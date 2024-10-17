@@ -915,7 +915,7 @@ def get_season_search(item, dict_series={}):
                 tvshow_key = '*'
                 media_type = item.media_type or item.contentType or TAG_MEDIA_DEF
 
-        item.season_search = item.season_search.title() or tvshow.title()
+        item.season_search = item.season_search or tvshow
 
         if dict_series and dict_series.get(tvshow_key, {}).get(TAG_TITLE, ""):
             if not dict_series[tvshow_key][TAG_TITLE].startswith('*'):

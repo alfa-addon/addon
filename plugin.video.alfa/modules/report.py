@@ -6,7 +6,6 @@ import os
 import sys
 import random
 import traceback
-import re
 
 from platformcode import config
 from platformcode import logger
@@ -17,19 +16,15 @@ from core import jsontools
 from core import httptools
 from core import scrapertools
 from core import filetools
+from core import urlparse
 from channelselector import get_thumb
 
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+PY3 = sys.version_info[0] >= 3
 
-if not PY3:
-    import urllib  # Usamos el nativo de PY2 que es más rápido
-    import urlparse
-    from core import proxytools
-else:
-    import urllib.parse as urlparse  # Es muy lento en PY2.  En PY3 es nativo
-    import urllib.parse as urllib
+if PY3:
     from core import proxytools_py3 as proxytools
+else:
+    from core import proxytools
 
 
 def mainlist(item):
@@ -144,7 +139,7 @@ def report_send(item, description=False, fatal=False):
     try:
         requests_status = True
         import requests
-    except:
+    except Exception:
         requests_status = False
         logger.error(traceback.format_exc())
 
@@ -428,7 +423,7 @@ def report_send(item, description=False, fatal=False):
 
         # En un futuro hay que ver reintentar varias veces a nuestro sitio antes
         # de probar con otro; por ahora limitamos a nuestro sitio como "prueba de estrés"
-        if not "alfa" in paste_name:
+        if "alfa" not in paste_name:
             continue
 
         if not paste_service['active']:  # Si no esta activo el servidor, pasamos
@@ -494,7 +489,7 @@ def report_send(item, description=False, fatal=False):
                     paste_post = log_data
 
                 else:
-                    paste_post = urllib.quote_plus(log_data)  # Se hace un "quote" de los datos del LOG
+                    paste_post = urlparse.quote_plus(log_data)  # Se hace un "quote" de los datos del LOG
 
                 if paste_post1:
                     paste_post = '%s%s' % (paste_post1, paste_post)
@@ -548,7 +543,7 @@ def report_send(item, description=False, fatal=False):
                                                   ignore_response_code=True, post=data_post, timeout=paste_timeout,
                                                   CF_test=False,
                                                   random_headers=paste_random_headers, headers=paste_headers).data
-                    if not 'successful' in data:
+                    if 'successful' not in data:
                         logger.error("successful: %s" % str(data))
                         raise
 
@@ -564,7 +559,7 @@ def report_send(item, description=False, fatal=False):
                 data['data'] = resp.data
                 data = type('HTTPResponse', (), data)
 
-        except:
+        except Exception:
             msg = 'Inténtelo más tarde'
             logger.error('Fallo al guardar el informe. ' + msg)
             logger.error(traceback.format_exc())
@@ -573,7 +568,7 @@ def report_send(item, description=False, fatal=False):
         # Se analiza la respuesta del servidor y se localiza la clave del upload para formar la url a pasar al usuario
         if data:
             paste_host_resp = paste_host
-            if paste_host_return == None:  # Si devuelve la url completa, no se compone
+            if paste_host_return is None:  # Si devuelve la url completa, no se compone
                 paste_host_resp = ''
                 paste_host_return = ''
 
@@ -587,7 +582,7 @@ def report_send(item, description=False, fatal=False):
                             try:
                                 for key_part in paste_url.split(','):
                                     key = key[key_part]  # por cada etiqueta adicional
-                            except:
+                            except Exception:
                                 key = ''
                         if key:
                             item.url = "%s%s%s" % (paste_host_resp + paste_host_return, key,

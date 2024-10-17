@@ -1,19 +1,11 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from platformcode import config, logger
-from core import httptools, scrapertools, tmdb
+from core import httptools, scrapertools
 from core import servertools
+from core import urlparse
 from core.item import Item
 from modules import autoplay
 from bs4 import BeautifulSoup
@@ -59,7 +51,7 @@ def search(item, texto):
     item.url = "%ssearch/%s" % (host,texto)
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -113,7 +105,7 @@ def lista(item):
         thumbnail = elem.img['src']
         if "svg+" in thumbnail:
             thumbnail = elem.img['data-lazy-src']
-        if not "xxxscenes" in item.url:
+        if "xxxscenes" not in item.url:
             year = elem.find('div', class_='jtip-top').a.text.strip()
         else:
             year = ""
@@ -135,7 +127,7 @@ def findvideos(item):
     matches = soup.find('div', id='pettabs').find_all('a')
     for elem in matches:
         url = elem['href']
-        if not url in video_urls:
+        if url not in video_urls:
             video_urls += url
             itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)

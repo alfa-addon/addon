@@ -4,14 +4,6 @@
 # -*- By the Alfa Development Group -*-
 # -*- Responsible: SistemaRayoXP -*-
 
-import sys
-PY3 = sys.version_info[0] >= 3
-
-if PY3:
-    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from modules import renumbertools
@@ -22,6 +14,7 @@ from core import jsontools
 from core import servertools
 from core import scrapertools
 from core import tmdb
+from core import urlparse
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
@@ -148,7 +141,7 @@ def search(item, texto):
                 new_item.contentTitle = title
             
             itemlist.append(new_item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -213,7 +206,7 @@ def novedades_episodios(item):
         try:
             infoLabels['season'] = int(season or 1)
             infoLabels['episode'] = int(episode or 1)
-        except:
+        except Exception:
             infoLabels['season'] = 1
             infoLabels['episode'] = 1
 
@@ -320,7 +313,7 @@ def episodios(item):
     info = scrapertools.find_single_match(data, "anime_info = \[(.*?)\];")
     try:
         info = eval(info)
-    except:
+    except Exception:
         return itemlist
     
     episodes = eval(scrapertools.find_single_match(data, "var episodes = (.*?);"))
@@ -336,7 +329,7 @@ def episodios(item):
         try:
             infoLabels['season'] = int(season)
             infoLabels['episode'] = int(episodeRenumber)
-        except:
+        except ValueError:
             infoLabels['season'] = 1
             infoLabels['episode'] = 1
         

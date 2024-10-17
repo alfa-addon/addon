@@ -36,6 +36,7 @@ def get_cl(
     retry=False,
     blacklist=True,
     headers=None,
+    Cookie={},
     retryIfTimeout=True,
     cache=True,
     clearWebCache=False,
@@ -89,6 +90,7 @@ def get_cl(
             alfa_s=alfa_s,
             httptools_obj=httptools,
             from_get_cl=True,
+            Cookie=Cookie,
             **kwargs,
         )
 
@@ -122,6 +124,8 @@ def get_cl(
     ):
         resp.status_code = 403
         return resp
+
+    if Cookie: Cookie_send = setup_cookies(Cookie)
 
     domain_full = urlparse.urlparse(url).netloc
     domain = domain_full
@@ -327,6 +331,7 @@ def get_cl(
                     headers=headers,
                     mute=mute,
                     alfa_s=False,
+                    Cookie=Cookie,
                     **kwargs,
                 )
         elif host == "a":
@@ -356,6 +361,7 @@ def get_source(
     blacklist=True,
     headers=None,
     from_get_cl=False,
+    Cookie={},
     retryIfTimeout=True,
     cache=False,
     clearWebCache=False,
@@ -383,6 +389,7 @@ def get_source(
     security_error_blackout = (5 * 60) - expiration
     ua_headers = False
     host_name = httptools.obtain_domain(url, scheme=True)
+    urls_ignored = []
 
     if timeout < 0:
         timeout = 0.001
@@ -453,6 +460,10 @@ def get_source(
                     str(time.time() - elapsed),
                 )
             )
+
+        if check_assistant and isinstance(check_assistant, dict):
+            if Cookie:
+                Cookie_send = setup_cookies(Cookie)
 
         if check_assistant and isinstance(check_assistant, dict):
             if check_assistant.get("assistantLatestVersion") and check_assistant.get(
@@ -537,7 +548,7 @@ def get_source(
             except Exception:
                 logger.error("Cancelado por el usuario")
                 return (data, resp) if not from_get_cl else resp
-
+            
             if not alfa_s:
                 logger.debug("data assistant: %s" % data_assistant)
 
@@ -548,6 +559,7 @@ def get_source(
             ):
                 for html_source in data_assistant["htmlSources"]:
                     if html_source.get("url", "") != url:
+                        urls_ignored += [html_source.get("url", "")]
                         if not alfa_s:
                             logger.debug("Url ignored: %s" % html_source.get("url", ""))
                         continue
@@ -591,6 +603,9 @@ def get_source(
                             freequent_data[1] += "OK_R"
                         break
 
+                else:
+                    if not source and 'captcha' in str(urls_ignored): retry = True
+
             if monitor and monitor.abortRequested():
                 logger.error("Cancelado por el usuario")
                 return (data, resp) if not from_get_cl else resp
@@ -599,6 +614,7 @@ def get_source(
                 logger.debug("No se obtuvieron resultados, reintentando...")
                 timeout = 1 if timeout < 5 else timeout * 2
                 extraPostDelay = -1 if extraPostDelay < 0 else extraPostDelay * 2
+
                 return get_source(
                     url,
                     resp,
@@ -616,6 +632,7 @@ def get_source(
                     mute=mute,
                     elapsed=elapsed,
                     httptools_obj=httptools,
+                    Cookie=Cookie,
                     **kwargs,
                 )
 
@@ -735,6 +752,11 @@ def get_ua(data_assistant):
     config.set_setting("cf_assistant_ua", UA)
 
     return UA
+
+
+def setup_cookies(Cookie):
+
+    return(Cookie)
 
 
 def get_jscode(count, key, n_iframe, timeout=3):

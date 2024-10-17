@@ -2,19 +2,10 @@
 # --------------------------------------------------------
 # Conector Emturbovid By Alfa development Group
 # --------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 from core import httptools
+from core import urlparse
 from platformcode import logger
-from lib import jsunpack
 from core import scrapertools
 
 # forced_proxy_opt = 'ProxySSL'
@@ -47,7 +38,7 @@ def get_video_url(page_url, video_password):
         patron = 'urlPlay\s*=\s*"([^")]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
-        if not server in url:
+        if server not in url:
             url = urlparse.urljoin(page_url,url)
         url += "|Referer=https://%s/" %server
         video_urls.append(['[%s]' %server.split(".")[-2], url])

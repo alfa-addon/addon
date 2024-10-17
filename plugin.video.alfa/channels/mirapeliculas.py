@@ -1,22 +1,14 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from modules import autoplay
 from platformcode import config, logger, platformtools
 from core.item import Item
-from core import httptools, scrapertools, jsontools, tmdb
+from core import httptools, scrapertools, tmdb
 from core import servertools
+from core import urlparse
 from modules import filtertools
 
 IDIOMAS = {'Latino': 'LAT', 'Español': 'ESP', 'Subtitulado': 'VOSE'}
@@ -80,7 +72,7 @@ def search(item, texto):
     
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -152,10 +144,14 @@ def findvideos(item):
             video = video.split("|")
             srv = video[1]
             id = video[0]
-            if "1" in srv: url = "https://swdyu.com/e/%s" %id
-            if "2" in srv: url = "https://filemoon.sx/e/%s" %id
-            if "3" in srv: url = "https://d000d.com/e/%s" %id
-            if "4" in srv: url = "https://mixdrop.ag/e/%s" %id
+            if "1" in srv:
+                url = "https://swdyu.com/e/%s" %id
+            if "2" in srv:
+                url = "https://filemoon.sx/e/%s" %id
+            if "3" in srv:
+                url = "https://d000d.com/e/%s" %id
+            if "4" in srv:
+                url = "https://mixdrop.ag/e/%s" %id
         else:
             url = video
         

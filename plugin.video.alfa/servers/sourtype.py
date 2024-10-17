@@ -1,16 +1,7 @@
 # -*- coding: utf-8 -*-
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
-import re
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import logger
 from bs4 import BeautifulSoup
 
@@ -43,10 +34,10 @@ def get_video_url(page_url, video_password):
         if soup.video.source:
             tipo = soup.video.source['type']    # application/x-mpegURL & video/mp4
         matches  = soup.video.find_all('source', type=tipo)
-    except:
+    except Exception:
         matches = scrapertools.find_multiple_matches(data, '<source src="([^"]+)" type="video/mp4"')
         for url in matches:
-            if not server in url:
+            if server not in url:
                 url = urlparse.urljoin(page_url,url) #justporn
             # if "justporn" in page_url:
                 # url = urlparse.urljoin(page_url,url)
@@ -57,7 +48,7 @@ def get_video_url(page_url, video_password):
         return video_urls
     for elem in matches:
         url = elem['src']
-        if not server in url:
+        if server not in url:
             url = urlparse.urljoin(page_url,url) #justporn
         if not url.startswith("http"):
             url = "http:%s" % url

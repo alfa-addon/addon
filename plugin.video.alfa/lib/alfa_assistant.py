@@ -707,11 +707,11 @@ def get_generic_call(
         if DEBUG:
             logger.debug(
                 "A: servers: %s / age: %s"
-                % (
-                    ASSISTANT_SERVERS,
-                    round((ASSISTANT_SERVERS_AGE - time.time()) / 60, 2),
-                )
+                % (ASSISTANT_SERVERS, round((ASSISTANT_SERVERS_AGE - time.time()) / 60, 2))
             )
+        if len(ASSISTANT_SERVERS) > 1:
+            del ASSISTANT_SERVERS[0]
+            change = True
 
         for url in ASSISTANT_SERVERS[:]:
             logger.error(

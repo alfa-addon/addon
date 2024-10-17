@@ -79,7 +79,7 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['miniboxs-ficha']}]),
                          ['(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
                          ['(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], ['\d?\d?&#.*', ''], ['\d+[x|×]\d+.*', ''], 
                          ['[\(|\[]\s*[\)|\]]', ''], ['(?i)(?:libro|volumen)?\s+\d{1,2}$', ''], ['(?i)\s+ts|\s+sub\w*|\s+\(*vos.*\)*', ''], 
-                         ['(?i)s\d{1,2}e\d{1,3}', '']],
+                         ['(?i)s\s*\d{1,2}\s*e\s*\d{1,3}', ''], ['(?i)\s+\d{1,2}\s*.\s*\d{1,3}', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', ''], 
                            ['(?i)\d+\.\d+', '']],
          'language_clean': [], 
@@ -220,10 +220,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 try:
                     if scrapertools.find_single_match(elem.find('div', class_='imagen').a.get("title", ""), '(?i)s(\d{1,2})e(\d{1,3})'):
                         elem_json['season'], elem_json['episode'] = scrapertools.find_single_match(elem.find('div', class_='imagen')\
-                                                                                                   .a.get("title", ""), '(?i)s(\d{1,2})e(\d{1,3})')
+                                                                                .a.get("title", ""), '(?i)s(\d{1,2})\s*e\s*(\d{1,3})')
                     else:
                         elem_json['season'], elem_json['episode'] = scrapertools.find_single_match(elem.find('div', class_='imagen')\
-                                                                                                   .a.get("title", ""), '(?i)\s+(\d{1,2}).(\d{1,3})')
+                                                                                .a.get("title", ""), '(?i)\s+(\d{1,2})\s*.\s*(\d{1,3})')
                     elem_json['season'] =  int(elem_json['season'])
                     elem_json['episode'] =  int(elem_json['episode'])
                 except:

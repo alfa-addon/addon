@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse
 import re
 
-from platformcode import config, logger
+from platformcode import logger
 from core import scrapertools
-from core import servertools
 from core.item import Item
 from core import httptools
 from modules import filtertools
@@ -42,7 +40,7 @@ def search(item, texto):
     item.url = host + "/search?keyword=%s" % texto
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -132,11 +130,10 @@ def findvideos(item):
 def decode_url(txt):
     import base64
     logger.info()
-    itemlist = []
     data = httptools.downloadpage(txt).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     rep = True
-    while rep == True:
+    while rep:
         b64_data = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
         if b64_data:
             b64_url = base64.b64decode(b64_data + "=").decode("utf8")

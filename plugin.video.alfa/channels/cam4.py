@@ -1,14 +1,5 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from platformcode import config, logger
@@ -54,7 +45,7 @@ def search(item, texto):
     item.url = "%sdirectoryCams?directoryJson=true&online=true&url=true&showTag=%s&page=1" % (host,texto)
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -81,7 +72,7 @@ def lista(item):
         if Video.get("statusMessage", ""):
             plot= Video['statusMessage'] 
         action = "play"
-        if logger.info() == False:
+        if logger.info() is False:
             action = "findvideos"
         itemlist.append(Item(channel = item.channel, action=action, title=title, url=video_url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))

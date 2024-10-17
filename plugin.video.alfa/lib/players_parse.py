@@ -3,17 +3,9 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
-
 import inspect
 
+from core import urlparse
 from platformcode import logger
 
 players = {'play': 'https://zplayer.live', 
@@ -51,7 +43,7 @@ def player_parse(url, server, host=''):
     
     # Obtenemos el nombre del canal
     channel = inspect.getmodule(inspect.currentframe().f_back.f_back)
-    if channel == None:
+    if channel is None:
         channel = ""
     else:
         channel = channel.__name__

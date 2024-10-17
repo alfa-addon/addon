@@ -1408,6 +1408,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
     def list_all(self, item, data='', matches_post=None, postprocess=None, generictools=None, finds={}, **kwargs):
         logger.info()
         from core import tmdb
+        from lib.generictools import AH_post_tmdb_listado, AH_find_videolab_status, check_alternative_tmdb_id
 
         itemlist = list()
         matches = []
@@ -1842,6 +1843,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
                         else:
                             new_item.matches.append(elem.get('matches', []) or elem.copy())
 
+                    # Busca alias a los títulos para mejora TMDB
+                    if generictools: check_alternative_tmdb_id(new_item, tmdb_check=False)
+
                     # Ahora se filtra por idioma, si procede, y se pinta lo que vale
                     if self.filter_languages > 0 and self.list_language and not BTDIGG_URL_SEARCH in new_item.url \
                                                  and not BTDIGG_URL_SEARCH in item.url_tvshow:   # Si hay idioma seleccionado, se filtra
@@ -1889,7 +1893,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 elif ('|' in item.season_search or '[' in item.season_search) and not '|' in new_item.season_search \
                                                                               and not '[' in new_item.season_search:
                     new_item.season_search += scrapertools.find_single_match(item.season_search, r'(\s*[\[|\|][^$]+$)')
-                new_item.season_search = re.sub(self.SEARCH_CLEAN, '', new_item.season_search)
+                new_item.season_search = re.sub(self.SEARCH_CLEAN, '', new_item.season_search).title()
                 if not isinstance(new_item.infoLabels['year'], int):
                     new_item.infoLabels['year'] = str(new_item.infoLabels['year']).replace('-', '')
                 if new_item.broadcast:
@@ -1898,14 +1902,12 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 if new_item.infoLabels['next_episode_air_date_custom']:
                     new_item.infoLabels['next_episode_air_date'] = new_item.infoLabels['next_episode_air_date_custom']
 
+            if generictools:
+                # Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
+                item, itemlist = AH_post_tmdb_listado(self, item, itemlist, **AHkwargs)
             if item.extra != 'find_seasons':
-                if generictools:
-                    # Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
-                    from lib.generictools import AH_post_tmdb_listado
-                    item, itemlist = AH_post_tmdb_listado(self, item, itemlist, **AHkwargs)
                 if videolab_status:
                     # Llamamos al método para encontrar el estado del vídeo en la videoteca
-                    from lib.generictools import AH_find_videolab_status
                     itemlist = AH_find_videolab_status(self, item, itemlist, **AHkwargs)
 
         # Si es necesario añadir paginacion

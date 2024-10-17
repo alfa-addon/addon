@@ -47,7 +47,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             
             if datos:
                 matches_m3u8 = re.compile('#EXT-X-STREAM-INF.*?RESOLUTION=\d+x(\d*)[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
-                ###matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+                ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
                     video_urls.append(["[streamwish] %s" % quality, url])

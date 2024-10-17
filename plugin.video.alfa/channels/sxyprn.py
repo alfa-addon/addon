@@ -1,22 +1,14 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from modules import autoplay
-from platformcode import config, logger
+from platformcode import logger
 from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from core import urlparse
 from bs4 import BeautifulSoup
 
 host = "https://www.sxyprn.com"
@@ -74,7 +66,7 @@ def search(item, texto):
 
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -152,12 +144,13 @@ def lista(item):
             thumbnail = thumbnail['src']
         else:
             thumbnail = thumbnail['data-src']
-        if "removed.png" in thumbnail: thumbnail = urlparse.urljoin(item.url,thumbnail)
+        if "removed.png" in thumbnail:
+            thumbnail = urlparse.urljoin(item.url,thumbnail)
         titulo = re.sub("#\w+", "", titulo).strip()
         title = scrapertools.find_single_match(titulo, '(.*?)https')
         if not title:
             title = titulo.replace("Visit Hornyfanz.com ", "")
-        if thumbnail and not "removed.png" in thumbnail:
+        if thumbnail and "removed.png" not in thumbnail:
             time = elem.find('span', class_='duration_small')
             if time:
                 time = time.text.strip()

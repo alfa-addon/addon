@@ -2,16 +2,6 @@
 # ------------------------------------------------------------
 # Lista de vídeos favoritos
 # ------------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
-
-import time
 import xbmc
 from core import filetools
 from core import scrapertools
@@ -43,9 +33,9 @@ def mainlist(item):
             item.thumbnail = thumb
             item.isFavourite = True
 
-            if type(item.context) == str:
+            if isinstance(item.context, str):
                 item.context = item.context.split("|")
-            elif type(item.context) != list:
+            elif not isinstance(item.context, list):
                 item.context = []
 
             item.context.extend([{"title": config.get_localized_string(30154),  # "Quitar de favoritos"
@@ -172,98 +162,3 @@ def renameFavourite(item):
                                             "se ha renombrado como:", new_title)  # 'Se ha quitado de favoritos'
                     platformtools.itemlist_refresh()
 
-
-##################################################
-# Funciones para migrar favoritos antiguos (.txt)
-def readbookmark(filepath):
-    logger.info()
-
-    bookmarkfile = filetools.file_open(filepath)
-
-    lines = bookmarkfile.readlines()
-
-    try:
-        titulo = urllib.unquote_plus(lines[0].strip())
-    except:
-        titulo = lines[0].strip()
-
-    try:
-        url = urllib.unquote_plus(lines[1].strip())
-    except:
-        url = lines[1].strip()
-
-    try:
-        thumbnail = urllib.unquote_plus(lines[2].strip())
-    except:
-        thumbnail = lines[2].strip()
-
-    try:
-        server = urllib.unquote_plus(lines[3].strip())
-    except:
-        server = lines[3].strip()
-
-    try:
-        plot = urllib.unquote_plus(lines[4].strip())
-    except:
-        plot = lines[4].strip()
-
-    # Campos contentTitle y canal añadidos
-    if len(lines) >= 6:
-        try:
-            contentTitle = urllib.unquote_plus(lines[5].strip())
-        except:
-            contentTitle = lines[5].strip()
-    else:
-        contentTitle = titulo
-
-    if len(lines) >= 7:
-        try:
-            canal = urllib.unquote_plus(lines[6].strip())
-        except:
-            canal = lines[6].strip()
-    else:
-        canal = ""
-
-    bookmarkfile.close()
-
-    return canal, titulo, thumbnail, plot, server, url, contentTitle
-
-
-def check_bookmark(readpath):
-    # Crea un listado con las entradas de favoritos
-    itemlist = []
-
-    for fichero in sorted(filetools.listdir(readpath)):
-        # Ficheros antiguos (".txt")
-        if fichero.endswith(".txt"):
-            # Esperamos 0.1 segundos entre ficheros, para que no se solapen los nombres de archivo
-            time.sleep(0.1)
-
-            # Obtenemos el item desde el .txt
-            canal, titulo, thumbnail, plot, server, url, contentTitle = readbookmark(filetools.join(readpath, fichero))
-            if canal == "":
-                canal = "favorites"
-            item = Item(channel=canal, action="play", url=url, server=server, title=contentTitle, thumbnail=thumbnail,
-                        plot=plot, fanart=thumbnail, contentTitle=contentTitle, folder=False)
-
-            filetools.rename(filetools.join(readpath, fichero), fichero[:-4] + ".old")
-            itemlist.append(item)
-
-    # Si hay Favoritos q guardar
-    if itemlist:
-        favourites_list = read_favourites()
-        for item in itemlist:
-            data = "ActivateWindow(10025,&quot;plugin://plugin.video.alfa/?" + item.tourl() + "&quot;,return)"
-            favourites_list.append((item.title, item.thumbnail, data))
-        if save_favourites(favourites_list):
-            logger.debug("Conversion de txt a xml correcta")
-
-
-# Esto solo funcionara al migrar de versiones anteriores, ya no existe "bookmarkpath"
-try:
-    if config.get_setting("bookmarkpath") != "":
-        check_bookmark(config.get_setting("bookmarkpath"))
-    else:
-        logger.info("No existe la ruta a los favoritos de versiones antiguas")
-except:
-    pass

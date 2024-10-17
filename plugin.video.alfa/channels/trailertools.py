@@ -5,27 +5,13 @@
 
 from __future__ import division
 #from builtins import str
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-from past.utils import old_div
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                             # Es muy lento en PY2.  En PY3 es nativo
-    import urllib.parse as urlparse
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
-    import urlparse
-
 import re
 
-from core.filetools import encode, decode
+from core.filetools import decode
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
+from core import urlparse
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
@@ -94,7 +80,7 @@ def buscartrailer(item, trailers=[]):
                     title = trailer['name'] + " [" + trailer['size'] + "p] (" + trailer['language'].replace("en", "ING") \
                         .replace("es", "ESP") + ")  [tmdb/youtube]"
                     itemlist.append(item.clone(action="play", title=title, url=trailer['url'], server="youtube"))
-        except:
+        except Exception:
             import traceback
             logger.error(traceback.format_exc())
 
@@ -170,7 +156,7 @@ def youtube_search(item):
     if item.page != "":
         data = httptools.downloadpage(item.page).data
     else:
-        titulo = urllib.quote(titulo)
+        titulo = urlparse.quote(titulo)
         titulo = titulo.replace("%20", "+")
         data = httptools.downloadpage("https://www.youtube.com/results?sp=EgIQAQ%253D%253D&q=" + titulo).data
     patron  = 'thumbnails":\[\{"url":"(https://i.ytimg.com/vi[^"]+).*?'
@@ -215,7 +201,7 @@ def abandomoviez_search(item):
     else:
         #titulo = item.contentTitle.decode('utf-8').encode('iso-8859-1')
         titulo = decode(item.contentTitle)
-        post = urllib.urlencode({'query': titulo, 'searchby': '1', 'posicion': '1', 'orden': '1',
+        post = urlparse.urlencode({'query': titulo, 'searchby': '1', 'posicion': '1', 'orden': '1',
                                  'anioin': item.year, 'anioout': item.year, 'orderby': '1'})
         url = "http://www.abandomoviez.net/db/busca_titulo.php?busco2=%s" %item.contentTitle
         item.prefix = "db/"
@@ -224,7 +210,8 @@ def abandomoviez_search(item):
             url = "http://www.abandomoviez.net/indie/busca_titulo.php?busco2=%s" %item.contentTitle
             item.prefix = "indie/"
             data = httptools.downloadpage(url, post=post).data
-            if not PY3: data = data.decode("iso-8859-1").encode('utf-8')
+            if isinstance(data, bytes):
+                data = data.decode("iso-8859-1").encode('utf-8')
 
     itemlist = []
     patron = '(?:<td width="85"|<div class="col-md-2 col-sm-2 col-xs-3">).*?<img src="([^"]+)"' \
@@ -297,7 +284,7 @@ def search_links_abando(item):
                 if item.contextual:
                     i += 1
                     message += ".."
-                    progreso.update(10 + (old_div(90 * i, len(matches))), message)
+                    progreso.update(10 + ((90 * i, len(matches))) // message)
                     scrapedtitle = "[COLOR white]%s[/COLOR]" % scrapedtitle
                 data_trailer = httptools.downloadpage(scrapedurl).data
                 trailer_url = scrapertools.find_single_match(data_trailer, 'iframe.*?src="([^"]+)"')
@@ -329,7 +316,7 @@ def filmaffinity_search(item):
     if item.page != "":
         data = httptools.downloadpage(item.page).data
     else:
-        params = urllib.urlencode([('stext', item.contentTitle), ('stype%5B%5D', 'title'), ('country', ''),
+        params = urlparse.urlencode([('stext', item.contentTitle), ('stype%5B%5D', 'title'), ('country', ''),
                                    ('genre', ''), ('fromyear', item.year), ('toyear', item.year)])
         url = "http://www.filmaffinity.com/es/advsearch.php?%s" % params
         data = httptools.downloadpage(url).data
@@ -353,8 +340,8 @@ def filmaffinity_search(item):
             if not scrapedthumbnail.startswith("http"):
                 scrapedthumbnail = "http://www.filmaffinity.com" + scrapedthumbnail
             scrapedurl = "http://www.filmaffinity.com/es/evideos.php?movie_id=%s" % id
-            if not PY3:
-                scrapedtitle = unicode(scrapedtitle, encoding="utf-8", errors="ignore")
+            if isinstance(scrapedtitle, bytes):
+                scrapedtitle = scrapedtitle.decode(encoding="utf-8", errors="ignore")
             scrapedtitle = scrapertools.htmlclean(scrapedtitle)
             itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, text_color="white",
                                        action="search_links_filmaff", thumbnail=scrapedthumbnail))
@@ -385,7 +372,7 @@ def search_links_filmaff(item):
 
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    if not '<a class="lnkvvid"' in data:
+    if '<a class="lnkvvid"' not in data:
         itemlist.append(item.clone(title=config.get_localized_string(70503), action="", text_color=""))
     else:
         patron = '<a class="lnkvvid".*?<b>(.*?)</b>.*?iframe.*?src="([^"]+)"'
@@ -401,8 +388,8 @@ def search_links_filmaff(item):
             else:
                 server = ""
                 thumbnail = item.thumbnail
-            if not PY3:
-                scrapedtitle = unicode(scrapedtitle, encoding="utf-8", errors="ignore")
+            if isinstance(scrapedtitle, bytes):
+                scrapedtitle = scrapedtitle.decode(scrapedtitle, encoding="utf-8", errors="ignore")
             scrapedtitle = scrapertools.htmlclean(scrapedtitle)
             scrapedtitle += "  [" + server + "]"
             if item.contextual:
@@ -439,12 +426,12 @@ try:
                                                  self.control_list)
                 self.getControl(3).setEnabled(0)
                 self.getControl(3).setVisible(0)
-            except:
+            except Exception:
                 pass
 
             try:
                 self.getControl(99).setVisible(False)
-            except:
+            except Exception:
                 pass
             self.getControl(1).setLabel("[COLOR orange]" + self.caption + "[/COLOR]")
             self.getControl(5).setLabel(config.get_localized_string(60495))
@@ -509,8 +496,8 @@ try:
                     else:
                         self.close()
                         buscartrailer(item)
-            except:
+            except Exception:
                 import traceback
                 logger.error(traceback.format_exc())
-except:
+except Exception:
     pass

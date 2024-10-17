@@ -1,26 +1,11 @@
 # s-*- coding: utf-8 -*-
-
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-    import urllib.parse as urlparse
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
-    import urlparse
-
-import re
-
 from core import httptools
-from core import jsontools as json
-from core import scrapertools
 from platformcode import config, logger
-if not PY3:
-    from lib import alfaresolver
-else:
+if sys.version_info > (3,):
     from lib import alfaresolver_py3 as alfaresolver
+else:
+    from lib import alfaresolver
 itag_list = {1: "video",
              5: "flv 240p",
              6: "flv 270p",
@@ -102,7 +87,6 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-    vid = list()
     if not page_url.startswith("http"):
         page_url = "https://www.youtube.com/watch?v=%s" % page_url
         logger.info(" page_url->'%s'" % page_url)

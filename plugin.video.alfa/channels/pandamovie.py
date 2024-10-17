@@ -1,14 +1,5 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from platformcode import config, logger
@@ -16,6 +7,7 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from core import httptools
+from core import urlparse
 from modules import autoplay
 from bs4 import BeautifulSoup
 
@@ -72,7 +64,7 @@ def search(item, texto):
     item.url = "%ssearch/%s" % (item.url, texto)
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -91,7 +83,7 @@ def categorias(item):
         thumbnail = ""
         if not url.startswith("https"):
             url = "https:%s" % url
-        if not "#" in url:
+        if "#" not in url:
             itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                                  thumbnail=thumbnail, plot=plot))
     if "Year" in item.title:
@@ -125,7 +117,7 @@ def lista(item):
         thumbnail = elem.img['src']
         if "svg" in thumbnail:
             thumbnail = elem.img['data-lazy-src']
-        if not "xxxscenes" in item.url:
+        if "xxxscenes" not in item.url:
             year = elem.find('div', class_='jtip-top').a
             if year:
                 year = year.text.strip()
@@ -148,7 +140,7 @@ def findvideos(item):
     for x , value in enumerate(pornstars):
         pornstars[x] = value.text.strip()
     pornstar = ' & '.join(pornstars)
-    if not "N/A" in pornstar:
+    if "N/A" not in pornstar:
         pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
     else:
         pornstar = ""
@@ -161,7 +153,7 @@ def findvideos(item):
         url = elem['href']
         logger.debug(url)
         url = url.split("?link=")[-1]
-        if not url in video_urls:
+        if url not in video_urls:
             video_urls += url
             itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', plot=plot, language='VO',contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)

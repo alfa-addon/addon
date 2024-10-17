@@ -1,21 +1,11 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
-import re
-
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from core import urlparse
 from bs4 import BeautifulSoup
 from modules import autoplay
 
@@ -78,7 +68,7 @@ def search(item, texto):
     item.url = "%ssearch/%s" % (item.url,texto)
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -168,7 +158,7 @@ def findvideos(item):
         pornstars[x] = value.text.strip()
     pornstar = ' & '.join(pornstars)
     pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
-    if not "/xxxmovies/" in item.url:
+    if "/xxxmovies/" not in item.url:
         lista = item.contentTitle.split()
         lista.insert (0, pornstar)
         item.contentTitle = ' '.join(lista)    
@@ -176,7 +166,7 @@ def findvideos(item):
     matches = soup.find('div', id='pettabs').find_all('a')
     for elem in matches:
         url = elem['href']
-        if not url in video_urls:
+        if url not in video_urls:
             video_urls += url
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url, plot=plot))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

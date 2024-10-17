@@ -1,14 +1,5 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from platformcode import config, logger
@@ -52,7 +43,7 @@ def search(item, texto):
     item.url = "%ssearch/%s/most-recent/?pageId=1" % (host, texto)
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -69,7 +60,7 @@ def categorias(item):
         if not elem.find('img'):
             continue
         url = elem['href']
-        if not "/channels/" in url:
+        if "/channels/" not in url:
             title = elem.find('span', class_='video-title').text.strip()
         else:
             title = elem.img['alt']
@@ -81,14 +72,14 @@ def categorias(item):
         if cantidad:
             title = "%s (%s)" % (title,cantidad.text.strip())
 
-        if not "/pornstars/" in url:
+        if "/pornstars/" not in url:
             url += "most-recent/?pageId=1"
         else:
             url += "?pageId=1"
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
-    if not "/channels/" in item.url:
+    if "/channels/" not in item.url:
         pagin = soup.find('div', id='pagingAuto')
         page = int(pagin['data-page'])
         page_limit = int(pagin['data-limit'])
@@ -137,7 +128,7 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
         action = "play"
-        if logger.info() == False:
+        if logger.info() is False:
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
