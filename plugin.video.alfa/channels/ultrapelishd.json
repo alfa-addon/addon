@@ -1,7 +1,7 @@
 {
   "id": "ultrapelishd",
   "name": "UltraPelisHD",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://ultrapelishd.net/wp-content/uploads/2021/07/logo_uphdd.png?x93892",

@@ -1,22 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
-    import urllib.parse as urllib
-else:
-    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
-    import urllib
-
 import re
 
 from core import httptools
 from core.item import Item
 from core import scrapertools
 from core import servertools
+from core import urlparse
 from platformcode import config, logger
 from bs4 import BeautifulSoup
 
@@ -53,7 +43,7 @@ def search(item, texto):
     try:
         return lista(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -101,14 +91,14 @@ def get_data(url_orig):
         response = httptools.downloadpage(url_orig, canonical=canonical)
         if not response.data or "urlopen error [Errno 1]" in str(response.code):
             raise Exception
-    except:
+    except Exception:
         # config.set_setting("url_error", True, "porntrex")
         import random
         server_random = ['nl', 'de', 'us']
         server = server_random[random.randint(0, 2)]
         url = "https://%s.hideproxy.me/includes/process.php?action=update" % server
         post = "u=%s&proxy_formdata_server=%s&allowCookies=1&encodeURL=0&encodePage=0&stripObjects=0&stripJS=0&go=" \
-               % (urllib.quote(url_orig), server)
+               % (urlparse.quote(url_orig), server)
         while True:
             response = httptools.downloadpage(url, post, follow_redirects=False)
             if response.headers.get("location"):
@@ -143,7 +133,7 @@ def lista(item):
         scrapedtitle = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (duration, quality, scrapedtitle)
         plot = ""
         action = "play"
-        if logger.info() == False:
+        if logger.info() is False:
             action = "findvideos"
         itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, 
                                    fanart=scrapedthumbnail, contentTitle = scrapedtitle))

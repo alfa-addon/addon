@@ -1,21 +1,14 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from modules import autoplay
-from platformcode import config, logger, platformtools
+from platformcode import config, logger
 from core.item import Item
-from core import httptools, scrapertools, jsontools, tmdb
+from core import httptools, scrapertools, tmdb
 from core import servertools, channeltools
+from core import urlparse
 from modules import filtertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
@@ -47,7 +40,7 @@ __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', __channel__)
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', __channel__)
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-except:
+except Exception:
     __modo_grafico__ = True
 
 
@@ -90,7 +83,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -278,7 +271,7 @@ def findvideos(item):
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra !='findvideos' and not "/episodios/" in item.url :
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra !='findvideos' and "/episodios/" not in item.url :
         itemlist.append(Item(channel=item.channel, action="add_pelicula_to_library", 
                              title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
                              extra="findvideos", contentTitle=item.contentTitle)) 

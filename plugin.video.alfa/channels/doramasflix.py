@@ -844,7 +844,7 @@ def get_language_string(languages, code):
 
 
 def set_filters(item):
-    if logger.info() == False:
+    if logger.info() is False:
         # Estamos en test, no mostramos nada
         return
     list_controls = get_controls_list()
