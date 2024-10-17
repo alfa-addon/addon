@@ -3,7 +3,7 @@
   "name": "PelisMaraton",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["lat", "cast", "vose"],
   "thumbnail": "https://i.postimg.cc/sDMZyMmm/pelismaraton.png",
   "banner": "",
   "fanart": "",
