@@ -25,10 +25,11 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.exposed/", "https://elitedivx.net/", "https://lilatorrent.com/", 
+             'host_alt': ["https://dontorrent.gratis/", "https://elitedivx.net/", "https://lilatorrent.com/", 
                           "https://mastorrents.net/", "https://reinventorrent.org/", "https://todotorrents.org/", 
                           "https://www14.dontorrent.link/", "https://tomadivx.net/"], 
-             'host_black_list': ["https://dontorrent.education/", "https://dontorrent.email/", "https://dontorrent.date/", 
+             'host_black_list': ["https://dontorrent.faith/", "https://dontorrent.exposed/", 
+                                 "https://dontorrent.education/", "https://dontorrent.email/", "https://dontorrent.date/", 
                                  "https://dontorrent.earth/", "https://dontorrent.cricket/", "https://dontorrent.dance/", 
                                  "https://dontorrent.cologne/", "https://dontorrent.city/", "https://dontorrent.esq/", 
                                  "https://dontorrent.cc/", "https://dontorrent.sbs/", "https://dontorrent.fyi/", 
@@ -217,6 +218,8 @@ def submenu(item):
                                  url=host, thumbnail=get_thumb("search.png"), c_type="search", 
                                  category=categoria, plot=AlfaChannelHelper.PLOT_BTDIGG, btdigg=True))
 
+        itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
+                             thumbnail=get_thumb("setting_0.png")))
         itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
         return itemlist
@@ -391,6 +394,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     if movie_path in elem_json['url']:
                         elem_json['quality'] = '*%s' % re.sub(r'(?i)\(|\)|Ninguno', '', 
                                                 elem_a.find_next_sibling('span', class_='text-muted').get_text(strip=True))
+                        elem_json['title'] = re.sub(r'\[([^\]]+)\]', '', elem_json['title'])
                     elif tv_path in elem_json['url']:
                         elem_json['quality'] = scrapertools.find_single_match(elem_json['title'], r'\[([^\]]+)\]')
                         elem_json['quality'] = 'HDTV-720p' if '720p' in elem_json['quality'] else 'HDTV'

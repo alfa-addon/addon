@@ -103,7 +103,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title="Todas", action="list_all", c_type='peliculas', 
-                         url=host+'category/terror-2', thumbnail=get_thumb('all', auto=True)))
+                         url=host+'category/terror-3', thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title="Asiaticas", action="list_all", c_type='peliculas', 
                          url=host+'category/asiatico1', thumbnail=get_thumb('asiaticas', auto=True)))
@@ -199,21 +199,6 @@ def actualizar_titulos(item):
     #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
 
     return AlfaChannel.do_actualizar_titulos(item)
-
-
-def play(item):
-    logger.info()
-    
-    if item.subtitle:
-        from platformcode import subtitletools
-        try:
-            sub = subtitletools.get_from_subdivx(item.subtitle)
-            return [item.clone(subtitle=sub)]
-        except:
-            logger.error('ERROR en Subtítulos: %s' % traceback.format_exc())
-            return [item]
-    else:
-        return [item]
 
 
 def search(item, texto, **AHkwargs):

@@ -33,26 +33,26 @@ if PY3: allchars = str.maketrans('', '')
 if not PY3: allchars = string.maketrans('', '')
 deletechars = ',\\/:*"<>|?'
 
-kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'timeout': 5, 
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'timeout': (5, 30), 
           'canonical': {}, 'hide_infobox': True, 'follow_redirects': False}
 
 
 # Extraemos el nombre de la serie, temporada y numero de capitulo ejemplo: 'fringe 1x01'
 def regex_tvshow(compare, file, sub=""):
-    regex_expressions = ['[Ss]([0-9]+)[][._-]*[Ee]([0-9]+)([^\\\\/]*)$',
-                         '[\._ \-]([0-9]+)x([0-9]+)([^\\/]*)',  # foo.1x09 
-                         '[\._ \-]([0-9]+)([0-9][0-9])([\._ \-][^\\/]*)',  # foo.109
-                         '([0-9]+)([0-9][0-9])([\._ \-][^\\/]*)',
-                         '[\\\\/\\._ -]([0-9]+)([0-9][0-9])[^\\/]*',
-                         'Season ([0-9]+) - Episode ([0-9]+)[^\\/]*',
-                         'Season ([0-9]+) Episode ([0-9]+)[^\\/]*',
-                         '[\\\\/\\._ -][0]*([0-9]+)x[0]*([0-9]+)[^\\/]*',
-                         '[[Ss]([0-9]+)\]_\[[Ee]([0-9]+)([^\\/]*)',  # foo_[s01]_[e01]
-                         '[\._ \-][Ss]([0-9]+)[\.\-]?[Ee]([0-9]+)([^\\/]*)',  # foo, s01e01, foo.s01.e01, foo.s01-e01
-                         's([0-9]+)ep([0-9]+)[^\\/]*',  # foo - s01ep03, foo - s1ep03
-                         '[Ss]([0-9]+)[][ ._-]*[Ee]([0-9]+)([^\\\\/]*)$',
-                         '[\\\\/\\._ \\[\\(-]([0-9]+)x([0-9]+)([^\\\\/]*)$',
-                         '[\\\\/\\._ \\[\\(-]([0-9]+)X([0-9]+)([^\\\\/]*)$'
+    regex_expressions = [r'[Ss]([0-9]+)[][._-]*[Ee]([0-9]+)([^\\\\/]*)$',
+                         r'[\._ \-]([0-9]+)x([0-9]+)([^\\/]*)',  # foo.1x09 
+                         r'[\._ \-]([0-9]+)([0-9][0-9])([\._ \-][^\\/]*)',  # foo.109
+                         r'([0-9]+)([0-9][0-9])([\._ \-][^\\/]*)',
+                         r'[\\\\/\\._ -]([0-9]+)([0-9][0-9])[^\\/]*',
+                         r'Season ([0-9]+) - Episode ([0-9]+)[^\\/]*',
+                         r'Season ([0-9]+) Episode ([0-9]+)[^\\/]*',
+                         r'[\\\\/\\._ -][0]*([0-9]+)x[0]*([0-9]+)[^\\/]*',
+                         r'[[Ss]([0-9]+)\]_\[[Ee]([0-9]+)([^\\/]*)',  # foo_[s01]_[e01]
+                         r'[\._ \-][Ss]([0-9]+)[\.\-]?[Ee]([0-9]+)([^\\/]*)',  # foo, s01e01, foo.s01.e01, foo.s01-e01
+                         r's([0-9]+)ep([0-9]+)[^\\/]*',  # foo - s01ep03, foo - s1ep03
+                         r'[Ss]([0-9]+)[][ ._-]*[Ee]([0-9]+)([^\\\\/]*)$',
+                         r'[\\\\/\\._ \\[\\(-]([0-9]+)x([0-9]+)([^\\\\/]*)$',
+                         r'[\\\\/\\._ \\[\\(-]([0-9]+)X([0-9]+)([^\\\\/]*)$'
                          ]
     sub_info = ""
     tvshow = 0
@@ -291,7 +291,7 @@ def saveSubtitleName(item):
     return
 
 
-def get_from_subdivx(sub_url, sub_data=None, sub_dir='', item=Item()):
+def get_from_subdivx(sub_url, sub_data=None, sub_dir='', item=Item(), sub_url_alt=''):
 
     """
     :param sub_url: Url de descarga del subtitulo alojado en suvdivx.com
@@ -302,27 +302,45 @@ def get_from_subdivx(sub_url, sub_data=None, sub_dir='', item=Item()):
 
     logger.info()
 
+    kwargS = kwargs.copy()
+    kwargS.update({'headers': {'Accept-Charset': None, 'Referer': sub_url}, 'follow_redirects': True})
+
     sub = ''
+    sub_data = ''
+    sub_url = sub_url.replace("&amp;", "&")
+    if not sub_url_alt:
+        sub_url_alt = httptools.obtain_domain(sub_url, scheme=True).rstrip('/') + '/descargar.php?id='
+        sub_url_alt += scrapertools.find_single_match(sub_url, r'\/(\d+)$')
     if not sub_dir:
         sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
         filetools.mkdir(sub_dir)
 
-    sub_url = sub_url.replace("&amp;", "&")
-    if not sub_data: sub_data = httptools.downloadpage(sub_url, follow_redirects=False)
-    if 'x-frame-options' not in sub_data.headers:
-        sub_url = '%s' % sub_data.headers['location']
-        ext = sub_url[-4::]
-        file_id = "subtitle%s" % ext
+    if not sub_data:
+        sub_data = httptools.downloadpage(sub_url_alt, **kwargS)
+        location = sub_data.url or sub_data.headers.get('location', '')
+        if not sub_data.proxy__ and location and sub_url_alt != location:
+            sub_url = sub_data.headers['location'] = location
+            ext = scrapertools.find_single_match(sub_url_alt, r'\=(\d+)$')
+        else:
+            sub_data = httptools.downloadpage(sub_url, **kwargS)
+            sub_url = '%s' % sub_data.headers.get('location', '')
+            ext = sub_url[-4::]
+
+    if 'x-frame-options' not in sub_data.headers and sub_data.headers.get('location'):
+        file_id = "subtitle_%s.zip" % ext
         filename = os.path.join(sub_dir, file_id)
         try:
-            data_dl = httptools.downloadpage(sub_url).data
+            data_dl = httptools.downloadpage(sub_url, **kwargS).data
             filetools.write(filename, data_dl)
             sub = extract_file_online(sub_dir, filename)
+            if sub and filetools.exists(filename):
+                filetools.remove(filename)
         except:
            logger.info('sub no valido')
     else:
        logger.info('sub no valido')
-    return sub if not sub_data else ''
+
+    return sub
 
 
 def get_from_subscene(sub_url, sub_data=None, sub_dir='', item=Item()):
@@ -364,9 +382,9 @@ def get_from_subscene(sub_url, sub_data=None, sub_dir='', item=Item()):
 
                         sub_title = subtitle.a.find('span', class_=False).get_text(strip=True)
                         if item.contentEpisodeNumber:
-                            pattern = '(?i)se?(\d{2})x?ep?(\d{2})'
+                            pattern = r'(?i)se?(\d{2})x?ep?(\d{2})'
                         else:
-                            pattern = '(?i)se?(\d{2})'
+                            pattern = r'(?i)se?(\d{2})'
                         if scrapertools.find_single_match(sub_title, pattern):
                             if item.contentEpisodeNumber:
                                 season, episode = scrapertools.find_single_match(sub_title, pattern)
@@ -423,6 +441,63 @@ def get_from_subscene(sub_url, sub_data=None, sub_dir='', item=Item()):
 
     return sub
 
+
+def get_from_subdl(sub_url, sub_data=None, sub_dir='', item=Item()):
+
+    """
+    :param sub_url: Url de descarga del subtitulo alojado en suvdivx.com
+           Por Ejemplo: https://subdl.com/subtitle/sd12674668/it-ends-with-us
+
+    :return: La ruta al subtitulo descomprimido
+    """
+
+    logger.info()
+
+    sub = []
+    sub_data = ''
+    sub_url_alt = 'https://dl.%s/subtitle/' % httptools.obtain_domain(sub_url, scheme=False).rstrip('/')
+    sub_url = sub_url.replace("&amp;", "&")
+    if not sub_dir:
+        sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
+        filetools.mkdir(sub_dir)
+
+    if not sub_data:
+        sub_data = httptools.downloadpage(sub_url, **kwargs)
+        if not sub_data.sucess:
+            return sub_url
+
+        sub_titles_txt = scrapertools.find_single_match(sub_data.data, r'(\{\\"groupedSubtitles\\".*?)\,\\"subtitleSimpleParsed\\"')\
+                                                        .replace('\\\\\\"', '@').replace('\\', '') + '}'
+        if not sub_titles_txt:
+            logger.debug(sub_data.data)
+            return sub_url
+        sub_titles = jsontools.load(sub_titles_txt)
+        if not sub_titles:
+            logger.debug(sub_titles_txt)
+            return sub_url
+
+        for language in ['spanish', 'english']:
+            if sub_titles.get('groupedSubtitles', {}).get(language):
+                for sub_title in sub_titles['groupedSubtitles'][language]:
+                    if sub_title.get('quality', '') not in ['webdl', 'bluray']: continue
+                    link = sub_url_alt + sub_title.get('link', '')
+                    file_id = '%s.zip' % sub_title.get('title', '')
+                    filename = os.path.join(sub_dir, file_id)
+                    try:
+                        data_dl = httptools.downloadpage(link, **kwargs).data
+                        filetools.write(filename, data_dl)
+                        sub += [extract_file_online(sub_dir, filename)]
+                        if sub and filetools.exists(filename):
+                            filetools.remove(filename)
+                        break
+                    except:
+                       logger.info('sub no valido')
+
+    else:
+       logger.info('sub no valido')
+    return sub
+
+
 def extract_file_online(path, filename):
 
     """
@@ -437,15 +512,15 @@ def extract_file_online(path, filename):
 
     url = "http://online.b1.org/rest/online/upload"
 
-    data = httptools.downloadpage(url, file=filename).data
+    data = httptools.downloadpage(url, file=filename, **kwargs).data
 
-    result = jsontools.load(scrapertools.find_single_match(data, "result.listing = ([^;]+);"))
+    result = jsontools.load(scrapertools.find_single_match(data, r"result.listing = ([^;]+);"))
     compressed = result["name"]
     extracted = result["children"][0]["name"]
 
     dl_url = "http://online.b1.org/rest/online/download/%s/%s" % (compressed, extracted)
     extracted_path = os.path.join(path, extracted)
-    data_dl = httptools.downloadpage(dl_url).data
+    data_dl = httptools.downloadpage(dl_url, **kwargs).data
     filetools.write(extracted_path, data_dl)
 
     return extracted_path
@@ -453,9 +528,9 @@ def extract_file_online(path, filename):
 
 def download_subtitles(item):
     #Permite preparar la descarga de los subtítulos externos
-    logger.info()
+    logger.info(item.subtitle)
 
-    subtitle_services = [['subscene.com', get_from_subscene], ['subdivx.com', get_from_subdivx]]
+    subtitle_services = [['subscene.com', get_from_subscene], ['subdivx.com', get_from_subdivx], ['subdl.com', get_from_subdl]]
 
     if not item.subtitle:
         return item
@@ -473,16 +548,25 @@ def download_subtitles(item):
             filetools.mkdir(subtitles_path)
 
         for x, subtitle in enumerate(subtitles):
+            data_dl = ''
             if not subtitle.startswith('http'):
                 if not item.subtitle: item.subtitle = subtitle
                 continue
 
             subtitle_path_name = filetools.join(subtitles_path, subtitle.split('/')[-1])
 
-            data_dl = httptools.downloadpage(subtitle.replace("&amp;", "&"), soup=True, headers=item.headers or {}, **kwargs)
             for service, funtion in subtitle_services:
-                if httptools.obtain_domain(subtitle) in service:
+                if service in httptools.obtain_domain(subtitle):
                     data_dl = funtion(subtitle, data_dl, subtitles_path, item)
+                    if data_dl:
+                        item.subtitle = data_dl
+                        if isinstance(item.subtitle, list): logger.debug(item.subtitle)
+                        data_dl = ''
+                        break
+
+            if not data_dl and not item.subtitle:
+                data_dl = httptools.downloadpage(subtitle.replace("&amp;", "&"), soup=True, headers=item.headers or {}, **kwargs)
+
             if data_dl: 
                 res = filetools.write(subtitle_path_name, data_dl.data)
                 if res and not item.subtitle: item.subtitle = subtitle_path_name
