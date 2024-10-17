@@ -316,7 +316,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['title'], elem_json['year'] = elem.find('img', class_='w-full').get("title", "").split(' (')
             else:
                 elem_json['title'] = elem.find('img', class_='w-full').get("alt", "")
-            if 'Premium' in elem_json['title']: continue
+            if 'Premium' in elem_json['title'] or 'promo' in elem_json['title']: continue
 
             if not elem_json.get('year'):
                 elem_json['year'] = '-'
@@ -353,26 +353,29 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
-    srv_ids = {"Dood": "Doodstream",
-               "Watchsb": "Streamsb",
-               "Maxplay": "voe",
+    srv_ids = {"dood": "Doodstream",
+               "watchsb": "Streamsb",
+               "maxplay": "voe",
+               "hlswish": "Streamwish",
+               "filemoon": "Tiwikiwi",
                "1fichier": "Onefichier",
-               "Latmax": "Fembed", 
+               "latmax": "Fembed", 
                "Ok": "Okru", 
-               "Torrent": "torrent"}
-
+               "torrent": "torrent"}
+    
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-
+        
         try:
             elem_json['url'] = base64.b64decode(elem.get("data-url", "") or elem.get("data-src", "")).decode('utf-8')
+            if "acortalink" in elem_json['url']:continue
             if elem.get("data-url", ""):
-                if elem.get_text(strip=True).capitalize() != 'Torrent': continue
+                # if elem.get_text(strip=True).lower() != 'torrent': continue
                 elem_json['url'] = AlfaChannel.create_soup(elem_json['url']).find("div", id="btn_enlace").a.get("href", "")
 
-            elem_json['server'] = elem.get_text(strip=True).capitalize()
-            if elem_json['server'] in ["Cineplay", "Netu", "trailer", "Fembed"]: continue
+            elem_json['server'] = elem.get_text(strip=True).lower()
+            if elem_json['server'] in ["Cineplay", "Netu", "trailer", "Fembed", "acortalink"]: continue
             if elem_json['server'] in srv_ids:
                 elem_json['server'] = srv_ids[elem_json['server']]
             

@@ -11,13 +11,22 @@ from platformcode import logger
 kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
 # chems https://media.cm/wcjxurq8sqtz  error 403
 
+
+# https://filemoon.link/e/cnj62hpc7oyr/DABUNH-18CA.mp4     <h1>This video cannot be watched under this domain</h1>
+# https://file-sp32aoh8-moon.com/bdd/7apq37d4gktm?referer=mp4.nu
+# https://file-sp32aoh8-moon.com/bdd/0011bagyarle?referer=mp4.nu
+# https://file-sp32aoh8-moon.com/bdd/6pai1v36s23o
+
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data, server
+    if "|Referer" in page_url or "|referer" in page_url:
+        page_url, referer = page_url.split("|")
+        referer = referer.replace('Referer=', '').replace('referer=', '')
+        kwargs['headers'] = {'Referer': referer}
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
     server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
-
     if response.code == 404 or "not found" in response.data:
         return False,  "[%s] El fichero no existe o ha sido borrado" %server
     return True, ""
@@ -29,7 +38,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     try:
         # enc_data = scrapertools.find_single_match(data, "type='text/javascript'>(eval.*?)?\s+</script>")
         enc_data = scrapertools.find_multiple_matches(data, "text/javascript(?:'|\")>(eval.*?)</script>")
-        # logger.debug(enc_data)
         dec_data = jsunpack.unpack(enc_data[-1])
     except Exception:
         dec_data = data

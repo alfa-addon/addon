@@ -1,15 +1,14 @@
 {
-  "id": "pelismaraton",
-  "name": "PelisMaraton",
-  "active": false,
+  "id": "pelisforte",
+  "name": "PelisForte",
+  "active": true,
   "adult": false,
-  "language": ["lat"],
-  "thumbnail": "https://pelismaraton.nu/icon/pelismaraton.png",
+  "language": ["lat", "cast"],
+  "thumbnail": "https://i.postimg.cc/rmc1Dxj3/pelisforte.png",
   "banner": "",
   "fanart": "",
   "categories": [
-    "movie",
-    "vos"
+    "movie"
   ],
   "force_unify": true,
   "settings": [
@@ -17,8 +16,8 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
-      "enabled": false,
+      "default": false,
+      "enabled": true,
       "visible": true
     },
     {
@@ -30,15 +29,23 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "LAT",
         "CAST",
+        "LAT",
         "VOSE"
       ]
     },
     {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "include_in_newest_infantiles",
       "type": "bool",
-      "label": "Incluir en Novedades - Películas",
+      "label": "Incluir en Novedades - Infantiles",
       "default": true,
       "enabled": true,
       "visible": true
@@ -52,9 +59,17 @@
       "visible": true
     },
     {
-      "id": "include_in_newest_peliculas",
+      "id": "include_in_newest_castellano",
       "type": "bool",
-      "label": "Incluir en Novedades - Películas",
+      "label": "Incluir en Novedades - Castellano",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_latino",
+      "type": "bool",
+      "label": "Incluir en Novedades - Latino",
       "default": true,
       "enabled": true,
       "visible": true
