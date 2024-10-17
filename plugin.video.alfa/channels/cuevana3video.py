@@ -1,15 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from inspect import trace
-import sys, base64
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
 import time
-if PY3:
-    import urllib.parse as urlparse
-else:
-    import urlparse
 from channelselector import get_thumb
 from modules import autoplay
 from modules import filtertools
@@ -17,6 +8,7 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core import tmdb
+from core import urlparse
 from core.item import Item
 from platformcode import config, logger
 
@@ -169,7 +161,7 @@ def last_episodes(item):
         try:
             infoLabels["episode"] = int(episode)
             infoLabels["season"] = int(season)
-        except:
+        except Exception:
             infoLabels["episode"] = 1
             infoLabels["season"] = 1
 
@@ -194,8 +186,9 @@ def last_tvshows(item):
 
     itemlist = []
     url = item.url
-    if not item.page: item.page = 1
-    if not item.extra: url += "?page=%s" %item.page
+    item.page = item.page or 1
+    if not item.extra:
+        url += "?page=%s" %item.page
 
     data = httptools.downloadpage(url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'id="%s".*?</ul>' %item.type_tvshow)
@@ -251,7 +244,7 @@ def seasons(item):
     for _scrapedid, scrapedtitle in matches:
         try:
             scrapedid = int(_scrapedid)
-        except:
+        except ValueError:
             scrapedid = 1
         itemlist.append(
             item.clone(
@@ -316,7 +309,7 @@ def episodesxseasons(item):
         try:
             infoLabels["episode"] = int(episode)
             infoLabels["season"] = int(season)
-        except:
+        except ValueError:
             infoLabels["episode"] = 1
             infoLabels["season"] = 1
 
@@ -362,8 +355,9 @@ def list_all(item):
 
     itemlist = []
     url = item.url
-    if not item.page: item.page = 1
-    if not item.extra: url += "?page=%s" %item.page
+    item.page = item.page or 1
+    if not item.extra:
+        url += "?page=%s" %item.page
 
     data = httptools.downloadpage(url, encoding=encoding, canonical=canonical).data
     patron  = '(?is)TPost C.*?<a href="([^"]+)'
@@ -435,9 +429,12 @@ def findvideos(item):
 
         for scrapedurl, scrapedtitle in matches:
             #if  "peliscloud" in scrapedtitle.lower(): continue
-            if  "pelisplay" in scrapedurl: continue  # Son los mismos server que los que muestra la web
-            if not scrapedurl.startswith("http"): scrapedurl = "https:" + scrapedurl
-            if "hydrax" in scrapedurl: continue
+            if  "pelisplay" in scrapedurl:
+                continue  # Son los mismos server que los que muestra la web
+            if not scrapedurl.startswith("http"):
+                scrapedurl = "https:" + scrapedurl
+            if "hydrax" in scrapedurl:
+                continue
             # if "pelisplay" in scrapedurl:             # Da los mismos server que los que muestra lña web
                 # data = httptools.downloadpage(scrapedurl, headers={"Referer" : item.url}, forced_proxy_opt='ProxyCF', canonical=canonical).data
                 # matches = scrapertools.find_multiple_matches(data, 'data-video="([^"]+)"')
@@ -589,7 +586,8 @@ def generos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for url, titulo in matches:
-        if not url.startswith("http"): url = urlparse.urljoin(host, url)
+        if not url.startswith("http"):
+            url = urlparse.urljoin(host, url)
 
         itemlist.append(
             Item(

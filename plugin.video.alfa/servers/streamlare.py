@@ -3,19 +3,11 @@
 # Conector streamlare By Alfa development Group
 # --------------------------------------------------------
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import logger
 
 url_new = ''
@@ -47,7 +39,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     server_url = "%s/api/video/stream/get" %httptools.obtain_domain(url_new, scheme=True)
     
     # if url_new:
-    if not id: id = scrapertools.find_single_match(page_url,'/e/(\w+)')
+    if not id:
+        id = scrapertools.find_single_match(page_url,'/e/(\w+)')
     post = {"id": id}
     
     response = httptools.downloadpage(server_url, post=post, **kwargs)
@@ -59,7 +52,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         
         if "xxxxxxxxxxxxxxmaster.m3u8" in media_url:
             data = httptools.downloadpage(media_url, **kwargs).data
-            if PY3 and isinstance(data, bytes):
+            if isinstance(data, bytes):
                 data = "".join(chr(x) for x in bytes(data))
             
             if data:

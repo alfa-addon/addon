@@ -3,15 +3,6 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
-import re
 import base64
 
 from core import tmdb
@@ -19,8 +10,7 @@ from core import httptools
 from core.item import Item
 from core import servertools
 from core import scrapertools
-from core import jsontools
-from lib import jsunpack
+from core import urlparse
 from channelselector import get_thumb
 from platformcode import config, logger
 from modules import filtertools
@@ -100,7 +90,8 @@ def genres(item):
         matches = scrapertools.find_multiple_matches(data, '(?is)href="/(year[^"]+)">(\d+)<')
     for url, title in matches:
         url += "/%s" %item.type
-        if title in existe: continue
+        if title in existe:
+            continue
         existe.append(title)
         itemlist.append(Item(channel=item.channel, title=title, url=host + url,
                  action="list_all"))
@@ -259,7 +250,7 @@ def findvideos(item):
             url = scrapertools.find_single_match(data, 'var shareId = "([^"]+)"')
             video_url = "https://www.amazon.com/clouddrive/share/%s" %url
         language = IDIOMAS.get(lang, lang)
-        if not "plusvip" in video_url:
+        if "plusvip" not in video_url:
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=video_url,
                                        language=language, infoLabels=item.infoLabels))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
@@ -290,7 +281,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -311,7 +302,7 @@ def newest(categoria):
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

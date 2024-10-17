@@ -1,22 +1,10 @@
 # -*- coding: utf-8 -*-
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
-import re
-
 from core.item import Item
 from core import httptools
 from core import servertools
 from core import scrapertools
+from core import urlparse
 from platformcode import config, logger
-import base64
-import hashlib
 
 
 canonical = {
@@ -92,7 +80,7 @@ def lista(item):
         if not scrapedthumbnail.startswith("https"):
             scrapedthumbnail = "https:%s" % scrapedthumbnail
         action = "play"
-        if logger.info() == False:
+        if logger.info() is False:
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail))

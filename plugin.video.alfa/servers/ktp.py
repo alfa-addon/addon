@@ -2,19 +2,11 @@
 # --------------------------------------------------------
 # Conector vipporns By Alfa development Group
 # --------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import logger
 
 from lib.kt_player import decode
@@ -62,7 +54,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     matches = re.compile(patron,re.DOTALL).findall(data)
     logger.debug(matches)
     for url, quality in matches:
-        if not "?login" in url and not "signup" in url and not "_preview" in url and ".mp4" in url:
+        if "?login" not in url and "signup" not in url and "_preview" not in url and ".mp4" in url:
             if "function/" in url:
                 url = decode(url, license_code)
             elif url.startswith("/get_file/"):

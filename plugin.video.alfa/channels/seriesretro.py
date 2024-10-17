@@ -4,14 +4,6 @@
 # -*- By the Alfa Development Group -*-
 
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from modules import filtertools
@@ -119,7 +111,7 @@ def list_all(item):
     itemlist = list()
     
     soup = get_source(item.url, soup=True)
-    matches = soup.find("ul", class_="MovieList NoLmtxt Rows AX A06 B04 C03 E20")
+    # matches = soup.find("ul", class_="MovieList NoLmtxt Rows AX A06 B04 C03 E20")
     
     # if not matches:
         # return itemlist
@@ -158,7 +150,7 @@ def list_all(item):
                 action = 'list_all'
             )
         )
-    except:
+    except Exception:
         pass
     
     return itemlist
@@ -233,7 +225,7 @@ def seasons(item):
     for elem in soup:
         try:
             season = int(elem.find("div", class_="AA-Season")["data-tab"])
-        except:
+        except ValueError:
             season = 1
         title = "Temporada %s" % season
         infoLabels["season"] = season
@@ -295,7 +287,7 @@ def episodesxseason(item):
                     url = epi.a["href"]
                     try:
                         epi_num = int(epi.find("span", class_="Num").text)
-                    except:
+                    except ValueError:
                         epi_num = 1
                     epi_name = epi.find("td", class_="MvTbTtl").a.text
                     infoLabels["episode"] = epi_num
@@ -311,7 +303,7 @@ def episodesxseason(item):
                             url = url,
                         )
                     )
-                except:
+                except Exception:
                     pass
             break
     
@@ -392,7 +384,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

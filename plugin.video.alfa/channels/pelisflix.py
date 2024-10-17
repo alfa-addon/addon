@@ -1,22 +1,14 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from modules import autoplay
 from platformcode import config, logger, platformtools
 from core.item import Item
-from core import httptools, scrapertools, jsontools, tmdb
+from core import httptools, scrapertools, tmdb
 from core import servertools, channeltools
-from modules import filtertools
+from core import urlparse
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
@@ -73,8 +65,6 @@ def mainlist(item):
 
 
 def configuracion(item):
-    from platformcode import platformtools
-    
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
     
@@ -106,7 +96,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -141,9 +131,9 @@ def categorias(item):
     for elem in matches:
         url = elem.a["href"]
         title = elem.a.text
-        if not "/estrenos/" in url: 
+        if "/estrenos/" not in url: 
             itemlist.append(item.clone(action="lista", url=url, title=title))
-    if not "Genero" in item.title:
+    if "Genero" not in item.title:
         itemlist.append(item.clone(action="lista", url="%sgenero/dc-comics/" % host, title="DC"))
         itemlist.append(item.clone(action="lista", url="%sgenero/marvel/" % host, title="MARVEL"))
     
