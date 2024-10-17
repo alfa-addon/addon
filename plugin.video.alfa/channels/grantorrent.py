@@ -236,7 +236,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     for elem in matches_int:
         elem_json = {}
-        logger.error(elem)
+        #logger.error(elem)
 
         for x, td in enumerate(elem.find_all('td')):
             if x == 1: 

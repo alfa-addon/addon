@@ -6,22 +6,10 @@
 from __future__ import division
 from __future__ import absolute_import
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 from builtins import range
 from past.utils import old_div
 
-import datetime
 import re
-import time
 import codecs
 import traceback
 
@@ -30,7 +18,10 @@ from core import httptools
 from core import jsontools
 from core import scrapertools
 from core.item import Item
+from core.httptools import urlparse
 from platformcode import config, logger, platformtools
+
+PY3 = sys.version_info >= (3,)
 
 IGNORE_NULL_LABELS = []
 dict_servers_parameters = {}
@@ -164,14 +155,15 @@ def findvideos(data, skip=False):
     for serverid in servers_list:
         '''if not is_server_enabled(serverid):
             continue'''
-        if config.get_setting("filter_servers") == True and config.get_setting("black_list", server=serverid):
+        if config.get_setting("filter_servers") and config.get_setting("black_list", server=serverid):
             is_filter_servers = True
             continue
         devuelve.extend(findvideosbyserver(data, serverid))
         if skip and len(devuelve) >= skip:
             devuelve = devuelve[:skip]
             break
-    if config.get_setting("filter_servers") == False:  is_filter_servers = False
+    if not config.get_setting("filter_servers"):
+        is_filter_servers = False
     if not devuelve and is_filter_servers:
         platformtools.dialog_ok(config.get_localized_string(60000), config.get_localized_string(60001))
 
@@ -222,28 +214,29 @@ def parse_hls(video_urls, server):
     hs = ''
     new_video_urls = list()
     headers = dict()
-    
+
     if (len(video_urls)) == 1 and config.get_setting("default_action") < 2:
         url = video_urls[0][1]
         if '|' in url:
             part = url.split('|')
             url = part[0]
-            if not 'm3u8' in url:
+            
+            if 'm3u8' not in url:
                 return video_urls
             
             khs = part[1]
             hs = '|' + khs
-            matches = scrapertools.find_multiple_matches(khs, r'(\w+)=([^&]+)')
             
-            for key, val in matches:
-                headers[key] = val
+            for key, val in urlparse.parse_qs(khs).items():
+                headers[key] = val[0]
 
-        if not 'm3u8' in url:
-                return video_urls
+        if 'm3u8' not in url:
+            return video_urls
         
         data = httptools.downloadpage(url, headers=headers).data
         patron = r'#EXT-X-STREAM-INF.*?RESOLUTION=(\d+x\d+).*?\s(http.*?)\s'
-        if not isinstance(data, str): data = codecs.decode(data, "utf-8")
+        if not isinstance(data, str):
+            data = codecs.decode(data, "utf-8")
         matches = scrapertools.find_multiple_matches(data, patron)
 
         if len(matches) > 1:
@@ -319,7 +312,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
             [premium for premium in server_parameters["premium"] if not premium == server] + [server] + ["free"]
         ]
 
-        if server_parameters["free"] == True:
+        if server_parameters["free"]:
             opciones.append("free")
         opciones.extend(
             [premium for premium in server_parameters["premium"] if config.get_setting("premium", server=premium)])
@@ -337,7 +330,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
     try:
         server_module = __import__('servers.%s' % server, None, None, ["servers.%s" % server])
         logger.info("Servidor importado: %s" % server_module)
-    except:
+    except ImportError:
         server_module = None
         logger.error("No se ha podido importar el servidor: %s" % server)
         logger.error(traceback.format_exc())
@@ -353,7 +346,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                 logger.info("test_video_exists dice que el video no existe")
             else:
                 logger.info("test_video_exists dice que el video SI existe")
-        except:
+        except Exception:
             logger.error("No se ha podido comprobar si el video existe")
             logger.error(traceback.format_exc())
 
@@ -382,7 +375,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                     logger.info("Invocando a %s.get_video_url" % server)
                     response = serverid.get_video_url(page_url=url, video_password=video_password)
                     video_urls.extend(response)
-                except:
+                except Exception:
                     logger.error("Error al obtener la url en modo free")
                     error_messages.append("Se ha producido un error en %s" % server_name)
                     logger.error(traceback.format_exc())
@@ -401,13 +394,13 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                         error_messages.append(response[0][0])
                     else:
                         error_messages.append(config.get_localized_string(60006) % server_name)
-                except:
+                except Exception:
                     logger.error("Error en el servidor: %s" % opcion)
                     error_messages.append(config.get_localized_string(60006) % server_name)
                     logger.error(traceback.format_exc())
 
             # Si ya tenemos URLS, dejamos de buscar
-            if video_urls and config.get_setting("resolve_stop") == True:
+            if video_urls and config.get_setting("resolve_stop"):
                 break
 
         # Cerramos el progreso
@@ -479,15 +472,16 @@ def is_server_enabled(server, domain=''):
     server_parameters = get_server_parameters(server)
     
     if domain:
-        if not proxy_channel_bloqued: get_proxy_list()
+        if not proxy_channel_bloqued:
+            get_proxy_list()
         if domain in proxy_channel_bloqued:
             logger.info('Server en PROXY: %s, Dominio: %s' % (server, domain), force=True)
             return False
 
-    if server_parameters.get("active", False) == True:
+    if server_parameters.get("active", False):
         if not config.get_setting("hidepremium"):
             return True
-        elif server_parameters.get("free", False) == True:
+        elif server_parameters.get("free", False):
             return True
         elif [premium for premium in server_parameters["premium"] if config.get_setting("premium", server=premium)]:
             return True
@@ -539,7 +533,7 @@ def get_server_parameters(server):
 
             dict_servers_parameters[server] = dict_server
 
-        except:
+        except Exception:
             mensaje = config.get_localized_string(59986) % server
             logger.error(mensaje + traceback.format_exc())
             return {}
@@ -629,7 +623,7 @@ def get_server_setting(name, server, default=None):
         # Obtenemos controles del archivo ../servers/server.json
         try:
             list_controls, default_settings = get_server_controls_settings(server)
-        except:
+        except Exception:
             default_settings = {}
         if name in default_settings:  # Si el parametro existe en el server.json creamos el server_data.json
             default_settings.update(dict_settings)
@@ -707,7 +701,7 @@ def get_debriders_list():
     for server in filetools.listdir(filetools.join(config.get_runtime_path(), "servers", "debriders")):
         if server.endswith(".json"):
             server_parameters = get_server_parameters(server)
-            if server_parameters["active"] == True:
+            if server_parameters["active"]:
                 logger.info(server_parameters)
                 server_list[server.split(".")[0]] = server_parameters
     return server_list
@@ -749,8 +743,10 @@ def filter_servers(servers_list):
             if i.server:
                 channel = i.contentChannel if i.contentChannel and i.contentChannel not in ['list', 'videolibrary'] else i.channel
                 domain = scrapertools.find_single_match(i.url, patron_domain)
-                if domain and domain in config.get_setting('current_host', channel=channel, default=''): domain = ''
-                if not is_server_enabled(i.server, domain=domain): continue
+                if domain and domain in config.get_setting('current_host', channel=channel, default=''):
+                    domain = ''
+                if not is_server_enabled(i.server, domain=domain):
+                    continue
             servers_list_alt.append(i)
         servers_list = servers_list_alt[:]
 
@@ -766,7 +762,7 @@ def filter_servers(servers_list):
                                                                  config.get_localized_string(70281)):
             servers_list = servers_list_filter
     
-    if config.get_setting("favorites_servers") == True:
+    if config.get_setting("favorites_servers"):
         servers_list = sort_servers(servers_list)
     
     return servers_list
@@ -799,7 +795,7 @@ def check_video_link(url, server, timeout=3):
     """
     try:
         server_module = __import__('servers.%s' % server, None, None, ["servers.%s" % server])
-    except:
+    except ImportError:
         server_module = None
         logger.info("[check_video_link] No se puede importar el servidor! %s" % server)
         return "??"
@@ -815,7 +811,7 @@ def check_video_link(url, server, timeout=3):
             else:
                 logger.info("[check_video_link] comprobacion OK %s %s" % (server, url))
                 resultado = "[COLOR green][B]OK[/B][/COLOR]"
-        except:
+        except Exception:
             logger.info("[check_video_link] No se puede comprobar ahora! %s %s" % (server, url))
             resultado = "??"
             import traceback

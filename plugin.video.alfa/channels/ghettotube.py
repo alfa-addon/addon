@@ -1,14 +1,5 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from platformcode import config, logger
@@ -16,6 +7,7 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from core import urlparse
 from bs4 import BeautifulSoup
 
 # CAM    https://www.asianpornmovies.com https://www.asspoint.com https://www.mobilepornmovies.com https://movieshark.com https://www.sexoasis.com    https://www.porngash.com 
@@ -54,7 +46,7 @@ def search(item, texto):
     item.url = "%ssearch/%s?filter[order_by]=date&page=1" % (host,texto)
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -139,7 +131,7 @@ def lista(item):
         url = urlparse.urljoin(item.url,url)
         plot = ""
         action = "play"
-        if logger.info() == False:
+        if logger.info() is False:
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                    plot=plot, fanart=thumbnail, contentTitle=title ))

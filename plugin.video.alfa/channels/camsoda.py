@@ -90,7 +90,7 @@ def lista(item):
         if not thumbnail.startswith("https"):
             thumbnail = "https:%s" % thumbnail
         action = "play"
-        if logger.info() == False:
+        if logger.info() is False:
             action = "findvideos"
         itemlist.append(item.clone(action=action, title=title, contentTitle=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail))

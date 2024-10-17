@@ -1,18 +1,10 @@
 # -*- coding: utf-8 -*-
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 from platformcode import config, logger
 from core import scrapertools, httptools
 from core.item import Item
 from core import servertools
+from core import urlparse
 from bs4 import BeautifulSoup
 
 canonical = {
@@ -48,7 +40,7 @@ def search(item, texto):
     try:
         return lista(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -133,15 +125,17 @@ def lista(item):
             continue
         time = time.text.strip()
         quality = ""
-        if elem.find('i', class_='thumb-image-container__icon--hd'): quality = "HD"
-        if elem.find('i', class_='thumb-image-container__icon--uhd'): quality = "4K"
+        if elem.find('i', class_='thumb-image-container__icon--hd'):
+            quality = "HD"
+        if elem.find('i', class_='thumb-image-container__icon--uhd'):
+            quality = "4K"
         if quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
         action = "play"
-        if logger.info() == False:
+        if logger.info() is False:
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )

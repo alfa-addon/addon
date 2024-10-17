@@ -33,6 +33,7 @@ import json
 import base64
 import random
 import copy
+import ast
 
 from channelselector import get_thumb
 from core import scrapertools
@@ -43,6 +44,8 @@ from core import tmdb
 from core import jsontools
 from core.item import Item
 from platformcode import config, logger, unify
+if not PY3: from lib.alfaresolver import get_cached_files, find_alternative_link
+else: from lib.alfaresolver_py3 import get_cached_files, find_alternative_link
 
 import xbmc
 import xbmcgui
@@ -79,10 +82,12 @@ btdigg_label = config.BTDIGG_LABEL
 btdigg_label_B = config.BTDIGG_LABEL_B
 BTDIGG_SEARCH = [{'urls': ['%s'], 'checks': [], 'limit_search': 2, 'quality_alt': '', 'language_alt': [], 'search_order': 2}]
 BTDIGG_URL_SEARCH = '%ssearch_btdig/' % btdigg_url
+PASSWORDS = {}
 TEST_ON_AIR = False
 VIDEOLIBRARY_UPDATE = False
 SIZE_MATCHES = 5000
 kwargs_json = {"indent": 2, "skipkeys": True, "sort_keys": True, "ensure_ascii": True}
+cookies_cached = []
 DEBUG = config.get_setting('debug_report', default=False) if not TEST_ON_AIR else False
 
 
@@ -346,6 +351,8 @@ def clean_title(title, decode=True, htmlclean=True, torrent_info=False, convert=
                          .replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o')\
                          .replace('ú', 'u')
 
+            title = title.replace('"', '').replace("'", '')
+
             if strict:
                 title = title.replace('&ordf;', 'a').replace('&ordm;', 'o')\
                              .replace('ª', 'a').replace('º', 'o')
@@ -357,29 +364,216 @@ def clean_title(title, decode=True, htmlclean=True, torrent_info=False, convert=
 
     return title.strip()
 
+def check_alternative_tmdb_id(item_local, tmdb_check=True):
 
-def set_tmdb_to_json(elem, title_search={}, title='', contentType=''):
+    get_cached_files_('password')
 
-    title = title or elem.get('title', '').replace(btdigg_label_B, '')
+    idioma = idioma_busqueda
+    if 'VO' in str(item_local.language):
+        idioma = idioma_busqueda_VO
+
+    item_local.contentSerieName = filetools.validate_path(item_local.contentSerieName.replace('/', '-').replace('  ', ' '))
+    item_local.contentTitle = filetools.validate_path(item_local.contentTitle.replace('/', '-').replace('  ', ' '))
+    contentType = item_local.contentType
+    contentType_stat = False
+    for contentTitle in [item_local.season_search.lower() or item_local.title.lower(), 
+                         item_local.contentTitle.lower() if item_local.contentType == 'movie' else item_local.contentSerieName.lower()]:
+        if PASSWORDS.get('tmdb_id', {}).get(contentTitle, {}).get(contentType):
+            break
+
+    if PASSWORDS.get('tmdb_id', {}).get(item_local.infoLabels['tmdb_id'], {}):
+        if PASSWORDS.get('tmdb_id', {}).get(item_local.infoLabels['tmdb_id'], {}).get(item_local.channel.lower()):
+            contentTitle = item_local.infoLabels['tmdb_id']
+            contentType = item_local.channel.lower()
+            contentType_stat = True
+        elif PASSWORDS.get('tmdb_id', {}).get(item_local.infoLabels['tmdb_id'], {}).get('*'):
+            contentTitle = item_local.infoLabels['tmdb_id']
+            contentType = '*'
+            contentType_stat = True
+
+    #if DEBUG: logger.debug('%s (%s): "%s"' % (contentTitle, contentType, PASSWORDS.get('tmdb_id', {}).get(contentTitle, {})))
+    if PASSWORDS.get('tmdb_id', {}).get(contentTitle, {}).get(contentType):
+        if contentType_stat or item_local.infoLabels['tmdb_id'] != PASSWORDS['tmdb_id'][contentTitle][contentType]:
+            if DEBUG: logger.debug('%s: "%s" UPDATED TO "%s" %s %s %s' % (item_local.contentSerieName or item_local.contentTitle, 
+                                                     item_local.infoLabels['tmdb_id'], 
+                                                     PASSWORDS['tmdb_id'][contentTitle][contentType],
+                                                     scrapertools.decode_utf8_error(PASSWORDS['tmdb_id'][contentTitle].get('title', '')),
+                                                     scrapertools.decode_utf8_error(PASSWORDS['tmdb_id'][contentTitle].get('season_search', '')),
+                                                     scrapertools.decode_utf8_error(PASSWORDS['tmdb_id'][contentTitle].get('year', ''))))
+            item_local.infoLabels['tmdb_id'] = PASSWORDS['tmdb_id'][contentTitle][contentType]
+            if PASSWORDS['tmdb_id'][contentTitle].get('title'):
+                item_local.check_alternative_tmdb_id = True
+                title = scrapertools.decode_utf8_error(PASSWORDS['tmdb_id'][contentTitle]['title']).strip()
+                if item_local.contentSerieName: item_local.contentSerieName = title
+                else: item_local.contentTitle = title
+                item_local.season_search = title
+                if item_local.title.lower() == contentTitle: item_local.title = title
+            if PASSWORDS['tmdb_id'][contentTitle].get('season_search'):
+                item_local.check_alternative_tmdb_id = True
+                item_local.season_search = scrapertools.decode_utf8_error(PASSWORDS['tmdb_id'][contentTitle]['season_search'])
+            if PASSWORDS['tmdb_id'][contentTitle].get('year'):
+                item_local.check_alternative_tmdb_id = True
+                item_local.infoLabels['year'] = scrapertools.decode_utf8_error(PASSWORDS['tmdb_id'][contentTitle]['year'])
+
+            if tmdb_check: tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma)
+
+
+def set_tmdb_to_json(elem, title_search={}, title='', contentType='', tmdb_check=True):
+
+    title = clean_title(title or elem.get('title', '').replace(btdigg_label_B, '')).strip()
     title_ = title.replace('_', ' ')
     contentType = contentType or elem.get('mediatype', 'movie')
+
+    idioma = idioma_busqueda
+    if 'VO' in str(elem.get('language', '')):
+        idioma = idioma_busqueda_VO
+
+    if title_search.get('tmdb_id', {}).get(title_.lower(), {}).get(contentType, '') or elem.get('tmdb_id', ''):
+        elem['tmdb_id'] = title_search.get('tmdb_id', {}).get(title_.lower(), {}).get(contentType, '') or elem.get('tmdb_id', '')
+
     itemO = Item()
     itemO.c_type = 'peliculas' if contentType == 'movie' else 'series'
     itemO.contentType = contentType
     if itemO.contentType in ['movie']: itemO.contentTitle = itemO.title = title_.capitalize()
-    if itemO.contentType in ['tvshow']: itemO.contentSerieName = itemO.title = title_.capitalize()
-    itemO.season_search = elem.get('season_search', '') or title_
+    if itemO.contentType in ['tvshow', 'episode']: itemO.contentSerieName = itemO.title = title_.capitalize()
+    itemO.season_search = season_search = elem.get('season_search', '') or title_
     if title_search:
         aliases = title_search.get('aliases', {})
         if title in aliases and '[' in aliases[title]:
-            itemO.season_search = elem['season_search'] = aliases[title].replace('_', ' ')
+            itemO.season_search = season_search = elem['season_search'] = aliases[title].replace('_', ' ')
     itemO.url = elem.get('url', '')
     itemO.infoLabels['year'] = elem.get('year', '-')
     if elem.get('tmdb_id'): itemO.infoLabels['tmdb_id'] = elem['tmdb_id']
-    tmdb.set_infoLabels_item(itemO, True, idioma_busqueda='es')
+
+    check_alternative_tmdb_id(itemO, tmdb_check=tmdb_check)
+    if tmdb_check:
+        tmdb.set_infoLabels_item(itemO, True, idioma_busqueda=idioma)
+        if not itemO.infoLabels['tmdb_id']: itemO.infoLabels['year'] = '-'
+        tmdb.set_infoLabels_item(itemO, True, idioma_busqueda=idioma)
+    if tmdb_check or itemO.check_alternative_tmdb_id: check_alternative_tmdb_id(itemO, tmdb_check=tmdb_check)
+
+    if itemO.check_alternative_tmdb_id:
+        del itemO.check_alternative_tmdb_id
+        if season_search != itemO.season_search: elem['season_search'] = itemO.season_search
+        title__ = clean_title(itemO.contentSerieName or itemO.contentTitle)
+        if elem.get('title', ''): elem['title'] = elem['title'].replace(title_, title__).strip()
+
     if itemO.infoLabels['tmdb_id']: elem['tmdb_id'] = itemO.infoLabels['tmdb_id']
+    if itemO.infoLabels['year'] and itemO.infoLabels['year'] != '-': elem['year'] = str(itemO.infoLabels['year'])
 
     return itemO, elem
+
+
+def set_btdigg_timer(btdigg_error):
+    timer = 15
+
+    if not window:
+        return False
+
+    btdigg_error_AGE = float(window.getProperty("alfa_btdigg_error_AGE") or 0.0)
+
+    if btdigg_error:
+        if not btdigg_error_AGE or btdigg_error_AGE < time.time():
+            btdigg_error_AGE = time.time() + timer*60
+            window.setProperty("alfa_btdigg_error_AGE", str(btdigg_error_AGE))
+            logger.error('## Error en BTDIGG: %s' % btdigg_error)
+            return False
+
+    else:
+        if not btdigg_error_AGE:
+            return True
+        if btdigg_error_AGE < time.time():
+            window.setProperty("alfa_btdigg_error_AGE", '')
+            return True
+        else:
+            logger.debug(round((btdigg_error_AGE-time.time())/60, 2))
+            return False
+
+
+def get_cached_files_(contentType, FORCED=False, cached=False):
+    global PASSWORDS, cookies_cached
+
+    cached_file = {}
+    error = {'ERROR': 'ERROR'}
+    error = [error] if contentType in ['movie', 'tvshow', 'emergency'] else error
+    cookies = []
+    cookies_cached_exp = []
+    btdigg_cf_clearance = ''
+
+    if contentType == 'password' and jsontools.load(window.getProperty("alfa_cached_passwords") or '{}').get('ERROR'):
+        FORCED = False
+        cached_btdigg_AGE = float(window.getProperty("alfa_cached_btdigg_list_AGE") or 0.0)
+        if cached_btdigg_AGE < time.time(): FORCED = True
+
+    if (contentType == 'password' and (len(window.getProperty("alfa_cached_passwords")) < 5 or FORCED)) or contentType != 'password':
+        cached_file = get_cached_files(contentType)
+        if not cached_file:
+            cached_file = error
+            logger.error('Error de lectura en %s' % contentType.upper())
+            window.setProperty("alfa_cached_btdigg_list_AGE", str(time.time() + 15*60))
+            if contentType == 'episodio':
+                window.setProperty("alfa_cached_btdigg_%s_list" % contentType, jsontools.dump(cached_file, **kwargs_json))
+            elif contentType in ['movie', 'tvshow']:
+                window.setProperty("alfa_cached_btdigg_%s_list" % contentType, str(cached_file))
+
+    if contentType == 'password':
+        cached_file_old = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
+        PASSWORDS = copy.deepcopy(cached_file) or PASSWORDS or copy.deepcopy(cached_file_old)
+        PASSWORDS['cookies']['cookies_expiration'] = cached_file_old.get('cookies', {}).get('cookies_expiration', '')
+        cookies_cached_exp = PASSWORDS.get('cookies', {}).get('cookies_exp', [])[:] or cached_file_old.get('cookies', {}).get('cookies_exp', [])[:]
+        cookies_cached = [] if cached_file else cookies_cached_exp[:]
+
+        if PASSWORDS.get('cookies', {}).get('cookies') and PASSWORDS.get('cookies', {}).get('btdigg_cf_clearance', {}).get('channel'):
+            btdigg_cf_clearance = config.get_setting('btdigg_cf_clearance', default='', 
+                                                     channel=PASSWORDS['cookies']['btdigg_cf_clearance']['channel'])
+            if btdigg_cf_clearance and PASSWORDS.get('cookies', {}).get('cookies'):
+                for cookie in PASSWORDS['cookies']['cookies']:
+                    if cookie.get('domain', '') == 'btdig.com' and cookie.get('name', '') == 'cf_clearance':
+                        if btdigg_cf_clearance not in str(cookies_cached_exp) and PASSWORDS['cookies']['cookies_expiration']: 
+                            PASSWORDS['cookies']['cookies_expiration'] = ''
+                        if not PASSWORDS['cookies']['cookies_expiration']:
+                            cookie['value'] = btdigg_cf_clearance
+                            PASSWORDS['cookies']['cookies_expiration'] = time.time() + cookie.get('expires', 86400)
+                        elif PASSWORDS['cookies']['cookies_expiration'] and PASSWORDS['cookies']['cookies_expiration'] > time.time():
+                            cookie['value'] = btdigg_cf_clearance
+                        else:
+                            PASSWORDS['cookies']['cookies_expiration'] = ''
+                            cookie['value'] = ''
+                            config.set_setting('btdigg_cf_clearance', '', channel=PASSWORDS['cookies']['btdigg_cf_clearance']['channel'])
+
+        if PASSWORDS.get('cookies', {}).get('cookies') or PASSWORDS.get('cookies', {}).get('cookies_cached'):
+            if DEBUG: 
+                module = inspect.getmodule(inspect.currentframe().f_back.f_back).__name__
+                function = inspect.currentframe().f_back.f_back.f_code.co_name
+                logger.debug('mod/func: %s[%s]; cached_file/forced: %s/%s; alfa_btdigg_error_AGE: "%s"; cookies: %s/%s; cookies_exp: %s' % \
+                             (module, function, True if cached_file else False, FORCED, window.getProperty("alfa_btdigg_error_AGE"), 
+                              PASSWORDS.get('cookies', {}).get('cookies'), PASSWORDS.get('cookies', {}).get('cookies_cached'), 
+                              cookies_cached_exp))
+
+            cookies_cached = PASSWORDS['cookies'].pop('cookies', [])[:]
+            for x, cookie in enumerate(cookies_cached[:]):
+                if not cookie.get('value'): del cookies_cached[x]
+            if btdigg_cf_clearance: btdigg_cf_clearance = PASSWORDS['cookies'].pop('cookies_cached', [])
+            cookies_cached.extend(PASSWORDS['cookies'].pop('cookies_cached', [])[:])
+            PASSWORDS['cookies']['cookies_exp'] = cookies_cached[:]
+            if cookies_cached:
+                window.setProperty("alfa_btdigg_error_AGE", '')
+                if DEBUG: logger.debug('COOKIES: %s / %s' % (cookies_cached, PASSWORDS['cookies']))
+
+                from core import httptools
+                for cookie in cookies_cached:
+                    if str(cookie.get('clear', True)) == 'reset' and cookie.get('domain'):
+                        try:
+                            httptools.cj.clear(cookie['domain'])
+                            httptools.save_cookies()
+                        except Exception:
+                            pass
+                    else:
+                        httptools.set_cookies(cookie, clear=cookie.get('clear', True))
+
+        if cached_file or cookies_cached: window.setProperty("alfa_cached_passwords", jsontools.dump(PASSWORDS, **kwargs_json))
+
+    return cached_file
 
 
 def get_color_from_settings(label, default='white'):
@@ -1079,10 +1273,10 @@ def AH_post_tmdb_listado(self, item, itemlist, **AHkwargs):
 
     format_tmdb_id(item)
     format_tmdb_id(itemlist)
+    get_cached_files_('password')
 
     for item_local in itemlist:                                                 # Recorremos el Itemlist generado por el canal
         #item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
-        title = item_local.title
         season = 0
         episode = 0
         idioma = idioma_busqueda
@@ -1118,16 +1312,18 @@ def AH_post_tmdb_listado(self, item, itemlist, **AHkwargs):
                 item_local.contentSerieName = item_local.from_title
             
             item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
-            title = item_local.title
 
-        #Limpiamos calidad de títulos originales que se hayan podido colar
+        # Si hay un título ambiguo, validamos si hay un tmdb_id alternativo configurado
+        check_alternative_tmdb_id(item_local)
+        title = item_local.title.strip()
+
+        # Limpiamos calidad de títulos originales que se hayan podido colar
         if item_local.infoLabels['originaltitle'].lower() in item_local.quality.lower():
             item_local.quality = re.sub(item_local.infoLabels['originaltitle'], '', item_local.quality)
 
         # Preparamos el título para series, con los núm. de temporadas, si las hay
         if item_local.contentType in ['season', 'tvshow', 'episode']:
-            item_local.contentSerieName = filetools.validate_path(item_local.contentSerieName.replace('/', '-').replace('  ', ' '))
-            item_local.contentTitle = filetools.validate_path(item_local.contentTitle.replace('/', '-').replace('  ', ' '))
+            
             item_local.title = filetools.validate_path(item_local.title.replace('/', '-').replace('  ', ' '))
             if item_local.from_title: item_local.from_title = filetools.validate_path(item_local.from_title.replace('/', '-').replace('  ', ' '))
 
@@ -1315,6 +1511,7 @@ def AH_find_seasons(self, item, matches, **AHkwargs):
     alias_in = alias_out = ''
 
     format_tmdb_id(item)
+    get_cached_files_('password')
 
     try:
         # Vemos la última temporada de TMDB y del .nfo
@@ -1352,11 +1549,11 @@ def AH_find_seasons(self, item, matches, **AHkwargs):
 
             title = title_search or alias_out \
                                  or scrapertools.find_single_match(item_search.season_search or item_search.contentSerieName \
-                                                                   or item_search.contentTitle, r'(^.*?)\s*(?:$|\(|\[|\|)').lower()  # Limpiamos
-            title = scrapertools.quote(re.sub(SEARCH_CLEAN, '', title))
+                                                                   or item_search.contentTitle, r'(^.*?)\s*(?:$|\(|\[|\|)')     # Limpiamos
+            title = urllib.quote(re.sub(SEARCH_CLEAN, '', title), safe=':/')
             title_list += [title]
-            title_org = scrapertools.find_single_match(item_search.infoLabels['originaltitle'], r'(^.*?)\s*(?:$|\(|\[|\|)').lower()  # Limpiamos
-            title_org = scrapertools.quote(re.sub(SEARCH_CLEAN, '', title_org))
+            title_org = scrapertools.find_single_match(item_search.infoLabels['originaltitle'], r'(^.*?)\s*(?:$|\(|\[|\|)')     # Limpiamos
+            title_org = urllib.quote(re.sub(SEARCH_CLEAN, '', title_org), safe=':/')
             if title_org != title: title_list += [title_org]
 
             channel = __import__('channels.%s' % item_search.channel, None, None, ["channels.%s" % item_search.channel])
@@ -1368,7 +1565,7 @@ def AH_find_seasons(self, item, matches, **AHkwargs):
                 item_search.infoLabels = {}
 
                 # Llamamos a 'Listado' para que procese la búsqueda
-                itemlist = getattr(channel, "search")(item_search, title_search.lower(), **kwargs)
+                itemlist = getattr(channel, "search")(item_search, title_search, **kwargs)
 
                 if not itemlist:
                     continue
@@ -1525,6 +1722,7 @@ def AH_post_tmdb_seasons(self, item, itemlist, **AHkwargs):
     
     format_tmdb_id(item)
     format_tmdb_id(itemlist)
+    get_cached_files_('password')
     
     matches = AHkwargs.get('matches', [])
     
@@ -1568,6 +1766,7 @@ def AH_post_tmdb_episodios(self, item, itemlist, **AHkwargs):
     
     format_tmdb_id(item)
     format_tmdb_id(itemlist)
+    get_cached_files_('password')
     
     matches = AHkwargs.get('matches', [])
 
@@ -1609,6 +1808,7 @@ def AH_post_tmdb_findvideos(self, item, itemlist, **AHkwargs):
     #logger.debug(item)
     
     headers = AHkwargs.get('headers', {})
+    get_cached_files_('password')
  
     # Saber si estamos en una ventana emergente lanzada desde una viñeta del menú principal,
     # con la función "play_from_library"
@@ -2035,8 +2235,6 @@ def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], matches_inde
 def AH_find_btdigg_ENTRY_from_BTDIGG(self, title='', contentType='episode', language=['CAST'], matches=[], 
                                      item=Item(), reset=False, retry=False, **AHkwargs):
     global DEBUG, TEST_ON_AIR, cached_btdigg
-    if not PY3: from lib.alfaresolver import get_cached_files
-    else: from lib.alfaresolver_py3 import get_cached_files
 
     if title: title = clean_title(title)
     found = {} if not title else []
@@ -2077,11 +2275,11 @@ def AH_find_btdigg_ENTRY_from_BTDIGG(self, title='', contentType='episode', lang
                 else:
                     if DEBUG: logger.debug('cached_AGE: %s / %s' % (c_type, round((cached_btdigg_AGE-time.time())/60, 2)))
                     time_now = time.time()
-                    cached_btdigg[c_type] = get_cached_files(c_type)
-                    cached_btdigg['password'] = get_cached_files('password')
-                    window.setProperty("alfa_cached_passwords", jsontools.dump(cached_btdigg['password']))
+                    cached_btdigg[c_type] = get_cached_files_(c_type)
+                    cached_btdigg['password'] = get_cached_files_('password', FORCED=True)
                     if isinstance(cached_btdigg[c_type], dict):
                         for key, value in cached_btdigg[c_type].items():
+                            if key == 'ERROR': continue
                             episode_list_len += len(value.get('episode_list', {}))
                             for key_, value_ in value['episode_list'].items():
                                 matches_cached_len += len(value_.get('matches_cached', []))
@@ -2319,8 +2517,8 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
 
     title_clean = AHkwargs.get('finds', {}).get('title_clean', [])
     title_clean.append([r'(?i)\s*UNCUT', ''])
-    patron_title = r'(?i)(.*?)\s*(?:-*\s*temp|\(|\[)'
-    patron_title_b = r'(?i)(.*?)\s*(?:-*\s*temp|\(|\[|\s+-)'
+    patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[)'
+    patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[|\s+-)'
     patron_sea = r'(?i)Cap.(\d{1,2})\d{2}'
     patron_year = r'\(?(\d{4})\)?'
     convert = ['.=', '-= ', ':=', '&=and', '  = ']
@@ -2378,6 +2576,8 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                     if matches_index.get(key, {}).get('quality', []):
                         if found_item.get('tmdb_id', item.infoLabels['tmdb_id']) and not matches_index.get(key, {}).get('tmdb_id'):
                             matches_index[key]['tmdb_id'] = found_item.get('tmdb_id', item.infoLabels['tmdb_id'])
+                        if found_item.get('season_search', item.season_search) and not matches_index.get(key, {}).get('season_search'):
+                            matches_index[key]['season_search'] = found_item.get('season_search', item.season_search)
                         if found_item.get('quality', '') not in matches_index[key]['quality']:
                             matches_index[key]['quality'] += found_item['quality'] if not matches_index[key]['quality'] \
                                                                                    else ', %s' % found_item['quality']
@@ -2388,6 +2588,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
 
                     matches_index.update({key: {'title': found_item['title'], 'mediatype': found_item['mediatype'], 
                                                 'tmdb_id': found_item.get('tmdb_id', item.infoLabels['tmdb_id']), 
+                                                'season_search': elem_json.get('season_search', item.season_search), 
                                                 'quality': found_item['quality'], 'matches_cached': [], 'episode_list': {}}})
                     matches_btdigg.append(found_item)
 
@@ -2398,10 +2599,9 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                                                                                             item=item, search=True, **AHkwargs)
                         if found_item: matches_btdigg.extend(found_item)
 
-        if not PY3: from lib.alfaresolver import find_alternative_link
-        else: from lib.alfaresolver_py3 import find_alternative_link
-
+        x = 0
         for title_search in titles_search:
+            if x >= 888888 and x < 999999: break
             if contentType and title_search.get('contentType', 'movie') != contentType: continue
 
             if not item.btdigg:
@@ -2436,12 +2636,14 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                               'search_order': title_search['search_order'] if 'search_order' in title_search else \
                                                                          2 if item.c_type == 'search' else 0,
                               'link_found_limit': 20000 if item.c_type != 'search' else 100000, 
-                              'find_catched': True if item.c_type != 'search' else False
+                              'find_catched': True if item.c_type != 'search' else False,
+                              'retries': 1,
+                              'headers': title_search.get('headers', PASSWORDS.get('cookies', {}).get('headers', {}))
                               }
 
             x = 0
             while x < limit_pages:
-                use_assistant = True
+                use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                 except:
@@ -2452,29 +2654,53 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                 if torrent_params['find_catched'] and contentType in ['movie', 'tvshow'] and window and cached_btdigg_AGE >= time.time() \
                                                   and len(window.getProperty("alfa_cached_btdigg_%s_list" % contentType)) > 3:
                     try:
-                        import ast
                         torrent_params = ast.literal_eval(window.getProperty("alfa_cached_btdigg_%s_list" % contentType) or [])
                     except Exception:
                         logger.error(traceback.format_exc())
+                        if not set_btdigg_timer(''):
+                            if cookies_cached: get_cached_files_('password', FORCED=True)
+                            if not set_btdigg_timer(''): x = 888888; break
                         torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, 
                                                                use_assistant=use_assistant)
+                        if not torrent_params: torrent_params['find_alt_link_result'] = [{'ERROR': 'ERROR'}]
                         window.setProperty("alfa_cached_btdigg_%s_list" % contentType, str(torrent_params))
                 else:
+                    if not torrent_params['find_catched'] and not set_btdigg_timer(''):
+                        if cookies_cached: get_cached_files_('password', FORCED=True)
+                        if not set_btdigg_timer(''): x = 888888; break
                     torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
-                    if contentType in ['movie', 'tvshow'] and window and torrent_params:
-                        window.setProperty("alfa_cached_btdigg_%s_list" % contentType, str(torrent_params))
-                        if cached_btdigg_AGE < time.time():
-                            cached_btdigg_AGE = time.time() + timer*60
-                            window.setProperty("alfa_cached_btdigg_list_AGE", str(cached_btdigg_AGE))
+
+                    if contentType in ['movie', 'tvshow']:
+                        if torrent_params and window:
+                            window.setProperty("alfa_cached_btdigg_%s_list" % contentType, str(torrent_params))
+                            if cached_btdigg_AGE < time.time():
+                                cached_btdigg_AGE = time.time() + timer*60
+                                window.setProperty("alfa_cached_btdigg_list_AGE", str(cached_btdigg_AGE))
+                        elif not torrent_params and torrent_params['find_catched'] and window:
+                            logger.error('Error de lectura en %s' % contentType.upper())
+                            window.setProperty("alfa_cached_btdigg_list_AGE", str(time.time() + timer*60))
+                            if len(window.getProperty("alfa_cached_btdigg_%s_list" % contentType)) < 30:
+                                torrent_params['find_alt_link_result'] = [{'ERROR': 'ERROR'}]
+                                window.setProperty("alfa_cached_btdigg_%s_list" % contentType, jsontools.dump(torrent_params, **kwargs_json))
+                            else:
+                                torrent_params = ast.literal_eval(window.getProperty("alfa_cached_btdigg_%s_list" % contentType) or [])
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
                 if not torrent_params.get('find_alt_link_next'): x = 999999
+                if torrent_params.get('find_alt_link_code', '200') != '200':
+                    set_btdigg_timer(torrent_params.get('find_alt_link_code', ''))
+                    if cookies_cached: get_cached_files_('password', FORCED=True)
+                    if not set_btdigg_timer(''): x = 888888
                 if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
                     limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
                 x += 1
 
                 for y, elem in enumerate(torrent_params['find_alt_link_result']):
+                    if 'ERROR' in elem:
+                        x = 999999
+                        break
+
                     elem_json = {}
                     elem_json_save = {}
                     alias = {}
@@ -2524,9 +2750,8 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                         elem_json['title'] = clean_title(elem_json['title']).replace(':', '')
                         if elem_json['mediatype'] != 'movie' and quality_control: title = '%s_%s' % (title, elem_json['quality'])
 
-                        if elem_json['mediatype'] == 'movie':
-                            if elem.get('tmdb_id'): elem_json['tmdb_id'] = elem['tmdb_id']
-                            else: itemO, elem_json = set_tmdb_to_json(elem_json, title_search=title_search)
+                        if elem.get('tmdb_id'): elem_json['tmdb_id'] = elem['tmdb_id']
+                        itemO, elem_json = set_tmdb_to_json(elem_json, title_search=title_search, tmdb_check=False)
 
                         elem_json['media_path'] = elem_json['mediatype']
                         if self:
@@ -2573,8 +2798,10 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                         if matches_index.get(key, {}).get('quality'):
                             if elem_json['url'] not in str(matches_index[key]):
                                 if quality not in matches_index[key]['quality'].split(', '):
-                                    if elem_json.get('tmdb_id', item.infoLabels['tmdb_id']) and not matches_index.get(key, {}).get('tmdb_id'):
-                                        matches_index[key]['tmdb_id'] = elem_json.get('tmdb_id', item.infoLabels['tmdb_id'])
+                                    if elem_json.get('tmdb_id', itemO.infoLabels['tmdb_id']) and not matches_index.get(key, {}).get('tmdb_id'):
+                                        matches_index[key]['tmdb_id'] = elem_json.get('tmdb_id', itemO.infoLabels['tmdb_id'])
+                                    if elem_json.get('season_search', itemO.season_search) and not matches_index.get(key, {}).get('season_search'):
+                                        matches_index[key]['season_search'] = elem_json.get('season_search', itemO.season_search)
                                     matches_index[key]['quality'] += ', %s' % quality
                                     if DEBUG: logger.info('QUALITY added: %s / %s' % (key, quality))
                                 matches_index[key]['matches_cached'].append(elem_json.copy())
@@ -2585,7 +2812,8 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                         item.btdig_in_use =  True
                         matches_btdigg.append(elem_json_save.copy())
                         matches_index.update({key: {'title': elem_json['title'], 'mediatype': elem_json['mediatype'], 'url': elem_json['url'], 
-                                                    'tmdb_id': elem_json.get('tmdb_id', item.infoLabels['tmdb_id']), 
+                                                    'tmdb_id': elem_json.get('tmdb_id', itemO.infoLabels['tmdb_id']), 
+                                                    'season_search': elem_json.get('season_search', itemO.season_search), 
                                                     'quality': quality, 'matches_cached': [elem_json.copy()]}})
 
                     except Exception:
@@ -2763,6 +2991,8 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, titl
             elem_json['quality'] = matches_index[key]['quality']
             if matches_index.get(key, {}).get('tmdb_id') and not elem_json.get('tmdb_id'):
                 elem_json['tmdb_id'] = matches_index[key]['tmdb_id']
+            if matches_index.get(key, {}).get('season_search') and not elem_json.get('season_search'):
+                elem_json['season_search'] = matches_index[key]['season_search']
             if matches_index.get(key, {}).get('matches_cached', []) and mediatype != 'tvshow':
                 elem_json['matches_cached'] = matches_index[key]['matches_cached'][:]
                 if mediatype != 'movie':
@@ -2778,19 +3008,19 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, titl
 
 
 def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
+    global DEBUG
+    DEBUG = True
     logger.info()
 
     monitor = xbmc.Monitor()
-    if not PY3: from lib.alfaresolver import find_alternative_link
-    else: from lib.alfaresolver_py3 import find_alternative_link
     from lib.AlfaChannelHelper import DictionaryAllChannel
-    import ast
 
     itemO = Item()
 
     try:
         titles_search = ast.literal_eval(window.getProperty("alfa_cached_btdigg_movie"))
         window.setProperty("alfa_cached_btdigg_movie", "")
+        window.setProperty("alfa_cached_btdigg_list_AGE", "")
         config.set_setting('btdigg_status', False, server='torrent')
     except Exception as e:
         logger.error('ERROR en titles_search: %s / %s' % (window.getProperty("alfa_cached_btdigg_movie"), str(e)))
@@ -2803,6 +3033,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                          {'urls': ['%s ' + channel_py], 'checks': ['Cap.'], 'contentType': 'episode', 'limit_search': 5, 'error_reset': 5}, 
                          {'urls': ['%s Temporada #!'], 'checks': ['Cap.'], 'contentType': 'episode', 'limit_search': 5, 'error_reset': 5}]
     titles_search_save = copy.deepcopy(titles_search)
+    get_cached_files_('password', cached=True)
 
     error_reset_time = time.time()
     btdigg_entries = 15
@@ -2814,13 +3045,14 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     matches_index = {}
     patron_sea = r'(?i)Cap.(\d+)\d{2}'
     patron_cap = r'(?i)Cap.\d+(\d{2})'
-    patron_title = r'(?i)(.*?)\s*(?:-*\s*temp|\(|\[)'
-    patron_title_b = r'(?i)(.*?)\s*(?:-*\s*temp|\(|\[|\s+-)'
+    patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[)'
+    patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[|\s+-)'
     patron_year = r'\(?(\d{4})\)?'
     convert = ['.=', '-= ', ':=', '&=and', '  = ']
     title = '_'
     self = {}
     config.set_setting('tmdb_cache_read', False)
+    retries = titles_search[-1].get('error_reset', 5)
 
     try:
         if False:   # Inhabilidado temporalemente
@@ -2854,6 +3086,9 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
             limit_search = title_search.get('limit_search', 1)
             if contentType == 'episode': continue
             if limit_search <= 0: continue
+            if title_search.get('cached_%s' % contentType, False):
+                cached[contentType] = get_cached_files_(contentType, FORCED=True)
+                continue
 
             quality_alt = '720p 1080p 2160p 4kwebrip 4k'
             if contentType == 'movie':
@@ -2877,12 +3112,13 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                               'link_found_limit': limit_items_found, 
                               'domain_alt': None,
                               'extensive_search': False,
-                              'search_order': title_search['search_order'] if 'search_order' in title_search else 2
+                              'search_order': title_search['search_order'] if 'search_order' in title_search else 2,
+                              'headers': title_search.get('headers', PASSWORDS.get('cookies', {}).get('headers', {}))
                               }
 
             x = 0
             while x < limit_pages and not monitor.abortRequested():
-                use_assistant = True
+                use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                     ASSISTANT_SERVERS = eval(window.getProperty("alfa_assistant_servers") or '127.0.0.1')
@@ -2896,10 +3132,27 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     if len(alfa_gateways) > 2:
                         use_assistant = False
                     else:
-                        window.setProperty("alfa_cached_btdigg_episode", 'CANCEL')
+                        window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
                         raise Exception("CANCEL")
-                
-                torrent_params = find_alternative_link(itemO, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
+
+                torrent_params_save = copy.deepcopy(torrent_params)
+                for zzz in range(retries):
+                    torrent_params = find_alternative_link(itemO, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
+                    if torrent_params.get('find_alt_link_code', '200') == '200':
+                        break
+                    logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
+                    if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
+                        break
+                    if monitor.waitForAbort(1 * 60):
+                        return
+                    if cookies_cached: get_cached_files_('password', FORCED=True, cached=True)
+                    torrent_params = copy.deepcopy(torrent_params_save)
+                else:
+                    logger.error('## Error en BTDIGG: %s / %s' % (torrent_params.get('find_alt_link_code', ''), torrent_params))
+                if torrent_params.get('find_alt_link_code', '200') != '200':
+                    x = 888888
+                    cached[contentType] = []
+                    break
 
                 if torrent_params.get('find_alt_link_code', '') in ['200']:
                     if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
@@ -2917,6 +3170,10 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         continue
 
                     elem['size'] = elem.get('size', '').replace('\xa0', ' ')
+
+                    elem['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem.get('title', '')), '.+?'+patron_year) or '-'
+                    if elem['year'] in ['720', '1080', '2160', '-']: del elem['year']
+
                     elem['title'] = clean_title(elem.get('title', ''))
                     title = title_save = elem['title'].replace(btdigg_label_B, '')
 
@@ -2930,7 +3187,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     title = title.replace('- ', '').replace('.', ' ')
                     if contentType == 'tvshow': title = title_save
 
-                    if title in str(cached[contentType]):
+                    if title.lower() in str(cached[contentType]).lower():
                         #logger.debug('Error en TÍTULO DUP: %s' % (elem['title']))
                         continue
 
@@ -2946,15 +3203,19 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     config.set_setting('tmdb_cache_read', True)
                     return
 
-            window.setProperty("alfa_cached_btdigg_%s" % contentType, str(cached[contentType]))
             logger.info('## %s: %s' % (contentType.capitalize(), len(cached[contentType])))
             if monitor.waitForAbort(1 * 60):
                 config.set_setting('tmdb_cache_read', True)
                 return
 
         contentType = 'episode'
+        if title_search.get('cached_%s' % contentType, False):
+            cached[contentType] = get_cached_files_(contentType, FORCED=True)
         if not cached[contentType] and not monitor.abortRequested():
+            x = 0
             for t, elem_show in enumerate(cached['tvshow']):
+                if x >= 888888 and x < 999999: break
+                config.set_setting('tmdb_cache_read', False)
                 elem_json = {}
                 alias = {}
                 alias_in = alias_out = ''
@@ -2991,9 +3252,12 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         if DEBUG: logger.debug('Error NO TÍTULO o NO URL: %s' % elem_json)
                         continue
 
+                    idioma = idioma_busqueda
+                    if 'VO' in str(elem_json.get('language', '')):
+                        idioma = idioma_busqueda_VO
                     if elem_show.get('tmdb_id'): elem_json['tmdb_id'] = elem_show['tmdb_id']
                     item, elem_json = set_tmdb_to_json(elem_json, title_search=titles_search[-1], title=title, contentType='tvshow')
-                    tmdb.set_infoLabels_item(item, True, idioma_busqueda='es')
+                    if not elem_show.get('tmdb_id'): tmdb.set_infoLabels_item(item, True, idioma_busqueda=idioma)
 
                     if item.contentTitle and item.contentTitle.lower() != item.contentSerieName.lower():
                         item.contentTitle = item.contentTitle.replace('- ', '').replace(':', '')
@@ -3008,10 +3272,10 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         if elem_json['season'] > item.infoLabels['number_of_seasons']:
                             if item.infoLabels.get('temporada_num_episodios'): del item.infoLabels['temporada_num_episodios']
                             item.contentSeason = elem_json['season']
-                            tmdb.set_infoLabels_item(item, True, idioma_busqueda='es')
+                            tmdb.set_infoLabels_item(item, True, idioma_busqueda=idioma)
                         if not item.infoLabels.get('temporada_num_episodios'):
                             item.contentSeason = elem_json['season'] = item.infoLabels['number_of_seasons']
-                            tmdb.set_infoLabels_item(item, True, idioma_busqueda='es')
+                            tmdb.set_infoLabels_item(item, True, idioma_busqueda=idioma)
                     seasons = elem_json['season']
                     if seasons != season_low:
                         if seasons > season_low:
@@ -3037,6 +3301,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     titles_search = search_btdigg_free_format_parse(self, item.clone(), titles_search_save, contentType)
 
                     for title_search in titles_search:
+                        if x >= 888888 and x < 999999: break
+                        config.set_setting('tmdb_cache_read', True)
                         z = 0
                         limit_search = title_search.get('limit_search', 1)
                         if contentType != title_search.get('contentType', ''): continue
@@ -3070,14 +3336,15 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                           'link_found_limit': limit_items_found, 
                                           'domain_alt': None,
                                           'extensive_search': False,
-                                          'search_order': title_search['search_order'] if 'search_order' in title_search else 2
+                                          'search_order': title_search['search_order'] if 'search_order' in title_search else 2,
+                                          'headers': title_search.get('headers', PASSWORDS.get('cookies', {}).get('headers', {}))
                                           }
 
                         x = y = 0
                         while x < limit_pages and not monitor.abortRequested():
-                            if window.getProperty("alfa_cached_btdigg_episode") == 'TIMEOUT_CANCEL':
+                            if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
                                 raise Exception("CANCEL")
-                            use_assistant = True
+                            use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                             other_season = False
                             try:
                                 alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
@@ -3092,11 +3359,28 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 if len(alfa_gateways) > 2:
                                     use_assistant = False
                                 else:
-                                    window.setProperty("alfa_cached_btdigg_episode", 'CANCEL')
+                                    window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
                                     raise Exception("CANCEL")
 
-                            torrent_params = find_alternative_link(item, torrent_params=torrent_params, 
-                                                                   cache=disable_cache, use_assistant=use_assistant)
+                            torrent_params_save = copy.deepcopy(torrent_params)
+                            for zzz in range(retries*2):
+                                torrent_params = find_alternative_link(item, torrent_params=torrent_params, 
+                                                                       cache=disable_cache, use_assistant=use_assistant)
+                                if torrent_params.get('find_alt_link_code', '200') == '200':
+                                    break
+                                logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
+                                if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
+                                    break
+                                if monitor.waitForAbort(2 * 60):
+                                    return
+                                if cookies_cached: get_cached_files_('password', FORCED=True, cached=True)
+                                torrent_params = copy.deepcopy(torrent_params_save)
+                            else:
+                                logger.error('## Error en BTDIGG: %s / %s' % (torrent_params.get('find_alt_link_code', ''), torrent_params))
+                            if torrent_params.get('find_alt_link_code', '200') != '200':
+                                x = 888888
+                                if len(cached[contentType]) < int(len(cached['tvshow'])*0.85): cached[contentType] = {}
+                                break
 
                             if torrent_params.get('find_alt_link_code', '') in ['200']:
                                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
@@ -3108,7 +3392,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                             x += 1
 
                             if z == 0 and not torrent_params.get('find_alt_link_result', []): 
-                                logger.debug('Error en SEARCH: %s: %s' % (item.season_search, torrent_params))
+                                if DEBUG: logger.debug('Error en SEARCH: %s: %s' % (item.season_search, torrent_params))
                             z += 1
                             for elem in torrent_params.get('find_alt_link_result', []):
                                 #logger.error(elem)
@@ -3123,19 +3407,24 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 elem['title'] = clean_title(elem.get('title', ''))
 
                                 try:
+                                    elem_episode['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem.get('title', '')), 
+                                                                                          '.+?'+patron_year) or '-'
+                                    if elem_episode['year'] in ['720', '1080', '2160']: elem_episode['year'] = '-'
+                                    if elem_episode['year'] != '-' and elem_json['year'] != '-' and elem_episode['year'] != elem_json['year']:
+                                        if DEBUG: logger.debug('YEAR diff: %s / %s' % (elem_json['year'], elem_episode['year']))
+                                        continue
+
                                     elem_episode['title'] = elem.get('title', '').replace(btdigg_label_B, '')
-                                    if elem.get('season_search', ''): elem_episode['season_search'] = elem['season_search']
-                                    if elem_json.get('season_search', ''): elem_episode['season_search'] = elem_json['season_search']
                                     elem_episode['season'] = int(scrapertools.find_single_match(elem['title'], patron_sea))
                                     if elem_episode['season'] != elem_json['season'] and elem_episode['season'] < season_low: 
                                         other_season = True
-                                        logger.debug('Error en SEASON: %s / %s' % (elem_episode['season'], elem_json['season']))
+                                        if DEBUG: logger.debug('Error en SEASON: %s / %s' % (elem_episode['season'], elem_json['season']))
                                         continue
                                     elem_episode['episode'] = int(scrapertools.find_single_match(elem['title'], patron_cap))
                                     if elem_episode['episode'] > item.infoLabels['temporada_num_episodios']:
-                                        logger.debug('Error en EPISODE: %s / %s: %s' % (elem_episode['episode'], 
-                                                                                        item.infoLabels['temporada_num_episodios'],
-                                                                                        elem))
+                                        if DEBUG: logger.debug('Error en EPISODE: %s / %s: %s' % (elem_episode['episode'], 
+                                                                                                  item.infoLabels['temporada_num_episodios'],
+                                                                                                  elem))
                                         continue
                                     sxe = '%sx%s' % (elem_episode['season'], str(elem_episode['episode']).zfill(2))
                                     if scrapertools.find_single_match(elem_episode['title'], patron_title).strip():
@@ -3143,17 +3432,16 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     elif scrapertools.find_single_match(elem_episode['title'], patron_title_b).strip():
                                         elem_episode['title'] = scrapertools.find_single_match(elem_episode['title'], patron_title_b).strip()
                                     else:
-                                        logger.debug('Error en PATRON: %s / %s' % (elem_episode['title'], patron_title))
+                                        if DEBUG: logger.debug('Error en PATRON: %s / %s' % (elem_episode['title'], patron_title))
                                         continue
                                     elem_episode['title'] = clean_title(elem_episode['title']).replace('- ', '').replace('.', ' ')
                                     if elem_episode['title'].lower() != elem_json['title'].lower() \
                                                              and elem_episode['title'].lower() != item.infoLabels['originaltitle'].lower() \
                                                              and elem_episode['title'].lower() != item.infoLabels['title_alt'].lower(): 
-                                        logger.debug('Error en TÍTULO: %s / %s' % (elem_episode['title'], elem_json['title']))
+                                        if DEBUG: logger.debug('Error en TÍTULO: %s / %s' % (elem_episode['title'], elem_json['title']))
                                         continue
                                     elem_episode['url'] = elem_json['url']
                                     elem_episode['mediatype'] = 'episode'
-                                    if item.infoLabels['tmdb_id']: elem_episode['tmdb_id'] = item.infoLabels['tmdb_id']
 
                                     elem_header = elem_episode.copy()
                                     elem_episode['url'] = elem.get('url', '')
@@ -3161,13 +3449,29 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     elem_episode['server'] = 'torrent'
                                     elem_episode['torrent_info'] = clean_title(elem.get('torrent_info', elem.get('size', '')), torrent_info=True)\
                                                                                .replace(btdigg_label_B, '')
-                                    elem_episode['torrent_info'] += ' (%s)' % (alias_in or elem_episode['title'])
+                                    elem_episode['torrent_info'] += ' (%s %sx%s)' % (alias_in or elem_episode['title'], 
+                                                                                     elem_episode['season'], elem_episode['episode'])
                                     elem_episode['size'] = elem.get('size', '').replace(btdigg_label_B, '')\
                                                                                .replace('\xa0', ' ')\
                                                                                .replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
                                     if elem.get('password', {}):
                                         elem_episode['password'] = elem['password']
                                     
+                                    if elem.get('season_search', ''): elem_episode['season_search'] = elem['season_search']
+                                    if elem_json.get('season_search', ''): elem_episode['season_search'] = elem_json['season_search']
+                                    if elem.get('tmdb_id'): elem_episode['tmdb_id'] = elem['tmdb_id']
+                                    item_local, elem_episode = set_tmdb_to_json(elem_episode, title_search=title_search, contentType='tvshow')
+                                    if item_local.infoLabels['tmdb_id'] and item_local.infoLabels['tmdb_id'] != elem_json.get('tmdb_id'):
+                                        if DEBUG: logger.debug('TMDB_ID diff: %s / %s' % (item_local.infoLabels['tmdb_id'], 
+                                                                                          elem_json.get('tmdb_id')))
+                                        continue
+                                    if elem_episode.get('season_search'):
+                                        cached[contentType][title]['season_search'] = elem_json['season_search'] = elem_episode['season_search']
+                                        del elem_episode['season_search']
+                                    if elem_episode.get('year'):
+                                        cached[contentType][title]['year'] = elem_episode['year']
+                                        del elem_episode['year']
+
                                     y += 1
                                 except Exception:
                                     logger.error('Error en EPISODIO: %s' % elem)
@@ -3175,6 +3479,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     continue
 
                                 if not cached[contentType][title]['episode_list'].get(sxe, {}):
+                                    if elem_header.get('year'): del elem_header['year']
                                     cached[contentType][title]['episode_list'][sxe] = elem_header.copy()
                                     cached[contentType][title]['episode_list'][sxe]['matches_cached'] = []
 
@@ -3193,39 +3498,42 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                             config.set_setting('tmdb_cache_read', True)
                             return
 
-                        if len(cached[contentType][title]['episode_list']) >= episodes:
+                        if (x >= 888888 and x < 999999) or len(cached[contentType].get(title, {}).get('episode_list', {})) >= episodes:
                             break
 
                 except Exception as e:
-                    if window.getProperty("alfa_cached_btdigg_episode") == 'TIMEOUT_CANCEL':
-                        logger.error('##### %s' % window.getProperty("alfa_cached_btdigg_episode"))
-                        window.setProperty("alfa_cached_btdigg_episode", 'CANCEL')
+                    if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
+                        logger.error('##### %s' % window.getProperty("alfa_cached_btdigg_stat"))
+                        window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
                         config.set_setting('tmdb_cache_read', True)
                         return
                     logger.error(traceback.format_exc())
 
                 logger.debug('Serie: %s[%s]; Episodes: [%s/%s] / %s' % (elem_json['title'], seasons, episodes, 
-                                                                len(cached[contentType][title].get('episode_list', {})), 
-                                                                sorted(cached[contentType][title].get('episode_list', {}).keys())))
-                if not cached[contentType][title].get('episode_list', {}):
+                                                                len(cached[contentType].get(title, {}).get('episode_list', {})), 
+                                                                sorted(cached[contentType].get(title, {}).get('episode_list', {}).keys())))
+                if cached[contentType].get(title, {}) and not cached[contentType][title].get('episode_list', {}):
                     del cached[contentType][title]
 
-        config.set_setting('btdigg_status', False, server='torrent')
-        if not window.getProperty("alfa_cached_btdigg_episode"):
-            window.setProperty("alfa_cached_btdigg_episode", jsontools.dump(cached['episode'], **kwargs_json))
-        if not cached['episode']:
-            window.setProperty("alfa_cached_btdigg_episode", 'EXIT')
+        window.setProperty("alfa_cached_btdigg_list_AGE", str(time.time() + 15*60))
+        for contentType in ['movie', 'tvshow', 'episode']:
+            cached_str = str(cached[contentType]) if isinstance(cached[contentType], list) else jsontools.dump(cached[contentType], **kwargs_json)
+            window.setProperty("alfa_cached_btdigg_%s" % contentType, cached_str)
+        window.setProperty("alfa_cached_btdigg_stat", 'DONE' if cached['episode'] else 'EXIT')
 
     except Exception as e:
         logger.error(traceback.format_exc())
-        window.setProperty("alfa_cached_btdigg_episode", 'CANCEL')
+        window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
     config.set_setting('tmdb_cache_read', True)
+    config.set_setting('btdigg_status', False, server='torrent')
+    DEBUG = False
 
 
 def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkwargs):
     logger.info()
-    global channel_py_episode_list, DEBUG, TEST_ON_AIR
+    global channel_py_episode_list, DEBUG, TEST_ON_AIR, VIDEOLIBRARY_UPDATE
     if self: TEST_ON_AIR = self.TEST_ON_AIR
+    if self: VIDEOLIBRARY_UPDATE = self.VIDEOLIBRARY_UPDATE
     DEBUG = DEBUG if not TEST_ON_AIR else False
     ASSISTANT_REMOTE = True if config.get_setting("assistant_mode").lower() == 'otro' else False
 
@@ -3286,9 +3594,6 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
 
         format_tmdb_id(item)
 
-        if not PY3: from lib.alfaresolver import find_alternative_link
-        else: from lib.alfaresolver_py3 import find_alternative_link
-
         season = item.infoLabels['number_of_seasons'] or 1
         seasons = season
         season_low = contentSeason or season_high[-1] + 1 or season
@@ -3346,7 +3651,9 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
 
         if not BTDIGG_SEARCH_STAT:
             titles_search = search_btdigg_free_format_parse(self, item, titles_search, contentType, **AHkwargs)
+        x = 0
         for title_search in titles_search:
+            if x >= 888888 and x < 999999: break
             if title_search.get('contentType', contentType) != contentType: continue
 
             limit_search = title_search.get('limit_search', 8)
@@ -3364,23 +3671,36 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
                               'link_found_limit': limit_items_found, 
                               'domain_alt': None,
                               'extensive_search': False if contentSeason > 0 else False,
-                              'search_order': title_search['search_order'] if 'search_order' in title_search else 0
+                              'search_order': title_search['search_order'] if 'search_order' in title_search else 0,
+                              'retries': 1,
+                              'headers': title_search.get('headers', PASSWORDS.get('cookies', {}).get('headers', {}))
                               }
 
             x = 0
             while x < limit_pages:
-                use_assistant = True
+                use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                 except:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
+                if not set_btdigg_timer(''):
+                    if cookies_cached: get_cached_files_('password', FORCED=True)
+                    if not set_btdigg_timer(''): x = 888888; break
                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
                 if not torrent_params.get('find_alt_link_next'): x = 999999
+                if torrent_params.get('find_alt_link_code', '200') != '200':
+                    if not VIDEOLIBRARY_UPDATE:
+                        set_btdigg_timer(torrent_params.get('find_alt_link_code', ''))
+                        if cookies_cached: get_cached_files_('password', FORCED=True)
+                        if not set_btdigg_timer(''): x = 888888
+                    else:
+                        logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
+                        if cookies_cached: get_cached_files_('password', FORCED=True)
                 if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
                     limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
                 x += 1
@@ -3443,8 +3763,9 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
 
 def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHkwargs):
     logger.info()
-    global channel_py_episode_list, DEBUG, TEST_ON_AIR
+    global channel_py_episode_list, DEBUG, TEST_ON_AIR, VIDEOLIBRARY_UPDATE
     if self: TEST_ON_AIR = self.TEST_ON_AIR
+    if self: VIDEOLIBRARY_UPDATE = self.VIDEOLIBRARY_UPDATE
     DEBUG = DEBUG if not TEST_ON_AIR else False
     ASSISTANT_REMOTE = True if config.get_setting("assistant_mode", default="").lower() == 'otro' else False
 
@@ -3462,11 +3783,13 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
     contentType = 'episode'
     BTDIGG_SEARCH_STAT = False
 
+    item.infoLabels['number_of_seasons'] = item.infoLabels.get('number_of_seasons', 1)
     season = seasons = item.infoLabels['season'] or 1
     episode_max = item.infoLabels['temporada_num_episodios'] or item.infoLabels['number_of_episodes'] or 1
     last_episode_to_air = item.infoLabels.get('last_episode_to_air', 0) or episode_max
     e = 0
     le = item.infoLabels.get('last_episode_to_air', 0)
+    year = int(scrapertools.find_single_match(item.infoLabels['temporada_air_date'], r'\d{4}') or 2020)
     if scrapertools.find_single_match(item.infoLabels.get('last_series_episode_to_air', ''), r'\d+x\d+'):
         s, e = item.infoLabels['last_series_episode_to_air'].split('x')
         if int(s) == item.infoLabels['season']:
@@ -3584,9 +3907,10 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
             return itemlist
 
         format_tmdb_id(item)
-
-        if not PY3: from lib.alfaresolver import find_alternative_link
-        else: from lib.alfaresolver_py3 import find_alternative_link
+        if item.infoLabels['originaltitle'] and not item.infoLabels['title_alt'] \
+                                            and scrapertools.slugify(item.infoLabels['originaltitle']) \
+                                                != scrapertools.slugify(item.contentSerieName):
+            item.infoLabels['title_alt'] = scrapertools.slugify(item.infoLabels['originaltitle'])
 
         if BTDIGG_URL_SEARCH in item.url_tvshow and not item.library_playcounts and (epis_index.get(last_episode_to_air, []) \
                                                 or item.contentSeason > item.infoLabels.get('number_of_seasons', 99)):
@@ -3622,7 +3946,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
             BTDIGG_SEARCH_STAT = True
         elif quality_alt ==  'HDTV':
             titles_search.extend([{'urls': ['%s HDTV ' + domain_alt], 'checks': ['Cap.'], 'contentType': contentType, 'limit_search': 8}])
-        else:
+        elif year > 2020:
             titles_search.extend([{'urls': ['%s HDTV ' + domain_alt, '%s 4K ' + domain_alt], 'checks': ['Cap.'], 
                                    'contentType': contentType, 'limit_search': 8}])
         if not channel_py_strict:
@@ -3634,16 +3958,20 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
 
         if not BTDIGG_SEARCH_STAT:
             titles_search = search_btdigg_free_format_parse(self, item, titles_search, contentType, **AHkwargs)
+        x = 0
         for title_search in titles_search:
+            if x >= 888888 and x < 999999: break
             if title_search.get('contentType', contentType) != contentType: continue
 
             limit_search = title_search.get('limit_search', 8)
-            limit_pages = limit_search if domain_alt in str(title_search['urls']) else limit_search / 2
+            limit_pages = limit_search if domain_alt in str(title_search['urls']) else limit_search / 1.5
             limit_pages_min = (limit_search / 2) if domain_alt in str(title_search['urls']) else 1
             limit_items_found = 10 * 10
             patron_sea = r'(?i)Cap.(\d+)\d{2}'
             patron_cap = r'(?i)Cap.\d+(\d{2})'
-            patron_title = r'(?i)(.*?(?:\(\d{4}\))?)\s*(?:-*\s*temp|\[)'
+            patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temp|\(|\[)'
+            patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temp|\(|\[|\s+-)'
+            patron_year = r'\(?(\d{4})\)?'
 
             torrent_params = {
                               'title_prefix': [title_search], 
@@ -3655,25 +3983,38 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                               'link_found_limit': limit_items_found, 
                               'domain_alt': None,
                               'extensive_search': False if contentSeason > 0 else False,
-                              'search_order': title_search['search_order'] if 'search_order' in title_search else 0
+                              'search_order': title_search['search_order'] if 'search_order' in title_search else 0,
+                              'retries': 1,
+                              'headers': title_search.get('headers', PASSWORDS.get('cookies', {}).get('headers', {}))
                               }
 
             x = 0
             while x < limit_pages:
-                use_assistant = True
+                use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                 except:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
+                if not set_btdigg_timer(''):
+                    if cookies_cached: get_cached_files_('password', FORCED=True)
+                    if not set_btdigg_timer(''): x = 888888; break
                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
                 if not torrent_params.get('find_alt_link_next'): x = 999999
-                if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
-                    limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
+                if torrent_params.get('find_alt_link_code', '200') != '200':
+                    if not VIDEOLIBRARY_UPDATE:
+                        set_btdigg_timer(torrent_params.get('find_alt_link_code', ''))
+                        if cookies_cached: get_cached_files_('password', FORCED=True)
+                        if not set_btdigg_timer(''): x = 888888
+                    else:
+                        logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
+                        if cookies_cached: get_cached_files_('password', FORCED=True)
+                #if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
+                #    limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
                 x += 1
 
                 for y, elem in enumerate(torrent_params['find_alt_link_result']):
@@ -3709,13 +4050,26 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                                                     % (item.contentSerieName, elem_json['season'], elem_json['episode'], elem_json['quality']))
                             continue
                         
+                        elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem.get('title', '')), 
+                                                                           '.+?'+patron_year) or '-'
+                        if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
+                        if elem_json['year'] != '-' and item.infoLabels['year'] != '-' and elem_json['year'] != str(item.infoLabels['year']):
+                            if DEBUG: logger.debug('YEAR diff: %s / %s' % (item.infoLabels['year'], elem_json['year']))
+                            continue
+
+                        elem['title'] = clean_title(elem.get('title', '')).replace(btdigg_label_B, '').replace('- ', '')\
+                                                                          .replace(elem.get('quality', ''), '')
+                        if scrapertools.find_single_match(elem.get('title', ''), patron_title).strip():
+                            elem['title'] = scrapertools.find_single_match(elem.get('title', ''), patron_title).strip()
+                        elif scrapertools.find_single_match(elem.get('title', ''), patron_title_b).strip():
+                            elem['title'] = scrapertools.find_single_match(elem.get('title', ''), patron_title_b).strip()
+
                         if elem.get('season_search', ''): elem_json['season_search'] = elem['season_search']
                         if '#' in item.season_search: elem_json['season_search'] = item.season_search
                         elem_json['quality'] = '%s%s' % (elem_json['quality'], btdigg_label)
                         elem_json['size'] = elem.get('size', '').replace(btdigg_label_B, '').replace('\xa0', ' ')
                         elem_json['torrent_info'] = clean_title(elem.get('size', ''), torrent_info=True)
-                        elem_json['torrent_info'] += ' (%s)' % (alias_in or clean_title(scrapertools.find_single_match(elem.get('title', ''),
-                                                                                        patron_title)))
+                        elem_json['torrent_info'] += ' (%s %sx%s)' % (alias_in or elem['title'], elem_json['season'], elem_json['episode'])
                         elem_json['language'] = elem.get('language', []) or item.language
                         elem_json['title'] = ''
                         elem_json['server'] = 'torrent'
@@ -3735,6 +4089,12 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                         elif elem.get('password'):
                             elem_json['password'] = elem['password']
 
+                        if elem.get('tmdb_id'): elem_json['tmdb_id'] = elem['tmdb_id']
+                        itemO, elem_json = set_tmdb_to_json(elem_json, title_search=title_search, title=elem['title'], contentType='tvshow')
+                        if item.infoLabels['tmdb_id'] and item.infoLabels['tmdb_id'] != elem_json.get('tmdb_id'):
+                            if DEBUG: logger.debug('TMDB_ID diff: %s / %s' % (item.infoLabels['tmdb_id'], elem_json.get('tmdb_id')))
+                            continue
+
                         if elem_json['episode'] in epis_index:
                             matches.append(elem_json.copy())
                             epis_index[elem_json['episode']] += [[elem_json['episode'], len(matches) - 1, 
@@ -3746,7 +4106,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                     except Exception:
                         logger.error(traceback.format_exc())
 
-            if len(epis_index) >= last_episode_to_air: break
+            if len(epis_index) >= last_episode_to_air and ((season >= item.infoLabels['number_of_seasons'] and year > 2023) or year < 2021): break
 
         if matches_len == len(matches): matches = AH_find_btdigg_matches(item, matches, **AHkwargs)
         matches = sorted(matches, key=lambda it: (it.get('episode', 0), self.convert_size(it.get('size', 0), silent=True))) if matches else []
@@ -3846,9 +4206,10 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
             return itemlist
 
         format_tmdb_id(item)
-
-        if not PY3: from lib.alfaresolver import find_alternative_link
-        else: from lib.alfaresolver_py3 import find_alternative_link
+        if item.infoLabels['originaltitle'] and not item.infoLabels['title_alt'] \
+                                            and scrapertools.slugify(item.infoLabels['originaltitle']) \
+                                                != scrapertools.slugify(item.contentSerieName or item.contentTitle):
+            item.infoLabels['title_alt'] = scrapertools.slugify(item.infoLabels['originaltitle'])
 
         quality_alt = ''
         language_alt = []
@@ -3888,7 +4249,9 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
 
         if not BTDIGG_SEARCH_STAT:
             titles_search = search_btdigg_free_format_parse(self, item, titles_search, item.contentType, **AHkwargs)
+        x = 0
         for title_search in titles_search:
+            if x >= 888888 and x < 999999: break
             if title_search.get('contentType', 'movie') != item.contentType: continue
 
             limit_search = title_search.get('limit_search', 4)
@@ -3897,7 +4260,10 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
             limit_items_found = 10 * 10
             patron_sea = r'(?i)Cap.(\d+)\d{2}'
             patron_cap = r'(?i)Cap.\d+(\d{2})'
-            patron_title = r'(?i)(.*?(?:\(\d{4}\))?)\s*(?:-*\s*temp|\[)'
+            patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[)'
+            patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[|\s+-)'
+            patron_year = r'\(?(\d{4})\)?'
+            convert = ['.=', '-= ', ':=', '&=and', '  = ']
 
             torrent_params = {
                               'title_prefix': [title_search], 
@@ -3907,23 +4273,32 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                               'limit_pages': limit_pages, 
                               'link_found_limit': limit_items_found, 
                               'domain_alt': None,
-                              'search_order': title_search['search_order'] if 'search_order' in title_search else 0
+                              'search_order': title_search['search_order'] if 'search_order' in title_search else 0,
+                              'retries': 1,
+                              'headers': title_search.get('headers', PASSWORDS.get('cookies', {}).get('headers', {}))
                               }
 
             x = 0
             while x < limit_pages:
-                use_assistant = True
+                use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                 except:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
+                if not set_btdigg_timer(''):
+                    if cookies_cached: get_cached_files_('password', FORCED=True)
+                    if not set_btdigg_timer(''): x = 888888; break
                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
                 if not torrent_params.get('find_alt_link_next'): x = 999999
+                if torrent_params.get('find_alt_link_code', '200') != '200':
+                    set_btdigg_timer(torrent_params.get('find_alt_link_code', ''))
+                    if cookies_cached: get_cached_files_('password', FORCED=True)
+                    if not set_btdigg_timer(''): x = 888888
                 if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
                     limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
                 x += 1
@@ -3941,6 +4316,21 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                             elem_json['episode'] = int(scrapertools.find_single_match(elem.get('title', ''), patron_cap))
                             if elem_json['episode'] != item.contentEpisodeNumber: continue
 
+                        elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem.get('title', '')), 
+                                                                           '.+?'+patron_year) or '-'
+                        if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
+                        if elem_json['year'] != '-' and item.infoLabels['year'] != '-' and elem_json['year'] != str(item.infoLabels['year']):
+                            if DEBUG: logger.debug('YEAR diff: %s / %s' % (item.infoLabels['year'], elem_json['year']))
+                            continue
+
+                        title = clean_title(elem.get('title', '').replace(btdigg_label_B, '').replace('- ', '')\
+                                                                 .replace(elem.get('quality', ''), ''))
+                        if scrapertools.find_single_match(title, patron_title).strip():
+                            title = scrapertools.find_single_match(title, patron_title).strip()
+                        elif scrapertools.find_single_match(title, patron_title_b).strip():
+                            title = scrapertools.find_single_match(title, patron_title_b).strip()
+                        title = re.sub(r'(?i)BTDigg\s*|-\s+|\[.*?\]|Esp\w*\s*|Cast\w*\s*|Lat\w*\s*|span\w*' , '', title)
+
                         elem_json['url'] = elem.get('url', '')
                         if elem_json['url'] in str(matches): 
                             if DEBUG: logger.debug('DROP: %s' % elem_json['url'])
@@ -3950,18 +4340,18 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                         elem_json['quality'] = elem.get('quality', '').replace('HDTV 720p', 'HDTV-720p').replace(btdigg_label, '')
                         q_match = False
                         for mate in matches:
-                            if elem_json['quality'] in mate.get('quality', '').replace(btdigg_label, '').replace('*', ''):
+                            if elem_json['quality'] == mate.get('quality', '').replace(btdigg_label, '').replace('*', '').replace('-', ' '):
                                 for lang in elem_json['language']:
                                     if lang in mate.get('language', []) or mate.get('language', []) == '*':
-                                        if DEBUG: logger.debug('DROP quality: %s' % elem_json['quality'])
+                                        if DEBUG: logger.debug('DROP quality/language: %s/%s' % (elem_json['quality'], lang))
                                         q_match = True
                         if q_match: continue
                         elem_json['quality'] = '%s%s' % (elem_json['quality'], btdigg_label)
                         elem_json['torrent_info'] = clean_title(elem.get('size', ''), torrent_info=True).replace(btdigg_label_B, '')
-                        title = clean_title(elem.get('title', '')).replace(btdigg_label_B, '').replace('- ', '')\
-                                                                  .replace(elem.get('quality', ''), '')
-                        title = re.sub(r'(?i)BTDigg\s*|-\s+|\[.*?\]|Esp\w*\s*|Cast\w*\s*|Lat\w*\s*|span\w*' , '', title)
-                        elem_json['torrent_info'] += ' (%s)' % title
+                        if item.contentType == 'episode':
+                            elem_json['torrent_info'] += ' (%s %sx%s)' % (title, elem_json['season'], elem_json['episode'])
+                        else:
+                            elem_json['torrent_info'] += ' (%s)' % title
                         elem_json['size'] = elem.get('size', '').replace(btdigg_label_B, '')\
                                                                 .replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
                         elem_json['server'] = 'torrent'
@@ -3988,7 +4378,8 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                             item.password = matches_cached.get('password', {})
 
                         if elem.get('tmdb_id'): elem_json['tmdb_id'] = elem['tmdb_id']
-                        else: itemO, elem_json = set_tmdb_to_json(elem_json, title_search=title_search, title=title, contentType=item.contentType)
+                        itemO, elem_json = set_tmdb_to_json(elem_json, title_search=title_search, title=title, 
+                                                            contentType=item.contentType if item.contentType == 'movie' else 'tvshow')
                         if item.infoLabels['tmdb_id'] and item.infoLabels['tmdb_id'] != elem_json.get('tmdb_id'):
                             if DEBUG: logger.debug('TMDB_ID diff: %s / %s' % (item.infoLabels['tmdb_id'], elem_json.get('tmdb_id')))
                             continue
@@ -4021,11 +4412,7 @@ def find_rar_password(item):
             elem_json = item.copy()
         password = elem_json.get('password')
 
-        if len(window.getProperty("alfa_cached_passwords")) < 5:
-            if not PY3: from lib.alfaresolver import get_cached_files
-            else: from lib.alfaresolver_py3 import get_cached_files
-            window.setProperty("alfa_cached_passwords", jsontools.dump(get_cached_files('password'), **kwargs_json))
-        alfa_cached_passwords = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
+        get_cached_files_('password')
 
         key = sxe = ''
         if elem_json.get('mediatype', '') != 'movie':
@@ -4041,10 +4428,9 @@ def find_rar_password(item):
                 key = scrapertools.find_single_match(elem_json['title'].replace(btdigg_label_B, ''), patron_title_b).strip()\
                                   .replace('- ', '').lower()
 
-        if key and sxe and key in alfa_cached_passwords and sxe in alfa_cached_passwords[key]:
-            if not isinstance(alfa_cached_passwords[key][sxe]['password'], dict) \
-                                                 and str(alfa_cached_passwords[key][sxe]['password']) != 'Contraseña DESCONOCIDA':
-                password = alfa_cached_passwords[key][sxe]['password']
+        if key and sxe and key in PASSWORDS and sxe in PASSWORDS[key]:
+            if not isinstance(PASSWORDS[key][sxe]['password'], dict) and str(PASSWORDS[key][sxe]['password']) != 'Contraseña DESCONOCIDA':
+                password = PASSWORDS[key][sxe]['password']
 
     except Exception:
         logger.error(traceback.format_exc())
@@ -4290,8 +4676,6 @@ def get_torrent_size(url, **kwargs):
                         torrent_params['find_alt_link_result'] = torrent_params['find_alt_link_result_save'][:]
                         torrent_params['find_alt_link_result_save'] = []
                     elif torrent_params['find_alt_link_option'] and kwargs.get('item', {}):
-                        if not PY3: from lib.alfaresolver import find_alternative_link
-                        else: from lib.alfaresolver_py3 import find_alternative_link
                         torrent_params = find_alternative_link(kwargs['item'], torrent_params=torrent_params, cache=True)
                 
                 logger.info('Torrent SIZE: %s-%s - %s' % (str(torrent_params['size']), torrent_params['torrents_path'], 
@@ -4392,7 +4776,6 @@ def verify_channel(channel, clones_list=False):
 
     if clones_list:
         if clones:
-            import ast
             clones = ast.literal_eval(clones)
         return channel, (clones or [channel])
         

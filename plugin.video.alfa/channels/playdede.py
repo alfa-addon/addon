@@ -3,20 +3,10 @@
 # Created for Alfa addon
 # By the Alfa Development Group
 # Maintained by SistemaRayoXP
-import sys
 import re
-import datetime
-
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urllib
-else:
-    import urllib
 
 from bs4 import BeautifulSoup
-from core import httptools, jsontools, scrapertools, servertools, tmdb
+from core import httptools, scrapertools, servertools, tmdb, urlparse
 from core.item import Item
 from platformcode import config, logger, platformtools, unify
 from channelselector import get_thumb
@@ -95,7 +85,8 @@ def get_source(url, json=False, soup=False, multipart_post=None, timeout=30, add
     if "Iniciar sesión" in data.data:
         # Si no tenemos sesión válida, mejor cerramos definitivamente la sesión
         global account
-        if account: logout({})
+        if account:
+            logout({})
         platformtools.dialog_notification("No se ha inciado sesión", "Inicia sesión en el canal {} para poder usarlo".format(__channel__))
         return None
 
@@ -153,7 +144,7 @@ def logout(item):
 
     # Borramos las cookies
     try:
-        domain = urllib.urlparse(host).netloc
+        domain = urlparse.urlparse(host).netloc
         httptools.cj.clear(domain)
         httptools.save_cookies()
     except Exception:
@@ -287,7 +278,8 @@ def genres(item):
 
     itemlist = []
     soup = get_source(item.url, soup=True)
-    if not soup: return []
+    if not soup:
+        return []
 
     if not soup:
         platformtools.dialog_notification("Cambio de estructura", "Reporta el error desde el menú principal", sound=False)
@@ -397,7 +389,7 @@ def list_all(item):
 
         itemlist.append(it)
 
-    if not isinstance(item.tmdb, bool) or item.tmdb != False:
+    if not isinstance(item.tmdb, bool) or item.tmdb is not False:
         tmdb.set_infoLabels(itemlist, True)
 
     btnnext = soup.find("div", class_="pagPlaydede")
@@ -417,7 +409,7 @@ def search(item, texto):
 
     try:
         if texto:
-            item.url = '{}search/?s={}'.format(host, urllib.quote_plus(texto))
+            item.url = '{}search/?s={}'.format(host, urlparse.quote_plus(texto))
 
             return list_all(item)
 
@@ -437,13 +429,14 @@ def seasons(item):
 
     itemlist = []
     soup = get_source(item.url, soup=True)
-    if not soup: return []
+    if not soup:
+        return []
     items = soup.find('div', id='seasons').find_all('div', class_='se-c')
 
     for div in items:
         try:
             season = int(div['data-season'])
-        except:
+        except ValueError:
             season = 1
 
         itemlist.append(
@@ -510,7 +503,8 @@ def findvideos(item):
 
     itemlist = []
     soup = get_source(item.url, soup=True)
-    if not soup: return []
+    if not soup:
+        return []
     items = []
     linklists = soup.findAll('div', class_='linkSorter')
     # items.extend(soup.find('div', class_='contEP contepID_1 contEP_A').find('div', class_='innerSelector').find_all('div', class_="playerItem"))

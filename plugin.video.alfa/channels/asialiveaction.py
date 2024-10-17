@@ -1,14 +1,5 @@
 # -*- coding: UTF-8 -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from modules import autoplay
@@ -17,8 +8,8 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core import tmdb
+from core import urlparse
 from core.item import Item
-from lib import jsunpack
 from platformcode import config, logger
 
 canonical = {
@@ -98,7 +89,8 @@ def category(item):
             scrapedurl = title
             title = title1
         if title != 'Próximas Películas':
-            if not scrapedurl.startswith("http"): scrapedurl = host + scrapedurl
+            if not scrapedurl.startswith("http"):
+                scrapedurl = host + scrapedurl
             itemlist.append(item.clone(action=action, title=title, url=scrapedurl, type='cat'))
     return itemlist
 
@@ -132,7 +124,7 @@ def search(item, texto):
 
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -170,7 +162,8 @@ def lista_a(item):
     patron += 'href.*?>([^"]+)<\/a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedtype, scrapedyear in matches:
-        if not scrapedthumbnail.startswith("http"): scrapedthumbnail = "https:" + scrapedthumbnail
+        if not scrapedthumbnail.startswith("http"):
+            scrapedthumbnail = "https:" + scrapedthumbnail
         new_item = Item(channel=item.channel, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
                        type=scrapedtype, infoLabels={'year':scrapedyear})
         if 'Movie' in scrapedtype:
@@ -202,15 +195,19 @@ def lista(item):
     patron += 'class="Genre">(.*?)</p' #scrapedtype
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedtype in matches:
-        if not scrapedthumbnail.startswith("http"): scrapedthumbnail = "https:" + scrapedthumbnail
+        if not scrapedthumbnail.startswith("http"):
+            scrapedthumbnail = "https:" + scrapedthumbnail
         title="%s - %s" % (scrapedtitle,scrapedyear)
         scrapedtype = scrapertools.find_multiple_matches(scrapedtype, 'internal">([^<]+)<')
         type = scrapedtype[0]
         language = []
         for elem in scrapedtype:
-            if "Latino" in elem: lang = "Lat"
-            elif "Español" in elem: lang = "Esp"
-            else: lang = "Sub"
+            if "Latino" in elem:
+                lang = "Lat"
+            elif "Español" in elem:
+                lang = "Esp"
+            else:
+                lang = "Sub"
             language.append(IDIOMAS.get(lang, lang))
         new_item = Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
                        type=scrapedtype, language=language, infoLabels={'year':scrapedyear})
@@ -234,7 +231,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    if not "/paste/" in item.url:
+    if "/paste/" not in item.url:
         data = httptools.downloadpage(item.url, canonical=canonical).data.replace("&quot;",'"').replace("amp;","").replace("#038;","")
         url = scrapertools.find_single_match(data, '<span><a rel="nofollow" target="_blank" href="([^"]+)"')
         data = httptools.downloadpage(url).data

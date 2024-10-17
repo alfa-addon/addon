@@ -1,7 +1,7 @@
 {
   "id": "animespace",
   "name": "AnimeSpace",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": [],
   "thumbnail": "https://i.imgur.com/twDknhC.jpg",
