@@ -62,7 +62,7 @@ finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['videos_list']}]),
                             'list_all_stime': dict([('find', [{'tag': ['div'], 'class': ['time']}]),
                                                     ('get_text', [{'tag': '', 'strip': True}])]),
                             },
-         'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
+         'controls': {'url_base64': False, 'cnt_tot': 25, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
                                      idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -107,8 +107,8 @@ def list_all(item):
     
     findS = finds.copy()
     
-    if item.extra != 'Categorias':
-        findS['controls']['cnt_tot'] = 10
+    # if item.extra != 'Categorias':
+        # findS['controls']['cnt_tot'] = 10
 
     return AlfaChannel.list_all(item, **kwargs)
 
