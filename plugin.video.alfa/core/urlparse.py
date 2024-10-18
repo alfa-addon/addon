@@ -19,11 +19,14 @@ def urljoin(base, *paths, **kwargs):
     return joined_url
 
 
-def urlencode(query, safe_chars="", quote_via=None):
-    if quote_via:
-        return _urllib.urlencode(query, safe=safe_chars, quote_via=quote_via)
+def urlencode(query, safe="", quote_via=None):
+    if PY3:
+        if quote_via:
+            return _urllib.urlencode(query, safe=safe, quote_via=quote_via)
+        else:
+            return _urllib.urlencode(query, safe=safe)
     else:
-        return _urllib.urlencode(query, safe=safe_chars)
+        return _urllib.urlencode(query)
 
 
 def urlparse(url, scheme="", allow_fragments=True):
@@ -75,11 +78,17 @@ def parse_qsl(
 
 
 def quote(string, safe="", encoding=None, errors=None):
-    return _urllib.quote(string, safe=safe, encoding=encoding, errors=errors)
+    if PY3:
+        return _urllib.quote(string, safe=safe, encoding=encoding, errors=errors)
+    else:
+        return _urllib.quote(string, safe=safe)
 
 
 def quote_plus(string, safe="", encoding=None, errors=None):
-    return _urllib.quote_plus(string, safe=safe, encoding=encoding, errors=errors)
+    if PY3:
+        return _urllib.quote_plus(string, safe=safe, encoding=encoding, errors=errors)
+    else:
+        return _urllib.quote_plus(string, safe=safe)
 
 
 def unquote(string, encoding="utf-8", errors="replace"):
