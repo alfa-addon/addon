@@ -637,7 +637,7 @@ def proxy_post_processing(url, proxy_data, response, **opt):
                     error_skip=proxy_data["addr"] or proxy_data["CF_addr"],
                     url_test=url,
                     post_test=opt["post_save"],
-                    **opt,
+                    **opt
                 )
                 url = opt["url_save"]
 
@@ -657,7 +657,7 @@ def proxy_post_processing(url, proxy_data, response, **opt):
                         proxy_init="ProxyCF",
                         url_test=url,
                         post_test=opt["post_save"],
-                        **opt,
+                        **opt
                     )
                 else:
                     proxytools.get_proxy_list_method(
