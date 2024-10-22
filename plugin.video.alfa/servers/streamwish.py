@@ -26,7 +26,7 @@ def test_video_exists(page_url):
         kwargs['headers'] = {'Referer': referer}
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
-    if response.code == 404:
+    if response.code == 404 or "no longer available" in data: 
         return False, "[streamwish] El archivo no existe o ha sido borrado"
     return True, ""
 

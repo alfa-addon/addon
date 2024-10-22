@@ -31,6 +31,7 @@ list_servers = [
     'mixdrop',
     'mystream'
     ]
+
 forced_proxy_opt = 'ProxySSL'  
 
 canonical = {
@@ -224,6 +225,7 @@ def findvideos(item):
         url = scrapertools.find_single_match(data,"(?i)Location.href = '([^']+)'")
         if "up.asdasd" in url:
             url = "https://netu.to/"
+        # if "pelisplus" in url: continue
         idioma = soup.img['alt']
         itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language=idioma,
                             infoLabels=item.infoLabels))

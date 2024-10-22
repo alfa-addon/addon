@@ -6,6 +6,7 @@ from core import httptools
 from core import scrapertools
 from platformcode import logger
 
+
 def test_video_exists(page_url):
     global data
     response = httptools.downloadpage(page_url)
@@ -24,7 +25,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
     video_urls = []
-    url = scrapertools.find_single_match(data,'"format":"mp4","videoUrl":"([^"]+)"').replace("\\", "")
+    url = scrapertools.find_single_match(data,'"format"\s*:\s*"mp4",[^\}]*"videoUrl"\s*:\s*"([^"]+)"').replace("\\", "")
     url = "https://es.redtube.com%s" %url
     data2 = httptools.downloadpage(url).data
     patron  = '"defaultQuality":.*?,"quality":"([^"]+)","videoUrl"\:"([^"]+)"'

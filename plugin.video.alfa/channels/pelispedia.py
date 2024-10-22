@@ -19,6 +19,7 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS
+
 forced_proxy_opt = 'ProxySSL'
 
 canonical = {
