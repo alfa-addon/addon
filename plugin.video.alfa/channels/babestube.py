@@ -24,6 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 
 # https://www.babestube.com   https://www.deviants.com   https://www.momvids.com     https://www.pornomovies.com  
 
+###  FALLA KTP por PROXY  ERROR en los test por CERTIFICADO TLS
+
 canonical = {
              'channel': 'babestube', 
              'host': config.get_setting("current_host", 'babestube', default=''), 
