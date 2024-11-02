@@ -22,7 +22,6 @@ import xbmcaddon
 
 from channelselector import get_thumb
 from core import channeltools
-from core import httptools
 from core import scrapertools
 from core import jsontools
 from core import urlparse
@@ -328,6 +327,7 @@ def render_items(itemlist, parent_item):
     logger.info("INICIO render_items")
     start = time.time()
 
+    from core import httptools
     from platformcode import unify
 
     # Si el itemlist no es un list salimos

@@ -86,6 +86,14 @@
       "default": true,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "external_cookies",
+      "type": "text",
+      "label": "¿Tienes cookies con formato dominio:nombre¡valor;nombre¡valor...|dominio:nombre¡valor... ?",
+      "default": "",
+      "enabled": true,
+      "visible": true
     }
   ]
 }

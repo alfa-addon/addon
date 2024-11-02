@@ -22,7 +22,7 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = None
 assistant = False
 
 # https://dominioshdfull.com/
@@ -30,9 +30,10 @@ assistant = False
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hdfull.blog/", "https://hdfull.today/", "https://hdfull.quest/"], 
+             "host_alt": ["https://hdfull.buzz/", "https://hdfull.today/", "https://hdfull.quest/"], 
              'host_verification': '%slogin', 
-             "host_black_list": ["https://hd-full.info/", "https://hd-full.sbs/", "https://hd-full.life/", 
+             "host_black_list": ["https://hdfull.blog/", 
+                                 "https://hd-full.info/", "https://hd-full.sbs/", "https://hd-full.life/", 
                                  "https://hd-full.fit/", "https://hd-full.me/", "https://hd-full.vip/", 
                                  "https://hd-full.lol/", "https://hd-full.co/", "https://hd-full.biz/", 
                                  "https://hd-full.in/", "https://hd-full.im/", "https://hd-full.one/", 
@@ -1248,7 +1249,7 @@ def agrupa_datos(url, post=None, referer=True, soup=False, json=False, force_che
     if isinstance(referer, str):
         headers.update({'Referer': referer})
     if len(canonical['host_alt']) > 1:
-        url = verify_domain_alt(url, post=post, headers=headers, soup=False, json=False)
+        url = verify_domain_alt(url, post=post, headers=headers, soup=False, json=False, alfa_s=alfa_s or hide_infobox)
 
     page = AlfaChannel.create_soup(url, post=post, headers=headers, ignore_response_code=True, timeout=timeout, 
                                    soup=False, json=False, canonical=canonical, hide_infobox=hide_infobox, alfa_s=alfa_s)
@@ -1296,7 +1297,7 @@ def agrupa_datos(url, post=None, referer=True, soup=False, json=False, force_che
     
     return data
 
-def verify_domain_alt(url, post=None, headers={}, soup=False, json=False):
+def verify_domain_alt(url, post=None, headers={}, soup=False, json=False, alfa_s=True):
     global host, host_save, canonical
 
     host_alt = AlfaChannel.obtain_domain(url, scheme=True).rstrip('/') + '/'
@@ -1307,8 +1308,9 @@ def verify_domain_alt(url, post=None, headers={}, soup=False, json=False):
         for host_alt in canonical['host_alt']:
             canonical_alt['host'] = host_alt
             canonical_alt['host_alt'] = [host_alt]
+            headers['Referer'] = host_alt
             page = AlfaChannel.create_soup(host_alt + url_rest, post=post, headers=headers, ignore_response_code=True, timeout=timeout, 
-                                           soup=soup, json=json, canonical=canonical_alt, alfa_s=True, proxy_retries=0, retries_cloudflare=0,
+                                           soup=soup, json=json, canonical=canonical_alt, alfa_s=alfa_s, proxy_retries=0, retries_cloudflare=0,
                                            canonical_check=False)
             if page.sucess:
                 url = host_alt + url_rest

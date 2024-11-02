@@ -82,6 +82,7 @@ btdigg_label = config.BTDIGG_LABEL
 btdigg_label_B = config.BTDIGG_LABEL_B
 BTDIGG_SEARCH = [{'urls': ['%s'], 'checks': [], 'limit_search': 2, 'quality_alt': '', 'language_alt': [], 'search_order': 2}]
 BTDIGG_URL_SEARCH = '%ssearch_btdig/' % btdigg_url
+BTDIGG_TIMEOUT = (3.05, 5)
 PASSWORDS = {}
 TEST_ON_AIR = False
 VIDEOLIBRARY_UPDATE = False
@@ -356,13 +357,14 @@ def clean_title(title, decode=True, htmlclean=True, torrent_info=False, convert=
             if strict:
                 title = title.replace('&ordf;', 'a').replace('&ordm;', 'o')\
                              .replace('ª', 'a').replace('º', 'o')
-                title = re.compile("\s+", re.DOTALL).sub(" ", title)
-                title = re.compile("\s", re.DOTALL).sub("-", title.strip())
-                title = re.compile("\-+", re.DOTALL).sub("-", title)
+                title = re.compile(r"\s+", re.DOTALL).sub(" ", title)
+                title = re.compile(r"\s", re.DOTALL).sub("-", title.strip())
+                title = re.compile(r"\-+", re.DOTALL).sub("-", title)
 
         #if DEBUG: logger.info('Title_OUT: %s' % title)
 
     return title.strip()
+
 
 def check_alternative_tmdb_id(item_local, tmdb_check=True):
 
@@ -375,6 +377,7 @@ def check_alternative_tmdb_id(item_local, tmdb_check=True):
     item_local.contentSerieName = filetools.validate_path(item_local.contentSerieName.replace('/', '-').replace('  ', ' '))
     item_local.contentTitle = filetools.validate_path(item_local.contentTitle.replace('/', '-').replace('  ', ' '))
     contentType = item_local.contentType
+    if contentType == 'episode': contentType = 'tvshow'
     contentType_stat = False
     for contentTitle in [item_local.season_search.lower() or item_local.title.lower(), 
                          item_local.contentTitle.lower() if item_local.contentType == 'movie' else item_local.contentSerieName.lower()]:
@@ -491,89 +494,223 @@ def set_btdigg_timer(btdigg_error):
 
 
 def get_cached_files_(contentType, FORCED=False, cached=False):
-    global PASSWORDS, cookies_cached
+    global PASSWORDS, cookies_cached, BTDIGG_TIMEOUT
 
+    timer = 15
     cached_file = {}
     error = {'ERROR': 'ERROR'}
     error = [error] if contentType in ['movie', 'tvshow', 'emergency'] else error
     cookies = []
     cookies_cached_exp = []
-    btdigg_cf_clearance = ''
+    external_cookies_str = ''
+    external_cookies = []
+    updated = {}
+    alfa_cached_password_AGE = 0.0
+    cached_file_old = {}
 
-    if contentType == 'password' and jsontools.load(window.getProperty("alfa_cached_passwords") or '{}').get('ERROR'):
-        FORCED = False
-        cached_btdigg_AGE = float(window.getProperty("alfa_cached_btdigg_list_AGE") or 0.0)
-        if cached_btdigg_AGE < time.time(): FORCED = True
+    if contentType == 'password' and window:
+        cached_file_old = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
+        if cached_file_old.get('ERROR'):
+            FORCED = False
+            if float(window.getProperty("alfa_cached_btdigg_list_AGE") or 0.0) < time.time():
+                FORCED = True
+        alfa_cached_password_AGE = float(window.getProperty("alfa_cached_password_AGE") or 0.0)
+        if not cached_file_old or alfa_cached_password_AGE < time.time():
+            FORCED = True
 
-    if (contentType == 'password' and (len(window.getProperty("alfa_cached_passwords")) < 5 or FORCED)) or contentType != 'password':
+    if (contentType == 'password' and (not cached_file_old or FORCED)) or contentType != 'password':
         cached_file = get_cached_files(contentType)
         if not cached_file:
             cached_file = error
             logger.error('Error de lectura en %s' % contentType.upper())
-            window.setProperty("alfa_cached_btdigg_list_AGE", str(time.time() + 15*60))
-            if contentType == 'episodio':
-                window.setProperty("alfa_cached_btdigg_%s_list" % contentType, jsontools.dump(cached_file, **kwargs_json))
-            elif contentType in ['movie', 'tvshow']:
-                window.setProperty("alfa_cached_btdigg_%s_list" % contentType, str(cached_file))
+            if window:
+                alfa_cached_password_AGE = time.time() + timer*60
+                window.setProperty("alfa_cached_btdigg_list_AGE", str(alfa_cached_password_AGE))
+                window.setProperty("alfa_cached_password_AGE", str(alfa_cached_password_AGE))
+                if contentType == 'episodio':
+                    window.setProperty("alfa_cached_btdigg_%s_list" % contentType, jsontools.dump(cached_file, **kwargs_json))
+                elif contentType in ['movie', 'tvshow']:
+                    window.setProperty("alfa_cached_btdigg_%s_list" % contentType, str(cached_file))
 
     if contentType == 'password':
-        cached_file_old = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
-        PASSWORDS = copy.deepcopy(cached_file) or PASSWORDS or copy.deepcopy(cached_file_old)
-        PASSWORDS['cookies']['cookies_expiration'] = cached_file_old.get('cookies', {}).get('cookies_expiration', '')
+        PASSWORDS = copy.deepcopy(cached_file) or copy.deepcopy(cached_file_old)
+        if not PASSWORDS.get('cookies', {}).get('cookies_expiration_'):
+            PASSWORDS['cookies']['cookies_expiration_'] = cached_file_old.get('cookies', {}).get('cookies_expiration_', {})
+        cookies_expiration = time_to_timedelta(PASSWORDS['cookies']['cookies_expiration_'])
         cookies_cached_exp = PASSWORDS.get('cookies', {}).get('cookies_exp', [])[:] or cached_file_old.get('cookies', {}).get('cookies_exp', [])[:]
         cookies_cached = [] if cached_file else cookies_cached_exp[:]
+        BTDIGG_TIMEOUT = tuple(PASSWORDS.get('cookies', {}).get('caching', {}).get('timeout', [])) or BTDIGG_TIMEOUT
 
-        if PASSWORDS.get('cookies', {}).get('cookies') and PASSWORDS.get('cookies', {}).get('btdigg_cf_clearance', {}).get('channel'):
-            btdigg_cf_clearance = config.get_setting('btdigg_cf_clearance', default='', 
-                                                     channel=PASSWORDS['cookies']['btdigg_cf_clearance']['channel'])
-            if btdigg_cf_clearance and PASSWORDS.get('cookies', {}).get('cookies'):
-                for cookie in PASSWORDS['cookies']['cookies']:
-                    if cookie.get('domain', '') == 'btdig.com' and cookie.get('name', '') == 'cf_clearance':
-                        if btdigg_cf_clearance not in str(cookies_cached_exp) and PASSWORDS['cookies']['cookies_expiration']: 
-                            PASSWORDS['cookies']['cookies_expiration'] = ''
-                        if not PASSWORDS['cookies']['cookies_expiration']:
-                            cookie['value'] = btdigg_cf_clearance
-                            PASSWORDS['cookies']['cookies_expiration'] = time.time() + cookie.get('expires', 86400)
-                        elif PASSWORDS['cookies']['cookies_expiration'] and PASSWORDS['cookies']['cookies_expiration'] > time.time():
-                            cookie['value'] = btdigg_cf_clearance
+        for cookie in PASSWORDS.get('cookies', {}).get('cookies', []):
+            if not cookie.get('channel'): continue
+            try:
+                external_cookies_str = config.get_setting('external_cookies', default='', channel=cookie['channel'])
+                if external_cookies_str:
+                    external_cookies_timestamp = config.get_setting('external_cookies_timestamp', default=0, channel=cookie['channel'])
+                    external_cookies = parse_get_setting_cookies(external_cookies_str, cookie.get('domain', ''), cookie.get('name', ''))
+                    for ext_cookie in external_cookies:
+                        if cookie.get('domain', '') == ext_cookie.get('domain', '') and cookie.get('name', '') == ext_cookie.get('name', ''):
+                            cookie.update(ext_cookie)
+
+                            if ext_cookie.get('value', '') and external_cookies_timestamp \
+                                                               + ext_cookie.get('expires', cookie.get('expires', 7200)) >= int(time.time()):
+                                updated[cookie['channel']] = True
+                                if cookie.get('expiration'):
+                                    PASSWORDS['cookies']['cookies_expiration_'].update({ext_cookie['domain']: {ext_cookie['name']: \
+                                                int(external_cookies_timestamp + ext_cookie.get('expires', cookie.get('expires', 7200)))}})
+                            else:
+                                updated[cookie['channel']] = False
+                                PASSWORDS['cookies']['cookies_expiration_'].update({ext_cookie['domain']: {ext_cookie['name']: 0}})
+                                cookie['value'] = ext_cookie['value'] = ''
+
+                            cookies_expiration = time_to_timedelta(PASSWORDS['cookies']['cookies_expiration_'])
+
                         else:
-                            PASSWORDS['cookies']['cookies_expiration'] = ''
-                            cookie['value'] = ''
-                            config.set_setting('btdigg_cf_clearance', '', channel=PASSWORDS['cookies']['btdigg_cf_clearance']['channel'])
+                            if not updated.get(cookie['channel']): updated[cookie['channel']] = False
+                            logger.error('## NO COINCIDEN: e:%s / c:%s, e:%s / c:%s / stat:%s: %s' \
+                                         % (ext_cookie.get('domain', ''), cookie.get('domain', ''), 
+                                            ext_cookie.get('name', ''), cookie.get('name', ''), 
+                                            cookie['channel'], updated.get(cookie['channel'])))
+            except Exception:
+                logger.error(traceback.format_exc())
+                external_cookies = []
+        if updated:
+            for channel, status in updated.items():
+                if not status:
+                    config.set_setting('external_cookies', '', channel=channel)
+                    config.set_setting('external_cookies_timestamp', 0, channel=channel)
 
         if PASSWORDS.get('cookies', {}).get('cookies') or PASSWORDS.get('cookies', {}).get('cookies_cached'):
-            if DEBUG: 
-                module = inspect.getmodule(inspect.currentframe().f_back.f_back).__name__
-                function = inspect.currentframe().f_back.f_back.f_code.co_name
-                logger.debug('mod/func: %s[%s]; cached_file/forced: %s/%s; alfa_btdigg_error_AGE: "%s"; cookies: %s/%s; cookies_exp: %s' % \
-                             (module, function, True if cached_file else False, FORCED, window.getProperty("alfa_btdigg_error_AGE"), 
-                              PASSWORDS.get('cookies', {}).get('cookies'), PASSWORDS.get('cookies', {}).get('cookies_cached'), 
-                              cookies_cached_exp))
+            try:
+                if DEBUG: 
+                    module = inspect.getmodule(inspect.currentframe().f_back.f_back).__name__
+                    function = inspect.currentframe().f_back.f_back.f_code.co_name
+                    logger.debug('mod/func: %s[%s]; cached_file/forced: %s/%s; Password_AGE: "%s"; cookies: %s/%s; cookies_exp: %s; exp.: %s' % \
+                                 (module, function, True if cached_file else False, FORCED, time_to_timedelta(int(alfa_cached_password_AGE)), 
+                                  PASSWORDS.get('cookies', {}).get('cookies'), PASSWORDS.get('cookies', {}).get('cookies_cached'), 
+                                  cookies_cached_exp, cookies_expiration))
 
-            cookies_cached = PASSWORDS['cookies'].pop('cookies', [])[:]
-            for x, cookie in enumerate(cookies_cached[:]):
-                if not cookie.get('value'): del cookies_cached[x]
-            if btdigg_cf_clearance: btdigg_cf_clearance = PASSWORDS['cookies'].pop('cookies_cached', [])
-            cookies_cached.extend(PASSWORDS['cookies'].pop('cookies_cached', [])[:])
-            PASSWORDS['cookies']['cookies_exp'] = cookies_cached[:]
-            if cookies_cached:
-                window.setProperty("alfa_btdigg_error_AGE", '')
-                if DEBUG: logger.debug('COOKIES: %s / %s' % (cookies_cached, PASSWORDS['cookies']))
+                cookies_cached = PASSWORDS['cookies'].pop('cookies', [])[:]
+                if external_cookies: external_cookies = PASSWORDS['cookies'].pop('cookies_cached', [])
+                cookies_cached.extend(PASSWORDS['cookies'].pop('cookies_cached', [])[:])
+                cookies_cached_bis = cookies_cached[:]
+                cookies_cached = []
+                for cookie in cookies_cached_bis:
+                    if not cookie.get('value') and str(cookie.get('clear', True)) != 'reset':
+                        continue
+                    cookies_cached.append(cookie)
+                PASSWORDS['cookies']['cookies_exp'] = cookies_cached[:]
+                if cookies_cached:
+                    if window: window.setProperty("alfa_cached_btdigg_list_AGE", "")
+                    if DEBUG: logger.debug('COOKIES: %s / %s' % (cookies_cached, PASSWORDS['cookies']))
 
-                from core import httptools
-                for cookie in cookies_cached:
-                    if str(cookie.get('clear', True)) == 'reset' and cookie.get('domain'):
-                        try:
-                            httptools.cj.clear(cookie['domain'])
-                            httptools.save_cookies()
-                        except Exception:
-                            pass
-                    else:
-                        httptools.set_cookies(cookie, clear=cookie.get('clear', True))
+                    from core import httptools
+                    for cookie in cookies_cached:
+                        if not cookie.get('domain'): continue
+                        if str(cookie.get('clear', True)) == 'reset':
+                            try:
+                                httptools.load_cookies(alfa_s=True)
+                                httptools.cj.clear(cookie['domain'])
+                                httptools.save_cookies()
+                            except Exception:
+                                pass
+                        else:
+                            httptools.set_cookies(cookie, clear=cookie.get('clear', True), alfa_s=True)
 
-        if cached_file or cookies_cached: window.setProperty("alfa_cached_passwords", jsontools.dump(PASSWORDS, **kwargs_json))
+            except Exception:
+                logger.error(traceback.format_exc())
+                PASSWORDS['cookies']['cookies'] = []
+                PASSWORDS['cookies']['cookies_cached'] = []
+
+        if window and (cached_file or (cookies_cached and cookies_cached != cookies_cached_exp)):
+            window.setProperty("alfa_cached_passwords", jsontools.dump(PASSWORDS, **kwargs_json))
+            window.setProperty("alfa_cached_password_AGE", str(time.time() + timer*60))
+        cached_file = PASSWORDS or cached_file or cached_file_old
 
     return cached_file
+
+
+def parse_get_setting_cookies(external_cookies_str, domain='', name='', value='', expires='', clear=False):
+
+    # Format: ^:|¡;domain.com:PHPSESSID¡akgdlgumm1234;_ga¡1234-HQJ|.domain.com:cf_clarance¡kldmdfh-df.dfMLl
+    external_cookies = []
+    sep1 = ':'
+    sep2 = '|'
+    sep3 = '¡'
+    sep4 = ';'
+
+    def split_cookie(dom, cookie):
+        external_cookie = {}
+
+        if dom and cookie:
+            cookie_split = cookie.split(sep4)
+            for param in cookie_split:
+                nam_val = param.split(sep3)
+                nam = name if len(nam_val) < 2 else nam_val[0]
+                val = nam_val[0] if len(nam_val) < 2 else nam_val[1]
+                external_cookie = {'domain': dom.strip(), 'name': nam.strip(), 'value': val.strip()}
+                if (expires and isinstance(expires, (int, float))) or expires is None: external_cookie['expires'] = expires
+                if clear: external_cookie['clear'] = clear
+        return external_cookie
+
+    external_cookies_str = external_cookies_str or value
+    if external_cookies_str:
+        if external_cookies_str.startswith('^'):
+            sep1 = external_cookies_str[1]
+            sep2 = external_cookies_str[2]
+            sep3 = external_cookies_str[3]
+            sep4 = external_cookies_str[4]
+            logger.info('SEPARADORES: %s / %s' % (external_cookies_str[:4], external_cookies_str[5:]))
+            external_cookies_str = external_cookies_str[5:]
+
+        if sep1 in external_cookies_str or sep2 in external_cookies_str:
+            external_cookies_domains = external_cookies_str.split(sep2)
+            for external_cookies_domain in external_cookies_domains:
+                domain_cookie = external_cookies_domain.split(sep1)
+                domain_ = domain if len(domain_cookie) < 2 else domain_cookie[0]
+                cookie = domain_cookie[0] if len(domain_cookie) < 2 else domain_cookie[1]
+                external_cookies.append(split_cookie(domain_, cookie))
+
+        elif sep3 in external_cookies_str or sep4 in external_cookies_str:
+            external_cookies.append(split_cookie(domain, external_cookies_str))
+
+        else:
+            external_cookie = {'domain': domain.strip(), 'name': name.strip(), 'value': external_cookies_str.strip()}
+            if (expires and isinstance(expires, (int, float))) or expires is None: external_cookie['expires'] = expires
+            if clear: external_cookie['clear'] = clear
+            external_cookies.append(external_cookie)
+
+    return external_cookies
+
+
+def time_to_timedelta(seconds, now=0):
+
+    if not isinstance(seconds, dict):
+        seconds_in = {'void': {'void': seconds}}
+    else:
+        seconds_in = copy.deepcopy(seconds)
+
+    index = '+'
+    now = now or int(time.time())
+
+    for domain, names in seconds_in.items():
+        for name, second in names.items():
+            remaining_time = int(second or 0)
+
+            if remaining_time < 2:
+                index = '-'
+                remaining_time = ''
+            else:
+                remaining_time = second - now
+                if remaining_time < 0:
+                    remaining_time = remaining_time*-1
+                    index = '-'
+                remaining_time = datetime.timedelta(seconds=remaining_time)
+
+            second = '%s%s' % (index, remaining_time)
+            seconds_in[domain][name] = second
+
+    return second if not isinstance(seconds, dict) else seconds_in
 
 
 def get_color_from_settings(label, default='white'):
@@ -1273,7 +1410,6 @@ def AH_post_tmdb_listado(self, item, itemlist, **AHkwargs):
 
     format_tmdb_id(item)
     format_tmdb_id(itemlist)
-    get_cached_files_('password')
 
     for item_local in itemlist:                                                 # Recorremos el Itemlist generado por el canal
         #item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
@@ -1722,7 +1858,6 @@ def AH_post_tmdb_seasons(self, item, itemlist, **AHkwargs):
     
     format_tmdb_id(item)
     format_tmdb_id(itemlist)
-    get_cached_files_('password')
     
     matches = AHkwargs.get('matches', [])
     
@@ -1766,7 +1901,6 @@ def AH_post_tmdb_episodios(self, item, itemlist, **AHkwargs):
     
     format_tmdb_id(item)
     format_tmdb_id(itemlist)
-    get_cached_files_('password')
     
     matches = AHkwargs.get('matches', [])
 
@@ -1808,7 +1942,6 @@ def AH_post_tmdb_findvideos(self, item, itemlist, **AHkwargs):
     #logger.debug(item)
     
     headers = AHkwargs.get('headers', {})
-    get_cached_files_('password')
  
     # Saber si estamos en una ventana emergente lanzada desde una viñeta del menú principal,
     # con la función "play_from_library"
@@ -2494,6 +2627,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
     if self: TEST_ON_AIR = self.TEST_ON_AIR
     DEBUG = DEBUG if not TEST_ON_AIR else False
     ASSISTANT_REMOTE = True if config.get_setting("assistant_mode").lower() == 'otro' else False
+    get_cached_files_('password')
 
     matches_inter = []
     matches_btdigg = matches[:]
@@ -2661,14 +2795,15 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                             if cookies_cached: get_cached_files_('password', FORCED=True)
                             if not set_btdigg_timer(''): x = 888888; break
                         torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, 
-                                                               use_assistant=use_assistant)
+                                                               use_assistant=use_assistant, timeout_req=BTDIGG_TIMEOUT)
                         if not torrent_params: torrent_params['find_alt_link_result'] = [{'ERROR': 'ERROR'}]
                         window.setProperty("alfa_cached_btdigg_%s_list" % contentType, str(torrent_params))
                 else:
                     if not torrent_params['find_catched'] and not set_btdigg_timer(''):
                         if cookies_cached: get_cached_files_('password', FORCED=True)
                         if not set_btdigg_timer(''): x = 888888; break
-                    torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
+                    torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, 
+                                                           use_assistant=use_assistant, timeout_req=BTDIGG_TIMEOUT)
 
                     if contentType in ['movie', 'tvshow']:
                         if torrent_params and window:
@@ -3035,7 +3170,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     titles_search_save = copy.deepcopy(titles_search)
     get_cached_files_('password', cached=True)
 
-    error_reset_time = time.time()
+    error_reset_time = function_elapsed = time.time()
     btdigg_entries = 15
     disable_cache = True
     torrent_params = {}
@@ -3053,6 +3188,21 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     self = {}
     config.set_setting('tmdb_cache_read', False)
     retries = titles_search[-1].get('error_reset', 5)
+    timeout_req = (BTDIGG_TIMEOUT[0] * 2, BTDIGG_TIMEOUT[1] * 2)
+    stat = '## %s: movies=%s/e=%s/t=%s; tvshows=%s/e=%s/t=%s; episodes=[%s]%s [qualities=%s]/e=%s/t=%s; [t=%s]'
+    counters = {
+        'cont_movies': 0,
+        'err_movies': 0,
+        'temp_movies': 0.0,
+        'cont_tvshows': 0,
+        'err_tvshows': 0,
+        'temp_tvshows': 0.0,
+        'cont_tvshows_master': 0,
+        'cont_episodes': 0,
+        'cont_episodes_qual': 0,
+        'err_episodes': 0,
+        'temp_episodes': 0.0,
+    }
 
     try:
         if False:   # Inhabilidado temporalemente
@@ -3090,6 +3240,12 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                 cached[contentType] = get_cached_files_(contentType, FORCED=True)
                 continue
 
+            if not cached[contentType]: contentType_time = time.time()
+            counters['temp_%ss' % contentType] = round((time.time() - contentType_time)/60, 2)
+            stat_l = []; stat_l.insert(0, contentType.upper()); stat_l.extend(list(counters.values()))
+            stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+            window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
+
             quality_alt = '720p 1080p 2160p 4kwebrip 4k'
             if contentType == 'movie':
                 quality_alt += ' bluray rip screener'
@@ -3118,6 +3274,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
             x = 0
             while x < limit_pages and not monitor.abortRequested():
+                if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
+                    raise Exception("CANCEL")
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
@@ -3132,19 +3290,30 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     if len(alfa_gateways) > 2:
                         use_assistant = False
                     else:
-                        window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
+                        stat_l = []; stat_l.insert(0, 'CANCEL'); stat_l.extend(list(counters.values()))
+                        stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+                        window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
                         raise Exception("CANCEL")
 
                 torrent_params_save = copy.deepcopy(torrent_params)
                 for zzz in range(retries):
-                    torrent_params = find_alternative_link(itemO, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
+                    torrent_params = find_alternative_link(itemO, torrent_params=torrent_params, cache=disable_cache, 
+                                                           use_assistant=use_assistant, timeout_req=timeout_req)
                     if torrent_params.get('find_alt_link_code', '200') == '200':
                         break
-                    logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
                     if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
+                        logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
                         break
+                    counters['err_%ss' % contentType] += 1
+                    stat_l = []; stat_l.insert(0, 'Error en BTDIGG: %s-%s' \
+                                        % (str(torrent_params.get('find_alt_link_code', '')), contentType.upper()))
+                    stat_l.extend(list(counters.values())); stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+                    window.setProperty("alfa_cached_btdigg_error", stat % tuple(stat_l))
+                    logger.error(stat % tuple(stat_l))
                     if monitor.waitForAbort(1 * 60):
                         return
+                    if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
+                        raise Exception("CANCEL")
                     if cookies_cached: get_cached_files_('password', FORCED=True, cached=True)
                     torrent_params = copy.deepcopy(torrent_params_save)
                 else:
@@ -3195,6 +3364,14 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
                     cached[contentType].append(elem.copy())
 
+                    counters['cont_%ss' % contentType] += 1
+                    counters['temp_%ss' % contentType] = round((time.time() - contentType_time)/60, 2)
+                    stat_l = []; stat_l.insert(0, contentType.upper()); stat_l.extend(list(counters.values()))
+                    stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+                    if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
+                        raise Exception("CANCEL")
+                    window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
+
                     if len(cached[contentType])> limit_items_found: 
                         x = 999999
                         break
@@ -3203,7 +3380,12 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     config.set_setting('tmdb_cache_read', True)
                     return
 
-            logger.info('## %s: %s' % (contentType.capitalize(), len(cached[contentType])))
+            if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
+                raise Exception("CANCEL")
+            stat_l = []; stat_l.insert(0, contentType.upper()); stat_l.extend(list(counters.values()))
+            stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+            window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
+            logger.info(stat % tuple(stat_l))
             if monitor.waitForAbort(1 * 60):
                 config.set_setting('tmdb_cache_read', True)
                 return
@@ -3213,6 +3395,12 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
             cached[contentType] = get_cached_files_(contentType, FORCED=True)
         if not cached[contentType] and not monitor.abortRequested():
             x = 0
+            contentType_time = time.time()
+            counters['temp_%ss' % contentType] = round((time.time() - contentType_time)/60, 2)
+            stat_l = []; stat_l.insert(0, contentType.upper()); stat_l.extend(list(counters.values()))
+            stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+            window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
+
             for t, elem_show in enumerate(cached['tvshow']):
                 if x >= 888888 and x < 999999: break
                 config.set_setting('tmdb_cache_read', False)
@@ -3297,6 +3485,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         elem_json['tmdb_id'] = item.infoLabels['tmdb_id']
                         elem_json['episode_limits'] = '%s/%s' % (episodes, item.infoLabels['temporada_num_episodios'])
                     
+                    counters['cont_tvshows_master'] += 1
                     cached[contentType][title] = elem_json.copy()
                     titles_search = search_btdigg_free_format_parse(self, item.clone(), titles_search_save, contentType)
 
@@ -3359,20 +3548,30 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 if len(alfa_gateways) > 2:
                                     use_assistant = False
                                 else:
-                                    window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
+                                    stat_l = []; stat_l.insert(0, 'CANCEL'); stat_l.extend(list(counters.values()))
+                                    stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+                                    window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
                                     raise Exception("CANCEL")
 
                             torrent_params_save = copy.deepcopy(torrent_params)
                             for zzz in range(retries*2):
                                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, 
-                                                                       cache=disable_cache, use_assistant=use_assistant)
+                                                                       cache=disable_cache, use_assistant=use_assistant, timeout_req=timeout_req)
                                 if torrent_params.get('find_alt_link_code', '200') == '200':
                                     break
-                                logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
                                 if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
+                                    logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
                                     break
-                                if monitor.waitForAbort(2 * 60):
+                                counters['err_%ss' % contentType] += 1
+                                stat_l = []; stat_l.insert(0, 'Error en BTDIGG: %s-%s' \
+                                                    % (str(torrent_params.get('find_alt_link_code', '')), contentType.upper()))
+                                stat_l.extend(list(counters.values())); stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+                                window.setProperty("alfa_cached_btdigg_error", stat % tuple(stat_l))
+                                logger.error(stat % tuple(stat_l))
+                                if monitor.waitForAbort(1 * 60):
                                     return
+                                if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
+                                    raise Exception("CANCEL")
                                 if cookies_cached: get_cached_files_('password', FORCED=True, cached=True)
                                 torrent_params = copy.deepcopy(torrent_params_save)
                             else:
@@ -3482,9 +3681,19 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     if elem_header.get('year'): del elem_header['year']
                                     cached[contentType][title]['episode_list'][sxe] = elem_header.copy()
                                     cached[contentType][title]['episode_list'][sxe]['matches_cached'] = []
+                                    counters['cont_%ss' % contentType] += 1
 
                                 cached[contentType][title]['episode_list'][sxe]['matches_cached'] += [elem_episode.copy()]
+
                                 
+                                counters['cont_%ss_qual' % contentType] += 1
+                                counters['temp_%ss' % contentType] = round((time.time() - contentType_time)/60, 2)
+                                stat_l = []; stat_l.insert(0, contentType.upper()); stat_l.extend(list(counters.values()))
+                                stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+                                if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
+                                    raise Exception("CANCEL")
+                                window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
+
                                 if y > limit_items_found: 
                                     x = 999999
                                     break
@@ -3504,7 +3713,9 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                 except Exception as e:
                     if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
                         logger.error('##### %s' % window.getProperty("alfa_cached_btdigg_stat"))
-                        window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
+                        stat_l = []; stat_l.insert(0, 'CANCEL'); stat_l.extend(list(counters.values()))
+                        stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+                        window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
                         config.set_setting('tmdb_cache_read', True)
                         return
                     logger.error(traceback.format_exc())
@@ -3519,11 +3730,17 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
         for contentType in ['movie', 'tvshow', 'episode']:
             cached_str = str(cached[contentType]) if isinstance(cached[contentType], list) else jsontools.dump(cached[contentType], **kwargs_json)
             window.setProperty("alfa_cached_btdigg_%s" % contentType, cached_str)
-        window.setProperty("alfa_cached_btdigg_stat", 'DONE' if cached['episode'] else 'EXIT')
+
+        stat_l = []; stat_l.insert(0, 'DONE' if cached['episode'] else 'EXIT'); stat_l.extend(list(counters.values()))
+        stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+        window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
+        logger.info(stat % tuple(stat_l))
 
     except Exception as e:
         logger.error(traceback.format_exc())
-        window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
+        stat_l = []; stat_l.insert(0, 'CANCEL'); stat_l.extend(list(counters.values()))
+        stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
+        window.setProperty("alfa_cached_btdigg_stat", stat % tuple(stat_l))
     config.set_setting('tmdb_cache_read', True)
     config.set_setting('btdigg_status', False, server='torrent')
     DEBUG = False
@@ -3536,6 +3753,7 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
     if self: VIDEOLIBRARY_UPDATE = self.VIDEOLIBRARY_UPDATE
     DEBUG = DEBUG if not TEST_ON_AIR else False
     ASSISTANT_REMOTE = True if config.get_setting("assistant_mode").lower() == 'otro' else False
+    get_cached_files_('password')
 
     controls = self.finds.get('controls', {})
     btdigg_search = controls.get('btdigg_search', True)
@@ -3688,7 +3906,8 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
                 if not set_btdigg_timer(''):
                     if cookies_cached: get_cached_files_('password', FORCED=True)
                     if not set_btdigg_timer(''): x = 888888; break
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, 
+                                                       use_assistant=use_assistant, timeout_req=BTDIGG_TIMEOUT)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
@@ -3700,6 +3919,7 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
                         if not set_btdigg_timer(''): x = 888888
                     else:
                         logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
+                        if window: window.setProperty("alfa_cached_btdigg_error", str(torrent_params.get('find_alt_link_code', '')))
                         if cookies_cached: get_cached_files_('password', FORCED=True)
                 if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
                     limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
@@ -3768,6 +3988,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
     if self: VIDEOLIBRARY_UPDATE = self.VIDEOLIBRARY_UPDATE
     DEBUG = DEBUG if not TEST_ON_AIR else False
     ASSISTANT_REMOTE = True if config.get_setting("assistant_mode", default="").lower() == 'otro' else False
+    get_cached_files_('password')
 
     controls = self.finds.get('controls', {})
     btdigg_search = controls.get('btdigg_search', True)
@@ -4000,7 +4221,8 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                 if not set_btdigg_timer(''):
                     if cookies_cached: get_cached_files_('password', FORCED=True)
                     if not set_btdigg_timer(''): x = 888888; break
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, 
+                                                       use_assistant=use_assistant, timeout_req=BTDIGG_TIMEOUT)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
@@ -4012,6 +4234,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                         if not set_btdigg_timer(''): x = 888888
                     else:
                         logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
+                        if window: window.setProperty("alfa_cached_btdigg_error", str(torrent_params.get('find_alt_link_code', '')))
                         if cookies_cached: get_cached_files_('password', FORCED=True)
                 #if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
                 #    limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
@@ -4123,6 +4346,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
     if self: TEST_ON_AIR = self.TEST_ON_AIR
     DEBUG = DEBUG if not TEST_ON_AIR else False
     ASSISTANT_REMOTE = True if config.get_setting("assistant_mode").lower() == 'otro' else False
+    get_cached_files_('password')
     
     controls = self.finds.get('controls', {}) if self else {}
     btdigg_search = controls.get('btdigg_search', True)
@@ -4290,7 +4514,8 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                 if not set_btdigg_timer(''):
                     if cookies_cached: get_cached_files_('password', FORCED=True)
                     if not set_btdigg_timer(''): x = 888888; break
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, 
+                                                       use_assistant=use_assistant, timeout_req=BTDIGG_TIMEOUT)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999

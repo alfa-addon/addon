@@ -660,12 +660,13 @@ def restart_error(item):
                     logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
                                     download_item.contentAction, download_item.contentChannel, download_item.downloadProgress, 
                                     download_item.downloadQueued, download_item.server, download_item.url))
-                    
+
                     if download_item.server == 'torrent':
                         if item.remote_download: download_item.remote_download = item.remote_download
                         delete_torrent_session(download_item, delete_RAR=False, action='reset')
                         download_item.downloadServer = {}
-                    
+                        download_item.torrents_path = ''
+
                     else:
                         if filetools.isfile(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename)):
                             filetools.remove(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename), silent=True)
@@ -683,6 +684,8 @@ def restart_error(item):
                     update_control(fichero,
                                 {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, \
                                             "downloadProgress": 0, "downloadQueued": download_item.downloadQueued, \
+                                            "downloadServer": download_item.downloadServer, \
+                                            "torrents_path": download_item.torrents_path, \
                                             "contentAction": contentAction}, function='restart_error')
 
     platformtools.itemlist_refresh()
@@ -703,13 +706,14 @@ def restart_all(item):
                 logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
                                     download_item.contentAction, download_item.contentChannel, download_item.downloadProgress, 
                                     download_item.downloadQueued, download_item.server, download_item.url))
-                
+
                 if download_item.server == 'torrent':
                     if download_item.downloadProgress != 0:
                         if item.remote_download: download_item.remote_download = item.remote_download
                         delete_torrent_session(download_item, delete_RAR=False, action='reset')
                     download_item.downloadServer = {}
-                
+                    download_item.torrents_path = ''
+
                 else:
                     if filetools.isfile(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename)):
                         filetools.remove(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename), silent=True)
@@ -727,6 +731,8 @@ def restart_all(item):
                 update_control(fichero,
                             {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, \
                                         "downloadProgress": 0, "downloadQueued": 0, \
+                                        "downloadServer": download_item.downloadServer, \
+                                        "torrents_path": download_item.torrents_path, \
                                         "contentAction": contentAction}, function='restart_all')
 
     platformtools.itemlist_refresh()
