@@ -19,13 +19,15 @@ list_quality_movies = []
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS
+
 forced_proxy_opt = 'ProxySSL'
+
 
 canonical = {
              'channel': 'seriesflix', 
              'host': config.get_setting("current_host", 'seriesflix', default=''), 
-             'host_alt': ["https://seriesflix.fit/"], 
-             'host_black_list': ['https://seriesflix.space/', 
+             'host_alt': ["https://seriesflix.buzz/"], 
+             'host_black_list': ['https://seriesflix.fit/', 'https://seriesflix.space/', 
                                  'https://seriesflix.pics/', 'https://seriesflix.lat/', 'https://seriesflix.video/'], 
              'status': 'Caído 31-5-2023', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
@@ -68,9 +70,11 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
-         'findvideos': dict([('find', [{'tagOR': ['div'], 'class': ['optns-bx']},
-                                       {'tag': ['ul'], 'class': ['ListOptions']}]), 
-                             ('find_all', [{'tag': ['li', 'button']}])]), 
+         'findvideos': dict([('find', [{'tag': ['div'], 'class': ['optns-bx']}]),
+                             ('find_all', [{'tag': ['li']}])]), 
+                       # dict([('find', [{'tagOR': ['div'], 'class': ['optns-bx']},
+                                       # {'tag': ['ul'], 'class': ['ListOptions']}]), 
+                             # ('find_all', [{'tag': ['li', 'button']}])]), 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real-*|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
@@ -89,10 +93,13 @@ def mainlist(item):
     logger.info()
 
     itemlist = list()
-
+    
     autoplay.init(item.channel, list_servers, list_quality)
-
-    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host + "ver-series-online/",
+    
+    itemlist.append(Item(channel=item.channel, title="FINDVIDEOS", action="findvideos", url=host + "episodio/fbi-international-zyba-1x1/",
+                         thumbnail=get_thumb("last", auto=True), c_type='series', first=0))
+    
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host + "series-online/",
                          thumbnail=get_thumb("last", auto=True), c_type='series', first=0))
 
     itemlist.append(Item(channel=item.channel, title="Productoras", action="section", url=host, 
@@ -133,7 +140,7 @@ def section(item):
         return itemlist
 
     if "Géneros" in item.extra:
-        findS['categories'] = dict([('find', [{'tag': ['div'], 'id': ['toroflix_genres_widget-2']}]), 
+        findS['categories'] = dict([('find', [{'tag': ['li'], 'class': ['menu-item-has-children']}]), 
                                     ('find_all', [{'tag': ['li']}])])
 
     elif 'Año' in item.extra:
@@ -143,7 +150,7 @@ def section(item):
         return AlfaChannel.section(item, matches_post=section_matches, finds=findS, **kwargs)
 
     elif 'Productoras' in item.extra:
-        findS['categories'] = dict([('find', [{'tag': ['li'], 'id': ['menu-item-1888']}]), 
+        findS['categories'] = dict([('find', [{'tag': ['li'], 'class': ['menu-item-583']}]), 
                                     ('find_all', [{'tag': ['li']}])])
         return AlfaChannel.section(item, postprocess=section_post, finds=findS, **kwargs)
 
@@ -302,31 +309,28 @@ def findvideos(item):
 
 def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
-
     matches = []
+    
     findS = AHkwargs.get('finds', finds)
-
-    servers = {"femax20": "fembed", "embed": "mystream", "dood": "doodstream", "server": "directo"}
-
+    
+    servers = {"femax20": "Fembed", "embed": "Mystream", "dood": "Doodstream", 
+               "waaw": "Netu", "principal": "Directo"}
+    
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-
+        
         try:
-            elem_json['url'] = "%s?trembed=%s&trid=%s&trtype=2" % (host, elem.get("data-key", ""), elem.get("data-id", ""))
-            
-            elem_json['server'] = elem.find("p", class_="AAIco-dns").text
-            if elem_json['server'].lower() in servers: elem_json['server'] = servers[elem_json['server'].lower()]
-            if elem_json['server'].lower() in ["waaw", "jetload", "player"]: continue
-            
-            if elem.find("p", class_="AAIco-language"):
-                elem_json['language'] = '*%s' % elem.find("p", class_="AAIco-language").get_text(strip=True).split(' ')[1]
-            
-            if elem.find("p", class_="AAIco-equalizer"):
-                elem_json['quality'] = '*%s' % elem.find("p", class_="AAIco-equalizer").get_text(strip=True).replace('HD ', '')
-            
-            elem_json['title'] = '%s'
-
+            elem_json['url'] = base64.b64decode(elem.div.get("data-url", "")).decode('utf-8')
+            datos = elem.div.text.replace("HD", "").split()
+            elem_json['server'] = datos[-1].lower()
+            if elem_json['server'] in servers: elem_json['server'] = servers.get(elem_json['server'])
+            if "nuuuppp" in elem_json['url']: elem_json['server'] = "Nupload"
+            if "waaw" in elem_json['url']: elem_json['server'] = "Netu"
+            elem_json['language'] = datos[1].capitalize()
+            # logger.debug(elem_json['server'] + " @@@@ " + elem_json['language'])
+            # logger.debug(elem_json['url'])
+        
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -346,31 +350,31 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-def play(item):
-    logger.info()
+# def play(item):
+    # logger.info()
 
-    itemlist = list()
-    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
-              'timeout': 5, 'cf_assistant': False, 'follow_redirects': False, 'headers': item.headers, 'canonical': {}, 
-              'CF': False, 'forced_proxy_opt': forced_proxy_opt}
+    # itemlist = list()
+    # kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
+              # 'timeout': 5, 'cf_assistant': False, 'follow_redirects': False, 'headers': item.headers, 'canonical': {}, 
+              # 'CF': False, 'forced_proxy_opt': forced_proxy_opt}
 
-    url = AlfaChannel.create_soup(item.url, **kwargs).find("div", class_="Video").iframe.get("src", "")
+    # url = AlfaChannel.create_soup(item.url, **kwargs).find("div", class_="Video").iframe.get("src", "")
 
-    if "streamcheck" in url or "//sc." in url:
-        api_url = "%sstreamcheck/r.php" % host
-        v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
-        post = {"h": v_id}
-        kwargs['soup'] = False
+    # if "streamcheck" in url or "//sc." in url:
+        # api_url = "%sstreamcheck/r.php" % host
+        # v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
+        # post = {"h": v_id}
+        # kwargs['soup'] = False
         
-        resp = AlfaChannel.create_soup(api_url, post=post, proxy_retries=-0, count_retries_tot=0, **kwargs)
+        # resp = AlfaChannel.create_soup(api_url, post=post, proxy_retries=-0, count_retries_tot=0, **kwargs)
         
-        if resp.code in AlfaChannel.REDIRECTION_CODES:
-            url = resp.headers.get('Location', '') or resp.url
+        # if resp.code in AlfaChannel.REDIRECTION_CODES:
+            # url = resp.headers.get('Location', '') or resp.url
 
-    itemlist.append(item.clone(url=url, server=""))
-    itemlist = servertools.get_servers_itemlist(itemlist)
+    # itemlist.append(item.clone(url=url, server=""))
+    # itemlist = servertools.get_servers_itemlist(itemlist)
 
-    return itemlist
+    # return itemlist
 
 
 def search(item, texto, **AHkwargs):

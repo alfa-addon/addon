@@ -30,7 +30,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     
     url = scrapertools.find_single_match(data, 'file: "([^"]+)"')
-    logger.debug(data)
     video_urls.append(["[Gamovideo] mp4", url])
     
     return video_urls
