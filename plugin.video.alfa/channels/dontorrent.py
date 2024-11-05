@@ -605,6 +605,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                         elem_json['season'], elem_json['episode'], alt_epi = \
                                 scrapertools.find_single_match(sxe, r'(?i)(\d+)x(\d+)\s*al\s*(\d+)')
                         epi_rango = True
+                    elif scrapertools.find_single_match(sxe, r'(?i)(\d+)x(\d+)\s*-\s*\d+x(\d+)'):
+                        elem_json['season'], elem_json['episode'], alt_epi = \
+                                scrapertools.find_single_match(sxe, r'(?i)(\d+)x(\d+)\s*-\s*\d+x(\d+)')
+                        epi_rango = True
                     elif scrapertools.find_single_match(sxe, r'(?i)(\d+)x(\d+)\s*-\s*(\d+)'):
                         elem_json['season'], elem_json['episode'], alt_epi = \
                                 scrapertools.find_single_match(sxe, r'(?i)(\d+)x(\d+)\s*-\s*(\d+)')

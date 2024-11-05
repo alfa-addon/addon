@@ -4190,6 +4190,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
             limit_items_found = 10 * 10
             patron_sea = r'(?i)Cap.(\d+)\d{2}'
             patron_cap = r'(?i)Cap.\d+(\d{2})'
+            patron_cap_al = r'(?i)Cap.\d+\d{2}(?:_|\s+)\d+(\d{2})'
             patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temp|\(|\[)'
             patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temp|\(|\[|\s+-)'
             patron_year = r'\(?(\d{4})\)?'
@@ -4260,6 +4261,8 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                         elem_json['episode'] = int(scrapertools.find_single_match(elem.get('title', ''), patron_cap))
                         if elem_json['episode'] > episode_max: continue
                         if elem_json['episode'] > last_episode_to_air: last_episode_to_air = episode_max
+                        episode_al = scrapertools.find_single_match(elem.get('title', ''), patron_cap_al)
+                        if episode_al: episode_al = ' al %s' % episode_al.zfill(2)
 
                         elem_json['url'] = elem.get('url', '')
                         elem_json['quality'] = elem.get('quality', '').upper().replace('P', 'p').replace('HDTV 720p', 'HDTV-720p')
@@ -4292,9 +4295,10 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                         elem_json['quality'] = '%s%s' % (elem_json['quality'], btdigg_label)
                         elem_json['size'] = elem.get('size', '').replace(btdigg_label_B, '').replace('\xa0', ' ')
                         elem_json['torrent_info'] = clean_title(elem.get('size', ''), torrent_info=True)
-                        elem_json['torrent_info'] += ' (%s %sx%s)' % (alias_in or elem['title'], elem_json['season'], elem_json['episode'])
+                        elem_json['torrent_info'] += ' (%s %sx%s%s)' % (alias_in or elem['title'], elem_json['season'], 
+                                                                        elem_json['episode'], episode_al)
                         elem_json['language'] = elem.get('language', []) or item.language
-                        elem_json['title'] = ''
+                        elem_json['title'] = episode_al.strip()
                         elem_json['server'] = 'torrent'
                         elem_json['btdig_in_use'] = True
 
@@ -4484,6 +4488,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
             limit_items_found = 10 * 10
             patron_sea = r'(?i)Cap.(\d+)\d{2}'
             patron_cap = r'(?i)Cap.\d+(\d{2})'
+            patron_cap_al = r'(?i)Cap.\d+\d{2}(?:_|\s+)\d+(\d{2})'
             patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[)'
             patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[|\s+-)'
             patron_year = r'\(?(\d{4})\)?'
@@ -4533,6 +4538,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                     #logger.error(torrent_params['find_alt_link_result'][y])
 
                     try:
+                        episode_al = ''
                         if item.contentType == 'episode':
                             if not scrapertools.find_single_match(elem.get('title', ''), patron_sea): continue
                             elem_json['season'] = int(scrapertools.find_single_match(elem.get('title', ''), patron_sea))
@@ -4540,6 +4546,8 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                             if not scrapertools.find_single_match(elem.get('title', ''), patron_cap): continue
                             elem_json['episode'] = int(scrapertools.find_single_match(elem.get('title', ''), patron_cap))
                             if elem_json['episode'] != item.contentEpisodeNumber: continue
+                            episode_al = scrapertools.find_single_match(elem.get('title', ''), patron_cap_al)
+                            if episode_al: episode_al = ' al %s' % episode_al.zfill(2)
 
                         elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem.get('title', '')), 
                                                                            '.+?'+patron_year) or '-'
@@ -4574,7 +4582,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                         elem_json['quality'] = '%s%s' % (elem_json['quality'], btdigg_label)
                         elem_json['torrent_info'] = clean_title(elem.get('size', ''), torrent_info=True).replace(btdigg_label_B, '')
                         if item.contentType == 'episode':
-                            elem_json['torrent_info'] += ' (%s %sx%s)' % (title, elem_json['season'], elem_json['episode'])
+                            elem_json['torrent_info'] += ' (%s %sx%s%s)' % (title, elem_json['season'], elem_json['episode'], episode_al)
                         else:
                             elem_json['torrent_info'] += ' (%s)' % title
                         elem_json['size'] = elem.get('size', '').replace(btdigg_label_B, '')\
