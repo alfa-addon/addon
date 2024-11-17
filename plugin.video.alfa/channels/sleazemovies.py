@@ -15,6 +15,8 @@ from bs4 import BeautifulSoup
 
 # http://www.eroti.ga/  https://www.sleazemovies.com/  https://erotiga.net/
 
+###  Solo pago ya no existe erotiga
+
 canonical = {
              'channel': 'sleazemovies', 
              'host': config.get_setting("current_host", 'sleazemovies', default=''), 

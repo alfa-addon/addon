@@ -5,6 +5,7 @@ from core import httptools
 from core import scrapertools
 from core import urlparse
 from core.item import Item
+from core import servertools
 from platformcode import config, logger
 
 canonical = {
@@ -95,12 +96,13 @@ def videos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).data
-    patron  = '(?s)<div class="wrap-box-escena">.*?'
-    patron += '<div class="box-escena">.*?'
-    patron += '<a href="([^"]+)".*?'
-    patron += 'src="([^"]+.jpg)".*?'
-    patron += '<h4><a href="[^"]+">([^<]+)</a></h4>.*?'
-    patron += '<div class="duracion">([^"]+) min</div>'
+    patron  = '<div class="wrap-box-escena">.*?'
+    # patron += '<div class="box-escena">.*?'
+    patron += '<a\s+href="([^"]+)".*?'
+    patron += '"([^"]+.jpg)".*?'
+    patron += 'alt="([^"]+)".*?'
+    # patron += '<h4><a href="[^"]+">([^<]+)<.*?'
+    patron += '<div class="duracion">([^"]+) min<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url, thumbnail, title,duration in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (duration, title)
@@ -121,18 +123,26 @@ def videos(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
-    url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
-    url = url.replace("&amp;", "&")
-    itemlist.append(Item(channel=item.channel, action="play", title="Directo", url=url, contentTitle=item.contentTitle))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
-    url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
-    url = url.replace("&amp;", "&")
-    itemlist.append(Item(channel=item.channel, action="play", url=url, contentTitle=item.contentTitle))
+    data = httptools.downloadpage(item.url).data
+    if ">Pornostars:<" in data:
+        data = scrapertools.find_single_match(data, '>Pornostars:</strong>(.*?)</p')
+        pornstars = scrapertools.find_multiple_matches(data, "'link12'\s+>([^<]+)")
+        pornstar = ' & '.join(pornstars)
+        pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+        lista = item.title.split()
+        if "HD" in item.title:
+            lista.insert (4, pornstar)
+        else:
+            lista.insert (2, pornstar)
+        item.contentTitle = ' '.join(lista)
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
