@@ -155,14 +155,14 @@ def findvideos(data, skip=False):
     for serverid in servers_list:
         '''if not is_server_enabled(serverid):
             continue'''
-        if config.get_setting("filter_servers") and config.get_setting("black_list", server=serverid):
+        if config.get_setting("filter_servers") is True and config.get_setting("black_list", server=serverid):
             is_filter_servers = True
             continue
         devuelve.extend(findvideosbyserver(data, serverid))
         if skip and len(devuelve) >= skip:
             devuelve = devuelve[:skip]
             break
-    if not config.get_setting("filter_servers"):
+    if config.get_setting("filter_servers") is False:
         is_filter_servers = False
     if not devuelve and is_filter_servers:
         platformtools.dialog_ok(config.get_localized_string(60000), config.get_localized_string(60001))
@@ -312,7 +312,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
             [premium for premium in server_parameters["premium"] if not premium == server] + [server] + ["free"]
         ]
 
-        if server_parameters["free"]:
+        if server_parameters["free"] is True:
             opciones.append("free")
         opciones.extend(
             [premium for premium in server_parameters["premium"] if config.get_setting("premium", server=premium)])
@@ -400,7 +400,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                     logger.error(traceback.format_exc())
 
             # Si ya tenemos URLS, dejamos de buscar
-            if video_urls and config.get_setting("resolve_stop"):
+            if video_urls and config.get_setting("resolve_stop") is True:
                 break
 
         # Cerramos el progreso
@@ -474,14 +474,14 @@ def is_server_enabled(server, domain=''):
     if domain:
         if not proxy_channel_bloqued:
             get_proxy_list()
-        if domain in proxy_channel_bloqued:
+        if domain in proxy_channel_bloqued and 'ProxyWeb' not in proxy_channel_bloqued[domain]:
             logger.info('Server en PROXY: %s, Dominio: %s' % (server, domain), force=True)
             return False
 
-    if server_parameters.get("active", False):
+    if server_parameters.get("active", False) is True:
         if not config.get_setting("hidepremium"):
             return True
-        elif server_parameters.get("free", False):
+        elif server_parameters.get("free", False) is True:
             return True
         elif [premium for premium in server_parameters["premium"] if config.get_setting("premium", server=premium)]:
             return True
@@ -701,7 +701,7 @@ def get_debriders_list():
     for server in filetools.listdir(filetools.join(config.get_runtime_path(), "servers", "debriders")):
         if server.endswith(".json"):
             server_parameters = get_server_parameters(server)
-            if server_parameters["active"]:
+            if server_parameters["active"] is True:
                 logger.info(server_parameters)
                 server_list[server.split(".")[0]] = server_parameters
     return server_list
@@ -762,7 +762,7 @@ def filter_servers(servers_list):
                                                                  config.get_localized_string(70281)):
             servers_list = servers_list_filter
     
-    if config.get_setting("favorites_servers"):
+    if config.get_setting("favorites_servers") is True:
         servers_list = sort_servers(servers_list)
     
     return servers_list

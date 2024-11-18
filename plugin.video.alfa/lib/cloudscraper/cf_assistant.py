@@ -43,7 +43,7 @@ def get_cl(
     mute=True,
     alfa_s=True,
     elapsed=0,
-    **kwargs,
+    **kwargs
 ):
     from lib import alfa_assistant
 
@@ -91,7 +91,7 @@ def get_cl(
             httptools_obj=httptools,
             from_get_cl=True,
             Cookie=Cookie,
-            **kwargs,
+            **kwargs
         )
 
     if timeout < 15:
@@ -332,7 +332,7 @@ def get_cl(
                     mute=mute,
                     alfa_s=False,
                     Cookie=Cookie,
-                    **kwargs,
+                    **kwargs
                 )
         elif host == "a":
             help_window.show_info("cf_2_01", wait=False)
@@ -369,7 +369,7 @@ def get_source(
     alfa_s=True,
     elapsed=0,
     httptools_obj=None,
-    **kwargs,
+    **kwargs
 ):
     from lib import alfa_assistant
 
@@ -633,7 +633,7 @@ def get_source(
                     elapsed=elapsed,
                     httptools_obj=httptools,
                     Cookie=Cookie,
-                    **kwargs,
+                    **kwargs
                 )
 
             domain_ = domain
