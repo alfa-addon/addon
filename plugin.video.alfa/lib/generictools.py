@@ -533,6 +533,8 @@ def get_cached_files_(contentType, FORCED=False, cached=False):
                     window.setProperty("alfa_cached_btdigg_%s_list" % contentType, str(cached_file))
 
     if contentType == 'password':
+        if not cached_file and not cached_file_old:
+            return cached_file
         PASSWORDS = copy.deepcopy(cached_file) or copy.deepcopy(cached_file_old)
         if not PASSWORDS.get('cookies', {}).get('cookies_expiration_'):
             PASSWORDS['cookies']['cookies_expiration_'] = cached_file_old.get('cookies', {}).get('cookies_expiration_', {})
@@ -2940,8 +2942,10 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                                     matches_index[key]['quality'] += ', %s' % quality
                                     if DEBUG: logger.info('QUALITY added: %s / %s' % (key, quality))
                                 matches_index[key]['matches_cached'].append(elem_json.copy())
-                            if elem_json['title'] not in str(matches_btdigg):
+                            if scrapertools.slugify(elem_json['title']) not in scrapertools.slugify(str(matches_btdigg)):
                                 matches_btdigg.append(elem_json_save.copy())
+                            if not matches_index[key].get('year') and elem_json['year'] != '-':
+                                matches_index[key]['year'] = elem_json['year']
                             continue
 
                         item.btdig_in_use =  True
@@ -2949,7 +2953,8 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                         matches_index.update({key: {'title': elem_json['title'], 'mediatype': elem_json['mediatype'], 'url': elem_json['url'], 
                                                     'tmdb_id': elem_json.get('tmdb_id', itemO.infoLabels['tmdb_id']), 
                                                     'season_search': elem_json.get('season_search', itemO.season_search), 
-                                                    'quality': quality, 'matches_cached': [elem_json.copy()]}})
+                                                    'quality': quality, 'matches_cached': [elem_json.copy()], 
+                                                    'year': elem_json['year'] if elem_json['year'] != '-' else ''}})
 
                     except Exception:
                         logger.error(traceback.format_exc())
@@ -3008,7 +3013,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, titl
             mediatype = elem_json['mediatype'] = elem_json.get('mediatype', '') or ('movie' if self.movie_path in elem_json['url'] else 'tvshow')
 
             if 'pelicula' in item.c_type or self.movie_path in elem_json.get('url', '') or mediatype == 'movie':
-                title = scrapertools.slugify(re.sub(r'\s*\[.*?\]', '', elem_json.get('title', '')), 
+                title = scrapertools.slugify(re.sub(r'(?i)\s*\[.*?\]|\s*\(*(?:3d|4k)\)*', '', elem_json.get('title', '')), 
                                              strict=False, convert=convert).strip().lower().replace(' ', '_')
                 elem_json['quality'] = quality = elem_json.get('quality', '').replace('*', '').replace('-', ' ').capitalize()
 
@@ -3018,10 +3023,13 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, titl
                 quality = elem_json.get('quality', '').replace('*', '') or 'HDTV'
                 if '[' in quality: quality = scrapertools.find_single_match(quality, r'\[(.*?)\]').strip() or 'HDTV'
                 if quality_control: title = '%s_%s' % (title, quality)
-            
+
             key = '%s_%s_%s' % (title, language, mediatype)
             if matches_index.get(key, {}).get('quality', []):
-                if quality not in matches_index[key]['quality'].split(', '):
+                if elem_json.get('server', '') != 'torrent' and \
+                                ('pelicula' in item.c_type or self.movie_path in elem_json.get('url', '') or mediatype == 'movie'): 
+                    matches_inter.append(elem_json.copy())
+                elif quality not in matches_index[key]['quality'].split(', '):
                     matches_index[key]['quality'] += quality if not matches_index[key]['quality'] else ', %s' % quality
                 continue
             matches_index.update({key: {'title': elem_json['title'], 'mediatype': elem_json['mediatype'], 
@@ -3111,19 +3119,29 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, titl
         if 'DUAL' in language and len(language) > 1: language.remove('DUAL')
         if 'DUAL' in language and len(language) == 1: language = ['CAST']
         mediatype = elem_json['mediatype'] = elem_json.get('mediatype', '') or ('movie' if self.movie_path in elem_json['url'] else 'tvshow')
-        title = scrapertools.slugify(re.sub(r'\s+-\s+\d+.+?$', '', elem_json.get('title', '')), 
-                                             strict=False, convert=convert).strip().lower().replace(' ', '_')
-        if mediatype != 'movie' and quality_control: title = '%s_%s' % (title, elem_json['quality'].replace('*', '').replace(btdigg_label, ''))
-        if mediatype == 'movie': elem_json['quality'].capitalize()
+        if mediatype == 'movie':
+            elem_json['quality'] = elem_json['quality'].replace('*', '').replace(btdigg_label, '').capitalize()
+            title = scrapertools.slugify(re.sub(r'(?i)\s*\[.*?\]|\s*\(*(?:3d|4k)\)*', '', elem_json.get('title', '')), 
+                                                 strict=False, convert=convert).strip().lower().replace(' ', '_')
+        else:
+            title = scrapertools.slugify(re.sub(r'\s+-\s+\d+.+?$', '', elem_json.get('title', '')), 
+                                                 strict=False, convert=convert).strip().lower().replace(' ', '_')
+            if quality_control: title = '%s_%s' % (title, elem_json['quality'].replace('*', '').replace(btdigg_label, ''))
         key = '%s_%s_%s' % (title, language, mediatype)
-        
-        if matches_index.get(key, {}).get('quality'):
-            quality = elem_json['quality'].replace('*', '').replace(btdigg_label, '').split(', ')
-            for q in quality:
-                if not q in matches_index[key]['quality'].split(', '):
-                    matches_index[key]['quality'] += ', %s' % q
 
-            elem_json['quality'] = matches_index[key]['quality']
+        if matches_index.get(key, {}).get('quality'):
+            quality = []
+            if elem_json['quality']: quality = elem_json['quality'].replace('*', '').replace(btdigg_label, '').split(', ')
+            if mediatype == 'movie' and elem_json.get('server', '') != 'torrent' and quality:
+                elem_json['quality'] += (', %s' % matches_index[key]['quality']).replace(elem_json['quality'], '').replace(', ,', ',')
+            else:
+                for q in quality:
+                    if not q in matches_index[key]['quality'].split(', '):
+                        matches_index[key]['quality'] += ', %s' % q
+                elem_json['quality'] = matches_index[key]['quality']
+
+            if matches_index.get(key, {}).get('year') and not elem_json.get('year'):
+                elem_json['year'] = matches_index[key]['year']
             if matches_index.get(key, {}).get('tmdb_id') and not elem_json.get('tmdb_id'):
                 elem_json['tmdb_id'] = matches_index[key]['tmdb_id']
             if matches_index.get(key, {}).get('season_search') and not elem_json.get('season_search'):
