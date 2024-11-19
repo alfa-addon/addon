@@ -1853,7 +1853,12 @@ def restart_unfinished_downloads():
                                     item.downloadServer['url'] = new_torrent_url
                                     item.url = new_torrent_url
 
-                            if item.server != 'torrent':
+                            if item.server == 'torrent' and item.torrents_path \
+                                                        and (not filetools.isfile(item.torrents_path) \
+                                                             or not filetools.exists(item.torrents_path)):
+                                del item.torrents_path
+
+                            if item.server != 'torrent' or (item.server == 'torrent' and not item.torrents_path):
                                 try:
                                     if isinstance(item.downloadProgress, (int, float)):
                                         item.downloadProgress += 1

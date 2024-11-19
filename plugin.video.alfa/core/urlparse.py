@@ -43,18 +43,21 @@ def parse_qs(
     strict_parsing=False,
     encoding="utf-8",
     errors="replace",
-    max_num_fields=None,
-    separator="&",
 ):
-    return _urlparse.parse_qs(
-        query_str,
-        keep_blank_values,
-        strict_parsing,
-        encoding,
-        errors,
-        max_num_fields,
-        separator,
-    )
+    if PY3:
+        return _urlparse.parse_qs(
+            query_str,
+            keep_blank_values=keep_blank_values,
+            strict_parsing=strict_parsing,
+            encoding=encoding,
+            errors=errors,
+        )
+    else:
+        return _urlparse.parse_qs(
+            query_str,
+            keep_blank_values=keep_blank_values,
+            strict_parsing=strict_parsing,
+        )
 
 
 def parse_qsl(
@@ -63,18 +66,21 @@ def parse_qsl(
     strict_parsing=False,
     encoding="utf-8",
     errors="replace",
-    max_num_fields=None,
-    separator="&",
 ):
-    return _urlparse.parse_qsl(
-        query_str,
-        keep_blank_values,
-        strict_parsing,
-        encoding,
-        errors,
-        max_num_fields,
-        separator,
-    )
+    if PY3:
+        return _urlparse.parse_qsl(
+            query_str,
+            keep_blank_values=keep_blank_values,
+            strict_parsing=strict_parsing,
+            encoding=encoding,
+            errors=errors,
+        )
+    else:
+        return _urlparse.parse_qsl(
+            query_str,
+            keep_blank_values=keep_blank_values,
+            strict_parsing=strict_parsing,
+        )
 
 
 def quote(string, safe="", encoding=None, errors=None):
@@ -92,11 +98,17 @@ def quote_plus(string, safe="", encoding=None, errors=None):
 
 
 def unquote(string, encoding="utf-8", errors="replace"):
-    return _urllib.unquote(string, encoding, errors)
+    if PY3:
+        return _urllib.unquote(string, encoding, errors)
+    else:
+        return _urllib.unquote(string)
 
 
 def unquote_plus(string, encoding="utf-8", errors="replace"):
-    return _urllib.unquote_plus(string, encoding, errors)
+    if PY3:
+        return _urllib.unquote_plus(string, encoding, errors)
+    else:
+        return _urllib.unquote_plus(string)
 
 
 def urlunparse(components):

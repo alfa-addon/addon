@@ -751,6 +751,16 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                     # ... si tampoco existe 'cb_validate_config'...
                     for v in self.values:
                         config.set_setting(v, self.values[v], **self.kwargs)
+                        if v == 'external_cookies':
+                            try:
+                                import time
+                                external_cookies_timestamp = int(time.time()) if self.values[v] else 0
+                                config.set_setting('external_cookies_timestamp', external_cookies_timestamp, **self.kwargs)
+                                window = xbmcgui.Window(10000)
+                                window.setProperty("alfa_cached_passwords", "")
+                            except Exception:
+                                import traceback
+                                logger.error(traceback.format_exc())
 
         # Controles de ajustes, si se cambia el valor de un ajuste, cambiamos el valor guardado en el diccionario de
         # valores

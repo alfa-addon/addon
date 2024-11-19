@@ -1901,7 +1901,6 @@ def is_playing():
 
 def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info()
-    from core import httptools
     # logger.debug(item.tostring('\n'))
     # logger.debug('item play: %s' % item)
 

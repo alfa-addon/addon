@@ -26,8 +26,9 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'pelitorrent', 
              'host': config.get_setting("current_host", 'pelitorrent', default=''), 
-             'host_alt': ["https://www.pelitorrent.com/"], 
-             'host_black_list': ["https://pelitorrent.com/", "https://pelitorrent.xyz/", "https://www.pelitorrent.com/"], 
+             'host_alt': ["https://www.torrenflix.com/"], 
+             'host_black_list': ["https://www.pelitorrent.com/", 
+                                 "https://pelitorrent.com/", "https://pelitorrent.xyz/", "https://www.pelitorrent.com/"], 
              'pattern': "<link\s*rel='stylesheet'\s*id='menu-icons-extra-css'\s*href='([^']+)'", 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -214,7 +215,7 @@ def section(item):
         for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
                       'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
 
-            itemlist.append(item.clone(action="list_all", title=letra, url=item.url + 'letters/%s/' % letra))
+            itemlist.append(item.clone(action="list_all", title=letra, url=item.url + 'letter/%s/' % letra))
 
         return itemlist
 

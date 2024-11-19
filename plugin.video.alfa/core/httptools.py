@@ -276,6 +276,9 @@ def set_cookies(dict_cookie, clear=True, alfa_s=False):
     secure = dict_cookie.get("secure", False)
     domain_initial_dot = dict_cookie.get("domain_initial_dot", False)
 
+    # Refrescamos las cookies
+    load_cookies(alfa_s=alfa_s)
+
     # Borramos las cookies ya existentes en dicho dominio (cp)
     if clear:
         try:
@@ -1860,8 +1863,9 @@ def downloadpage(url, **opt):
                     else 1
                 )
                 if ssl_version and ssl:
-                    if ssl_context == ssl.PROTOCOL_TLS_CLIENT:
-                        opt["set_tls"] = ssl.PROTOCOL_TLSv1_2
+                    if PY3:
+                        if ssl_context == ssl.PROTOCOL_TLS_CLIENT:
+                            opt["set_tls"] = ssl.PROTOCOL_TLSv1_2
                     if ssl_context == ssl.PROTOCOL_TLSv1_2:
                         opt["set_tls"] = ssl.PROTOCOL_TLSv1_1
                     if ssl_context == ssl.PROTOCOL_TLSv1_1:
@@ -2210,14 +2214,14 @@ def show_infobox(info_dict, force=False):
     from textwrap import wrap
 
     box_items_kodi = {
-        "r_up_corner": "\u250c",
-        "l_up_corner": "\u2510",
-        "center": "\u2502",
-        "r_center": "\u251c",
-        "l_center": "\u2524",
-        "fill": "\u2500",
-        "r_dn_corner": "\u2514",
-        "l_dn_corner": "\u2518",
+        "r_up_corner": u"\u250c",
+        "l_up_corner": u"\u2510",
+        "center": u"\u2502",
+        "r_center": u"\u251c",
+        "l_center": u"\u2524",
+        "fill": u"\u2500",
+        "r_dn_corner": u"\u2514",
+        "l_dn_corner": u"\u2518",
     }
 
     box_items = {

@@ -50,8 +50,6 @@ def mainlist(item):
                     thumbnail=thumbnail)
         set_category_context(new_item)
         itemlist.append(new_item)
-    itemlist.append(Item(channel="news", title="Configuración", action="news_setting",
-                         thumbnail=get_thumb("setting_0.png")))
     help_window.show_info("news")
     return itemlist
 

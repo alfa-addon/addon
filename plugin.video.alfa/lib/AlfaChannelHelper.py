@@ -208,7 +208,8 @@ class AlfaChannelHelper:
         :return: objeto soup o response sino soup
         """
         global DEBUG
-        from lib.generictools import js2py_conversion, check_blocked_IP
+        from lib.generictools import js2py_conversion, check_blocked_IP, get_cached_files_
+        get_cached_files_('password')
 
         if "soup" not in kwargs: kwargs["soup"] = True
         json = kwargs.pop("json", False)
@@ -524,13 +525,13 @@ class AlfaChannelHelper:
         
         return urlparse(url, scheme=scheme, allow_fragments=allow_fragments)
 
-    def parse_qs(self, url, keep_blank_values=False, strict_parsing=False, max_num_fields=None):
+    def parse_qs(self, url, keep_blank_values=False, strict_parsing=False, encoding="utf-8", errors="replace", max_num_fields=None):
         if PY3:
             from urllib.parse import parse_qs
+            return parse_qs(url, keep_blank_values, strict_parsing, encoding, errors, max_num_fields)
         else:
             from urlparse import parse_qs
-        
-        return parse_qs(url, keep_blank_values=keep_blank_values, strict_parsing=strict_parsing, max_num_fields=max_num_fields)
+            return parse_qs(url, keep_blank_values, strict_parsing)
 
     def obtain_domain(self, url, sub=False, point=False, scheme=False):
 
@@ -1844,7 +1845,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                             new_item.matches.append(elem.get('matches', []) or elem.copy())
 
                     # Busca alias a los títulos para mejora TMDB
-                    if generictools: check_alternative_tmdb_id(new_item, tmdb_check=False)
+                    check_alternative_tmdb_id(new_item, tmdb_check=False)
 
                     # Ahora se filtra por idioma, si procede, y se pinta lo que vale
                     if self.filter_languages > 0 and self.list_language and not BTDIGG_URL_SEARCH in new_item.url \

@@ -660,12 +660,13 @@ def restart_error(item):
                     logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
                                     download_item.contentAction, download_item.contentChannel, download_item.downloadProgress, 
                                     download_item.downloadQueued, download_item.server, download_item.url))
-                    
+
                     if download_item.server == 'torrent':
                         if item.remote_download: download_item.remote_download = item.remote_download
                         delete_torrent_session(download_item, delete_RAR=False, action='reset')
                         download_item.downloadServer = {}
-                    
+                        download_item.torrents_path = ''
+
                     else:
                         if filetools.isfile(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename)):
                             filetools.remove(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename), silent=True)
@@ -683,6 +684,8 @@ def restart_error(item):
                     update_control(fichero,
                                 {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, \
                                             "downloadProgress": 0, "downloadQueued": download_item.downloadQueued, \
+                                            "downloadServer": download_item.downloadServer, \
+                                            "torrents_path": download_item.torrents_path, \
                                             "contentAction": contentAction}, function='restart_error')
 
     platformtools.itemlist_refresh()
@@ -703,13 +706,14 @@ def restart_all(item):
                 logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
                                     download_item.contentAction, download_item.contentChannel, download_item.downloadProgress, 
                                     download_item.downloadQueued, download_item.server, download_item.url))
-                
+
                 if download_item.server == 'torrent':
                     if download_item.downloadProgress != 0:
                         if item.remote_download: download_item.remote_download = item.remote_download
                         delete_torrent_session(download_item, delete_RAR=False, action='reset')
                     download_item.downloadServer = {}
-                
+                    download_item.torrents_path = ''
+
                 else:
                     if filetools.isfile(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename)):
                         filetools.remove(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename), silent=True)
@@ -727,6 +731,8 @@ def restart_all(item):
                 update_control(fichero,
                             {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, \
                                         "downloadProgress": 0, "downloadQueued": 0, \
+                                        "downloadServer": download_item.downloadServer, \
+                                        "torrents_path": download_item.torrents_path, \
                                         "contentAction": contentAction}, function='restart_all')
 
     platformtools.itemlist_refresh()
@@ -1912,8 +1918,9 @@ def start_download(item):
         DOWNLOAD_PATH = item.downloadAt
 
     # Antes de descargar verificamos si el .torrent es accesible
-    if item.contentAction == "play" and item.server == 'torrent' and not item.url.startswith('magnet') \
-                                    and (item.contentChannel not in blocked_channels or not torrent_params['lookup']):
+    if (item.contentAction == "play" or item.from_action == "play") \
+                                     and item.server == 'torrent' and not item.url.startswith('magnet') \
+                                     and (item.contentChannel not in blocked_channels or not torrent_params['lookup']):
         from lib.generictools import get_torrent_size
         headers = {}
         if item.url.startswith('/') or item.url.startswith('\\'):
@@ -1946,7 +1953,7 @@ def start_download(item):
             return ret["downloadStatus"]
 
     # Ya tenemnos server, solo falta descargar
-    if item.contentAction == "play":
+    if item.contentAction == "play" or item.from_action == "play":
         ret = download_from_server(item)
         update_control(item.path, ret, function='end_download_from_server_play')
         return ret["downloadStatus"]
