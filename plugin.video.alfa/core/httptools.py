@@ -550,8 +550,8 @@ def proxy_post_processing(url, proxy_data, response, **opt):
     data = ""
     if response["data"]:
         data = response["data"][:500]
-        if PY3 and isinstance(data, bytes):
-            data = "".join(chr(x) for x in bytes(data))
+        if isinstance(data, bytes):
+            data = data.decode()
 
     try:
         if response["code"] in NOT_FOUND_CODES:
@@ -1866,8 +1866,8 @@ def downloadpage(url, **opt):
                     if PY3:
                         if ssl_context == ssl.PROTOCOL_TLS_CLIENT:
                             opt["set_tls"] = ssl.PROTOCOL_TLSv1_2
-                        if ssl_context == ssl.PROTOCOL_TLSv1_2:
-                            opt["set_tls"] = ssl.PROTOCOL_TLSv1_1
+                    if ssl_context == ssl.PROTOCOL_TLSv1_2:
+                        opt["set_tls"] = ssl.PROTOCOL_TLSv1_1
                     if ssl_context == ssl.PROTOCOL_TLSv1_1:
                         opt["set_tls"] = False
                 if opt["retries_cloudflare"] > 0:
