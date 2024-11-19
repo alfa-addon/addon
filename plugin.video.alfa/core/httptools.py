@@ -276,6 +276,9 @@ def set_cookies(dict_cookie, clear=True, alfa_s=False):
     secure = dict_cookie.get("secure", False)
     domain_initial_dot = dict_cookie.get("domain_initial_dot", False)
 
+    # Refrescamos las cookies
+    load_cookies(alfa_s=alfa_s)
+
     # Borramos las cookies ya existentes en dicho dominio (cp)
     if clear:
         try:

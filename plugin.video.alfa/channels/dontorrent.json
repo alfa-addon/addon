@@ -84,9 +84,9 @@
       "visible": "!eq(-1,false)"
     },
     {
-      "id": "btdigg_cf_clearance",
+      "id": "external_cookies",
       "type": "text",
-      "label": "¿Introduzca el valor *cf_clearance* de la Cookie de BTDigg?",
+      "label": "¿Introduce el valor *cf_clearance* de la Cookie de BTDigg?",
       "default": "",
       "enabled": true,
       "visible": "!eq(-2,false)"
