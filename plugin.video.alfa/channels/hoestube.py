@@ -22,6 +22,8 @@ list_servers = AlfaChannelHelper.LIST_SERVERS_A
 
 forced_proxy_opt = 'ProxySSL'
 
+###  FALLA KTP por meter todo el tema de agent y REFERER  FALLAN LOS TEST
+
 canonical = {
              'channel': 'hoestube', 
              'host': config.get_setting("current_host", 'hoestube', default=''), 

@@ -19,6 +19,7 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES_A
 list_quality_tvshow = []
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
+
 forced_proxy_opt = 'ProxySSL'
 
 canonical = {
@@ -52,7 +53,7 @@ finds = {'find': {'find_all': [{'tag': ['li'], 'id': re.compile(r"^(?:browse_|ps
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
-         'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'}, 
+         'controls': {'url_base64': False, 'cnt_tot': 32, 'reverse': False, 'profile': 'default'}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
                                      idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -178,7 +179,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                                      or elem.img.get('data-src', '') \
                                      or elem.img.get('src', '')
             elem_json['stime'] = elem.find(class_='duration').get_text(strip=True) if elem.find(class_='duration') else ''
-            elem_json['quality'] = elem.find('span', class_=['hd-thumbnail', 'is-hd', 'video_quality']).get_text(strip=True)
+            elem_json['quality'] = elem.find('span', class_=['hd-thumbnail', 'is-hd', 'video_quality']).get_text(strip=True) if elem.find('span', class_=['hd-thumbnail', 'is-hd', 'video_quality']) else ''
             elem_json['stime'] = elem_json['stime'].replace(elem_json['quality'], '')
             elem_json['premium'] = elem.find('i', class_='premiumIcon') \
                                      or elem.find('span', class_=['ico-private', 'premium-video-icon']) or ''

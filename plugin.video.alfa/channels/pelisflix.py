@@ -1,14 +1,22 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
 import re
 
 from modules import autoplay
 from platformcode import config, logger, platformtools
 from core.item import Item
-from core import httptools, scrapertools, tmdb
+from core import httptools, scrapertools, jsontools, tmdb
 from core import servertools, channeltools
-from core import urlparse
+from modules import filtertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
@@ -20,11 +28,15 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = list(SERVER.values())
 
+
 canonical = {
              'channel': 'pelisflix', 
              'host': config.get_setting("current_host", 'pelisflix', default=''), 
-             'host_alt': ["https://pelisflixtv.lat/"], 
-             'host_black_list': ['https://pelisflix.town/', 'https://pelisflix.food/', 
+             'host_alt': ["https://pelisflixhd.fit/"], 
+             'host_black_list': ['https://pelisflixhd.click/', 'https://pelisflixhd.buzz/', 'https://pelisflixhd.biz/',
+                                 'https://pelisflixhd.cam/', 'https://pelisflixhd.fun/', 'https://pelisflixhd.net/', 
+                                 'https://pelisflixhd.vip/', 'https://pelisflixhd.com/', 'https://pelisflixhd.pro/', 
+                                 'https://pelisflixtv.lat/', 'https://pelisflix.town/', 'https://pelisflix.food/', 
                                  'https://pelisflix.works/', 'https://pelisflix.loan/', 'https://pelisflix.casa/',
                                  'https://pelisflix.show/', 'https://pelisflix.zone/', 'https://pelisflix.host/', 
                                  'https://pelisflix.codes/', 'https://pelisflix.mom/', 'https://pelisflix.tools/', 
@@ -48,6 +60,8 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
+    itemlist.append(item.clone(title="FINDVIDEOS" , action="findvideos", url= host + "pelicula1/sie-sagt-er-sagt/", thumbnail=get_thumb("movies", auto=True)))
+    
     itemlist.append(item.clone(title="Estrenos" , action="lista", url= host + "genero/estrenos/", thumbnail=get_thumb("premieres", auto=True)))
     itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "peliculas-online/", thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(item.clone(title="Series", action="lista", url= host + "series-online/", thumbnail=get_thumb("tvshows", auto=True)))
@@ -65,6 +79,8 @@ def mainlist(item):
 
 
 def configuracion(item):
+    from platformcode import platformtools
+    
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
     
@@ -96,7 +112,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except Exception:
+    except:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -131,9 +147,9 @@ def categorias(item):
     for elem in matches:
         url = elem.a["href"]
         title = elem.a.text
-        if "/estrenos/" not in url: 
+        if not "/estrenos/" in url: 
             itemlist.append(item.clone(action="lista", url=url, title=title))
-    if "Genero" not in item.title:
+    if not "Genero" in item.title:
         itemlist.append(item.clone(action="lista", url="%sgenero/dc-comics/" % host, title="DC"))
         itemlist.append(item.clone(action="lista", url="%sgenero/marvel/" % host, title="MARVEL"))
     
@@ -212,7 +228,6 @@ def lista(item):
     soup = create_soup(item.url, referer=host)
     matches = soup.find_all("li", class_=re.compile(r"^post-\d+"))
     for elem in matches:
-        logger.debug(elem)
         url = elem.a['href']
         title = elem.h2.text.strip()
         thumbnail = elem.figure.img['data-src']
@@ -256,7 +271,6 @@ def lista(item):
                 a -= 1
 
     next_page = soup.find('a', class_='current')
-    logger.debug(next_page)
     if next_page and next_page.find_next_sibling("a"):
         next_page = next_page.find_next_sibling("a")['href']
         next_page = urlparse.urljoin(item.url,next_page)
@@ -329,7 +343,7 @@ def episodios(item):
     return itemlist
 
 
-def findvideos(item):         
+def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, ignore_response_code=ignore_response_code).data
@@ -344,65 +358,46 @@ def findvideos(item):
     return itemlist
 
 
-def play(item):
-    logger.info()
-    logger.debug("ITEM: %s" % item)
+# def play(item):
+    # logger.info()
+    # logger.debug("ITEM: %s" % item)
     
-    itemlist = []
+    # itemlist = []
 
-    if "pelisflix" in item.url:
-        url = create_soup(item.url).find(class_='Video').iframe['src']
-    else:
-        url = item.url
+    # if "pelisflix" in item.url:
+        # url = create_soup(item.url).find(class_='Video').iframe['src']
+    # else:
+        # url = item.url
     
-    if "index.php?h=" in url:
-        id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
-        post_url= "%sstream/r.php" % host
-        post = {'h' : id}
-        url = httptools.downloadpage(post_url, post=post, ignore_response_code=ignore_response_code, 
-                                     follow_redirects=False).headers.get('location', '')
+    # if "index.php?h=" in url:
+        # id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
+        # post_url= "%sstream/r.php" % host
+        # post = {'h' : id}
+        # url = httptools.downloadpage(post_url, post=post, ignore_response_code=ignore_response_code, 
+                                     # follow_redirects=False).headers.get('location', '')
     
-    if "vip/?url=" in url:
-        url = create_soup(url).iframe['src'].replace("embed.html#", "details.php?v=")
-        data = httptools.downloadpage(url, ignore_response_code=ignore_response_code).json
-        url = data['file']
+    # if "vip/?url=" in url:
+        # url = create_soup(url).iframe['src'].replace("embed.html#", "details.php?v=")
+        # data = httptools.downloadpage(url, ignore_response_code=ignore_response_code).json
+        # url = data['file']
     
-    if "byegoto" in url:
-        id = scrapertools.find_single_match(url, '=([^"]+)')
-        url = "%sbyegoto/rd.php" % host
-        post = {'url': id}
-        url = httptools.downloadpage(url, ignore_response_code=ignore_response_code, post=post).url
+    # if "byegoto" in url:
+        # id = scrapertools.find_single_match(url, '=([^"]+)')
+        # url = "%sbyegoto/rd.php" % host
+        # post = {'url': id}
+        # url = httptools.downloadpage(url, ignore_response_code=ignore_response_code, post=post).url
     
-    if "nuuuppp" in url:
-        # server = scrapertools.get_domain_from_url(url)
-        # headers={"referer": server, 'Cookie':  'adturaz=1'}
+    # if "nuuuppp" in url:
+       
         
-        # ("POST", "https://ap.nupload.me/", 
-        # post = "ty=" + ty + "&session=" + sesz + "&t=" + t + "&p=" + p + "&x=" + x + "&z=" + zl
-        # server = "https://nuuuppp.bio/"
-        # headers={"referer": server, "Content-type": "application/x-www-form-urlencoded"}
-        # url += "?h="
+        # server = "https://nuuuppp.pro/"
+        # headers={"referer": server}
         # data = httptools.downloadpage(url, headers=headers).data
-        # logger.debug(data)
-        # ty = scrapertools.find_single_match(data, 'ty=0')
         # id = scrapertools.find_single_match(data, 'sesz="([^"]+)"')
-        # t = scrapertools.find_single_match(data, 't="([^"]+)"')
-        # p = scrapertools.find_single_match(data, 'p=([^,]+)')
-        # x = scrapertools.find_single_match(data, 'x="([^"]+)"')
-        # z = scrapertools.find_single_match(data, 'z=0')
-        # url = "https://ap.nupload.me/?ty=%s&session=%s&t=%s&p=%s&x=%s&z=%s"  %(ty,id,t,p,x,z)
-        # url = "https://ap.nupload.me/?ty=1&session=%s&t=0&p=0&x=%s&z=0"  %(id,x)
-        
-        
-        server = "https://nuuuppp.pro/"
-        headers={"referer": server}
-        data = httptools.downloadpage(url, headers=headers).data
-        id = scrapertools.find_single_match(data, 'sesz="([^"]+)"')
-        # url = "https://sv3.nupload.site/?s=%s" % id
-        url = "https://sv2.nupload.site/?s=%s" % id
-        # url = httptools.downloadpage(url, headers=headers, follow_redirect=False).headers.get("location")
-        url = httptools.downloadpage(url, headers=headers).url
-        url += "|Referer=%s" % server
+        # url = "https://sv4.nupload.site/?s=%s" % id
+        # url = httptools.downloadpage(url, headers=headers).url
+        # url += "|Referer=%s" % server
+        # url += "|Origin=https://nuuuppp.pro"
     
     # if "mega1080p" in url:
         # from lib import jsunpack
@@ -421,10 +416,7 @@ def play(item):
         # for url in matches:
             # itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play", language=lang))
         # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
+    # itemlist.append(['m3u', url])
     
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    
-    return itemlist
+    # return itemlist
 

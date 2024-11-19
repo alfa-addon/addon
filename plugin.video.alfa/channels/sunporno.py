@@ -66,7 +66,7 @@ def categorias(item):
             title = elem.img['alt']
         if elem.img.get("src", ""):
             thumbnail = elem.img['src']
-        else:
+        if "px_4_3.png" in thumbnail:
             thumbnail = elem.img['data-src']
         cantidad = elem.find('p', class_='videos')
         if cantidad:
@@ -115,7 +115,7 @@ def lista(item):
         title = elem.find('span', class_='video-title').text.strip()
         if elem.img.get("src", ""):
             thumbnail = elem.img['src']
-        else:
+        if "px_4_3.png" in thumbnail:
             thumbnail = elem.img['data-src']
         if "/pornstars/" in item.url:
             time = elem.find('span', class_='dur').text.strip()

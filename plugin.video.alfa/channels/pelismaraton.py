@@ -34,6 +34,9 @@ list_servers = [
     'upstream'
     ]
 
+
+##    YA TODO es   https://embed69.org/ y falta DEsencriptar
+
 canonical = {
              'channel': 'pelismaraton', 
              'host': config.get_setting("current_host", 'pelismaraton', default=''), 
@@ -255,6 +258,13 @@ def findvideos(item):
     url = create_soup(item.url).find('div', class_='Video').iframe['src']
     url = create_soup(url).find('div', class_='Video').iframe['src']
     data = httptools.downloadpage(url).data
+    
+                ##############################################
+                #       LAS PELICULAS SON embed69.org        #
+                #    FALTA DESENCRIPTAR url = vid['link']    #
+                ##############################################
+    
+    # https://pelismaraton.nu/?trembed=0&trid=116671&trtype=1  >>>  https://embed69.org/f/tt32313870/
     if "dataLink" in data:
         data = scrapertools.find_single_match(data, "const dataLink = (.*?);")
         JSONData = json.load(data)
@@ -267,7 +277,8 @@ def findvideos(item):
                 url = vid['link']
                 # IDIOMAS.get(lang.lower(), lang)
                 itemlist.append(Item(channel=item.channel, action='play', url=url, server=server,
-                                     language=IDIOMAS.get(lang.lower(), lang), infoLabels=item.infoLabels))
+                                     language=lang, infoLabels=item.infoLabels))
+    # https://pelismaraton.nu/?trembed=0&trid=116357&trtype=2  >>>  https://xupalace.org/video/tt0115378-1x01/  
     else:
         IDIOMAS = {'0': 'LAT', '1': 'CAST', '2': 'VOSE'}
         SERVER = {'dood': 'Doodstream', 'vidhide': 'Vidhidepro', 'vox': 'Voe', 'stape': 'Streamtape',

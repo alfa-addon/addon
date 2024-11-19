@@ -18,7 +18,7 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    url = scrapertools.find_single_match(data, '"format":"mp4","videoUrl":"([^"]+)"').replace("\/", "/")
+    url = scrapertools.find_single_match(data, '"format":"mp4","remote":true,"videoUrl":"([^"]+)"').replace("\/", "/")
     data = httptools.downloadpage(url).json
     for elem in data:
         quality = elem['quality']

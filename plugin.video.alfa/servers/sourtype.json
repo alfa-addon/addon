@@ -128,6 +128,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://www.serviporno.com/video/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)bustybus.com/video\\?play=[0-9]+)",
         "url": "\\1"
       }
