@@ -1143,7 +1143,7 @@ def detalles(item):
         data = httptools.downloadpage(
             urlparse.urljoin(host_imdb, "title/%s/" % item.infoLabels["imdb_id"]),
             headers=headers,
-            **kwargs,
+            **kwargs
         ).data
 
         pics = scrapertools.find_single_match(
@@ -3382,7 +3382,7 @@ def login_fa():
                 host_filmaffinity, "%s/account.ajax.php?action=login" % langf
             ),
             post=post,
-            **kwargs,
+            **kwargs
         ).data
 
         if "Invalid username" in data:
@@ -3396,7 +3396,7 @@ def login_fa():
                     host_filmaffinity, "%s/tpl.ajax.php?action=getTemplate" % langf
                 ),
                 post=post,
-                **kwargs,
+                **kwargs
             ).data
             userid = scrapertools.find_single_match(data, "id-user=(\d+)")
             if userid:
@@ -3636,7 +3636,7 @@ def callback_voto(item, values):
         httptools.downloadpage(
             urlparse.urljoin(host_filmaffinity, "%s/ratingajax.php" % langf),
             post=post,
-            **kwargs,
+            **kwargs
         ).data
     )
 
@@ -5838,7 +5838,7 @@ def login_mal(from_list=False):
         response = httptools.downloadpage(
             urlparse.urljoin(host_mal, "logout.php"),
             post="csrf_token=%s" % token,
-            **kwargs,
+            **kwargs
         )
 
         post = (
@@ -5849,7 +5849,7 @@ def login_mal(from_list=False):
             urlparse.urljoin(host_mal, "login.php?from=%2F"),
             post=post,
             referer=urlparse.urljoin(host_mal, "login.php?from=%2F"),
-            **kwargs,
+            **kwargs
         )
 
         if not re.search(r"(?i)" + user, response.data):
@@ -6172,7 +6172,7 @@ def play(item):
             data_music = jsontools.load(
                 httptools.downloadpage(
                     "https://www.musicaanime.org/scripts/resources/artists1.php",
-                    **kwargs,
+                    **kwargs
                 ).data
             )
             for child in data_music["data"]:
