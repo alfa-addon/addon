@@ -165,7 +165,7 @@ def mainlist(item):
                         unify.set_color(i.contentSerieName, "tvshow"),
                         unify.set_color(year, "year"),
                         unify.format_rating(i.infoLabels["rating"]),
-                        unify.set_color(i.contentChannel.capitalize(), "channel"),
+                        unify.set_color(i.contentChannel.capitalize(), "channel")
                     )
                     if i_bis.infoLabels["season"]:
                         del i_bis.infoLabels["season"]
@@ -225,7 +225,7 @@ def mainlist(item):
                         unify.set_color(s.contentSerieName, "tvshow"),
                         unify.set_color(year, "year"),
                         unify.format_rating(s.infoLabels["rating"]),
-                        unify.set_color(s.contentChannel.capitalize(), "channel"),
+                        unify.set_color(s.contentChannel.capitalize(), "channel")
                     )
 
             # Peliculas
@@ -242,7 +242,7 @@ def mainlist(item):
                     ),
                     unify.set_color(year, "year"),
                     unify.format_rating(i.infoLabels["rating"]),
-                    unify.set_color(i.contentChannel.capitalize(), "channel"),
+                    unify.set_color(i.contentChannel.capitalize(), "channel")
                 )
                 if remote_download:
                     i.remote_download = remote_download
@@ -269,7 +269,7 @@ def mainlist(item):
                     ),
                     unify.set_color(year, "year"),
                     unify.format_rating(i.infoLabels["rating"]),
-                    unify.set_color(i.contentChannel.capitalize(), "channel"),
+                    unify.set_color(i.contentChannel.capitalize(), "channel")
                 )
                 if remote_download:
                     i.remote_download = remote_download
@@ -278,7 +278,7 @@ def mainlist(item):
                         quality=i.quality,
                         plot=unify.add_info_plot(
                             i.plot, i.language, i.quality, "", "", i.contentSerieName, i
-                        ),
+                        )
                     )
                 )
 
@@ -299,7 +299,7 @@ def mainlist(item):
                 contentSerieName=item.contentSerieName,
                 remote_download=remote_download,
                 text_color="sandybrown",
-            ),
+            )
         )
 
     # Si hay alguno con error
@@ -316,7 +316,7 @@ def mainlist(item):
                 contentSerieName=item.contentSerieName,
                 remote_download=remote_download,
                 text_color="orange",
-            ),
+            )
         )
 
     # Reiniciar todos
@@ -333,7 +333,7 @@ def mainlist(item):
                 contentSerieName=item.contentSerieName,
                 remote_download=remote_download,
                 text_color="orange",
-            ),
+            )
         )
 
     # Pausar todos
@@ -350,7 +350,7 @@ def mainlist(item):
                 contentSerieName=item.contentSerieName,
                 remote_download=remote_download,
                 text_color="orange",
-            ),
+            )
         )
 
     # Si hay alguno pendiente
@@ -373,7 +373,7 @@ def mainlist(item):
                 contentSerieName=item.contentSerieName,
                 remote_download=remote_download,
                 text_color="limegreen",
-            ),
+            )
         )
 
     if len(itemlist):
@@ -389,7 +389,7 @@ def mainlist(item):
                 contentSerieName=item.contentSerieName,
                 remote_download=remote_download,
                 text_color="red",
-            ),
+            )
         )
 
     if remote_download_dict and HOST == "Local":
@@ -402,7 +402,7 @@ def mainlist(item):
                     % remote_domain.capitalize(),
                     thumbnail=get_thumb("on_the_air.png"),
                     remote_download={remote_domain: params},
-                ),
+                )
             )
 
     if (
@@ -419,7 +419,7 @@ def mainlist(item):
                 thumbnail=get_thumb("search.png"),
                 url=DOWNLOAD_PATH,
                 remote_download=remote_download,
-            ),
+            )
         )
 
     return itemlist
@@ -624,7 +624,7 @@ def browser(item):
                         title = "%s [%sx%s]" % (
                             download_item.infoLabels["tvshowtitle"],
                             download_item.infoLabels["season"],
-                            str(download_item.infoLabels["episode"]).zfill(2),
+                            str(download_item.infoLabels["episode"]).zfill(2)
                         )
                     if not title:
                         title = scrapertools.find_single_match(
@@ -654,7 +654,7 @@ def browser(item):
                         title = "%s [%sx%s]" % (
                             download_item.infoLabels["tvshowtitle"],
                             download_item.infoLabels["season"],
-                            str(download_item.infoLabels["episode"]).zfill(2),
+                            str(download_item.infoLabels["episode"]).zfill(2)
                         )
                     if not title:
                         title = download_item.downloadFilename
@@ -670,7 +670,7 @@ def browser(item):
                         title = "%s [%sx%s]" % (
                             download_item.infoLabels["tvshowtitle"],
                             download_item.infoLabels["season"],
-                            str(download_item.infoLabels["episode"]).zfill(2),
+                            str(download_item.infoLabels["episode"]).zfill(2)
                         )
                     if not title:
                         title = download_item.downloadFilename
@@ -690,7 +690,7 @@ def browser(item):
                     unify.format_rating(download_item.infoLabels["rating"]),
                     unify.set_color(
                         download_item.contentChannel.capitalize(), "channel"
-                    ),
+                    )
                 )
 
                 if filetools.exists(url):
@@ -713,7 +713,7 @@ def browser(item):
                                 + plot
                                 % (
                                     get_size(url),
-                                    url_clean.replace("\\", " \\ ").replace("/", " / "),
+                                    url_clean.replace("\\", " \\ ").replace("/", " / ")
                                 ),
                                 thumbnail=download_item.thumbnail
                                 or download_item.contentThumbnail,
@@ -741,7 +741,7 @@ def browser(item):
                                         get_size(url),
                                         url_clean.replace("\\", " \\ ").replace(
                                             "/", " / "
-                                        ),
+                                        )
                                     ),
                                     thumbnail=download_item.thumbnail
                                     or download_item.contentThumbnail,
@@ -775,9 +775,9 @@ def browser(item):
                                 plot=plot
                                 % (
                                     get_size(url),
-                                    url_clean.replace("\\", " \\ ").replace("/", " / "),
+                                    url_clean.replace("\\", " \\ ").replace("/", " / ")
                                 ),
-                                thumbnail=get_thumb("videolibrary_movie.png"),
+                                thumbnail=get_thumb("videolibrary_movie.png")
                             )
                         )
                     else:
@@ -804,9 +804,9 @@ def browser(item):
                                         get_size(url),
                                         url_clean.replace("\\", " \\ ").replace(
                                             "/", " / "
-                                        ),
+                                        )
                                     ),
-                                    thumbnail=get_thumb("videolibrary_movie.png"),
+                                    thumbnail=get_thumb("videolibrary_movie.png")
                                 )
                             )
 
@@ -849,7 +849,7 @@ def browser(item):
                     + plot
                     % (
                         get_size(url),
-                        url_clean.replace("\\", " \\ ").replace("/", " / "),
+                        url_clean.replace("\\", " \\ ").replace("/", " / ")
                     ),
                     text_color="yellow",
                 )
@@ -871,8 +871,8 @@ def browser(item):
                         + plot
                         % (
                             get_size(url),
-                            url_clean.replace("\\", " \\ ").replace("/", " / "),
-                        ),
+                            url_clean.replace("\\", " \\ ").replace("/", " / ")
+                        )
                     )
                 )
 
@@ -1147,7 +1147,7 @@ def restart_error(item):
                                         download_item.downloadAt or DOWNLOAD_PATH,
                                         filetools.dirname(
                                             download_item.downloadFilename
-                                        ),
+                                        )
                                     )
                                 )
                                 and len(
@@ -1156,7 +1156,7 @@ def restart_error(item):
                                             download_item.downloadAt or DOWNLOAD_PATH,
                                             filetools.dirname(
                                                 download_item.downloadFilename
-                                            ),
+                                            )
                                         )
                                     )
                                 )
@@ -1167,7 +1167,7 @@ def restart_error(item):
                                         download_item.downloadAt or DOWNLOAD_PATH,
                                         filetools.dirname(
                                             download_item.downloadFilename
-                                        ),
+                                        )
                                     ),
                                     silent=True,
                                 )
@@ -1257,7 +1257,7 @@ def restart_all(item):
                             and filetools.isdir(
                                 filetools.join(
                                     download_item.downloadAt or DOWNLOAD_PATH,
-                                    filetools.dirname(download_item.downloadFilename),
+                                    filetools.dirname(download_item.downloadFilename)
                                 )
                             )
                             and len(
@@ -1266,7 +1266,7 @@ def restart_all(item):
                                         download_item.downloadAt or DOWNLOAD_PATH,
                                         filetools.dirname(
                                             download_item.downloadFilename
-                                        ),
+                                        )
                                     )
                                 )
                             )
@@ -1275,7 +1275,7 @@ def restart_all(item):
                             filetools.rmdirtree(
                                 filetools.join(
                                     download_item.downloadAt or DOWNLOAD_PATH,
-                                    filetools.dirname(download_item.downloadFilename),
+                                    filetools.dirname(download_item.downloadFilename)
                                 ),
                                 silent=True,
                             )
@@ -1415,7 +1415,7 @@ def download_all(item):
                         )
                         res = filetools.write(
                             filetools.join(DOWNLOAD_LIST_PATH, fichero),
-                            download_item.tojson(),
+                            download_item.tojson()
                         )
                         if res:
                             second_pass = True
@@ -1431,7 +1431,7 @@ def download_all(item):
                             download_item.downloadQueued = 1
                         res = filetools.write(
                             filetools.join(DOWNLOAD_LIST_PATH, fichero),
-                            download_item.tojson(),
+                            download_item.tojson()
                         )
                         if item.remote_download:
                             continue
@@ -1466,7 +1466,7 @@ def download_all(item):
                                     download_item.downloadQueued = 0
                                     res = filetools.write(
                                         filetools.join(DOWNLOAD_LIST_PATH, file),
-                                        download_item.tojson(),
+                                        download_item.tojson()
                                     )
                                     second_pass = False
                             break
@@ -1516,7 +1516,7 @@ def download_auto(item, start_up=False):
                     download_item.downloadQueued = -1
                     res = filetools.write(
                         filetools.join(DOWNLOAD_LIST_PATH, fichero),
-                        download_item.tojson(),
+                        download_item.tojson()
                     )
                     if res:
                         second_pass = True
@@ -1556,7 +1556,7 @@ def download_auto(item, start_up=False):
                 ):
                     res = filetools.write(
                         filetools.join(DOWNLOAD_LIST_PATH, fichero),
-                        download_item.tojson(),
+                        download_item.tojson()
                     )
                     res = STATUS_CODES.stoped
                     try:
@@ -1717,14 +1717,14 @@ def menu(item):
                     and filetools.isdir(
                         filetools.join(
                             item.downloadAt or DOWNLOAD_PATH,
-                            filetools.dirname(item.downloadFilename),
+                            filetools.dirname(item.downloadFilename)
                         )
                     )
                     and len(
                         filetools.listdir(
                             filetools.join(
                                 item.downloadAt or DOWNLOAD_PATH,
-                                filetools.dirname(item.downloadFilename),
+                                filetools.dirname(item.downloadFilename)
                             )
                         )
                     )
@@ -1733,7 +1733,7 @@ def menu(item):
                     filetools.rmdirtree(
                         filetools.join(
                             item.downloadAt or DOWNLOAD_PATH,
-                            filetools.dirname(item.downloadFilename),
+                            filetools.dirname(item.downloadFilename)
                         ),
                         silent=True,
                     )
@@ -1932,7 +1932,7 @@ def delete_torrent_session(item, delete_RAR=True, action="delete"):
                     )
                     item.downloadFilename = ":%s: %s" % (
                         torr_client.upper(),
-                        filetools.join(folder, file_rar),
+                        filetools.join(folder, file_rar)
                     )
                     filetools.remove(
                         filetools.join(folder_new_mod, "_rar_control.json"), silent=True
@@ -2050,13 +2050,13 @@ def move_to_library(item, forced=False):
                 item_library_path = filetools.join(
                     config.get_videolibrary_path(),
                     config.get_setting("folder_movies"),
-                    *filetools.split(item.downloadFilename),
+                    *filetools.split(item.downloadFilename)
                 )
             elif item.contentType == "episode":
                 item_library_path = filetools.join(
                     config.get_videolibrary_path(),
                     config.get_setting("folder_tvshows"),
-                    *filetools.split(item.downloadFilename),
+                    *filetools.split(item.downloadFilename)
                 )
 
             # Si la ruta a la carpeta en la videoteca es un archivo ya existente,
@@ -2166,7 +2166,7 @@ def get_server_position(server):
                         sum(servers[x]["speeds"]), (len(servers[x]["speeds"]) or 1)
                     ),
                     float(sum(servers[x]["success"]))
-                    / (len(servers[x]["success"]) or 1),
+                    / (len(servers[x]["success"]) or 1)
                 ),
                 reverse=True,
             )
@@ -2429,7 +2429,7 @@ def sort_torrents(play_items, emergency_urls=False, channel="", torrent_info=[])
                         play_items_torrent = sorted(
                             play_items_torrent,
                             reverse=True,
-                            key=lambda it: (float(it[1])),
+                            key=lambda it: (float(it[1]))
                         )  # clasificamos
                         if (
                             size_order == 1
@@ -2442,7 +2442,7 @@ def sort_torrents(play_items, emergency_urls=False, channel="", torrent_info=[])
                             play_items_torrent = sorted(
                                 play_items_torrent,
                                 reverse=True,
-                                key=lambda it: (float(it[1])),
+                                key=lambda it: (float(it[1]))
                             )  # RE-clasificamos
                     else:
                         play_items_torrent = sorted(
@@ -2579,7 +2579,7 @@ def sort_torrents(play_items, emergency_urls=False, channel="", torrent_info=[])
                         play_items_torrent = sorted(
                             play_items_torrent,
                             reverse=True,
-                            key=lambda it: (float(it.size_torr)),
+                            key=lambda it: (float(it.size_torr))
                         )  # clasificamos
                         if (
                             size_order == 1
@@ -2594,7 +2594,7 @@ def sort_torrents(play_items, emergency_urls=False, channel="", torrent_info=[])
                             play_items_torrent = sorted(
                                 play_items_torrent,
                                 reverse=True,
-                                key=lambda it: (float(it.size_torr)),
+                                key=lambda it: (float(it.size_torr))
                             )  # RE-clasificamos
                     else:
                         play_items_torrent = sorted(
@@ -2674,7 +2674,7 @@ def download_from_url(url, item):
         max_connections=1 + int(config.get_setting("downloads_max_connections")),
         block_size=2 ** (17 + int(config.get_setting("downloads_block_size"))),
         part_size=2 ** (20 + int(config.get_setting("downloads_part_size"))),
-        max_buffer=2 * int(config.get_setting("downloads_max_buffer")),
+        max_buffer=2 * int(config.get_setting("downloads_max_buffer"))
     )
     d.start_dialog(
         "%s: %s" % (config.get_localized_string(60332), item.server.capitalize())
@@ -2764,7 +2764,7 @@ def download_from_server(item, silent=False):
             itemlist = channeltools.get_channel_attr(
                 item.contentChannel,
                 "play",
-                item.clone(channel=item.contentChannel, action=item.contentAction),
+                item.clone(channel=item.contentChannel, action=item.contentAction)
             )
         except Exception:
             logger.error("Error en el canal %s" % item.contentChannel)
@@ -3028,7 +3028,7 @@ def download_from_best_server(item, silent=False):
         play_items = channeltools.get_channel_attr(
             item.contentChannel,
             item.contentAction,
-            item.clone(action=item.contentAction, channel=item.contentChannel),
+            item.clone(action=item.contentAction, channel=item.contentChannel)
         )
     else:
         play_items = servertools.find_video_items(
@@ -3046,7 +3046,7 @@ def download_from_best_server(item, silent=False):
             + "\n"
             + config.get_localized_string(70181) % len(play_items)
             + "\n"
-            + config.get_localized_string(70182),
+            + config.get_localized_string(70182)
         )
 
     if config.get_setting("downloads_sort_servers") == 1:
@@ -3125,7 +3125,7 @@ def select_server(item):
         play_items = channeltools.get_channel_attr(
             item.contentChannel,
             item.contentAction,
-            item.clone(action=item.contentAction, channel=item.contentChannel),
+            item.clone(action=item.contentAction, channel=item.contentChannel)
         )
     else:
         play_items = servertools.find_video_items(
@@ -3142,7 +3142,7 @@ def select_server(item):
         + "\n"
         + config.get_localized_string(70181) % len(play_items)
         + "\n"
-        + config.get_localized_string(70182),
+        + config.get_localized_string(70182)
     )
 
     for x, i in enumerate(play_items):
@@ -3572,8 +3572,8 @@ def get_episodes(item):
                     "%sx%s.strm"
                     % (
                         str(episode.infoLabels["season"]),
-                        str(episode.infoLabels["episode"]).zfill(2),
-                    ),
+                        str(episode.infoLabels["episode"]).zfill(2)
+                    )
                 ).replace(SERIES, "")
                 episode.sub_action = item.sub_action
                 episode.channel = item.contentChannel
@@ -3629,7 +3629,7 @@ def get_episodes(item):
         ):  # Descargamos solo los episodios NO vistos
             seaxepi = "%sx%s" % (
                 str(episode.contentSeason),
-                str(episode.contentEpisodeNumber).zfill(2),
+                str(episode.contentEpisodeNumber).zfill(2)
             )
             try:
                 if nfo_json.library_playcounts[seaxepi] == 1:
@@ -3693,7 +3693,7 @@ def get_episodes(item):
                                     order=x,
                                     quality=scrapertools.find_single_match(
                                         episode.emergency_urls[3][x], "^#(.*?)#"
-                                    ),
+                                    )
                                 )
                             )
                         from modules import filtertools
@@ -3775,7 +3775,7 @@ def get_episodes(item):
                     continue
                 sesxepi_now = "%sx%s" % (
                     str(episode.infoLabels["season"]),
-                    str(episode.infoLabels["episode"]).zfill(2),
+                    str(episode.infoLabels["episode"]).zfill(2)
                 )
                 if sesxepi_now in str(sesxepi):
                     continue
@@ -3823,9 +3823,9 @@ def get_episodes(item):
                     % (
                         episode.contentSeason,
                         episode.contentEpisodeNumber,
-                        episode.contentTitle.strip(),
+                        episode.contentTitle.strip()
                     )
-                ),
+                )
             )
 
             itemlist.append(episode)
@@ -3839,7 +3839,7 @@ def get_episodes(item):
         if len(itemlist) > 1:
             itemlist = sorted(
                 itemlist,
-                key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)),
+                key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber))
             )
         if item.infoLabels["tmdb_id"] and item.infoLabels["tmdb_id"] != null:
             idioma = "es"
@@ -4019,7 +4019,7 @@ def save_download(item, silent=False):
                                 channels.append(
                                     "{} {}".format(
                                         config.get_localized_string(70763),
-                                        channel_params.get("title", c),
+                                        channel_params.get("title", c)
                                     )
                                 )
                             seleccion = platformtools.dialog_select(
@@ -4118,7 +4118,7 @@ def save_download(item, silent=False):
                             else:
                                 platformtools.dialog_ok(
                                     config.get_localized_string(20000),
-                                    config.get_localized_string(60339),
+                                    config.get_localized_string(60339)
                                 )
                                 return False
 
@@ -4232,7 +4232,7 @@ def save_download_video(item):
         platformtools.dialog_ok(
             config.get_localized_string(30101),
             item.contentTitle,
-            config.get_localized_string(30109),
+            config.get_localized_string(30109)
         )
     else:
         item.downloadCompleted = 0
@@ -4314,7 +4314,7 @@ def save_download_movie(item, silent=False):
         platformtools.dialog_ok(
             config.get_localized_string(30101),
             item.contentTitle,
-            config.get_localized_string(30109),
+            config.get_localized_string(30109)
         )
     elif not silent_org:
         item.downloadCompleted = 0
@@ -4402,7 +4402,7 @@ def save_download_tvshow(item, silent=False):
             progreso.update(
                 old_div(x * 100, len(episodes)),
                 "%dx%0.2d: %s"
-                % (i.contentSeason, i.contentEpisodeNumber, i.contentTitle),
+                % (i.contentSeason, i.contentEpisodeNumber, i.contentTitle)
             )
         write_json(i)
         epi_saved += [
@@ -4421,7 +4421,7 @@ def save_download_tvshow(item, silent=False):
         platformtools.dialog_ok(
             config.get_localized_string(30101),
             str(len(episodes)) + " capitulos de: " + item.contentSerieName,
-            config.get_localized_string(30109),
+            config.get_localized_string(30109)
         )
     elif not silent_org:
         for i in episodes:
