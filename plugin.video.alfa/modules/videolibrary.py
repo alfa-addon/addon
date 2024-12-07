@@ -71,6 +71,7 @@ def list_movies(item, silent=False):
                     logger.error(traceback.format_exc())
 
                 head_nfo, new_item = videolibrarytools.read_nfo(nfo_path)
+                new_item.module = "videolibrary"
 
                 if not new_item or not isinstance(
                     new_item.library_playcounts, dict
@@ -284,6 +285,7 @@ def list_tvshows(item):
                     logger.error(traceback.format_exc())
 
                 head_nfo, item_tvshow = videolibrarytools.read_nfo(tvshow_path)
+                item_tvshow.module = "videolibrary"
 
                 if (
                     not item_tvshow
@@ -653,6 +655,7 @@ def get_episodes(item):
             # Obtener los datos del season_episode.nfo
             nfo_path = filetools.join(raiz, i).replace(".strm", ".nfo")
             head_nfo, epi = videolibrarytools.read_nfo(nfo_path)
+            epi.module = "videolibrary"
 
             # Fijar el titulo del capitulo si es posible
             if epi.contentTitle:
