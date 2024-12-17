@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-from platformcode import config, logger
+from platformcode import config, logger, unify
 from core import scrapertools
 from core.item import Item
 from core import servertools
@@ -8,6 +8,9 @@ from core import httptools
 from core import urlparse
 from bs4 import BeautifulSoup
 from modules import autoplay
+
+UNIFY_PRESET = config.get_setting("preset_style", default="Inicial")
+color = unify.colors_file[UNIFY_PRESET]
 
 list_quality = ['default']
 list_servers = []
@@ -100,6 +103,8 @@ def categorias(item):
         thumbnail = ""
         if elem.img.get('src', ''):
             thumbnail = elem.img['src']
+        if "svg+" in thumbnail:
+            thumbnail = elem.img['data-lazy-src']
         if cantidad:
             title = "%s (%s)" % (title,cantidad)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, fanart=thumbnail, thumbnail=thumbnail) )
@@ -135,6 +140,8 @@ def lista(item):
         thumbnail = ""
         if elem.img.get('src', ''):
             thumbnail = elem.img['src']
+        if "svg+" in thumbnail:
+            thumbnail = elem.img['data-lazy-src']
         if time:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time.text.strip(),title)
         plot = ""
@@ -157,7 +164,7 @@ def findvideos(item):
     for x , value in enumerate(pornstars):
         pornstars[x] = value.text.strip()
     pornstar = ' & '.join(pornstars)
-    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    pornstar = "[COLOR %s]%s[/COLOR]" % (color.get('rating_3',''), pornstar)
     if "/xxxmovies/" not in item.url:
         lista = item.contentTitle.split()
         lista.insert (0, pornstar)
