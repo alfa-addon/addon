@@ -26,13 +26,14 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host +"most-recent/?pageId=1"))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "most-viewed/date-last-month/?pageId=1"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "top-rated/date-last-month/?pageId=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas favoritas" , action="lista", url=host + "mostfavorites/date-last-month/?pageId=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas largas" , action="lista", url=host + "long-movies/date-last-month/?pageId=1"))
-    itemlist.append(Item(channel=item.channel, title="PornStars" , action="categorias", url=host + "pornstars/?pageId=1"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "channels/name/?pageId=1"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host +"s/?sort_by=post_date&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "s/?sort_by=video_viewed&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "s/?sort_by=rating&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas favoritas" , action="lista", url=host + "s/?sort_by=most_favourited&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas comentada" , action="lista", url=host + "s/?sort_by=most_commented&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas largas" , action="lista", url=host + "s/?sort_by=duration&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="PornStars" , action="categorias", url=host + "pornstars/?sort_by=model_viewed&from=1"))
+    # itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -40,7 +41,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/%s/most-recent/?pageId=1" % (host, texto)
+    item.url = "%ss/?q=%s&sort_by=post_date&from_videos=1" % (host, texto)
     try:
         return lista(item)
     except Exception:
@@ -54,39 +55,31 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('a', class_='pp')
+    matches = soup.find_all('div', class_='item')
     for elem in matches:
-        # if "Category:" in elem.parent.text: 
         if not elem.find('img'):
             continue
-        url = elem['href']
-        if "/channels/" not in url:
-            title = elem.find('span', class_='video-title').text.strip()
-        else:
-            title = elem.img['alt']
+        url = elem.a['href']
+        title = elem.a['title']
         if elem.img.get("src", ""):
             thumbnail = elem.img['src']
         if "px_4_3.png" in thumbnail:
             thumbnail = elem.img['data-src']
-        cantidad = elem.find('p', class_='videos')
+        cantidad = elem.find('div', class_='model-info-videos')
         if cantidad:
             title = "%s (%s)" % (title,cantidad.text.strip())
-
-        if "/pornstars/" not in url:
-            url += "most-recent/?pageId=1"
-        else:
-            url += "?pageId=1"
+        url += "?sort_by=post_date&from=1"
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
-    if "/channels/" not in item.url:
-        pagin = soup.find('div', id='pagingAuto')
-        page = int(pagin['data-page'])
-        page_limit = int(pagin['data-limit'])
-        if page <= page_limit:
-            next_page = page +1
-            next_page = re.sub(r"pageId=\d+", "pageId={0}".format(next_page), item.url)
-            itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    next_page = soup.find('li', class_='next')
+    if next_page.find('a'):
+        next_page = next_page.a['data-parameters'].split(":")[-1]
+        if "from_videos" in item.url:
+            next_page = re.sub(r"&from_videos=\d+", "&from_videos={0}".format(next_page), item.url)
+        else:
+            next_page = re.sub(r"&from=\d+", "&from={0}".format(next_page), item.url)
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -106,21 +99,15 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    if "/pornstars/" in item.url:
-        matches = soup.find_all('div', class_='th')
-    else:
-        matches = soup.find_all('div', class_=re.compile(r"^movie-\d+"))
+    matches = soup.find_all('a', class_='item')
     for elem in matches:
-        url = elem.a['href']
-        title = elem.find('span', class_='video-title').text.strip()
+        url = elem['href']
+        title = elem['title']
         if elem.img.get("src", ""):
             thumbnail = elem.img['src']
         if "px_4_3.png" in thumbnail:
             thumbnail = elem.img['data-src']
-        if "/pornstars/" in item.url:
-            time = elem.find('span', class_='dur').text.strip()
-        else:
-            time = elem.find('span', class_='btime').text.strip()
+        time = elem.find('div', class_='duration').text.strip()
         quality = elem.find('i', class_='icon-hd')
         if quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time,title)
@@ -132,12 +119,13 @@ def lista(item):
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
-    pagin = soup.find('div', id='pagingAuto')
-    page = int(pagin['data-page'])
-    page_limit = int(pagin['data-limit'])
-    if page <= page_limit:
-        next_page = page +1
-        next_page = re.sub(r"pageId=\d+", "pageId={0}".format(next_page), item.url)
+    next_page = soup.find('li', class_='next')
+    if next_page.find('a'):
+        next_page = next_page.a['data-parameters'].split(":")[-1]
+        if "from_videos" in item.url:
+            next_page = re.sub(r"&from_videos=\d+", "&from_videos={0}".format(next_page), item.url)
+        else:
+            next_page = re.sub(r"&from=\d+", "&from={0}".format(next_page), item.url)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
