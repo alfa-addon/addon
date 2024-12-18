@@ -469,7 +469,7 @@ def get_cl(
                                 if "Secure" in cookie_part:
                                     dict_cookie["secure"] = True
 
-                                httptools.set_cookies(dict_cookie, clear=False)
+                                httptools.set_cookies(dict_cookie, clear=False, alfa_s=True)
 
                     if cf_cookies_names:
                         logger.info("COOKIES añadidas='%s': %s" % (domain, cf_cookies_names), force=True)
@@ -1069,7 +1069,7 @@ def get_source(
                                 if "Secure" in cookie_part:
                                     dict_cookie["secure"] = True
 
-                                httptools.set_cookies(dict_cookie, clear=False)
+                                httptools.set_cookies(dict_cookie, clear=False, alfa_s=True)
                             resp.status_code = 201 if not from_get_cl else 208
 
                         freequent_data[1] += "C"
@@ -1334,6 +1334,8 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
     )
     if not cf_cookie and "cf_cookie" not in opt:
         cf_cookie = url_cf
+    if not jscode:
+        jscode = get_jscode(1, "KEYCODE_ENTER", 1)
 
     try:
         if urlOnly:
@@ -1402,7 +1404,7 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
                                 if "Secure" in cookie_part:
                                     dict_cookie["secure"] = True
 
-                                httptools.set_cookies(dict_cookie, clear=clear)
+                                httptools.set_cookies(dict_cookie, clear=clear, alfa_s=True)
                             clear = False
 
                 if DEBUG:

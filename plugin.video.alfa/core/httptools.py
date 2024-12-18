@@ -307,7 +307,7 @@ def set_cookies(dict_cookie, clear=True, alfa_s=False):
     )
 
     cj.set_cookie(ck)
-    save_cookies()
+    save_cookies(alfa_s=alfa_s)
 
 
 def load_cookies(alfa_s=False):
