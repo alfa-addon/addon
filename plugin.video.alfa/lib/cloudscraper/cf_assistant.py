@@ -152,6 +152,11 @@ def get_cl(
     host_name = httptools.obtain_domain(url, scheme=True).rstrip("/") + "/"
     domain_full = urlparse.urlparse(url).netloc
     domain = domain_full
+    split_lst = domain.split(".")
+    if len(split_lst) > 2:
+        domain = domain.replace(split_lst[0], "")
+    if not domain.startswith("."):
+        domain = "." + domain
     pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
     if (
         opt.get("cf_assistant_if_proxy", False)
@@ -165,7 +170,7 @@ def get_cl(
         or "__cpo=" in url
         or proxies
         or httptools.TEST_ON_AIR
-        or domain in pcb
+        or domain_full in pcb
     ):
         blacklist_clear = False
         blacklist = False
@@ -179,7 +184,7 @@ def get_cl(
     if blacklist_clear:
         host = config.get_system_platform()[:1]
 
-        freequent_data = [domain, "CF2,0.0.0,0,%s0,NoApp" % host]
+        freequent_data = [domain_full, "CF2,0.0.0,0,%s0,NoApp" % host]
 
         check_assistant = alfa_assistant.open_alfa_assistant(
             getWebViewInfo=True, retry=retry
@@ -207,8 +212,10 @@ def get_cl(
                 if newer:
                     help_window.show_info("cf_2_02", wait=False)
 
-            if Cookie:
-                Cookies_send = setup_cookies(Cookie, **opt)
+            if Cookie or (headers and isinstance(headers, dict) and headers.get("Cookie")):
+                Cookies_send = setup_cookies(Cookie, domain, headers)
+                if Cookies_send and not opt.get("post") and not opt.get("cf_jscode"):
+                    extraPostDelay += 2
                 logger.debug("Cookies_send: %s" % Cookies_send)
 
             if opt.get("cf_assistant_ua", False):
@@ -325,15 +332,6 @@ def get_cl(
             if not alfa_s or "cookies" not in str(data_assistant):
                 logger.debug("data assistant: %s" % data_assistant)
 
-            domain_ = domain
-            split_lst = domain.split(".")
-
-            if len(split_lst) > 2:
-                domain = domain.replace(split_lst[0], "")
-
-            if not domain.startswith("."):
-                domain = "." + domain
-
             if (
                 isinstance(data_assistant, dict)
                 and data_assistant.get("urlsVisited", [])
@@ -353,7 +351,7 @@ def get_cl(
                                 data_assistant['urlsVisited'], 
                                 challenge,
                                 url,
-                                domain=domain,
+                                domain=domain_full,
                                 DEBUG=debug,
                                 cache=cache,
                                 ua=ua,
@@ -367,7 +365,7 @@ def get_cl(
                                 else challenge_url.get("htmlSources", []),
                                 find_url,
                                 find_url,
-                                domain=domain,
+                                domain=domain_full,
                                 DEBUG=debug,
                                 cache=cache,
                                 ua=ua,
@@ -452,6 +450,8 @@ def get_cl(
                                 name, val = scrapertools.find_single_match(
                                     cookie_part, "^([^=]+)=([^$]+)$"
                                 )
+                                if name.strip() == "domain":
+                                    continue
                             except Exception:
                                 continue
 
@@ -473,22 +473,22 @@ def get_cl(
                     if cf_cookies_names:
                         logger.info("COOKIES añadidas='%s': %s" % (domain, cf_cookies_names), force=True)
                             
-                if "cf_clearance" in cf_cookies_names and cf_cookies_names["cf_clearance"]:
-                    resp.status_code = 403
-                    rin = {"Server": "Alfa"}
-                    resp.headers.update(dict(rin))
- 
-                    if not retry:
-                        freequent_data[1] += "OK"
+                    if "cf_clearance" in cf_cookies_names and cf_cookies_names["cf_clearance"]:
+                        resp.status_code = 403
+                        rin = {"Server": "Alfa"}
+                        resp.headers.update(dict(rin))
+     
+                        if not retry:
+                            freequent_data[1] += "OK"
+                        else:
+                            freequent_data[1] += "OK_R"
+                        freequency(freequent_data)
+
+                        return resp
+
                     else:
-                        freequent_data[1] += "OK_R"
-                    freequency(freequent_data)
-
-                    return resp
-
-                else:
-                    logger.error("No cf_clearance")
-                    freequent_data[1] += "NO-CFC"
+                        logger.error("No cf_clearance")
+                        freequent_data[1] += "NO-CFC"
             else:
                 freequent_data[1] += "ERR"
                 logger.error(
@@ -625,14 +625,20 @@ def get_source(
     host_name = httptools.obtain_domain(url, scheme=True).rstrip("/") + "/"
     domain_full = urlparse.urlparse(url).netloc
     domain = domain_full
+    split_lst = domain.split(".")
+    if len(split_lst) > 2:
+        domain = domain.replace(split_lst[0], "")
+    if not domain.startswith("."):
+        domain = "." + domain
     pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
+
     if (
         "hideproxy" in url
         or "webproxy" in url
         or "hidester" in url
         or "__cpo=" in url
         or httptools.TEST_ON_AIR
-        or domain in pcb
+        or domain_full in pcb
     ):
         blacklist_clear = False
         blacklist = False
@@ -647,9 +653,9 @@ def get_source(
         blacklist_clear = check_blacklist(domain_full)
 
     host = config.get_system_platform()[:1]
-    freequent_data = [domain, "Cha,0.0.0,0,%s0,BlakL" % host]
+    freequent_data = [domain_full, "Cha,0.0.0,0,%s0,BlakL" % host]
     if blacklist_clear:
-        freequent_data = [domain, "Cha,0.0.0,0,%s0,App" % host]
+        freequent_data = [domain_full, "Cha,0.0.0,0,%s0,App" % host]
         if not retry:
             freequent_data[1] += "KO"
         else:
@@ -695,8 +701,10 @@ def get_source(
                 if newer:
                     help_window.show_info("cf_2_02", wait=False)
 
-            if Cookie:
-                Cookies_send = setup_cookies(Cookie, **opt)
+            if Cookie or (headers and isinstance(headers, dict) and headers.get("Cookie")):
+                Cookies_send = setup_cookies(Cookie, domain, headers)
+                if Cookies_send and not opt.get("post") and not opt.get("cf_jscode"):
+                    extraPostDelay += 2
                 logger.debug("Cookies_send: %s" % Cookies_send)
 
             resp.headers["Content-Type"] = "text/html; charset=%s" % encoding
@@ -806,8 +814,7 @@ def get_source(
                     postData=postData,
                     clearWebCache=clearWebCache,
                     removeAllCookies=removeAllCookies,
-                    returnWhenCookieNameFound=None if opt.get("cf_cookie")
-                        or opt.get("cf_cookie", "") is None else url_cf,
+                    returnWhenCookieNameFound=None,
                     retryIfTimeout=retryIfTimeout,
                     useAdvancedWebView=True,
                     headers=headers,
@@ -821,15 +828,6 @@ def get_source(
             if not alfa_s:
                 logger.debug("data assistant: %s" % data_assistant)
 
-            domain_ = domain
-            split_lst = domain.split(".")
-
-            if len(split_lst) > 2:
-                domain = domain.replace(split_lst[0], "")
-
-            if not domain.startswith("."):
-                domain = "." + domain
-            
             if (
                 isinstance(data_assistant, dict)
                 and data_assistant.get("urlsVisited", [])
@@ -849,7 +847,7 @@ def get_source(
                                 data_assistant['urlsVisited'], 
                                 challenge,
                                 url,
-                                domain=domain,
+                                domain=domain_full,
                                 DEBUG=debug,
                                 cache=cache,
                                 ua=ua,
@@ -863,7 +861,7 @@ def get_source(
                                 else challenge_url.get("htmlSources", []),
                                 find_url,
                                 find_url,
-                                domain=domain,
+                                domain=domain_full,
                                 DEBUG=debug,
                                 cache=cache,
                                 ua=ua,
@@ -978,6 +976,7 @@ def get_source(
                 logger.debug("No se obtuvieron resultados, reintentando...")
                 timeout = 1 if timeout < 5 else timeout * 2
                 extraPostDelay = -1 if extraPostDelay < 0 else extraPostDelay * 2
+                removeAllCookies = True
 
                 return get_source(
                     url,
@@ -1023,6 +1022,8 @@ def get_source(
                                 name, val = scrapertools.find_single_match(
                                     cookie_part, "^([^=]+)=([^$]+)$"
                                 )
+                                if name.strip() == "domain":
+                                    continue
                             except Exception:
                                 continue
 
@@ -1120,11 +1121,16 @@ def get_ua(data_assistant, userAgent=False):
     return UA
 
 
-def setup_cookies(Cookie, **opt):
+def setup_cookies(Cookie, domain, headers):
     Cookies_send = ""
+    if not Cookie:
+        Cookie = []
     
     if not isinstance(Cookie, list):
         Cookie = [Cookie]
+    if headers and isinstance(headers, dict) and headers.get("Cookie"):
+        Cookie += [headers.pop("Cookie")]
+
     for Cookie_ in Cookie:
         Cookie_send = name_ = value_ = ""
         if isinstance(Cookie_, dict):
@@ -1142,13 +1148,17 @@ def setup_cookies(Cookie, **opt):
                     name_ = value_ = ""
                 else:
                     Cookie_send += "%s=%s; " % (urlparse.quote(key), urlparse.quote(str(value)))
-            Cookie_send = Cookie_send.rstrip()
+            Cookie_send = Cookie_send
         else:
-            Cookie_send = str(Cookie_)
+            Cookie_send = str(Cookie_).rstrip(";").rstrip() + "; "
         if Cookie_send:
-            Cookies_send += "document.cookie = '%s'; " % Cookie_send
+            if not "domain" in Cookie_send:
+                Cookie_send += "%s=%s; " % ("domain", urlparse.quote(str(domain)))
+            if not "path" in Cookie_send:
+                Cookie_send += "%s=%s; " % ("path", "/")
+            Cookies_send += "document.cookie = '%s'; " % Cookie_send.rstrip("; ")
 
-    return(Cookies_send)
+    return Cookies_send
 
 
 def get_jscode(count, key, n_iframe, timeout=3, url="", headers="", postData="", Cookies_send=""):
@@ -1344,6 +1354,8 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
                                 name, val = scrapertools.find_single_match(
                                     cookie_part, "^([^=]+)=([^$]+)$"
                                 )
+                                if name.strip() == "domain":
+                                    continue
                             except Exception:
                                 continue
 
