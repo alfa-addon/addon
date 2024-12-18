@@ -116,6 +116,7 @@ def get_cl(
     headers_str = ""
     post_str = ""
     Cookies_send = ""
+    data_assistant = {}
 
     if opt.get("cf_cookie_send"):
         Cookie = opt.get("cf_cookie_send")
@@ -488,7 +489,7 @@ def get_cl(
                             try:
                                 req = requests.Response()
                                 req.url = urlsVisited.get("url", "")
-                                req.status_code = 200 if not from_get_cl else 207
+                                req.status_code = 200
                                 req.encoding = encoding
                                 req.headers["Content-Type"] = "application/json"
                                 req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
@@ -551,6 +552,20 @@ def get_cl(
             if not debug:
                 filetools.write(PATH_BL, jsontools.dump(bl_data))
 
+    if isinstance(data_assistant, dict):
+        for urlsVisited in data_assistant.get("urlsVisited", []):
+            try:
+                req = requests.Response()
+                req.url = urlsVisited.get("url", "")
+                req.status_code = 200
+                req.encoding = encoding
+                req.headers["Content-Type"] = "application/json"
+                req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+
+                resp.history.append(req)
+            except Exception:
+                logger.error(traceback.format_exc())
+
     return resp
 
 
@@ -598,6 +613,7 @@ def get_source(
     postData = None
     jscode = None
     Cookies_send = ""
+    data_assistant = {}
 
     if timeout < 0:
         timeout = 0.001
