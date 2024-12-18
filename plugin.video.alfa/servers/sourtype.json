@@ -146,6 +146,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://xorgasmo.com/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://fansteek.com/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
