@@ -550,8 +550,8 @@ def proxy_post_processing(url, proxy_data, response, **opt):
     data = ""
     if response["data"]:
         data = response["data"][:500]
-        if isinstance(data, bytes):
-            data = data.decode()
+        if PY3 and isinstance(data, bytes):
+            data = "".join(chr(x) for x in bytes(data))
 
     try:
         if response["code"] in NOT_FOUND_CODES:
@@ -622,6 +622,7 @@ def proxy_post_processing(url, proxy_data, response, **opt):
             and not response["sucess"]
             and opt.get("proxy_retries_counter", 0) <= opt.get("proxy_retries", 1)
             and opt.get("count_retries_tot", 5) > 1
+            and opt.get("forced_proxy_ifnot_assistant", "") is not None
         ):
             if not PY3:
                 from . import proxytools
@@ -1283,12 +1284,10 @@ def downloadpage(url, **opt):
         "canonical", {}
     ):
         opt["cf_assistant_if_proxy"] = opt["canonical"]["cf_assistant_if_proxy"]
-    if opt.get("canonical", {}).get("forced_proxy_ifnot_assistant", "") or opt.get(
-        "forced_proxy_ifnot_assistant", ""
+    if "forced_proxy_ifnot_assistant" not in opt and "forced_proxy_ifnot_assistant" in opt.get(
+        "canonical", {}
     ):
-        opt["forced_proxy_ifnot_assistant"] = opt.get("canonical", {}).get(
-            "forced_proxy_ifnot_assistant", ""
-        ) or opt.get("forced_proxy_ifnot_assistant", "")
+        opt["forced_proxy_ifnot_assistant"] = opt["canonical"]["forced_proxy_ifnot_assistant"]
         opt["ignore_response_code"] = True
     if "set_tls" not in opt and "set_tls" in opt.get("canonical", {}):
         opt["set_tls"] = opt["canonical"]["set_tls"]
@@ -1304,6 +1303,30 @@ def downloadpage(url, **opt):
         "canonical", {}
     ):
         opt["cf_assistant_get_source"] = opt["canonical"]["cf_assistant_get_source"]
+    if "cf_challenge" not in opt and "cf_challenge" in opt.get("canonical", {}):
+        opt["cf_challenge"] = opt["canonical"]["cf_challenge"]
+    if "cf_challenges_list" not in opt and "cf_challenges_list" in opt.get("canonical", {}):
+        opt["cf_challenges_list"] = opt["canonical"]["cf_challenges_list"]
+    if "cf_returnkey" not in opt and "cf_returnkey" in opt.get("canonical", {}):
+        opt["cf_returnkey"] = opt["canonical"]["cf_returnkey"]
+    if "cf_partial" not in opt and "cf_partial" in opt.get("canonical", {}):
+        opt["cf_partial"] = opt["canonical"]["cf_partial"]
+    if "cf_cookie" not in opt and "cf_cookie" in opt.get("canonical", {}):
+        opt["cf_cookie"] = opt["canonical"]["cf_cookie"]
+    if "cf_debug" not in opt and "cf_debug" in opt.get("canonical", {}):
+        opt["cf_debug"] = opt["canonical"]["cf_debug"]
+    if "cf_removeAllCookies" not in opt and "cf_removeAllCookies" in opt.get("canonical", {}):
+        opt["cf_removeAllCookies"] = opt["canonical"]["cf_removeAllCookies"]
+    if "cf_cookies_names" not in opt and "cf_cookies_names" in opt.get("canonical", {}):
+        opt["cf_cookies_names"] = opt["canonical"]["cf_cookies_names"]
+    if "cf_find_url" not in opt and "cf_find_url" in opt.get("canonical", {}):
+        opt["cf_find_url"] = opt["canonical"]["cf_find_url"]
+    if "cf_assistant_ua" not in opt and "cf_assistant_ua" in opt.get("canonical", {}):
+        opt["cf_assistant_ua"] = opt["canonical"]["cf_assistant_ua"]
+    if "cf_jscode" not in opt and "cf_jscode" in opt.get("canonical", {}):
+        opt["cf_jscode"] = opt["canonical"]["cf_jscode"]
+    if "cf_cookie_send" not in opt and "cf_cookie_send" in opt.get("canonical", {}):
+        opt["cf_cookie_send"] = opt["canonical"]["cf_cookie_send"]
 
     # Preparando la url
     if not PY3:
@@ -1420,8 +1443,6 @@ def downloadpage(url, **opt):
             if ssl and ssl_version and opt["session_verify"]:
                 ssl_context = ssl.SSLContext(ssl_version)
             CS_stat = True
-            if cf_ua and cf_ua != "Default" and get_cookie(url, "cf_clearance"):
-                req_headers["User-Agent"] = cf_ua
         else:
             session = requests.session()
             session.verify = opt.get("session_verify", False)
@@ -1475,6 +1496,8 @@ def downloadpage(url, **opt):
             # if opt["session_verify_save"] is None: session.verify = opt['session_verify'] = False
         if opt.get("headers_proxy", {}):
             req_headers.update(dict(opt["headers_proxy"]))
+        if cf_ua and cf_ua != "Default" and (get_cookie(url, "cf_clearance") or opt.get("cf_assistant_ua", False)):
+            req_headers["User-Agent"] = cf_ua
 
         session.headers = req_headers.copy()
 
@@ -1544,6 +1567,21 @@ def downloadpage(url, **opt):
                             timeout=opt.get("timeout", None),
                             params=opt.get("params", {}),
                         )
+                    elif str(opt.get("cf_assistant", '')) == 'force':
+                        ### Makes the request thru Assistant
+                        from lib.cloudscraper import cf_assistant
+
+                        if opt.get("post", None) is not None and payload:
+                            opt["post"] = payload
+                        if opt.get("files", {}) and files:
+                            opt["files"] = files
+                        req = requests.Response()
+                        req.status_code = 403
+                        req = cf_assistant.get_cl(opt, req, cache=True)
+                        # If no Assistant
+                        if req.status_code in [503, 429, 400]:
+                            opt['cf_assistant'] = True
+                            return downloadpage(url, **opt)
                     else:
                         ### Makes the request with POST method
                         req = session.post(
@@ -1554,6 +1592,19 @@ def downloadpage(url, **opt):
                             timeout=opt.get("timeout", None),
                             params=opt.get("params", {}),
                         )
+
+                elif str(opt.get("cf_assistant", '')) == 'force':
+                    info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
+                    ### Makes the request thru Assistant
+                    from lib.cloudscraper import cf_assistant
+
+                    req = requests.Response()
+                    req.status_code = 403
+                    req = cf_assistant.get_cl(opt, req, cache=True)
+                    # If no Assistant
+                    if req.status_code in [503, 429, 400]:
+                        opt['cf_assistant'] = True
+                        return downloadpage(url, **opt)
 
                 elif opt.get("only_headers", False):
                     info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
@@ -1664,14 +1715,11 @@ def downloadpage(url, **opt):
 
         response = build_response()
         response_code = req.status_code
-        response["data"] = (
-            req.content
-            if not opt.get("cf_assistant_get_source", False)
-            else req.reason
-            if req.status_code in [207, 208]
-            else req.content
-        )
+        response["data"] = req.content
         response["proxy__"] = proxy_stat(opt["url_save"], proxy_data, **opt)
+        response["history"] = req.history[:]
+        if opt.get("history"):
+            response["history"].append(opt["history"])
 
         canonical = opt.get("canonical", {})
 
@@ -1710,7 +1758,7 @@ def downloadpage(url, **opt):
             and opt.get("proxy__test", "") != "retry"
             and not proxy_data.get("stat", "")
             and opt.get("proxy_retries", 1)
-            and opt.get("forced_proxy_ifnot_assistant", "")
+            and opt.get("forced_proxy_ifnot_assistant", "") is not None
             and response_code not in [404]
         ):
             if not opt.get("alfa_s", False):
@@ -1844,6 +1892,7 @@ def downloadpage(url, **opt):
             and response_code in CLOUDFLARE_CODES
             and (not opt.get("CF", False) or opt["retries_cloudflare"] > 0)
             and opt.get("CF_test", True)
+            and opt.get("forced_proxy_ifnot_assistant", "") is not None
             and not opt.get("check_blocked_IP_save", {})
             and opt.get("error_check", True)
         ):
@@ -1884,15 +1933,22 @@ def downloadpage(url, **opt):
                     )
                 return downloadpage(opt["url_save"], **opt)
 
-        # Retry con Assistant si falla proxy SSL
+        # Retry con Assistant si falla proxy SSL, o no hay proxy y se quiere forzar el Assistant
         if (
             opt["retries_cloudflare"] <= 0
-            and response_code in CLOUDFLARE_CODES
+            and (response_code in CLOUDFLARE_CODES or (
+                    response_code not in SUCCESS_CODES
+                    and opt.get("cf_assistant_get_source", False)
+                    )
+                )
             and opt.get("cf_assistant_if_proxy", True)
             and not opt.get("cf_v2", False)
             and opt.get("CF_test", True)
-            and ", Proxy Web" in proxy_data.get("stat", "")
-            and opt.get("error_check", True)
+            and (", Proxy Web" in proxy_data.get("stat", "") or (
+                    opt.get("forced_proxy_ifnot_assistant") in [None, "ProxyCF"]
+                    and opt.get("cf_assistant", False)
+                    )
+                )
             and opt.get("error_check", True)
         ):
             update_alfa_domain_web_list(url, response_code, proxy_data, **opt)
@@ -1904,18 +1960,35 @@ def downloadpage(url, **opt):
                 logger.debug("CF Assistant TRY... for domain: %s" % domain)
             from lib.cloudscraper import cf_assistant
 
+            if opt.get("post", None) is not None and payload:
+                opt["post"] = payload
+            if opt.get("files", {}) and files:
+                opt["files"] = files
+            if not isinstance(req.status_code, int):
+                req.status_code = 666
             req = cf_assistant.get_cl(opt, req)
             response_code = req.status_code
-            if not PY3:
-                from . import proxytools
-            else:
-                from . import proxytools_py3 as proxytools
+            response["history"] = req.history[:]
+            if opt.get("cf_assistant_get_source", False):
+                response["data"] = req.content
+
             if response_code == 403:
-                proxytools.add_domain_retried(
-                    domain, proxy__type="ProxyWeb", delete="forced"
-                )
-                opt["forced_proxy_ifnot_assistant"] = "ProxyCF"
-                opt["CF"] = opt["CF_save"] = opt["cloudscraper_active"] = True
+                if ", Proxy Web" in proxy_data.get("stat", ""):
+                    if not PY3:
+                        from . import proxytools
+                    else:
+                        from . import proxytools_py3 as proxytools
+                    proxytools.add_domain_retried(
+                        domain, proxy__type="ProxyWeb", delete="forced"
+                        )
+                if opt.get("forced_proxy_ifnot_assistant", "") is not None:
+                    opt["forced_proxy_ifnot_assistant"] = "ProxyCF"
+                    opt["CF"] = opt["CF_save"] = opt["cloudscraper_active"] = True
+                if str(opt.get("cf_assistant", '')) == 'force':
+                    opt["cf_assistant"] = True
+                    if response["history"]:
+                        opt["history"] = response["history"][:]
+                    return downloadpage(opt["url_save"], **opt)
 
         if (
             req.headers.get("Server", "") == "Alfa"
@@ -1930,6 +2003,8 @@ def downloadpage(url, **opt):
             if opt["retries_cloudflare"] > 0:
                 time.sleep(1)
             opt["retries_cloudflare"] -= 1
+            if response["history"]:
+                opt["history"] = response["history"][:]
             if not CACHING_DOMAINS:
                 logger.debug(
                     "CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1]
@@ -2436,6 +2511,7 @@ def build_response(HTTPResponse=False):
     response["url_new"] = ""
     response["headers"] = {}
     response["cookies"] = ""
+    response["history"] = []
     response["time_elapsed"] = 0
 
     return type("HTTPResponse", (), response) if HTTPResponse else response

@@ -15,6 +15,7 @@ from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_th
 
 import ast
 from platformcode.platformtools import dialog_notification, dialog_ok, itemlist_refresh, itemlist_update, show_channel_settings
+from lib.alfa_assistant import is_alfa_installed
 
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
@@ -22,17 +23,19 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS
+
+cf_assistant = True if is_alfa_installed() else False
 forced_proxy_opt = None
-assistant = False
+debug = config.get_setting('debug_report', default=False)
 
 # https://dominioshdfull.com/
 
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hdfull.tel/", "https://hdfull.today/", "https://hdfull.quest/"], 
+             "host_alt": ["https://hdfull.today/", "https://hdfull.cfd/", "https://hdfull.quest/"], 
              'host_verification': '%slogin', 
-             "host_black_list": ["https://hdfull.buzz/", "https://hdfull.blog/", 
+             "host_black_list": ["https://hdfull.tel/", "https://hdfull.buzz/", "https://hdfull.blog/", 
                                  "https://hd-full.info/", "https://hd-full.sbs/", "https://hd-full.life/", 
                                  "https://hd-full.fit/", "https://hd-full.me/", "https://hd-full.vip/", 
                                  "https://hd-full.lol/", "https://hd-full.co/", "https://hd-full.biz/", 
@@ -44,10 +47,15 @@ canonical = {
                                  "https://hdfull.fun/", "https://hdfull.lol/", "https://hdfull.one/", 
                                  "https://new.hdfull.one/", "https://hdfull.top/", "https://hdfull.bz/"],
              'pattern': r'<meta\s*property="og:url"\s*content="([^"]+)"', 
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'expires': 365*24*60*60, 
-             'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_if_assistant': True if assistant else False, 
-             'CF_stat': True if assistant else False, 'session_verify': True if assistant else False, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'set_tls': True, 'set_tls_min': False, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': cf_assistant, 
+             'cf_assistant_ua': True, 'cf_assistant_get_source': True if cf_assistant == 'force' else False, 
+             'cf_no_blacklist': True, 'cf_removeAllCookies': False if cf_assistant == 'force' else True,
+             'cf_challenge': True, 'cf_returnkey': 'url', 'cf_partial': True, 'cf_debug': debug, 
+             'cf_cookie': '$HOST|_ga|$HOST|_ga_54W4HK6ZMG', 'cf_jscode': None if cf_assistant == 'force' else {'KEYCODE_ENTER': True}, 
+             'cf_cookies_names': {'cf_clearance': False, '_ga': False, '_ga_54W4HK6ZMG': False, 'PHPSESSID': False},
+             'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
+             'CF_stat': True if cf_assistant is True else False, 'session_verify': True if cf_assistant is True else False, 
+             'CF': False, 'CF_test': True, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_save = host
@@ -56,7 +64,6 @@ _silence = config.get_setting('silence_mode', channel=canonical['channel'])
 
 timeout = (5, 20)
 kwargs = {}
-debug = config.get_setting('debug_report', default=False)
 movie_path = "pelicula/"
 tv_path = 'serie/'
 language = []
@@ -103,7 +110,7 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['container-flex', 'm
          'url_replace': [], 
          'controls': {'duplicates': [], 'min_temp': False, 'url_base64': False, 'add_video_to_videolibrary': True, 'cnt_tot': 20, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
-                      'IDIOMAS_TMDB': {0: 'es', 1: 'ja', 2: 'es'}, 'jump_page': True, 'timer': 15}, 
+                      'IDIOMAS_TMDB': {0: 'es', 1: 'ja', 2: 'es'}, 'jump_page': True, 'timer': 4.5}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -136,7 +143,7 @@ if not user_ or not pass_:
 credentials_req = True
 js_url = AlfaChannel.urljoin(host, "templates/hdfull/js/jquery.hdfull.view.min.js")
 data_js_url = AlfaChannel.urljoin(host, "js/providers.js")
-patron_sid = r"<input\s*type='hidden'\s*name='__csrf_magic'\s*value=\"([^\"]+)\"\s*\/>"
+patron_sid = r"<input\s*type=['|\"]hidden['|\"]\s*name=['|\"]__csrf_magic['|\"]\s*value=\"([^\"]+)\"\s*.*>"
 timer = AlfaChannel.finds['controls']['timer']
 
 try:
@@ -1274,7 +1281,9 @@ def agrupa_datos(url, post=None, referer=True, soup=False, json=False, force_che
         if not page.json and page.data:
             page.json = page.data
             if not isinstance(page.json, _dict):
-                page.json = jsontools.load(page.json)
+                page.json = jsontools.load(page.json, silence=True)
+                if not page.json:
+                    page.json = jsontools.load(scrapertools.find_single_match(str(page.data), r"(\{.*?\})(?:$|<\/)"), silence=True)
         return page.json
     
     if (page.data or (not page.data and not post)) and not 'application' in page.headers['Content-Type'] and not check_login_status(page.data):
