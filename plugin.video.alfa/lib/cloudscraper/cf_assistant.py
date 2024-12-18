@@ -484,6 +484,19 @@ def get_cl(
                             freequent_data[1] += "OK_R"
                         freequency(freequent_data)
 
+                        for urlsVisited in data_assistant.get("urlsVisited", []):
+                            try:
+                                req = requests.Response()
+                                req.url = urlsVisited.get("url", "")
+                                req.status_code = 200 if not from_get_cl else 207
+                                req.encoding = encoding
+                                req.headers["Content-Type"] = "application/json"
+                                req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+
+                                resp.history.append(req)
+                            except Exception:
+                                logger.error(traceback.format_exc())
+                        
                         return resp
 
                     else:
@@ -1069,18 +1082,19 @@ def get_source(
         if not debug and not httptools.TEST_ON_AIR:
             filetools.write(PATH_BL, jsontools.dump(bl_data))
 
-    for urlsVisited in data_assistant.get("urlsVisited", []):
-        try:
-            req = requests.Response()
-            req.url = urlsVisited.get("url", "")
-            req.status_code = 200 if not from_get_cl else 207
-            req.encoding = encoding
-            req.headers["Content-Type"] = "application/json"
-            req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+    if isinstance(data_assistant, dict):
+        for urlsVisited in data_assistant.get("urlsVisited", []):
+            try:
+                req = requests.Response()
+                req.url = urlsVisited.get("url", "")
+                req.status_code = 200 if not from_get_cl else 207
+                req.encoding = encoding
+                req.headers["Content-Type"] = "application/json"
+                req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
 
-            resp.history.append(req)
-        except Exception:
-            logger.error(traceback.format_exc())
+                resp.history.append(req)
+            except Exception:
+                logger.error(traceback.format_exc())
     if from_get_cl:
         try:
             if PY3 and not isinstance(data, bytes):
