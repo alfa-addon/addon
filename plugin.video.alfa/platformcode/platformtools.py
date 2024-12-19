@@ -1559,7 +1559,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                 )
 
         # Añadir a videoteca
-        if item.channel != "videolibrary":
+        if not item.module:
             # Añadir Serie a la videoteca
             if (
                 item.action in ["episodios", "get_episodios", "seasons"]

@@ -31,13 +31,7 @@ def getmainlist(view="thumb_"):
             thumbnail = get_thumb("news.png", view),
             category = get_string(30119),
             viewmode = "thumbnails",
-            context = [
-                {
-                    "title": get_string(70285),
-                    "module": "news", 
-                    "action":"news_setting"
-                }
-            ]
+            context = []
         )
     )
 
@@ -49,7 +43,14 @@ def getmainlist(view="thumb_"):
             thumbnail = get_thumb("channels.png", view),
             view = view,
             category = get_string(30119),
-            viewmode = "thumbnails"
+            viewmode = "thumbnails",
+            context = [
+                # {
+                #     "title": config.get_localized_string(60537),
+                #     "module": "setting",
+                #     "action": "menu_channels",
+                # }
+            ]
         )
     )
 
@@ -61,13 +62,7 @@ def getmainlist(view="thumb_"):
             thumbnail = get_thumb("wishlist.png", view),
             category = "wishlist",
             viewmode = "thumbnails",
-            context = [
-                {
-                    "title": get_string(80788),
-                    "module": "info_popup",
-                    "action": "show_settings"
-                }
-            ]
+            context = []
         )
     )
 
@@ -91,14 +86,7 @@ def getmainlist(view="thumb_"):
             thumbnail = get_thumb("search.png", view),
             category = get_string(30119),
             viewmode = "list",
-            context = [
-                {
-                    "title": get_string(70286),
-                    "module": "search",
-                    "action": "opciones",
-                    "goto": True
-                }
-            ]
+            context = []
         )
     )
 
@@ -122,13 +110,7 @@ def getmainlist(view="thumb_"):
                 thumbnail = get_thumb("videolibrary.png", view),
                 category = get_string(30119),
                 viewmode = "thumbnails",
-                context = [
-                    {
-                        "title": get_string(70287),
-                        "module": "videolibrary",
-                        "action": "channel_config"
-                    }
-                ]
+                context = []
             )
         )
 
@@ -139,14 +121,7 @@ def getmainlist(view="thumb_"):
             action = "mainlist",
             thumbnail = get_thumb("downloads.png", view),
             viewmode = "list",
-            context = [
-                {
-                    "title": get_string(70288),
-                    "module": "setting",
-                    "config": "downloads",
-                    "action": "channel_config"
-                }
-            ]
+            context = []
         )
     )
 

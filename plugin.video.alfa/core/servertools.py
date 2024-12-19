@@ -743,7 +743,7 @@ def filter_servers(servers_list):
             if i.server:
                 channel = i.contentChannel if i.contentChannel and i.contentChannel not in ['list', 'videolibrary'] else i.channel
                 domain = scrapertools.find_single_match(i.url, patron_domain)
-                if domain and domain in config.get_setting('current_host', channel=channel, default=''):
+                if not i.module and domain and domain in config.get_setting('current_host', channel=channel, default=''):
                     domain = ''
                 if not is_server_enabled(i.server, domain=domain):
                     continue

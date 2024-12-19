@@ -536,7 +536,8 @@ def get_cached_files_(contentType, FORCED=False, cached=False):
         if not cached_file and not cached_file_old:
             return cached_file
         PASSWORDS = copy.deepcopy(cached_file) or copy.deepcopy(cached_file_old)
-        if not PASSWORDS.get('cookies', {}).get('cookies_expiration_'):
+        if PASSWORDS and not PASSWORDS.get('cookies', {}).get('cookies_expiration_'):
+            if not 'cookies' in PASSWORDS: PASSWORDS['cookies'] = {}
             PASSWORDS['cookies']['cookies_expiration_'] = cached_file_old.get('cookies', {}).get('cookies_expiration_', {})
         cookies_expiration = time_to_timedelta(PASSWORDS['cookies']['cookies_expiration_'])
         cookies_cached_exp = PASSWORDS.get('cookies', {}).get('cookies_exp', [])[:] or cached_file_old.get('cookies', {}).get('cookies_exp', [])[:]
@@ -3579,6 +3580,9 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     break
                                 if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
                                     logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
+                                    torrent_params['find_alt_link_code'] = '200'
+                                    torrent_params['find_alt_link_result'] = []
+                                    torrent_params['find_alt_link_next'] = ''
                                     break
                                 counters['err_%ss' % contentType] += 1
                                 stat_l = []; stat_l.insert(0, 'Error en BTDIGG: %s-%s' \
