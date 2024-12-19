@@ -270,10 +270,12 @@ class AlfaChannelHelper:
             soup = response.soup or {}
         elif json:
             soup = response.json or {}
-            if not soup and response.data:
+            if (not soup or not isinstance(soup, _dict)) and response.data:
                 soup = response.data
                 if not isinstance(soup, _dict):
-                    soup = jsontools.load(soup)
+                    soup = jsontools.load(response.data)
+                    if not soup:
+                        soup = jsontools.load(scrapertools.find_single_match(str(response.data), r"(\{.*?\})(?:$|<\/)"))
                 response.json = soup
         else:
             soup = response
