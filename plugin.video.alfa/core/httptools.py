@@ -551,7 +551,7 @@ def proxy_post_processing(url, proxy_data, response, **opt):
     if response["data"]:
         data = response["data"][:500]
         if PY3 and isinstance(data, bytes):
-            data = "".join(chr(x) for x in bytes(data))
+            data = data.decode(errors="ignore")
 
     try:
         if response["code"] in NOT_FOUND_CODES:
