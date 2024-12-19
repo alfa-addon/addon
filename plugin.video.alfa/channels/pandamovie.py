@@ -2,7 +2,7 @@
 # ------------------------------------------------------------
 import re
 
-from platformcode import config, logger
+from platformcode import config, logger, unify
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -10,6 +10,9 @@ from core import httptools
 from core import urlparse
 from modules import autoplay
 from bs4 import BeautifulSoup
+
+UNIFY_PRESET = config.get_setting("preset_style", default="Inicial")
+color = unify.colors_file[UNIFY_PRESET]
 
 list_quality = ['default']
 list_servers = ['mangovideo']
@@ -136,12 +139,12 @@ def findvideos(item):
     itemlist = []
     video_urls = []
     soup = create_soup(item.url)
-    pornstars = soup.find('div', class_='mvic-info').find_all('a', href=re.compile("/actor/"))
+    pornstars = soup.find('div', class_='mvic-info').find_all('a', href=re.compile("/actors/"))
     for x , value in enumerate(pornstars):
         pornstars[x] = value.text.strip()
     pornstar = ' & '.join(pornstars)
     if "N/A" not in pornstar:
-        pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+        pornstar = "[COLOR %s]%s[/COLOR]" % (color.get('rating_3',''), pornstar)
     else:
         pornstar = ""
     plot = pornstar
@@ -151,7 +154,6 @@ def findvideos(item):
     matches = soup.find('div', id='pettabs').find_all('a')
     for elem in matches:
         url = elem['href']
-        logger.debug(url)
         url = url.split("?link=")[-1]
         if url not in video_urls:
             video_urls += url

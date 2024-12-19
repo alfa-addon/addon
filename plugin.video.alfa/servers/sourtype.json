@@ -4,13 +4,19 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|)(?:nonktube|leslez|teenxy|sunporno).com/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:nonktube|leslez|teenxy).com/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
         "pattern": "(https://(?:www.|en.|)(?:fuqer|luxuretv|sextubefun|freehdporn|wanktv|iporntoo|hdporn-movies).(?:com|xxx)/video(?:s|)/[A-z0-9-]+.html)",
         "url": "\\1"
       },
+      {
+        "pattern": "(https://(?:embed.|)fuqer.com/vid/[0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+
+
       {
         "pattern": "(https://(?:www.|)(?:justporn|pulpo69|publicsexhub).(?:com|net)/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
@@ -68,6 +74,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)koreanpornmovie.com/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(vagina.nl/sexfilms/view/[A-z0-9-]+(?:/|))",
         "url": "https://en.\\1"
       },
@@ -80,7 +90,7 @@
         "url": "\\1"
       },
      {
-        "pattern": "(https://(?:www.|)vlxxx.(?:com|porn)(?:/blog|)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)vlxxx.(?:com|porn|\\w{2,4})(?:/blog|/video|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
      {
@@ -108,6 +118,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://eboblack.com/video/[0-9]+/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(http://www.absoluporn.com/(?:en|fr)/[A-z0-9-]+.html)",
         "url": "\\1"
       },
@@ -125,6 +139,22 @@
       },
       {
         "pattern": "(https://draftsex.porn/video/[A-z0-9-]+.html)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://gotanynudes.com/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://xorgasmo.com/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://fansteek.com/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)dump.xxx/video/[0-9-]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

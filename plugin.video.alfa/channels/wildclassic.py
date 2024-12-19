@@ -9,8 +9,9 @@ from core import servertools
 from core import httptools
 from core import urlparse
 
-host = 'http://www.wildclassic.com'
+host = 'https://www.wildclassic.com'
 
+#### ERROR AÑ REPRODUCIR DIRECTOS
 
 def mainlist(item):
     logger.info()
@@ -68,6 +69,8 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime, scrapedtitle)
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         thumbnail = scrapedthumbnail
+        if not thumbnail.startswith("https"):
+            thumbnail = "https:%s" % thumbnail
         plot = ""
         action = "play"
         if logger.info() is False:
@@ -113,7 +116,10 @@ def play(item):
     url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
     if not url:
         url = scrapertools.find_single_match(data, 'src="([^"]+)"')
-    url = urlparse.urljoin(item.url, url)
+    # url = url.replace("%3D", "=").replace("%2B", "+").replace("%2F", "/")
+    # url = urlparse.unquote(url)
+    # url += "|Referer=%s" % url
+    # url = urlparse.urljoin(item.url, url)
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

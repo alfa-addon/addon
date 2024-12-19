@@ -16,7 +16,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy|pornvase|sortporn|4wank|porncaper|camstreams|celebsroulette|pornve|xhand).(?:com|xxx|tube|to|tv)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy|pornvase|sortporn|4wank|porncaper|camstreams|celebsroulette|pornve|xhand|baddies247|baddiesonly).(?:com|xxx|tube|to|tv)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -101,6 +101,10 @@
       },
       {
         "pattern": "(https://www.theyarehuge.com/v/[A-z0-9-.]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://www.sunporno.com/v/[0-9]+/[A-z0-9-.]+(?:/|))",
         "url": "\\1"
       },
       {
