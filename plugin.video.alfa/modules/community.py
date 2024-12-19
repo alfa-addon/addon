@@ -33,7 +33,7 @@ def mainlist(item):
 
     path = filetools.join(config.get_data_path(), 'community_channels.json')
     if not filetools.exists(path):
-        res = filetools.write(path, '{"channels":{}}', silent=True)
+        res = filetools.write(path, '{"modules":{}}', silent=True)
     autoplay.init(item.channel, list_servers, list_quality)
 
     return show_channels(item)
@@ -45,12 +45,12 @@ def show_channels(item):
 
     context = [{"title": "Eliminar este canal",
                  "action": "remove_channel",
-                 "channel": "community"}]
+                 "module": "community"}]
 
     path = filetools.join(config.get_data_path(), 'community_channels.json')
     json = jsontools.load(filetools.read(path))
 
-    itemlist.append(Item(channel=item.channel, title='Agregar un canal', action='add_channel', thumbnail=get_thumb('add.png')))
+    itemlist.append(Item(module=item.module, title='Agregar un canal', action='add_channel', thumbnail=get_thumb('add.png')))
 
     for key, channel in list(json['channels'].items()):
 
@@ -59,7 +59,7 @@ def show_channels(item):
         else:
             poster = ''
 
-        itemlist.append(Item(channel=item.channel, title=channel['channel_name'], url=channel['path'],
+        itemlist.append(Item(module=item.module, title=channel['channel_name'], url=channel['path'],
                              thumbnail=poster, action='show_menu', channel_id = key, context=context))
     return itemlist
 
@@ -93,7 +93,7 @@ def show_menu(item):
                 action = 'finder'
             else:
                 action = 'show_menu'
-            itemlist.append(Item(channel=item.channel, title=option['title'], action=action, url=option['link']))
+            itemlist.append(Item(module=item.module, title=option['title'], action=action, url=option['link']))
         autoplay.show_option(item.channel, itemlist)
         return itemlist
 
@@ -139,7 +139,7 @@ def list_all(item):
         title = media['title']
         title = set_title(title, language, quality)
 
-        new_item = Item(channel=item.channel, title=title, quality=quality,
+        new_item = Item(module=item.module, title=title, quality=quality,
                         language=language, plot=plot, thumbnail=poster)
 
 
@@ -162,7 +162,7 @@ def list_all(item):
 
     if next:
         first = last
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=item.url, action='list_all',
+        itemlist.append(Item(module=item.module, title="Siguiente >>", url=item.url, action='list_all',
                          media_type=item.media_type, results=item.results, first=first))
 
     return itemlist
@@ -176,7 +176,7 @@ def seasons(item):
     for season in list_seasons:
         infoLabels['season'] = season['season']
         title = 'Temporada %s' % season['season']
-        itemlist.append(Item(channel=item.channel, title=title, url=season['link'], action='episodesxseason',
+        itemlist.append(Item(module=item.module, title=title, url=season['link'], action='episodesxseason',
                              contentSeasonNumber=season['season'], infoLabels=infoLabels))
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -200,7 +200,7 @@ def episodesxseason(item):
 
         title = '%sx%s - Episodio %s' % (season_number, episode_number, episode_number)
 
-        itemlist.append(Item(channel=item.channel, title=title, url=episode, action='findvideos',
+        itemlist.append(Item(module=item.module, title=title, url=episode, action='findvideos',
                              contentEpisodeNumber=episode_number, infoLabels=infoLabels))
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -216,7 +216,7 @@ def findvideos(item):
         title = ''
         title = set_title(title, language, quality)
 
-        itemlist.append(Item(channel=item.channel, title='%s'+title, url=url['url'], action='play', quality=quality,
+        itemlist.append(Item(module=item.module, title='%s'+title, url=url['url'], action='play', quality=quality,
                              language=language, infoLabels = item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

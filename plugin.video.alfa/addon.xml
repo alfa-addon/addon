@@ -54,8 +54,8 @@
     [B][COLOR red]Desactivados:[/COLOR][/B]
     • Pelis Maratón</news>
         <assets>
-            <icon>resources/icon.png</icon>
-            <fanart>resources/fanart.jpg</fanart>
+            <icon>resources/icon-christmas.png</icon>
+            <fanart>resources/fanart-christmas.jpg</fanart>
             <screenshot>resources/media/screenshots/1.jpg</screenshot>
             <screenshot>resources/media/screenshots/2.jpg</screenshot>
             <screenshot>resources/media/screenshots/3.jpg</screenshot>

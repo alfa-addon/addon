@@ -197,15 +197,20 @@ def get_channel_controls_settings(channel_name):
     # logger.info("channel_name=" + channel_name)
     dict_settings = {}
 
-    list_controls = get_channel_json(channel_name).get('settings', list())
+    list_controls = get_channel_json(channel_name)
 
-    for c in list_controls:
-        if 'id' not in c or 'type' not in c or 'default' not in c:
-            # Si algun control de la lista  no tiene id, type o default lo ignoramos
-            continue
+    if list_controls:
+        list_controls = list_controls.get('settings', list())
 
-        # new dict with key(id) and value(default) from settings
-        dict_settings[c['id']] = c['default']
+        for c in list_controls:
+            if 'id' not in c or 'type' not in c or 'default' not in c:
+                # Si algun control de la lista  no tiene id, type o default lo ignoramos
+                continue
+
+            # new dict with key(id) and value(default) from settings
+            dict_settings[c['id']] = c['default']
+    else:
+        list_controls = {}
 
     return list_controls, dict_settings
 
