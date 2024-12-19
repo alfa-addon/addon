@@ -1,7 +1,7 @@
 {
   "id": "serieslan",
   "name": "SeriesLan",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "http://i.imgur.com/s6CBxlw.png",
