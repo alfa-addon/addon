@@ -1,7 +1,7 @@
 {
   "id": "peliplayhd",
   "name": "peliplayhd",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat","cast"],
   "thumbnail": "https://i.postimg.cc/4N7d4pRK/peliplayhd.png",

@@ -1,7 +1,7 @@
 {
   "id": "cinehindi",
   "name": "CineHindi",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["vos"],
   "thumbnail": "https://i.postimg.cc/RJQsxbWB/cinehindi.png",
