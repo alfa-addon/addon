@@ -1,7 +1,7 @@
 {
   "id": "tvanime",
   "name": "TVAnime",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://i.postimg.cc/DmxTT1LK/logo4.jpg",
