@@ -32,7 +32,7 @@
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       },
       {
-        "pattern": "(?:hqq|megaplay|netu).(?:tv|cc|wiztube.xyz)/player/embed_player.php\\?vid=([A-z0-9]+)",
+        "pattern": "(?:hqq|megaplay|netu|netuplayer).(?:tv|cc|wiztube.xyz)/player/embed_player.php\\?vid=([A-z0-9]+)",
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       },
       {

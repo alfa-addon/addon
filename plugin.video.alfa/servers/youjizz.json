@@ -8,7 +8,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.youjizz.com/videos/[A-z0-9-.,\\(\\)]+.html)",
+        "pattern": "(https://www.youjizz.com/videos/[A-z0-9-.,'!\\(\\)]+.html)",
         "url": "\\1"
       }
     ]

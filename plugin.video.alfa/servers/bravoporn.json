@@ -36,11 +36,19 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)hello.porn/videos/[0-9]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://es.anyporn.com/[0-9]+/)",
         "url": "\\1"
       },
       {
         "pattern": "(https://(?:www.|)alphaporno.com/videos/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)checkporno.com/videos/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -144,6 +152,10 @@
       },
       {
         "pattern": "(https://(?:www.|)uppornx.com/(?:video|videos)/[0-9]+/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)hd-easyporn.com/(?:video|videos)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {

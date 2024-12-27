@@ -26,6 +26,12 @@ forced_proxy_opt = 'ProxySSL'
 # https://18yos.co/   https://boombj.com/  https://roleplayers.co/   https://teenanal.co/  https://wanktank.co/
 # https://amateurporntape.com/  https://amateurporngirlfriends.com/   https://sexng.com/
 
+# https://analcuties.co/ https://fuxxx.co/ https://grandtheftanus.com/  https://pornouploads.com/  https://unchartedanus.com/
+# https://teenagecreampieninjasquirters.com/  https://asianporn.ink/ https://hardjap.co/   https://vidshop.com/
+# https://hardfamily.co/  https://taboofamily.co/  https://brosislove.com/  https://whorehammer.com/  https://freexxxhardcore.com/
+# https://extremeteens.co/  https://brosislove.com/  https://collegegirls.xyz/  https://extremeteens.co/  https://hardcoreteens.co/
+# https://cd-universe.com/  https://hardteens.co/   https://freeporntube.vip/  https://fl1rt.com/ https://porntube.ink/
+
 canonical = {
              'channel': 'd1ck', 
              'host': config.get_setting("current_host", 'd1ck', default=''), 

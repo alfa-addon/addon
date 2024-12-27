@@ -23,18 +23,18 @@ canonical = {
              'host': config.get_setting("current_host", 'camsoda', default=''), 
              'host_alt': ["https://www.camsoda.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-
+# https://www.camsoda.com/api/v1/browse/react?p=2&gender-hide=m,t&perPage=98
 def mainlist(item):
     logger.info()
     itemlist = []
     httptools.downloadpage(host, canonical=canonical).data
     
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "api/v1/browse/react/?p=1"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "api/v1/browse/react/?gender-hide=m,t&perPage=98&p=1"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "api/v1/tags/index?page=1"))
     return itemlist
 
@@ -51,6 +51,7 @@ def search(item, texto):
             logger.error("%s" % line)
         return []
 
+# https://www.camsoda.com/api/v1/browse/react/girls/tag/big-tits-cams?p=2&gender-hide=m,t&perPage=98
 
 def categorias(item):
     logger.info()
@@ -61,7 +62,7 @@ def categorias(item):
         cantidad = elem['tag_count']
         title = "%s (%s)" %(name, cantidad)
         thumbnail = ""
-        url = "%sapi/v1/browse/react/tag/%s-cams?p=1" % (host,name)
+        url = "%sapi/v1/browse/react/girls/tag/%s-cams?p=1" % (host,name)
         plot = "[COLOR yellow]%s[/COLOR]" %name
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot) )

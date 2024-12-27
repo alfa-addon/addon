@@ -31,7 +31,7 @@ def get_video_url(page_url, video_password):
     video_urls = []
     data = httptools.downloadpage(page_url, **kwargs).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-    if soup.find("div", class_="player-wrap"):  ####  anyporn
+    if soup.find("div", id="player-wrap"):  ####  anyporn
         data = soup.find("div", class_="player-wrap")
         data = str(data)
         patron = "([0-9]+)\s*:\s*'([^']+)'"
@@ -65,8 +65,8 @@ def get_video_url(page_url, video_password):
                 quality = "360p"
             if "hq" in quality.lower():
                 quality = "720p"
-            if "auto" in quality.lower():
-                continue  # pornobande
+            if "auto" in quality.lower() or "preview" in quality.lower():
+                continue  # pornobande checkporno
             if not quality:
                 quality = "480p"
             if server not in url:
