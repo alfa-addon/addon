@@ -152,7 +152,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:hd-easyporn|porndrake|pornblade|pornboxer|sexclips66|sexmovies69|pornolisa|porn-monkey|pornoleon|meinyouporn|hd-pornos|pornotanja).(?:com|info)/(?:video|videos|pornvideo|porno|film)/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:hd-easyporn|porndrake|pornblade|pornboxer|sexclips66|sexmovies69|pornolisa|porn-monkey|pornoleon|meinyouporn|hd-pornos|pornotanja).(?:com|info|net)/(?:video|videos|pornvideo|porno|film|movies)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
