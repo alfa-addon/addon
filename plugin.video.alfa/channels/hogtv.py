@@ -29,8 +29,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "trending"))
     itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "all"))
     itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "engaging"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars/1?sort=vcount"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/1?sort=name"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -54,6 +54,7 @@ def categorias(item):
     soup = create_soup(item.url)
     matches = soup.find_all('li', class_='grid__item')
     for elem in matches:
+        if elem.find('script'): continue
         url = elem.a['href']
         title = elem.a['title']
         thumbnail = elem.img['data-src']

@@ -110,9 +110,6 @@
       {
         "pattern": "(https://(?:www.|)dirtyship.com/[A-z0-9-]+/)",
         "url": "\\1"
-      },      {
-        "pattern": "(https://(?:www.|)porndrake.com/pornvideo/[A-z0-9-]+/)",
-        "url": "\\1"
       },
       {
         "pattern": "(https://(?:www.|)(?:collectionofbestporn|xerotica|sexvr).com/video/[A-z0-9-]+.html)",
@@ -155,7 +152,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)hd-easyporn.com/(?:video|videos)/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:hd-easyporn|porndrake|pornblade|pornboxer|sexclips66|sexmovies69|pornolisa|porn-monkey|pornoleon|meinyouporn|hd-pornos|pornotanja).(?:com|info)/(?:video|videos|pornvideo|porno|film)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {

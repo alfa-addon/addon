@@ -15,7 +15,6 @@ def test_video_exists(page_url):
     if "tporn.xxx" in page_url or "pornzog" in page_url:
         data = httptools.downloadpage(page_url).data
         page_url = scrapertools.find_single_match(data, '="(https://[A-z-]+.[A-z]+/embed/[0-9]+/)')
-        logger.debug(page_url)
     server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
     # server = scrapertools.find_single_match(page_url, '([A-z0-9-]+).(?:com|tube|xxx)')
     dom = scrapertools.find_single_match(page_url, '.((?:com|tube|xxx))/')
@@ -50,6 +49,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         url = elem['video_url']
         quality = elem['format']
         quality = scrapertools.find_single_match(quality, '_([A-z]+).mp4')
+        if "tr" in quality: continue
         url = dec_url(url)
         if not url.startswith("http"):
             url = "https://%s.%s%s" % (server,dom,url)

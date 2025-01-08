@@ -224,7 +224,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:rt.|)bobs-tuber.live/videos/[0-9-]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:rt.|)bobs-tuber.live/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
