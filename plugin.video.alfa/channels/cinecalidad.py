@@ -322,7 +322,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['year'] = '-'
                 if elem.find('div'): elem_json['year'] = scrapertools.find_single_match(elem.find('div').get_text(strip=True), '\d{4}') or '-'
 
-            elem_json['thumbnail'] = re.sub(r'(-\d+x\d+.jpg)', '.jpg', elem.find('img', class_="w-full").get("src", ""))
+            elem_json['thumbnail'] = re.sub(r'(-\d+x\d+.jpg)', '.jpg', elem.find('img', class_="w-full").get("data-src", "") \
+                                                                       or elem.find('img', class_="w-full").get("src", ""))
 
             elem_json['plot'] = elem.p.get_text(strip=True) if elem.p else ''
             
@@ -342,7 +343,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
-    
+
     return AlfaChannel.get_video_options(item, item.url, matches_post=findvideos_matches, 
                                          verify_links=False, generictools=True, findvideos_proc=True, **kwargs)
 
@@ -352,6 +353,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     import base64
 
     matches = []
+    kwargs = {'error_check': False}
     findS = AHkwargs.get('finds', finds)
     srv_ids = {"dood": "Doodstream",
                "watchsb": "Streamsb",
@@ -369,13 +371,12 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         
         try:
             elem_json['url'] = base64.b64decode(elem.get("data-url", "") or elem.get("data-src", "")).decode('utf-8')
-            # if "acortalink" in elem_json['url']:continue
             if elem.get("data-url", ""):
                 # if elem.get_text(strip=True).lower() != 'torrent': continue
                 elem_json['url'] = AlfaChannel.convert_url_base64(elem_json['url'], host)
                 if "mediafire" in elem_json['url']:continue
                 if elem_json['url'].startswith('http'):
-                    elem_json['url'] = AlfaChannel.create_soup(elem_json['url']).find("div", id="btn_enlace").a.get("href", "")
+                    elem_json['url'] = AlfaChannel.create_soup(elem_json['url'], **kwargs).find("div", id="btn_enlace").a.get("href", "")
 
             elem_json['server'] = elem.get_text(strip=True).lower().replace('utorrent', 'torrent')
             if elem_json['server'] in ["Cineplay", "Netu", "trailer", "Fembed", "acortalink"]: continue

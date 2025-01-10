@@ -337,7 +337,10 @@ def list_storage(item):
 def btdigg(item):
     if not PY3: from lib.alfaresolver import find_alternative_link
     else: from lib.alfaresolver_py3 import find_alternative_link
-    from lib.generictools import search_btdigg_free_format_parse
+    from lib.generictools import search_btdigg_free_format_parse, get_cached_files_
+
+    PASSWORDS = get_cached_files_('password', FORCED=True, cached=True)
+    use_assistant = PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True)
     
     context = [{"title": "Copiar a Mis Torrents",
                 "action": "copy_file",
@@ -383,7 +386,7 @@ def btdigg(item):
 
     x = 0
     while item.btdigg and x < limit_search:
-        torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=True)
+        torrent_params = find_alternative_link(item, torrent_params=torrent_params, use_assistant=use_assistant, cache=True)
 
         for elem in torrent_params['find_alt_link_result']:
             item_local = item.clone()

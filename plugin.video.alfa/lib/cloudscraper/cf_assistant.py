@@ -152,13 +152,18 @@ def get_cl(
 
     host_name = httptools.obtain_domain(url, scheme=True).rstrip("/") + "/"
     domain_full = urlparse.urlparse(url).netloc
-    domain = domain_full
-    split_lst = domain.split(".")
+    domain_ = domain = domain_full
+    split_lst = domain_.split(".")
     if len(split_lst) > 2:
-        domain = domain.replace(split_lst[0], "")
+        domain_ = domain = domain_.replace(split_lst[0], "")
     if not domain.startswith("."):
         domain = "." + domain
-    pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
+    domain_host = "https://%s" % domain.lstrip(".")
+    try:
+        pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
+    except Exception:
+        pcb = ""
+
     if (
         opt.get("cf_assistant_if_proxy", False)
         or opt.get("canonical", {}).get("cf_assistant_if_proxy", False)
@@ -305,6 +310,7 @@ def get_cl(
             )
 
             try:
+                elapsed_now = time.time()
                 data_assistant = alfa_assistant.get_urls_by_page_finished(
                     url,
                     timeout=timeout,
@@ -319,6 +325,7 @@ def get_cl(
                     clearWebCache=clearWebCache,
                     removeAllCookies=removeAllCookies,
                     returnWhenCookieNameFound=opt["cf_cookie"].replace("$HOST", host_name.rstrip("/"))
+                        .replace("$DOMAIN", domain_host)
                         if "cf_cookie" in opt else url_cf,
                     retryIfTimeout=retryIfTimeout,
                     useAdvancedWebView=True,
@@ -327,11 +334,11 @@ def get_cl(
                     alfa_s=alfa_s
                 )
             except Exception:
-                logger.error("Cancelado por el usuario")
+                logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed_now))
                 return resp
 
             if not alfa_s or "cookies" not in str(data_assistant):
-                logger.debug("data assistant: %s" % data_assistant)
+                logger.debug("data assistant: %s - %s" % (data_assistant, str(time.time() - elapsed_now)))
 
             if (
                 isinstance(data_assistant, dict)
@@ -352,12 +359,13 @@ def get_cl(
                                 data_assistant['urlsVisited'], 
                                 challenge,
                                 url,
-                                domain=domain_full,
+                                domain=domain_,
                                 DEBUG=debug,
                                 cache=cache,
                                 ua=ua,
                                 cookiesView=data_assistant.pop("cookies", []),
                                 jscode=jscode,
+                                extraPostDelay=extraPostDelay, 
                                 **opt
                             )
                         for find_url in opt.get("cf_find_url", []):
@@ -366,12 +374,13 @@ def get_cl(
                                 else challenge_url.get("htmlSources", []),
                                 find_url,
                                 find_url,
-                                domain=domain_full,
+                                domain=domain_,
                                 DEBUG=debug,
                                 cache=cache,
                                 ua=ua,
                                 cookiesView=challenge_url.get("cookies", []),
                                 jscode=jscode,
+                                extraPostDelay=extraPostDelay, 
                                 urlOnly=True,
                                 **opt
                             )
@@ -471,10 +480,17 @@ def get_cl(
 
                                 httptools.set_cookies(dict_cookie, clear=False, alfa_s=True)
 
+                    cookies_found = True
+                    for key, value in opt.get("cf_cookies_names", {}).items():
+                        if value:
+                            continue
+                        if not cf_cookies_names.get(key):
+                            cookies_found = False
+                            break
                     if cf_cookies_names:
-                        logger.info("COOKIES añadidas='%s': %s" % (domain, cf_cookies_names), force=True)
+                        logger.info("COOKIES añadidas='%s - %s' - found: %s" % (domain, cf_cookies_names, cookies_found), force=True)
                             
-                    if "cf_clearance" in cf_cookies_names and cf_cookies_names["cf_clearance"]:
+                    if cookies_found or ("cf_clearance" in cf_cookies_names and cf_cookies_names["cf_clearance"]):
                         resp.status_code = 403
                         rin = {"Server": "Alfa"}
                         resp.headers.update(dict(rin))
@@ -511,11 +527,11 @@ def get_cl(
                 )
 
             if monitor and monitor.abortRequested():
-                logger.error("Cancelado por el usuario")
+                logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed))
                 return resp
             if not retry:
                 config.set_setting("cf_assistant_ua", "")
-                logger.debug("No se obtuvieron resultados, reintentando...")
+                logger.debug("No se obtuvieron resultados, reintentando... - %s" % str(time.time() - elapsed))
                 return get_cl(
                     self,
                     resp,
@@ -653,13 +669,17 @@ def get_source(
 
     host_name = httptools.obtain_domain(url, scheme=True).rstrip("/") + "/"
     domain_full = urlparse.urlparse(url).netloc
-    domain = domain_full
-    split_lst = domain.split(".")
+    domain_ = domain = domain_full
+    split_lst = domain_.split(".")
     if len(split_lst) > 2:
-        domain = domain.replace(split_lst[0], "")
+        domain_ = domain = domain_.replace(split_lst[0], "")
     if not domain.startswith("."):
         domain = "." + domain
-    pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
+    domain_host = "https://%s" % domain.lstrip(".")
+    try:
+        pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
+    except Exception:
+        pcb = ""
 
     if (
         "hideproxy" in url
@@ -830,6 +850,7 @@ def get_source(
             )
 
             try:
+                elapsed_now = time.time()
                 data_assistant = alfa_assistant.get_source_by_page_finished(
                     url,
                     timeout=timeout,
@@ -851,11 +872,11 @@ def get_source(
                     alfa_s=alfa_s
                 )
             except Exception:
-                logger.error("Cancelado por el usuario")
-                return (data, resp) if not from_get_cl else resp
-            
+                logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed_now))
+                return resp
+
             if not alfa_s:
-                logger.debug("data assistant: %s" % data_assistant)
+                logger.debug("data assistant: %s - %s" % (data_assistant, str(time.time() - elapsed_now)))
 
             if (
                 isinstance(data_assistant, dict)
@@ -876,12 +897,13 @@ def get_source(
                                 data_assistant['urlsVisited'], 
                                 challenge,
                                 url,
-                                domain=domain_full,
+                                domain=domain_,
                                 DEBUG=debug,
                                 cache=cache,
                                 ua=ua,
                                 cookiesView=data_assistant.pop("cookies", []),
                                 jscode=jscode,
+                                extraPostDelay=extraPostDelay,
                                 **opt
                             )
                         for find_url in opt.get("cf_find_url", []):
@@ -890,12 +912,13 @@ def get_source(
                                 else challenge_url.get("htmlSources", []),
                                 find_url,
                                 find_url,
-                                domain=domain_full,
+                                domain=domain_,
                                 DEBUG=debug,
                                 cache=cache,
                                 ua=ua,
                                 cookiesView=challenge_url.get("cookies", []),
                                 jscode=jscode,
+                                extraPostDelay=extraPostDelay,
                                 urlOnly=True,
                                 **opt
                             )
@@ -998,11 +1021,11 @@ def get_source(
                     if not source and 'captcha' in str(urls_ignored): retry = True
 
             if monitor and monitor.abortRequested():
-                logger.error("Cancelado por el usuario")
+                logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed))
                 return (data, resp) if not from_get_cl else resp
             if not source and not retry:
                 config.set_setting("cf_assistant_ua", "")
-                logger.debug("No se obtuvieron resultados, reintentando...")
+                logger.debug("No se obtuvieron resultados, reintentando... - %s" % str(time.time() - elapsed))
                 timeout = 1 if timeout < 5 else timeout * 2
                 extraPostDelay = -1 if extraPostDelay < 0 else extraPostDelay * 2
                 removeAllCookies = True
@@ -1035,7 +1058,8 @@ def get_source(
             if isinstance(data_assistant, dict) and data_assistant.get("cookies", None):
                 if not alfa_s:
                     logger.debug(
-                        "Lista cookies: %s" % data_assistant.get("cookies", [])
+                        "Lista cookies: %s - %s"
+                        % (data_assistant.get("cookies", []), str(time.time() - elapsed))
                     )
                 for cookie in data_assistant["cookies"]:
                     cf_cookies_names = {}
@@ -1143,8 +1167,9 @@ def get_ua(data_assistant, userAgent=False):
     if not httptools:
         from core import httptools
 
-    if UA == httptools.get_user_agent():
-        UA = "Default"
+    if UA == "Default":
+        #UA = httptools.get_user_agent()
+        UA = None
 
     config.set_setting("cf_assistant_ua", UA)
 
@@ -1198,7 +1223,10 @@ def get_jscode(count, key, n_iframe, timeout=3, url="", headers="", postData="",
     js = None
 
     js_list = {
-        'KEYCODE_ENTER': """(()=>{function e(e,t,n,o,i){var c,s,u,a;try{let d=alfaAssistantAndroidPI.getDPINeutral();x=t*d,y=n*d,r(o,i),c=l(o,i).x,s=l(o,i).y,u=c-0,a=s-0;let f=document.createElement("div");f.style.width="10px",f.style.height="10px",f.style.background="red",f.style.display="inline-block",f.style.borderRadius="25px",f.style.position="absolute";let $=(window.pageXOffset||document.documentElement.scrollLeft)-(document.documentElement.clientLeft||0);f.style.left=$+x/window.devicePixelRatio-5-1+u+"px";let m=(window.pageYOffset||document.documentElement.scrollTop)-(document.documentElement.clientTop||0);f.style.top=m+y/window.devicePixelRatio-5-1+a+"px",f.style.zIndex="9999999999",f.innerHTML="",document.body.appendChild(f),setTimeout(()=>{document.body.removeChild(f)},500)}catch(_){}try{setTimeout(()=>{r(o,i),console.log("alfaAssistantAndroidPI.sendMouse =>",x+u,y+a),alfaAssistantAndroidPI.sendMouse(e,x+u,y+a)},600)}catch(p){console.error("##Error sending mouse keys ",e,x,y,p)}}function t(e,t){try{for(var r=0;r<=e;r++)if(r>0&&alfaAssistantAndroidPI.sendKey("KEYCODE_TAB"),r==e){alfaAssistantAndroidPI.sendKey(t),console.log("#Current item focused:",document.activeElement);break}}catch(l){console.error("##Error sending key "+t,l)}}function r(e,t){try{document.querySelectorAll(null!=t?t:"iframe")[e-1].focus(),console.log("#Current item focused:",document.activeElement)}catch(r){console.error("##Error on setFocusToElementNumber",r)}}function l(e,t){return document.querySelectorAll(null!=t?t:"iframe")[e-1].getBoundingClientRect()}function n(e,t){let r=document.querySelectorAll(null!=t?t:"iframe")[e-1];r.style.margin=0,r.style.padding=0,r.style.left=0,r.style.top=0,r.style.border=0,r.style.position="absolute",r.style.zIndex="99999"}async function o(e){let t=null!=e?e:"iframe";for(;!document.querySelectorAll(t)[nmb-1];)await s(100)}function i(e,t){return Math.random()*(t-e)+e}function c(e,t){return i(e*(100-t)/100,e*(100+t)/100)}function s(e){return new Promise(t=>setTimeout(t,e))}async function u(){o(thisSelector='iframe[src*="challenge"]'),n(1,thisSelector),e([0,1],c(314,DIFF_PERCENTAGE=8),c(120,DIFF_PERCENTAGE),1)}try{u()}catch(a){console.error("##Error",a)}})();
+        'KEYCODE_ENTER': """(()=>{function e(e,t,n,o,i){var c,s,u,a;try{let d=alfaAssistantAndroidPI.getDPINeutral();x=t*d,y=n*d,r(o,i),c=l(o,i).x,s=l(o,i).y,u=c-0,a=s-0;let f=document.createElement("div");f.style.width="10px",f.style.height="10px",f.style.background="red",f.style.display="inline-block",f.style.borderRadius="25px",f.style.position="absolute";let $=(window.pageXOffset||document.documentElement.scrollLeft)-(document.documentElement.clientLeft||0);f.style.left=$+x/window.devicePixelRatio-5-1+u+"px";let m=(window.pageYOffset||document.documentElement.scrollTop)-(document.documentElement.clientTop||0);f.style.top=m+y/window.devicePixelRatio-5-1+a+"px",f.style.zIndex="9999999999",f.innerHTML="",document.body.appendChild(f),setTimeout(()=>{document.body.removeChild(f)},500)}catch(p){}try{setTimeout(()=>{r(o,i),console.log("alfaAssistantAndroidPI.sendMouse =>",x+u,y+a),alfaAssistantAndroidPI.sendMouse(e,x+u,y+a)},600)}catch(_){console.error("##Error sending mouse keys ",e,x,y,_)}}function t(e,t){try{for(var r=0;r<=e;r++)if(r>0&&alfaAssistantAndroidPI.sendKey("KEYCODE_TAB"),r==e){alfaAssistantAndroidPI.sendKey(t),console.log("#Current item focused:",document.activeElement);break}}catch(l){console.error("##Error sending key "+t,l)}}function r(e,t){try{document.querySelectorAll(null!=t?t:"iframe")[e-1].focus(),console.log("#Current item focused:",document.activeElement)}catch(r){console.error("##Error on setFocusToElementNumber",r)}}function l(e,t){return document.querySelectorAll(null!=t?t:"iframe")[e-1].getBoundingClientRect()}function n(e,t){let r=document.querySelectorAll(null!=t?t:"iframe")[e-1];r.style.margin=0,r.style.padding=0,r.style.left=0,r.style.top=0,r.style.border=0,r.style.position="absolute",r.style.zIndex="99999"}async function o(e){let t=null!=e?e:"iframe";for(;!document.querySelectorAll(t)[0];)await s(100)}function i(e,t){return Math.random()*(t-e)+e}function c(e,t){return i(e*(100-t)/100,e*(100+t)/100)}function s(e){return new Promise(t=>setTimeout(t,e))}async function u(){o(thisSelector='iframe[src*="challenge"]'),n(1,thisSelector),e([0,1],c(314,DIFF_PERCENTAGE=8),c(120,DIFF_PERCENTAGE),1)}try{u()}catch(a){console.error("##Error",a)}})();
+        """,
+        'KEYCODE_ENTER_RECAPTCHA': """ 
+        document.querySelector("#recaptcha-anchor > div.recaptcha-checkbox-border").click();
         """,
         'POST_FORM': """
         var http = new XMLHttpRequest();
@@ -1305,7 +1333,7 @@ def check_blacklist(domain, expiration=0, reset=False):
 
 
 def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey="source", 
-                     jscode=None, DEBUG=False, cache=True, ua=None, urlOnly=False, **opt):
+                     extraPostDelay=15, jscode=None, DEBUG=False, cache=True, ua=None, urlOnly=False, **opt):
     logger.info("Challenge: %s" % url)
     data = False
     response = None
@@ -1320,22 +1348,28 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
     host_name = httptools.obtain_domain(host, scheme=True)
     domain_full = urlparse.urlparse(host_name).netloc 
     domain = domain or domain_full
+    domain_host = "https://%s" % domain
     cf_returnkey = cf_returnkey or opt.get("cf_returnkey", "source")
     cf_partial = opt.get("cf_partial", False)
     cf_cookie = opt.get("cf_cookie", "")
     if cf_cookie is not None:
-        cf_cookie = cf_cookie.replace("$HOST", host_name.rstrip("/"))
+        cf_cookie = cf_cookie.replace("$HOST", host_name.rstrip("/")).replace("$DOMAIN", domain_host)
     cf_cookies_names = opt.get("cf_cookies_names", {})
+    if "missing" in cf_cookies_names:
+        del cf_cookies_names["missing"]
     url_cf = (
         scrapertools.find_single_match(
-            url, "(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?"
+            host, "(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?"
         )
         + "|cf_clearance"
     )
     if not cf_cookie and "cf_cookie" not in opt:
         cf_cookie = url_cf
     if not jscode:
-        jscode = get_jscode(1, "KEYCODE_ENTER", 1)
+        key_js = "KEYCODE_ENTER_RECAPTCHA" if "recaptcha" in url else "KEYCODE_ENTER"
+        jscode = get_jscode(1, key_js, 1)
+        if extraPostDelay <= 0:
+            extraPostDelay = 2
 
     try:
         if urlOnly:
@@ -1361,14 +1395,16 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
 
         if data and not urlOnly:
             for x in range(2):
+                elapsed_now = time.time()
                 clear = True
                 response = alfa_assistant.get_urls_by_page_finished("about:blank", 1, closeAfter=True, removeAllCookies=True, 
                                                                     userAgent=ua, debug=DEBUG)
                 response = alfa_assistant.get_urls_by_page_finished("{}".format(host), 20, closeAfter=True, disableCache=cache, 
                                                                     clearWebCache=True, returnWhenCookieNameFound=cf_cookie, 
-                                                                    jsCode=jscode, getCookies=True, userAgent=ua, debug=DEBUG)
+                                                                    jsCode=jscode, extraPostDelay=extraPostDelay, 
+                                                                    getCookies=True, userAgent=ua, debug=DEBUG)
                 if DEBUG:
-                    logger.debug("data assistant: %s" % response)
+                    logger.debug("data assistant: %s - %s" % (response, str(time.time() - elapsed_now)))
 
                 for cookie in response.get("cookies", []):
                     cookieslist = cookie.get("cookiesList", "")

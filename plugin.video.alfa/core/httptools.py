@@ -98,6 +98,7 @@ DEBUG_EXC = [
     "file.io/",
     "ufile.io/",
     "anonfiles",
+    "/api/stats",
 ]
 
 patron_host = "((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?[\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)"
@@ -2003,6 +2004,7 @@ def downloadpage(url, **opt):
             if opt["retries_cloudflare"] > 0:
                 time.sleep(1)
             opt["retries_cloudflare"] -= 1
+            opt["timeout"] = 30
             if response["history"]:
                 opt["history"] = response["history"][:]
             if not CACHING_DOMAINS:

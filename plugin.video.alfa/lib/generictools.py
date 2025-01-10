@@ -1152,6 +1152,7 @@ def context_for_videolibray(item):
 
 def monitor_domains_update(options=None):
     logger.info()
+    from core import channeltools
 
     monitor = xbmc.Monitor()
     server_domains_list = jsontools.load(window.getProperty("alfa_cached_domains_update") or '{}')
@@ -1174,6 +1175,7 @@ def monitor_domains_update(options=None):
     for channel_ in channels:
         if not channel_.endswith('.py'): continue
         channel = channel_.replace('.py', '')
+        if not channeltools.is_enabled(channel): continue
 
         try:
             channel_obj = __import__('channels.%s' % channel, None, None, ["channels.%s" % channel])
