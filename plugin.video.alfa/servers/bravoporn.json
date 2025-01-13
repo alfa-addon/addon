@@ -152,7 +152,27 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:hd-easyporn|porndrake|pornblade|pornboxer|sexclips66|sexmovies69|pornolisa|porn-monkey|pornoleon|meinyouporn|hd-pornos|pornotanja).(?:com|info|net)/(?:video|videos|pornvideo|porno|film|movies)/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:hd-easyporn|porndrake|pornblade|porntommy|pornboxer|sexclips66|sexmovies69|porn-monkey).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film)/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)(?:hdpornos|pornoente|pornoklinge|pornotommy|pornolisa|pornoaffe|drsexfilme|pornotanja).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film|filme)/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)(?:xnxx-pornos|pornofelix|halloporno|lesbenhd|pornofisch|sexvideos-gratis|pornohirsch|pornodavid|gutesexfilme|hd-sexfilme|pornotom|pornoritze).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film|filme)/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)(?:xnxx-pornos|xnxx-porno|xnxx-sexfilme).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film|filme)/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)(?:pornoleon|hd-pornos|sexfilme-gratis|meinyouporn|sexvideos-hd|tube8-pornos|deinesexvideos|deinesexfilme|pornozebra|pornhub-sexfilme|pornosusi).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film|filme)/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)(?:pornojenny|pornohammer|sexente|pornovideos-hd|pornoschlange|beeg-pornos|herzporno|einfachtitten|nursexfilme|milffabrik|pornohans).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film|filme)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
