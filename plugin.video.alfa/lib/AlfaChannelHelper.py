@@ -351,7 +351,7 @@ class AlfaChannelHelper:
             new_item.action = self.movie_action
 
         elif contentType != 'tvshow' and ((self.movie_path in new_item.url and not self.tv_path in new_item.url) \
-                                     or new_item.contentType == 'movie'):
+                                          or new_item.contentType == 'movie'):
             new_item.action = new_item.action or self.movie_action
             new_item.contentTitle = new_item.title.strip()
             if new_item.infoLabels.get("tvshowtitle", ''): del new_item.infoLabels["tvshowtitle"]
@@ -1829,8 +1829,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 new_item.url = self.do_url_replace(new_item.url, url_replace)
 
-                if elem.get('mediatype', ''): new_item.contentType = elem['mediatype']
-                elif item.c_type == 'peliculas': new_item.contentType = 'movie'
+                if elem.get('mediatype'): new_item.contentType = elem['mediatype']
+                elif item.c_type == 'peliculas': new_item.contentType = elem['mediatype'] = 'movie'
+                elif item.contentType: new_item.contentType = elem['mediatype'] = item.contentType
                 new_item = self.define_content_type(new_item, item, contentType=new_item.contentType)
 
                 new_item.context += ['buscar_trailer']
