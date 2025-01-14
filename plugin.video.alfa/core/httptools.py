@@ -1973,7 +1973,7 @@ def downloadpage(url, **opt):
             if opt.get("cf_assistant_get_source", False):
                 response["data"] = req.content
 
-            if response_code == 403:
+            if response_code in [403, 429]:
                 if ", Proxy Web" in proxy_data.get("stat", ""):
                     if not PY3:
                         from . import proxytools
