@@ -480,6 +480,7 @@ def check_proxy(url, **opt):
     proxy_data["proxy_retries"] = opt.get("proxy_retries", 1) or opt.get(
         "canonical", {}
     ).get("proxy_retries", 1)
+    proxy_data["forced_proxy_SSL_list"] = opt.get("forced_proxy_SSL_list", [])
 
     if (
         (proxy_data["proxy"] or proxy_data["proxy_web"])
@@ -1279,6 +1280,8 @@ def downloadpage(url, **opt):
         opt["CF_if_NO_assistant"] = opt["canonical"]["CF_if_NO_assistant"]
     if "forced_proxy_opt" not in opt and "forced_proxy_opt" in opt.get("canonical", {}):
         opt["forced_proxy_opt"] = opt["canonical"]["forced_proxy_opt"]
+    if "forced_proxy_SSL_list" not in opt and "forced_proxy_SSL_list" in opt.get("canonical", {}):
+        opt["forced_proxy_SSL_list"] = opt["canonical"]["forced_proxy_SSL_list"]
     if "forced_proxy" not in opt and "forced_proxy" in opt.get("canonical", {}):
         opt["forced_proxy"] = opt["canonical"]["forced_proxy"]
     if "cf_assistant_if_proxy" not in opt and "cf_assistant_if_proxy" in opt.get(
