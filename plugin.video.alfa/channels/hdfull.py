@@ -52,8 +52,8 @@ canonical = {
              'cf_assistant_ua': True, 'cf_assistant_get_source': True if cf_assistant == 'force' else False, 
              'cf_no_blacklist': True, 'cf_removeAllCookies': False if cf_assistant == 'force' else True,
              'cf_challenge': True, 'cf_returnkey': 'url', 'cf_partial': True, 'cf_debug': debug, 
-             'cf_cookie': '$HOST|_ga|$HOST|_ga_54W4HK6ZMG', 
-             'cf_cookies_names': {'cf_clearance': False, '_ga': False, '_ga_54W4HK6ZMG': False, 'PHPSESSID': False},
+             'cf_cookie': '$HOST|cf_clearance', 
+             'cf_cookies_names': {'cf_clearance': False},
              'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
              'CF_stat': True if cf_assistant is True else False, 'session_verify': True if cf_assistant is True else False, 
              'CF': False, 'CF_test': True, 'alfa_s': True

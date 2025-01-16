@@ -440,7 +440,10 @@ def get_cl(
                         req.status_code = 200
                         req.encoding = encoding
                         req.headers["Content-Type"] = "application/json"
-                        req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+                        if PY3:
+                            req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+                        else:
+                            req._content = jsontools.dump(urlsVisited)
 
                         resp.history.append(req)
                     except Exception:
@@ -508,7 +511,10 @@ def get_cl(
                                 req.status_code = 200
                                 req.encoding = encoding
                                 req.headers["Content-Type"] = "application/json"
-                                req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+                                if PY3:
+                                    req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+                                else:
+                                    req._content = jsontools.dump(urlsVisited)
 
                                 resp.history.append(req)
                             except Exception:
@@ -576,7 +582,10 @@ def get_cl(
                 req.status_code = 200
                 req.encoding = encoding
                 req.headers["Content-Type"] = "application/json"
-                req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+                if PY3:
+                    req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+                else:
+                    req._content = jsontools.dump(urlsVisited)
 
                 resp.history.append(req)
             except Exception:
@@ -1130,7 +1139,10 @@ def get_source(
                 req.status_code = 200 if not from_get_cl else 207
                 req.encoding = encoding
                 req.headers["Content-Type"] = "application/json"
-                req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+                if PY3:
+                    req._content = bytes(jsontools.dump(urlsVisited), encoding.lower())
+                else:
+                    req._content = jsontools.dump(urlsVisited)
 
                 resp.history.append(req)
             except Exception:
