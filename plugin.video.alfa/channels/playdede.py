@@ -81,7 +81,7 @@ list_language = list(IDIOMAS.values())
 list_quality = ["HD1080", "HD720", "HDTV", "DVDRIP"]
 list_quality_tvshow = list_quality_movies = list_quality
 list_servers = list(SERVIDORES.values())
-host = "https://playdede.eu/"
+host = "https://playdede.in/"
 assistant = config.get_setting(
     "assistant_version", default=""
 ) and not httptools.channel_proxy_list(host)
@@ -91,6 +91,8 @@ canonical = {
     "host": config.get_setting("current_host", "playdede", default=""),
     "host_alt": [host],
     "host_black_list": [
+        "https://playdede.me/",
+        "https://playdede.eu/",
         "https://playdede.us/",
         "https://playdede.to/",
         "https://playdede.nu/",
