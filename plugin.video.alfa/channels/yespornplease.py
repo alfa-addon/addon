@@ -133,12 +133,13 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find_all('div', class_='wp-video')
-    if soup.find('div', class_='iframe-container'):
-        matches.append(soup.find('div', class_='iframe-container'))
+    soup = create_soup(item.url).find('div', class_='wp-video')
+    matches = soup.find_all('iframe')
     for elem in matches:
-        url = elem.iframe['src']
+        if elem.get('data-litespeed-src',''):
+            url = elem['data-litespeed-src']
+        else:
+            url = elem['src']
         if "player-x.php?" in url:
             url = url.split("q=")
             url = url[-1]

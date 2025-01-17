@@ -8,16 +8,16 @@
         "url": "https://tiwi.kiwi/embed-\\1.html"
       },
       {
-        "pattern": "https://filemo+n.(?:sx|to|in|top|nl|lat|\\w{2,4})/(?:e|d)/([a-z0-9]+)",
-        "url": "https://moon-n9hp2onm-embed.com/ptsd/\\1?referer=mp4.nu"
+        "pattern": "(https://filemo+n.(?:sx|to|in|top|nl|lat|\\w{2,4})/)(?:e|d)/([a-z0-9]+)",
+        "url": "https://filemooon.link/e/\\2|Referer=\\1"
       },
       {
         "pattern": "https://moonembed.(?:sx|to|in|top|nl|xyz)/(?:e|d)/([a-z0-9]+)",
-        "url": "https://moon-n9hp2onm-embed.com/ptsd/\\1?referer=mp4.nu"
+        "url": "https://filemooon.link/e/\\1|Referer=https://filemooon.link/"
       },
       {
         "pattern": "https://x08.(?:online||\\w{2,4})/(?:e|d)/([a-z0-9]+)",
-        "url": "https://moon-n9hp2onm-embed.com/ptsd/\\1?referer=mp4.nu"
+        "url": "https://filemooon.link/e/\\1|Referer=https://filemooon.link/"
       },
       {
         "pattern": "(https://(?:filelions|fviplions|azipcdn).(?:sx|to|in|live|online|com|live|top|site)/(?:e|d|v|f|embed)/[a-z0-9]+)",

@@ -24,7 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 ''' CANAL ANTIGUA OUT pages
     gameofporn  veporns  https://www.veporno.net  https://www.fxporn.net      http://www.veporns.com    '''
 
-#  https://veporn.com/  https://pornoflix.com/  https://ultrahorny.com/   https://eporner.xxx/
+#  https://veporn.com/  https://ultrahorny.com/   https://eporner.xxx/
+# https://pornoflix.com/  
 
 canonical = {
              'channel': 'veporns', 
@@ -190,8 +191,9 @@ def play(item):
     lista.insert (1, pornstar)
     item.contentTitle = '[/COLOR]'.join(lista)
     
-    url = soup.find('div', class_='bx-video').iframe['src']
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
+    if soup.find('div', class_='bx-video').get('iframe', ''):
+        item.url = soup.find('div', class_='bx-video').iframe['src']
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
     return itemlist

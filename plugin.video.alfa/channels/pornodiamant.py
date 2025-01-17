@@ -10,6 +10,8 @@ from core import servertools
 from core import httptools
 from core import urlparse
 
+####   SOURTYPE  [A-z0-9-ß]+
+
 host = ''
 canonical = {
              'channel': 'pornodiamant', 
@@ -52,12 +54,13 @@ def catalogo(item):
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a itemprop="url" href="([^"]+)".*?'
-    patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
+    patron += 'src="([^"]+)"\s+data-src="([^"]+)"\s+alt="([^"]+)".*?'
     patron += '</svg>([^<]+)</'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle, cantidad in matches:
+    for scrapedurl,thumbnail,thumb2,scrapedtitle, cantidad in matches:
         title = "%s (%s)" %(scrapedtitle,cantidad.strip())
-        thumbnail = scrapedthumbnail
+        if "gif" in thumbnail:
+            thumbnail = thumb2
         url = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
@@ -74,12 +77,13 @@ def categorias(item):
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a href="([^"]+)" data-category-gtmname="([^"]+)".*?'
-    patron += 'data-src="([^"]+)".*?'
+    patron += 'src="([^"]+)"\s+data-src="([^"]+)".*?'
     patron += '</svg>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
+    for scrapedurl,scrapedtitle,thumbnail,thumb2,cantidad in matches:
         title = "%s (%s)" %(scrapedtitle,cantidad.strip())
-        thumbnail = scrapedthumbnail
+        if "gif" in thumbnail:
+            thumbnail = thumb2
         url = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
@@ -96,14 +100,17 @@ def lista(item):
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a href="([^"]+)" data-video-id.*?'
-    patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
+    patron += 'src="([^"]+)"\s+data-src="([^"]+)".*?'
+    patron += 'alt="([^"]+)".*?'
     patron += '</svg>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,time in matches:
+    for scrapedurl,thumbnail,thumb2,scrapedtitle,time in matches:
         time = time.strip()
         title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
-        thumbnail = scrapedthumbnail
+        if "gif" in thumbnail:
+            thumbnail = thumb2
         url = urlparse.urljoin(item.url,scrapedurl)
+        url = urlparse.unquote(url)
         plot = ""
         action = "play"
         if logger.info() is False:
@@ -128,6 +135,22 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
+    
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+
+    if "video-footer__pornstars" in data:
+        data = scrapertools.find_single_match(data, '"video-footer__pornstars">(.*?)</ul')
+        pornstars = scrapertools.find_multiple_matches(data, ">([^<]+)</a")
+        pornstar = ' & '.join(pornstars)
+        pornstar = "[COLOR orange]%s[/COLOR]" % (pornstar)
+        lista = item.title.split()
+        if "HD" in item.title:
+            lista.insert (4, pornstar)
+        else:
+            lista.insert (2, pornstar)
+        item.contentTitle = ' '.join(lista)
+    
     itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

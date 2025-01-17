@@ -24,19 +24,20 @@ forced_proxy_opt = 'ProxySSL'
 ''' CANAL ANTIGUA OUT pages
     gameofporn  veporns  https://www.veporno.net  https://www.fxporn.net      http://www.veporns.com    '''
 
-#  https://veporn.com/  https://pornoflix.com/  https://ultrahorny.com/   https://eporner.xxx/
+#  https://veporn.com/  https://ultrahorny.com/   https://eporner.xxx/
+# https://pornoflix.com/  
 
 canonical = {
              'channel': 'pornoflix', 
              'host': config.get_setting("current_host", 'pornoflix', default=''), 
-             'host_alt': ["https://eporner.xxx/"], 
-             'host_black_list': ["https://pornoflix.com/"], 
+             'host_alt': ["https://pornoflix.com/"], 
+             'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 5
+timeout = 30
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = ''
@@ -190,8 +191,9 @@ def play(item):
     lista.insert (1, pornstar)
     item.contentTitle = '[/COLOR]'.join(lista)
     
-    url = soup.find('div', class_='bx-video').iframe['src']
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
+    if soup.find('div', class_='bx-video').get('iframe', ''):
+        item.url = soup.find('div', class_='bx-video').iframe['src']
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
     return itemlist

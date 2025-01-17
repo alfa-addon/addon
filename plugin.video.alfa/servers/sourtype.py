@@ -15,7 +15,6 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global server, data
     server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
-    logger.debug(server)
     if "send" in server:
         data = httptools.downloadpage(page_url, **kwargs).data
     response = httptools.downloadpage(page_url, **kwargs)
@@ -43,6 +42,8 @@ def get_video_url(page_url, video_password):
                 # url = urlparse.urljoin(page_url,url)
             if not url.startswith("http"):
                 url = "http:%s" % url
+            
+            url = urlparse.unquote(url)
             url += "|Referer=%s" % page_url
             video_urls.append(["[%s] mp4" %(server), url])
         return video_urls
@@ -52,6 +53,7 @@ def get_video_url(page_url, video_password):
             url = urlparse.urljoin(page_url,url) #justporn
         if not url.startswith("http"):
             url = "http:%s" % url
+        url = urlparse.unquote(url)
         url += "|Referer=%s" % page_url
         video_urls.append(["[%s] mp4" %(server), url])
     return video_urls

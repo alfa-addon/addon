@@ -62,7 +62,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:drpornofilme|pornobereich|pornodiamant).com/film(?:e|)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:drpornofilme|pornobereich|pornodiamant).com/film(?:e|)/[A-z0-9-ß]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -86,7 +86,11 @@
         "url": "\\1"
       },
      {
-        "pattern": "(https://(?:www.|)(?:pornvid69|sextube|ultrahorny).(?:com|nl)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:pornvid69|sextube).(?:com|nl)/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+     {
+        "pattern": "(https://(?:www.|)(?:pornoflix|veporn|ultrahorny).(?:com|nl)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
      {
@@ -154,7 +158,15 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://ogporn.com/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)dump.xxx/video/[0-9-]+/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)veporn.net/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

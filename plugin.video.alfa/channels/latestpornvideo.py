@@ -57,7 +57,7 @@ finds = {'find': {'find_all': [{'tag': ['article'], 'class': re.compile(r"^post-
                                            '@ARG': 'href', '@TEXT': 'page/(\d+)'}])]), 
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['article'], 'class': re.compile(r"^post-\d+")}]), 
-                             ('find_all', [{'tagOR': ['a'], 'href': True, 'rel': 'noopener'},
+                             ('find_all', [{'tagOR': ['a'], 'href': True, 'target': 'blank'},
                                            {'tag': ['iframe'], 'src': True}])]),
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],

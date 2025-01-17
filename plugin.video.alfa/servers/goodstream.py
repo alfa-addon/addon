@@ -20,7 +20,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
     data = httptools.downloadpage(page_url, **kwargs).data
-    if "<h2>WE ARE SORRY</h2>" in data or '<title>404 Not Found</title>' in data:
+    if "<h2>WE ARE SORRY</h2>" in data or 'No such file' in data:
         return False, "[GoodStream] El fichero no existe o ha sido borrado"
     return True, ""
 
@@ -29,9 +29,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     
-    url = scrapertools.find_single_match(data, 'file: "([^"]+)"')
-    logger.debug(data)
-    video_urls.append(["[GoodStream] mp4", url])
+    url = scrapertools.find_single_match(data, 'file:\s*"([^"]+)"')
+    # url += "|Referer=%s" % page_url
     
+    video_urls.append(["[GoodStream] m3u", url])
     return video_urls
 
