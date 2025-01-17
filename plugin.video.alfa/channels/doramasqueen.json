@@ -1,7 +1,7 @@
 {
   "id": "doramasqueen",
   "name": "DoramasQueen",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/gnYc9cz9/doramasqueen.png",
