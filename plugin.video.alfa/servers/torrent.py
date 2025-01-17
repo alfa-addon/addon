@@ -352,8 +352,11 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
 
                     if not torrent_params.get('lookup', False) and cf_error:
                         torrent_params['torrents_path'] = ''
-                        url_call = item.url_tvshow if url_domain in domain_CF_blacklist and item.url_tvshow else url
-                        
+                        url_call = url
+                        if url_domain in domain_CF_blacklist and item.url_tvshow:
+                            url_call = item.url_tvshow
+                            if item.contentType == 'episode' and item.url_save_rec and item.url_save_rec[0]:
+                                url_call = item.url_save_rec[0]
                         url_save, torrent_file = capture_thru_browser(url_call, capture_path, item, response, VFS)
                         
                         if 'ERROR_CF_BLOCKED' in url_save:

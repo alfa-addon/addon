@@ -71,9 +71,12 @@ def check_assistant_servers(time1=timer1, time2=timer2):
             )
 
         if not ASSISTANT_SERVERS:
-            ASSISTANT_SERVERS = config.get_setting(
-                "assistant_custom_address", default=ASSISTANT_LOCAL
-            ).split(",")
+            if config.get_setting("assistant_mode", default="este").lower() == "este":
+                ASSISTANT_SERVERS = [ASSISTANT_LOCAL]
+            else:
+                ASSISTANT_SERVERS = config.get_setting(
+                    "assistant_custom_address", default=ASSISTANT_LOCAL
+                ).split(",")
             if not ASSISTANT_SERVERS[-1]:
                 del ASSISTANT_SERVERS[-1]
             window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS))
@@ -195,23 +198,46 @@ assistant_urls = [
     "https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/",
     "https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/",
 ]
+assistant_components = []
 assistant_desktop_urls = {
-    "windows": [
-        "https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/",
-        "https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/",
-    ],
-    "linux": [
-        "https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/",
-        "https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/",
-    ],
-    "osx": [
-        "https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/",
-        "https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/",
-    ],
+    "windows": {
+        "urls": [
+            "https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/windows/",
+            "https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/windows/",
+        ],
+        "components": [
+            "alfa-desktop-assistant-windows.zip",
+            "alfa-desktop-assistant-java-windows.part%s.rar",
+            "alfa-desktop-assistant-chrome-windows.part%s.rar"
+        ]
+    },
+    "linux": {
+        "urls": [
+            "https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/linux/",
+            "https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/linux/",
+        ],
+        "components": [
+            "alfa-desktop-assistant-linux.zip",
+            "alfa-desktop-assistant-java-linux.part%s.rar",
+            "alfa-desktop-assistant-chrome-linux.part%s.rar"
+        ]
+    },
+    "osx": {
+        "urls": [
+            "https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/osx/",
+            "https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/osx/",
+        ],
+        "components": [
+            "alfa-desktop-assistant-osx.zip",
+            "alfa-desktop-assistant-java-osx.part%s.rar",
+            "alfa-desktop-assistant-chrome-osx.part%s.rar"
+        ]
+    }
 }
 if PLATFORM not in ["android", "atv2"] and ASSISTANT_MODE == "este":
     if assistant_desktop_urls.get(PLATFORM, []):
-        assistant_urls = assistant_desktop_urls[PLATFORM]
+        assistant_urls = assistant_desktop_urls[PLATFORM]["urls"]
+        assistant_components = assistant_desktop_urls[PLATFORM]["components"]
     else:
         assistant_urls = []
 
@@ -1301,6 +1327,7 @@ def execute_in_alfa_assistant_with_cmd(
                     cmdexe[0] += command.get("%s_debug" % PLATFORM, "")
 
         try:
+            logger.info("##Assistant executing CMD: %s, wait=%s, cwd: %s" % (cmdexe, wait, assistant_path))
             p = subprocess.Popen(
                 cmdexe,
                 bufsize=0,
@@ -1309,13 +1336,12 @@ def execute_in_alfa_assistant_with_cmd(
                 stdin=subprocess.PIPE,
                 creationflags=creationflags,
                 cwd=assistant_path,
-                shell=True,
+                shell=False,
             )
             if wait:
                 output_cmd, error_cmd = p.communicate()
                 if error_cmd:
                     p = False
-            logger.info("##Assistant executing CMD: %s, wait=%s" % (cmdexe, wait))
             return p
         except Exception as e:
             if isinstance(e, bytes):
@@ -2204,6 +2230,7 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
             json_to_utf8=False,
             retry_alt=False,
             proxy_retries=0,
+            hide_infobox=True,
         )
         if response.sucess:
             break
@@ -2307,6 +2334,7 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
         alfa_s=alfa_s,
         json_to_utf8=False,
         retry_alt=False,
+        hide_infobox=True,
     )
     if not response.sucess:
         if not update or verbose:
@@ -2682,6 +2710,8 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
 ## Instala o actualiza el DESKTOP de Assitant ##################################################################################################################################
 #
 def install_alfa_desktop_assistant(update=False, remote="", verbose=VERBOSE):
+    global isAlfaAssistantOpen
+
     if ASSISTANT_MODE == "otro":
         logger.info(
             "{} actualización remota no implementada.".format(ASSISTANT_DESKTOP)
@@ -2692,6 +2722,7 @@ def install_alfa_desktop_assistant(update=False, remote="", verbose=VERBOSE):
     if update:
         logger.info("update=%s" % str(update))
 
+    alfa_assistant_pwd = ""
     app_name = ASSISTANT_DESKTOP
     version_name = "%s.version" % (app_name)
     assistant_flag_install = config.get_setting("assistant_flag_install")
@@ -2702,14 +2733,17 @@ def install_alfa_desktop_assistant(update=False, remote="", verbose=VERBOSE):
         alfa_s = False
     respuesta = False
     assistant_url = ""
+    version_dict = {}
 
     install_path = filetools.join(
         addons_path, "lib", "assistant", platform, version_name
     )
     version_inst = filetools.read(install_path)
-    zip_path = filetools.join(addons_path, "tools", app_name + ".zip")
+    zip_path = filetools.join(addons_path, "tools", app_name + "/")
     if update and filetools.exists(zip_path):
         filetools.remove(zip_path, silent=True)
+    if update:
+        filetools.mkdir(zip_path, silent=True)
     binary_path = filetools.join(DATA_PATH, "assistant")
     binary_exec = filetools.join(binary_path, app_name + ".exe")
     version_actual_path = filetools.join(DATA_PATH, version_name)
@@ -2768,7 +2802,7 @@ def install_alfa_desktop_assistant(update=False, remote="", verbose=VERBOSE):
         logger.error("Error en la descarga de la VERSIÓN: %s" % str(platform))
         return respuesta, app_name
     for _assistant_url in assistant_urls:
-        assistant_url = "%s%s/%s" % (_assistant_url, platform, version_name)
+        assistant_url = "%s%s" % (_assistant_url, version_name)
         # assistant_url = _assistant_url
         response = httptools.downloadpage(
             assistant_url,
@@ -2778,6 +2812,7 @@ def install_alfa_desktop_assistant(update=False, remote="", verbose=VERBOSE):
             json_to_utf8=False,
             retry_alt=False,
             proxy_retries=0,
+            hide_infobox=True,
         )
         if response.sucess:
             break
@@ -2847,74 +2882,118 @@ def install_alfa_desktop_assistant(update=False, remote="", verbose=VERBOSE):
     # Descargamos y guardamos el BINARIO
     if update is not True:
         platformtools.dialog_notification(
-            "Instalación Alfa Assistant", "Descargando BINARIO"
+            "Instalación Alfa Assistant", "Descargando BINARIOS"
         )
-    assistant_url = "%s%s/%s-%s.zip" % (_assistant_url, platform, app_name, platform)
-    # if assistant_desktop_urls.get(platform, []):
-    #    assistant_url = assistant_desktop_urls[platform][1]
-    # else:
-    #    logger.error("Error en la descarga del BINARIO: %s" % str(platform))
-    #    return respuesta, app_name
-    logger.info("Descargando de_ %s" % assistant_url)
-    response = httptools.downloadpage(
-        assistant_url,
-        timeout=30,
-        ignore_response_code=True,
-        alfa_s=alfa_s,
-        json_to_utf8=False,
-        retry_alt=False,
-        proxy_retries=0,
-    )
-    if not response.sucess:
-        if not update or verbose:
-            platformtools.dialog_notification(
-                "Instalación Alfa Assistant", "Error en la descarga del BINARIO"
-            )
-        logger.error("Error en la descarga del BINARIO: %s" % str(response.code))
-        return respuesta, app_name
-    else:
-        # Guardamos archivo descargado .zip
-        res = filetools.write(zip_path, response.data, mode="wb", silent=True)
-        if not res:
-            if not update or verbose:
-                platformtools.dialog_notification(
-                    "Instalación Alfa Assistant", "Error en la escritura del BINARIO"
-                )
-            logger.error("Error en la escritura del BINARIO: %s" % zip_path)
-            return respuesta, app_name
-        else:
-            global isAlfaAssistantOpen
-            isAlfaAssistantOpen = False
-            res = get_generic_call(
-                "terminate", timeout=1 - EXTRA_TIMEOUT, alfa_s=True
-            )  # desactivamos la app si estaba iniciada
-            # Empezando la extracción del .zip del DESKTOP
-            if filetools.exists(binary_path):
-                res = filetools.rmdirtree(binary_path, silent=False)
-                time.sleep(2)
-            try:
-                import ziptools
+    assistant_components_mod = []
+    for _assistant_component in assistant_components:
+        _assist_component = _asst_component = _assistant_component.replace("z%s", "zip")
+        assistant_url = "%s%s" % (_assistant_url, _assist_component)
+        limit = 1
+        zfill = 2
+        e404 = False
+        if "%" in _assistant_component:
+            limit = 15
 
-                archive = ziptools.ziptools()
-                archive.extract(zip_path, binary_path)
-            except Exception:
-                xbmc.executebuiltin('Extract("%s","%s")' % (zip_path, binary_path))
-            for x in range(30):
-                if filetools.exists(binary_exec):
+        y = 0
+        for x in range(limit):
+            assist_url = assistant_url
+            if ".part" in assistant_url:
+                assist_url = assistant_url % str(y+1).zfill(zfill)
+                _asst_component = _assist_component % str(y+1).zfill(zfill)
+            elif y > 0 and "%" in _assistant_component:
+                assist_url = assistant_url.replace("zip", "z%s" % str(y).zfill(zfill))
+                _asst_component = _assist_component.replace("zip", "z%s" % str(y).zfill(zfill))
+
+            response = httptools.downloadpage(
+                assist_url,
+                timeout=30,
+                ignore_response_code=True,
+                alfa_s=alfa_s,
+                json_to_utf8=False,
+                retry_alt=False,
+                proxy_retries=0,
+                hide_infobox=True,
+            )
+            if not response.sucess:
+                if y == 0 and ".part" in _assistant_component and str(response.code) in ["404"] and not e404:
+                    zfill = 1
+                    e404 = True
+                    continue
+                if y > 0 and "%" in _assistant_component and str(response.code) in ["404"]:
                     break
-                time.sleep(1)
-            else:
-                filetools.remove(version_actual_path, silent=False)
-                logger.error("Error en la instalación del BINARIO: %s" % zip_path)
                 if not update or verbose:
                     platformtools.dialog_notification(
-                        "Instalación Alfa Assistant",
-                        "Error en la instalación del BINARIO, versión: %s"
-                        % version_app,
+                        "Instalación Alfa Assistant", "Error en la descarga del BINARIO"
                     )
+                logger.info("Descargando %s" % _asst_component)
+                logger.error("Error en la descarga del BINARIO: %s" % str(response.code))
                 return respuesta, app_name
+            else:
+                if y == 0:
+                    assistant_components_mod += [_asst_component]
+                y += 1
+                logger.info("Descargando %s" % _asst_component)
+                # Guardamos archivo descargado .zip/.rar
+                path_zip = filetools.join(zip_path, _asst_component)
+                res = filetools.write(path_zip, response.data, mode="wb", silent=True)
+                if not res:
+                    if not update or verbose:
+                        platformtools.dialog_notification(
+                            "Instalación Alfa Assistant", "Error en la escritura del BINARIO"
+                        )
+                    logger.error("Error en la escritura del BINARIO: %s" % path_zip)
+                    return respuesta, app_name
+
+    isAlfaAssistantOpen = False
+    res = get_generic_call(
+        "terminate", timeout=1 - EXTRA_TIMEOUT, alfa_s=True
+    )  # desactivamos la app si estaba iniciada
+    # Empezando la extracción del .zip/.rar del DESKTOP
+    if filetools.exists(binary_path):
+        res = filetools.rmdirtree(binary_path, silent=False)
+        time.sleep(2)
+
+    for _assistant_component in assistant_components_mod:
+        _assist_component = _assistant_component.replace("z%s", "zip")
+        path_zip = filetools.join(zip_path, _assist_component)
+        logger.info("UnZipping/UnRARing %s" % _assist_component)
+        if ".rar" in path_zip:
+            # Empezando la extracción del .rar del paquete
+            try:
+                import rarfile_py2 as rarfile
+                archive = rarfile.RarFile(path_zip)
+                if alfa_assistant_pwd:
+                    archive.setpassword(alfa_assistant_pwd)
+                archive.extractall(binary_path)
+            except Exception:
+                logger.error(traceback.format_exc(1))
+        elif ".zip" in path_zip:
+            # Empezando la extracción del .zip del paquete
+            try:
+                import ziptools
+                archive = ziptools.ziptools()
+                archive.extract(path_zip, binary_path)
+            except Exception:
+                xbmc.executebuiltin('Extract("%s","%s")' % (path_zip, binary_path))
+
+        for x in range(30):
+            if filetools.exists(binary_exec):
+                break
+            time.sleep(1)
+        else:
+            filetools.remove(version_actual_path, silent=False)
+            logger.error("Error en la instalación del BINARIO: %s" % path_zip)
+            if not update or verbose:
+                platformtools.dialog_notification(
+                    "Instalación Alfa Assistant",
+                    "Error en la instalación del BINARIO, versión: %s"
+                    % version_app,
+                )
+            return respuesta, app_name
 
     # Procesamos instalaciones adicionales que vengan con el .zip
+    if filetools.exists(zip_path):
+        res = filetools.rmdirtree(zip_path, silent=False)
     for install in sorted(filetools.listdir(binary_path)):
         if not install.startswith("install"):
             continue
@@ -2947,6 +3026,7 @@ def install_alfa_desktop_assistant(update=False, remote="", verbose=VERBOSE):
             output_cmd, error_cmd = p.communicate(timeout=15)
             if not error_cmd:
                 filetools.remove(ins_path, silent=True)
+                time.sleep(2)
             else:
                 logger.error(
                     "## ERROR Apt_Install CMD: %s, error: %s"

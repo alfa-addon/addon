@@ -221,7 +221,7 @@ def findvideos(item):
     for elem in matches:
         url = elem['data-server']
         url = base64.b64encode(url.encode("utf-8")).decode('utf-8')
-        data = httptools.downloadpage(host + "/player/" + url, canonical=canonical).data
+        data = httptools.downloadpage(host + "player/" + url, canonical=canonical).data
         url = scrapertools.find_single_match(data,"(?i)Location.href = '([^']+)'")
         if "up.asdasd" in url:
             url = "https://netu.to/"

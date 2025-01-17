@@ -13,6 +13,8 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
+from lib.alfa_assistant import is_alfa_installed
+
 # Canal común con Pelispanda, Yestorrent
 
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
@@ -21,14 +23,23 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES_T
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_T
-forced_proxy_opt = 'ProxySSL'
+
+cf_assistant = True if is_alfa_installed() else False
+forced_proxy_opt = 'ProxyCF'
+debug = config.get_setting('debug_report', default=False)
 
 canonical = {
              'channel': 'pelispanda', 
              'host': config.get_setting("current_host", 'pelispanda', default=''), 
              'host_alt': ['https://pelispanda.org/'], 
              'host_black_list': ['https://pelispanda.win/', 'https://pelispanda.re/', 'https://pelispanda.com/'], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'set_tls': True, 'set_tls_min': True, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': cf_assistant, 
+             'cf_assistant_ua': True, 'cf_assistant_get_source': True if cf_assistant == 'force' else False, 
+             'cf_no_blacklist': True, 'cf_removeAllCookies': False if cf_assistant == 'force' else True,
+             'cf_challenge': True, 'cf_returnkey': 'url', 'cf_partial': True, 'cf_debug': debug, 
+             'cf_cookies_names': {'cf_clearance': False},
+             'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
+             'CF_stat': True if cf_assistant is True else False, 'session_verify': True if cf_assistant is True else False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -361,11 +372,11 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             x = 0
             
             for td in elem.find_all('td'):
-                #logger.error(td)
+                #logger.error('x: %s; td: %s' % (x, td))
                 try:
                     if item.infoLabels['mediatype'] in ['movie']:
                         if x == 0:
-                            if len(elem.find_all('td')) < 7 and 'torrent' not in td.get_text(strip=True):
+                            if len(elem.find_all('td')) < 7 and 'torrent' not in td.get_text(strip=True).lower():
                                 elem_json['server'] = 'torrent'
                                 x += 1
                             else:

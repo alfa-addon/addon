@@ -312,7 +312,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         try:
             if server.find('span', class_='server'):
                 server_lang = server.find('span', class_='server').get_text(strip=True).split(' -')
-                elem_json['server'] = server_lang[0].lower()
+                elem_json['server'] = server_lang[0].lower().strip()
                 if len(server_lang) > 1: elem_json['language'] = '*%s' % server_lang[1].lower()
             if elem_json['server'].lower() in servers: elem_json['server'] = servers[elem_json['server'].lower()]
             if elem_json['server'].lower() in ["waaw", "jetload", "player"]: continue

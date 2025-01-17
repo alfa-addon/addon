@@ -351,7 +351,7 @@ class AlfaChannelHelper:
             new_item.action = self.movie_action
 
         elif contentType != 'tvshow' and ((self.movie_path in new_item.url and not self.tv_path in new_item.url) \
-                                     or new_item.contentType == 'movie'):
+                                          or new_item.contentType == 'movie'):
             new_item.action = new_item.action or self.movie_action
             new_item.contentTitle = new_item.title.strip()
             if new_item.infoLabels.get("tvshowtitle", ''): del new_item.infoLabels["tvshowtitle"]
@@ -924,6 +924,9 @@ class AlfaChannelHelper:
 
         self.host_torrent = finds_controls.get('host_torrent', self.host_torrent) or self.host
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
+        torrent_url_replace = finds_controls.get('torrent_url_replace', [])
+        torrent_headers = finds_controls.get('torrent_headers', {})
+        torrent_kwargs = finds_controls.get('torrent_kwargs', {})
         FOLDER = config.get_setting("folder_movies") if item.contentType == 'movie' else config.get_setting("folder_tvshows")
         size = ''
         blacklist_links = ['enlacito.com']
@@ -952,6 +955,8 @@ class AlfaChannelHelper:
             if finds.get('controls', {}).get('url_base64', True):
                 elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer, item=item)
             if elem['url'] and not 'magnet:' in elem['url'] and not '.torrent' in elem['url']:
+                if torrent_kwargs: kwargs.update(torrent_kwargs)
+                if torrent_headers: kwargs['headers'] = torrent_headers
                 if host_torrent_referer: kwargs['referer'] = host_torrent_referer
                 kwargs['hide_infobox'] = True
                 torrent = self.create_soup(elem['url'], item=item, **kwargs)
@@ -971,6 +976,7 @@ class AlfaChannelHelper:
                         logger.error('TORRENT error: %s en "%s"' % (str(e), str(elem['url'])))
                 elif torrent.a:
                     elem['url'] = torrent.a.get('href', '')
+                elem['url'] = self.do_url_replace(elem['url'], torrent_url_replace)
         
         # Restauramos urls de emergencia por si es necesario
         local_torr = '%s_torrent_file' % item.channel.capitalize()
@@ -1823,8 +1829,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 new_item.url = self.do_url_replace(new_item.url, url_replace)
 
-                if elem.get('mediatype', ''): new_item.contentType = elem['mediatype']
-                elif item.c_type == 'peliculas': new_item.contentType = 'movie'
+                if elem.get('mediatype'): new_item.contentType = elem['mediatype']
+                elif item.c_type == 'peliculas': new_item.contentType = elem['mediatype'] = 'movie'
+                elif item.contentType: new_item.contentType = elem['mediatype'] = item.contentType
                 new_item = self.define_content_type(new_item, item, contentType=new_item.contentType)
 
                 new_item.context += ['buscar_trailer']
