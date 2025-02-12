@@ -49,8 +49,8 @@ def mainlist(item):
     
     itemlist = []
     
-    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "api/rest/listing?post_type=movies&posts_per_page=16&page=", extra="", pagina = 1, thumbnail = get_thumb("newest", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos", url = host + "peliculas", thumbnail = get_thumb("genres", auto = True) ))
+    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "/api/rest/listing?post_type=movies&posts_per_page=16&page=", extra="", pagina = 1, thumbnail = get_thumb("newest", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos", url = host + "/peliculas", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "search/" , pagina=1, thumbnail = get_thumb("search", auto = True)))
     
@@ -88,7 +88,7 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     #https://allcalidad.re/api/rest/search?post_type=movies%2Ctvshows%2Canimes&query=star&posts_per_page=16&page=1
-    item.url = host + "api/rest/search?post_type=movies%2Ctvshows%2Canimes&query=" + texto + "&posts_per_page=16&page=" #%texto #+ "/?page="
+    item.url = host + "/api/rest/search?post_type=movies%2Ctvshows%2Canimes&query=" + texto + "&posts_per_page=16&page=" #%texto #+ "/?page="
     item.pagina = 1
     item.extra = "busca"
     if texto != '':
@@ -108,7 +108,7 @@ def generos(item):
     
     for genero in j:
         #https://allcalidad.re/api/rest/listing?tax=genres&term=familia&page=1&post_type=movies%2Ctvshows%2Canimes&posts_per_page=16
-        url = host + "api/rest/listing?tax=genres&term=" + j[genero]["slug"] + "&post_type=movies%2Ctvshows%2Canimes&posts_per_page=16"
+        url = host + "/api/rest/listing?tax=genres&term=" + j[genero]["slug"] + "&post_type=movies%2Ctvshows%2Canimes&posts_per_page=16"
         itemlist.append(Item(channel = item.channel,
                              action = "peliculas",
                              title = j[genero]["name"],
@@ -162,7 +162,7 @@ def findvideos(item):
     itemlist = []
     encontrado = []
     
-    data = httptools.downloadpage(host + "api/rest/player?post_id=%s&_any=1" %item._id, encoding=encoding, forced_proxy_opt=forced_proxy_opt, canonical=canonical).json["data"]["embeds"]
+    data = httptools.downloadpage(host + "/api/rest/player?post_id=%s&_any=1" %item._id, encoding=encoding, forced_proxy_opt=forced_proxy_opt, canonical=canonical).json["data"]["embeds"]
     
     for servidores in data:
         itemlist.append(Item(
