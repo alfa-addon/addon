@@ -189,7 +189,7 @@ def sub_menu(item):
         itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por Calidad[/COLOR]', 
                              url=host, action='section',
                              thumbnail=get_thumb('search_star.png'), c_type=item.c_type, extra='Calidad'))
-    else:
+    elif item.c_type in ['series']:
         itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por Estudio[/COLOR]', 
                              url=host, action='section',
                              thumbnail=get_thumb('nofolder.png'), c_type=item.c_type, extra='Estudio'))

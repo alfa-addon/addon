@@ -34,7 +34,7 @@ canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
              "host_alt": ["https://hdfull.today/", "https://hd-full.sbs/", "https://hdfull.monster/", "https://hd-full.vip/"], 
-             "host_alt_main": 3, 
+             "host_alt_main": 2, 
              'host_verification': '%slogin', 
              "host_black_list": ["https://hd-full.biz/", "https://hd-full.me/", "https://hd-full.fit/", 
                                  "https://hd-full.info/", "https://hdfull.blog/", "https://hd-full.life/", 
@@ -470,6 +470,7 @@ def list_all(item):
     logger.info()
 
     findS = finds.copy()
+    item.url = item.url.replace(AlfaChannel.obtain_domain(item.url, scheme=True) + '/', host)
 
     verify_credentials(force_login='timer')
 
