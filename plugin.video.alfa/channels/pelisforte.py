@@ -42,7 +42,7 @@ host = canonical['host'] or canonical['host_alt'][0]
 
 IDIOMAS = {'Subtitulado': 'VOSE', 'Latino': 'LAT', 'Castellano': 'CAST'}
 SERVER = {'swish': 'Streamwish', 'vgfplay': 'Vidguard', 'playpf': 'Tiwikiwi',
-          'filemoon': 'Tiwikiwi', 'okhd': 'Tiwikiwi'}
+          'filemoon': 'Filemoon', 'okhd': 'Okhd', 'bf0skv': 'Filemoon'}
 
 list_language = list(IDIOMAS.values())
 list_servers = list(SERVER.values())
@@ -218,7 +218,7 @@ def play(item):
     logger.info()
     itemlist = []
     url = httptools.downloadpage(item.url).url
-    if not "vgfplay" in url or "listeamed" in url:
+    if not "vgfplay" in url and not "listeamed" in url and not "bf0skv" in url:
         url += "|Referer=%s" %item.url
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

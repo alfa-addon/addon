@@ -19,11 +19,12 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "es/?page=1"))  # "en_US/ajax/page/list_videos/?page=1"
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "?page=1"))  # "en_US/ajax/page/list_videos/?page=1"
+    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="lista", url=host + "most-viewed/?page=1"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "top-rated/?page=1"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels/?page=1"))
     itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "pornstars/?page=1"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/?page=1"))
@@ -65,19 +66,25 @@ def categorias(item):
     if "categories" in item.url:
         patron  = '<li class="grid__item grid__item--category">.*?'
         patron += '<a href="([^"]+)".*?'
-        patron += 'data-src="([^"]+)" alt=.*?'
-        patron += '<h3 class="grid__item__title grid__item__title--category">([^<]+)</h3>.*?'
+        patron += '(<img[^>]+).*?'
+        patron += '>([^<]+)</h3>.*?'
         patron += '</svg>([^<]+)<'
     else:
         patron  = '<a itemprop="url" href="/([^"]+)".*?'
-        patron += 'data-src="([^"]+)" alt=.*?'
+        patron += '(<img[^>]+).*?'
         patron += 'itemprop="name">([^<]+)</h3>.*?'
-        patron += '</svg>([^<]+)<'
+        if "pornstars" in item.url:
+            patron += '</svg>([^<]+)</li'
+        else:
+            patron += '</svg>([^<]+)</small'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         cantidad = re.compile("\s+", re.DOTALL).sub(" ", cantidad)
         title = "%s (%s)" %(scrapedtitle,cantidad)
+        thumbnail = scrapertools.find_single_match(scrapedthumbnail, 'src="([^"]+)"')
+        if "base64" in thumbnail:
+            thumbnail = scrapertools.find_single_match(scrapedthumbnail, 'data-src="([^"]+)"')
         if "categories" not in item.url:
             scrapedurl = scrapedurl.replace("channel/", "producer/")
             scrapedurl = "/en_US/ajax/page/show_%s?page=1" %scrapedurl
@@ -85,7 +92,7 @@ def categorias(item):
             scrapedurl = "%s%s?page=1" %( host,scrapedurl)
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
-                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=thumbnail, thumbnail=thumbnail, plot=scrapedplot) )
     if "/categories/" in item.url:
         itemlist.sort(key=lambda x: x.title)
     next_page = scrapertools.find_single_match(data,'href="([^"]+)" title="(?:Next|Siguiente)"')
@@ -102,7 +109,7 @@ def lista(item):
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" data-video-id=.*?'
-    patron += 'data-src="([^"]+)".*?'
+    patron += '(<img[^>]+).*?'
     patron += '<span class="duration-video">([^<]+)<.*?'
     patron += '<h3 [^>]+>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -111,7 +118,9 @@ def lista(item):
         scrapedtime = scrapedtime.strip()
         title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime,scrapedtitle)
         contentTitle = title
-        thumbnail = scrapedthumbnail
+        thumbnail = scrapertools.find_single_match(scrapedthumbnail, 'src="([^"]+)"')
+        if "base64" in thumbnail:
+            thumbnail = scrapertools.find_single_match(scrapedthumbnail, 'data-src="([^"]+)"')
         plot = ""
         action = "play"
         if logger.info() is False:

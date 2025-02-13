@@ -29,7 +29,7 @@ canonical = {
              'host': config.get_setting("current_host", 'porn00', default=''), 
              'host_alt': ["https://www.porn00.org/"], 
              'host_black_list': [], 
-             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 6, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -41,6 +41,7 @@ movie_path = ''
 tv_path = ''
 language = []
 url_replace = []
+
 
 finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['video-list', 'list-videos']}]),
                        ('find_all', [{'tag': ['div'], 'class': ['item', 'video-item']}])]),

@@ -16,8 +16,12 @@
         "url": "\\1"
       },
       {
-        "pattern": "https://(?:vtube|vtbe).(?:to|network)/(?:embed-|)([A-z0-9]+).html",
-        "url": "https://vtube.to/\\1.html"
+        "pattern": "https://vtbe.to/embed-d/([a-z0-9]+)",
+        "url": "https://vtbe.to/\\1.html"
+      },
+      {
+        "pattern": "(?:vtube|vtbe).(?:to|network)/(?:embed-|)([A-z0-9]+).html",
+        "url": "https://vtbe.to/\\1.html"
       }
       ]
   },

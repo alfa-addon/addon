@@ -56,13 +56,13 @@ SERVIDORES = {
     "7565": "mp4upload",
     "50": "fembed",
     "6656": "vidmoly",
-    "45": "netu",
+    "45": "netutv",
     "51": "streamtape",
     "9201": "voe",
-    "7701": "tiwikiwi",
+    "7701": "filemoon",
     "6183": "playtube",
     "7561": "streamwish",
-    "153": "tiwikiwi",
+    "153": "Vidhidepro",
     "10": "rapidgator",
     "1195": "streamvid",
     "6187": "vidguard",
@@ -75,13 +75,32 @@ SERVIDORES = {
     "38": "clicknupload",
     "65": "hexupload",
     "53": "uqload",
+    "8777": "dailyuploads",
+    "24": "katfile",
+    "27":  "nitroflare",
+    "7567": "ouo",
+    "52654": "uploady",
+    "filelions": "Vidhidepro",
+    "filemoon": "Filemoon",
+    "luluvideo": "Lulustream",
+    "vembed": "Vidguard",
+    "bigwarp": "Tiwikiwi",
+    "voe": "Voe",
+    "streamwish": "Streamwish",
+    "powvideo": "Powvideo",
+    "streamplay": "Streamplay",
+    "streamtape": "Streamtape",
+    "vtube": "Playtube",
+    "streamsilk": "Streamsilk",
+    "vidmoly": "vidmoly",
+    "doodstream": "doodstream",
 }
 
 list_language = list(IDIOMAS.values())
 list_quality = ["HD1080", "HD720", "HDTV", "DVDRIP"]
 list_quality_tvshow = list_quality_movies = list_quality
 list_servers = list(SERVIDORES.values())
-host = "https://playdede.in/"
+host = "https://www2.playdede.link/"
 assistant = config.get_setting(
     "assistant_version", default=""
 ) and not httptools.channel_proxy_list(host)
@@ -91,6 +110,7 @@ canonical = {
     "host": config.get_setting("current_host", "playdede", default=""),
     "host_alt": [host],
     "host_black_list": [
+        "https://playdede.in/",
         "https://playdede.me/",
         "https://playdede.eu/",
         "https://playdede.us/",
@@ -411,10 +431,10 @@ def genres(item):
 
 def list_all(item):
     logger.info()
-
+    
     itemlist = []
     soup = get_source(item.url, soup=True)
-
+    
     if not soup:
         platformtools.dialog_notification(
             "Cambio de estructura",
@@ -422,10 +442,14 @@ def list_all(item):
             sound=False,
         )
         return itemlist
-
+    
     items = soup.find_all("article", id=re.compile(r"^post-(?:\d+|)"))
     # items = soup.find('div', id=' archive-content').find_all('article')
-
+    
+    shown_half = 1 if item.half else 0
+    items_half = len(items) // 2
+    items = items[items_half:] if shown_half == 1 else items[:items_half]
+    
     for article in items:
         data = article.find("div", class_="data")
         year = data.find("p").text
@@ -435,12 +459,12 @@ def list_all(item):
         title = data.find("h3").text
         url = article.find("a")["href"]
         url = "{}%s".format(host) % url
-
+        
         """
         if 'tmdb.org' in thumbnail:
             infoLabels['filtro'] = scrapertools.find_single_match(thumbnail, "/(\w+)\.\w+$")
         """
-
+        
         it = Item(
             action="findvideos",
             channel=item.channel,
@@ -450,39 +474,43 @@ def list_all(item):
             title=title,
             url=url,
         )
-
+        
         it.context = filtertools.context(it, list_language, list_quality)
         it.context.extend(autoplay.context)
-
+        
         if "serie" in it.url or "anime" in it.url:
             c_type = "tvshows"
-
+        
         elif "pelicula" in it.url:
             c_type = "movies"
-
+        
         else:
             c_type = "tvshows"
-
+        
         if c_type == "tvshows":
             it.action = "seasons"
             it.contentSerieName = title
             it.contentType = "tvshow"
             it.viewType = "episodes"
-
+        
         elif c_type == "movies":
             it.contentTitle = title
             it.contentType = "movie"
             it.viewType = "movies"
-
+        
         itemlist.append(it)
-
+    
     if not isinstance(item.tmdb, bool) or item.tmdb is not False:
         tmdb.set_infoLabels(itemlist, True)
-
-    btnnext = soup.find("div", class_="pagPlaydede")
-
-    if btnnext and "href" in str(btnnext):
-        itemlist.append(item.clone(title="Siguiente >", url=btnnext.find("a")["href"]))
+    
+    btnnext = soup.find("div", class_="pagPlaydede").find_all('a')
+    
+    if shown_half == 0:
+        itemlist.append(item.clone(title="Siguiente >", half=1))
+    elif btnnext:
+        btnnext = btnnext[-1]['href']
+        itemlist.append(item.clone(title="Siguiente >", half=0, url=btnnext))
+    
     return itemlist
 
 
@@ -587,86 +615,78 @@ def episodesxseason(item):
 
 def findvideos(item):
     logger.info()
-
     itemlist = []
+    
     soup = get_source(item.url, soup=True)
     if not soup:
         return []
-    items = []
-    linklists = soup.findAll("div", class_="linkSorter")
-    # items.extend(soup.find('div', class_='contEP contepID_1 contEP_A').find('div', class_='innerSelector').find_all('div', class_="playerItem"))
-    for lst in linklists:
-        items.extend(lst.find_all("li"))
-    for li in items:
-        language = IDIOMAS.get(li.get("data-lang", "").lower(), "")
-        quality = li.get("data-quality", "")
-
+    matches = []
+    
+    matches = soup.findAll("div", class_="playerItem")
+    descargas = soup.findAll("div", class_="linkSorter")
+    
+    for lst in descargas:
+        matches.extend(lst.find_all("li"))
+    
+    for elem in matches:
+        if not elem.find(class_='reportLink'): continue
+        quality = ""
+        server = ""
+        language = IDIOMAS.get(elem.get("data-lang", "").lower(), "")
+        quality = elem.get("data-quality", "")
+        player=elem.get("data-loadplayer", "")
+        
         if quality:
-            server = SERVIDORES.get(li.get("data-provider", "").lower(), "")
-            url = li.find("a")["href"]
-
+            url = elem.find("a")["href"]
+            server = SERVIDORES.get(elem.get("data-provider", ""), "")
+            if not server:
+                server = elem.span.b.text
+                server = SERVIDORES.get(server.lower(), "")
         else:
-            data = li.find("div", class_="meta")
-
+            data = elem.find("div", class_="meta")
+            
             if data:
                 quality = data.p.span.text
                 server = data.find("h3").text
-                url = "%sajax.php" % host
-
-        title = item.title
-
-        if not server:
-            server = servertools.get_server_from_url(url)
-
-        if server == "directo":
-            continue
-
-        title = "{}".format(server.title())
-
-        if language:
-            try:
-                title = unify.add_languages(title, language)
-            except Exception:
-                import traceback
-
-                traceback.format_exc()
-
-        if quality:
-            title += " [COLOR=cyan][{}][/COLOR]".format(quality.upper())
-
+                server = SERVIDORES.get(server.lower(), "")
+                url = "%sembed.php?id=%s" % (host, player)
+        
         itemlist.append(
             item.clone(
                 action="play",
                 language=language,
-                player=li.get("data-loadplayer", ""),
+                # player=player,
                 quality=quality,
-                # server=server,  # TODO: No deberia de haber necesidad de hacer esto; investigar
-                title=title,
+                server=server,
+                # title=title,
                 url=url,
             )
         )
-
-    # Asignamos los servidores
-    itemlist = servertools.get_servers_itemlist(itemlist)
-    itemlist = [item for item in itemlist if item.server != "directo"]
-
+    
+    # Ordenar por language
+    itemlist.sort(key=lambda x: x.language)
+    
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
-
+    
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
-
+    
     return itemlist
 
 
 def play(item):
     logger.info()
 
-    if host in item.url and item.player:
-        data = get_source("{}embed.php?id={}".format(host, item.player), post={})
-        realurl = scrapertools.find_single_match(data, """iframe src=["'](.+?)["']""")
-
-        return [item.clone(url=realurl)]
-
-    else:
-        return [item]
+    if host in item.url:
+        data = get_source(item.url)
+        item.url = scrapertools.find_single_match(data, 'var url\s*=\s*"([^"]+)"')
+    
+    devuelve = servertools.findvideosbyserver(item.url, item.server)
+    if devuelve:
+        #Sonic3 vidmoly     https://vidmoly.me/w/6etlw26o0hgu  >>  https://vidmoly.me/6etlw26o0hgu.html
+        #DESACTICVADO por captcha el server streamplay  https://streamplay.to/embed-gumabp75uwfi-960x580.html >> https://stre4mplay.one/gumabp75uwfi
+        #MUSAFA  playtube    https://vtube.network/embed-hilj6t7313oy.html >> https://vtbe.to/hilj6t7313oy.html
+        item.url =  devuelve[0][1]
+    
+    return [item]

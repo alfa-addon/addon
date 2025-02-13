@@ -11,13 +11,20 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
+
+# Error 403  captcha
+# NO PIDE el captcha  https://vidmoly.me/\\1.html
+# https://vidmoly.me/embed-15e4ac1yvzfm.html  >>>  https://vidmoly.me/w/15e4ac1yvzfm
+#
 
 def test_video_exists(page_url):
     global data
     logger.info("(page_url='%s')" % page_url)
-    response = httptools.downloadpage(page_url)
+    response = httptools.downloadpage(page_url, timeout=30)
     data = response.data
-    logger.debug(data)
+    if response.code == 403:
+        return False, "[vidmoly] Error"
     if response.code == 404 or "Please wait" in data or "/notice.php" in data:
         return False, "[vidmoly] El archivo no existe o ha sido borrado"
     return True, ""

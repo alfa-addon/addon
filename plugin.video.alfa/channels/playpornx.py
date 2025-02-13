@@ -100,10 +100,11 @@ def categorias(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title'].replace("&nbsp;", "" )
-        if elem.img:
+        thumbnail = elem.img['src'].replace("amp;", "")
+        if "svg" in thumbnail and elem.img.get('data-lazy-src', ''):
+            thumbnail = elem.img['data-lazy-src'].replace("amp;", "")
+        elif elem.img.get('data-src', ''):
             thumbnail = elem.img['data-src'].replace("amp;", "")
-        else:
-            thumbnail = ""
         cantidad = elem.find(class_='video-datas')
         if cantidad:
             title = "%s (%s)" %(title, cantidad.text.strip())
@@ -138,10 +139,11 @@ def lista(item):
         thumbnail = ""
         url = elem.a['href']
         title = elem.find(class_='title').text.strip()
-        if elem.img.get('data-src', ''):
-            thumbnail = elem.img['data-src']
-        elif elem.img.get('src', ''):
-            thumbnail = elem.img['src']
+        thumbnail = elem.img['src'].replace("amp;", "")
+        if "svg" in thumbnail and elem.img.get('data-lazy-src', ''):
+            thumbnail = elem.img['data-lazy-src'].replace("amp;", "")
+        elif elem.img.get('data-src', ''):
+            thumbnail = elem.img['data-src'].replace("amp;", "")
         time = elem.find(class_='duration')
         if time:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time.text.strip(),title)

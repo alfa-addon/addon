@@ -14,6 +14,8 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 
+# https://voe.sx/e/q1hvet1drcpe  ESTE NO RESUELVE es de PORNEZ
+
 def test_video_exists(page_url):
     global data
     logger.info("(page_url='%s')" % page_url)

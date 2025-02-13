@@ -4,18 +4,22 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://vidmoly.(?:to|me)/(?:embed-|w/|)([A-z0-9]+)(?:\\.html|)",
-        "url": "https://vidmoly.me/\\1.html"
+        "pattern": "https://(?:filemo+n|bf0skv).(?:sx|to|in|top|nl|lat|\\w{2,4})/(?:e|d)/([a-z0-9]+)",
+        "url": "https://filemoon.to/e/\\1"
+      },
+      {
+        "pattern": "https://moonembed.(?:sx|to|in|top|nl|xyz)/(?:e|d)/([a-z0-9]+)",
+        "url": "https://filemoon.to/e/\\1"
+      },
+      {
+        "pattern": "https://x08.(?:online||\\w{2,4})/(?:e|d)/([a-z0-9]+)",
+        "url": "https://filemoon.to/e/\\1"
       }
     ]
   },
   "free": true,
-  "id": {
-    "value": [
-      "vidmoly"
-    ]
-  },
-  "name": "vidmoly",
+  "id": "filemoon",
+  "name": "filemoon",
   "settings": [
     {
       "default": false,
@@ -42,5 +46,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://vidmoly.to/img/logo-main.png"
+  "thumbnail": "https://i.postimg.cc/CxdyWRcN/tiwikiwi.png"
 }

@@ -56,7 +56,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:xbabe|crocotube|pinflix).com/videos/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:xbabe|crocotube|pinflix|pornhat).com/video(?:s|)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
