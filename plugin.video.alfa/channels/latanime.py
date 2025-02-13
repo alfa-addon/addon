@@ -26,7 +26,7 @@ list_servers = ['uqload', 'voe', 'streamtape', 'doodstream', 'okru', 'streamlare
 canonical = {
              'channel': 'latanime', 
              'host': config.get_setting("current_host", 'latanime', default=''), 
-             'host_alt': ['https://latanime.org'], 
+             'host_alt': ['https://latanime.org/'], 
              'host_black_list': [], 
              # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              # 'CF': False, 'CF_test': False, 'alfa_s': True
@@ -37,7 +37,7 @@ timeout = 15
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = ''
-tv_path = '/animes?p=1'
+tv_path = 'animes?p=1'
 language = []
 url_replace = []
 
@@ -108,7 +108,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host, action='list_all',
                          thumbnail=get_thumb('newest', auto=True), c_type='novedades'))
     
-    itemlist.append(Item(channel=item.channel, title='En Emisión', url=host + '/emision?p=1', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='En Emisión', url=host + 'emision?p=1', action='list_all',
                          thumbnail=get_thumb('on air', auto=True), c_type='series'))
 
     itemlist.append(Item(channel=item.channel, title='Directorio', url=host + tv_path, action='list_all',
@@ -180,8 +180,8 @@ def list_all(item):
         findS['controls']['cnt_tot'] = 36
 
     if item.c_type == 'novedades':
-        findS['find'] = dict([('find', [{'tag': ['div'], 'class': ['owl-two']}]), 
-                              ('find_all', [{'tag': ['div'], 'class': ['item']}])])
+        findS['find'] = dict([('find', [{'tag': ['ul'], 'class': ['ps-0 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 row-cols-xxl-6']}]), 
+                              ('find_all', [{'tag': ['li'], 'class': ['col mb-4 ficha_efecto']}])])
         findS['controls']['cnt_tot'] = 10
 
     return AlfaChannel.list_all(item, matches_post=list_all_matches, generictools=True, finds=findS, **kwargs)
@@ -200,8 +200,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
         try:
             if item.c_type == 'episodios':
                 try:
-                    ext = elem.find("h2", class_="mt-2").get_text(strip=True)
+                    ext = elem.find("h2", class_="mt-3").get_text(strip=True)
                     episode, elem_json['title'] = ext.split(' - ', 1)
+                    episode = episode.replace('Episodio ', '')
                     elem_json['episode'] = int(episode or 1)
                     elem_json['thumbnail'] = elem.find("img").get("data-src", "")
                 except Exception as error:
@@ -211,7 +212,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['mediatype'] = 'episode'
             else:
                 if item.c_type == 'novedades':
-                    elem_json['title'] = elem.find("a").get('title', '')
+                    elem_json['title'] = elem.find("h3").get_text(strip=True)
                 else:
                     elem_json['title'] = elem.find("h3", class_="my-1").get_text(strip=True)
                 info = elem.find("span", class_="opacity-75")
@@ -381,7 +382,7 @@ def search(item, texto, **AHkwargs):
     try:
         # https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
         texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = item.url + "/buscar?p=1&q=" + texto
+        item.url = item.url + "buscar?p=1&q=" + texto
 
         if texto:
             item.c_type = 'search'
