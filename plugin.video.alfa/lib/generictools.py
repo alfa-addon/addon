@@ -493,7 +493,7 @@ def set_btdigg_timer(btdigg_error):
             return False
 
 
-def get_cached_files_(contentType, FORCED=False, cached=False):
+def get_cached_files_(contentType, FORCED=False, cached=False, structure=True):
     global PASSWORDS, cookies_cached, BTDIGG_TIMEOUT
 
     timer = 15
@@ -519,7 +519,7 @@ def get_cached_files_(contentType, FORCED=False, cached=False):
             FORCED = True
 
     if (contentType == 'password' and (not cached_file_old or FORCED)) or contentType != 'password':
-        cached_file = get_cached_files(contentType)
+        cached_file = get_cached_files(contentType, structure=structure)
         if not cached_file:
             cached_file = error
             logger.error('Error de lectura en %s' % contentType.upper())
