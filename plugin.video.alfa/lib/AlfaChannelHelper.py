@@ -123,7 +123,7 @@ class AlfaChannelHelper:
         self.color_setting = unify.colors_file[UNIFY_PRESET]
         self.window = window
         self.Comment = None
-        self.SEARCH_CLEAN = '\¿|\?|\/|\$|\@|\<|\>|\.'
+        self.SEARCH_CLEAN = '\¿|\?|\/|\$|\@|\<|\>'
 
         self.httptools = httptools
         self.response = self.httptools.build_response(HTTPResponse=True)        # crea estructura vacía de response
@@ -1118,6 +1118,7 @@ class AlfaChannelHelper:
         match = soup
         json = {}
         level_ = ''
+        level = ''
         block = ''
         f = ''
         tagOR_save = {}
@@ -1719,7 +1720,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 new_item.title = scrapertools.htmlclean(new_item.title).strip()
                 new_item.title = new_item.title.replace("á", "a").replace("é", "e").replace("í", "i")\
                                                .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                                               .replace("ï¿½", "ñ").replace("Ã±", "ñ")
+                                               .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace('.', ' ')
                 new_item.title = scrapertools.decode_utf8_error(new_item.title).strip()
                 if not new_item.title: continue
 
@@ -1831,7 +1832,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 if elem.get('mediatype'): new_item.contentType = elem['mediatype']
                 elif item.c_type == 'peliculas': new_item.contentType = elem['mediatype'] = 'movie'
-                elif item.contentType: new_item.contentType = elem['mediatype'] = item.contentType
+                elif item.contentType and item.contentType != 'list': new_item.contentType = elem['mediatype'] = item.contentType
                 new_item = self.define_content_type(new_item, item, contentType=new_item.contentType)
 
                 new_item.context += ['buscar_trailer']
@@ -1903,7 +1904,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 elif ('|' in item.season_search or '[' in item.season_search) and not '|' in new_item.season_search \
                                                                               and not '[' in new_item.season_search:
                     new_item.season_search += scrapertools.find_single_match(item.season_search, r'(\s*[\[|\|][^$]+$)')
-                new_item.season_search = re.sub(self.SEARCH_CLEAN, '', new_item.season_search).title()
+                new_item.season_search = re.sub(self.SEARCH_CLEAN, '', new_item.season_search).title().replace('.', ' ')
                 if not isinstance(new_item.infoLabels['year'], int):
                     new_item.infoLabels['year'] = str(new_item.infoLabels['year']).replace('-', '')
                 if new_item.broadcast:

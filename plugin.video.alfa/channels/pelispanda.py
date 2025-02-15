@@ -25,7 +25,7 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_T
 
 cf_assistant = True if is_alfa_installed() else False
-forced_proxy_opt = 'ProxyCF'
+forced_proxy_opt = None if cf_assistant else 'ProxyCF'
 debug = config.get_setting('debug_report', default=False)
 
 canonical = {
@@ -181,7 +181,8 @@ def submenu(item):
         sufix = ''
 
     soup = AlfaChannel.create_soup(item.url, **kwargs)
-    item.url = AlfaChannel.parse_finds_dict(soup, findS).rstrip('/') + sufix + '/'
+    item.url = AlfaChannel.parse_finds_dict(soup, findS)
+    if item.url: item.url = item.url.rstrip('/') + sufix + '/'
 
     return list_all(item)
 
