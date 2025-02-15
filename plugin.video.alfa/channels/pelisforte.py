@@ -205,9 +205,13 @@ def findvideos(item):
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     
-    if config.get_videolibrary_support() and len(itemlist) > 0:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra:
         itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                             url=item.url, action="add_pelicula_to_library",
+                             url=item.url, action='add_pelicula_to_library', extra=item.extra,
+                             contentTitle=item.contentTitle))
+    elif config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             url=item.url, action='add_pelicula_to_library',
                              contentTitle=item.contentTitle))
     return itemlist
 
