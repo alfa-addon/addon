@@ -324,7 +324,8 @@ def get_cl(
                     postData=postData,
                     clearWebCache=clearWebCache,
                     removeAllCookies=removeAllCookies,
-                    returnWhenCookieNameFound=opt["cf_cookie"].replace("$HOST", host_name.rstrip("/"))
+                    returnWhenCookieNameFound=opt["cf_cookie"]
+                        .replace("$HOST", host_name.rstrip("/"))
                         .replace("$DOMAIN", domain_host)
                         if "cf_cookie" in opt else url_cf,
                     retryIfTimeout=retryIfTimeout,
@@ -343,8 +344,8 @@ def get_cl(
             if (
                 isinstance(data_assistant, dict)
                 and data_assistant.get("urlsVisited", [])
-                and challenges < 2
                 and opt.get("cf_challenge", False)
+                and challenges < (2 if opt.get("cf_challenge", False) is True else opt["cf_challenge"])
             ):
                 found_url = ''
                 if challenges:
@@ -890,8 +891,8 @@ def get_source(
             if (
                 isinstance(data_assistant, dict)
                 and data_assistant.get("urlsVisited", [])
-                and challenges < 2
                 and opt.get("cf_challenge", False)
+                and challenges < (2 if opt.get("cf_challenge", False) is True else opt["cf_challenge"])
             ):
                 found_url = ''
                 if challenges:
@@ -1345,7 +1346,7 @@ def check_blacklist(domain, expiration=0, reset=False):
 
 
 def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey="source", 
-                     extraPostDelay=15, jscode=None, DEBUG=False, cache=True, ua=None, urlOnly=False, **opt):
+                     extraPostDelay=15, jscode="", DEBUG=False, cache=True, ua=None, urlOnly=False, **opt):
     logger.info("Challenge: %s" % url)
     data = False
     response = None
@@ -1377,7 +1378,7 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
     )
     if not cf_cookie and "cf_cookie" not in opt:
         cf_cookie = url_cf
-    if not jscode:
+    if not jscode and jscode is not None:
         key_js = "KEYCODE_ENTER_RECAPTCHA" if "recaptcha" in url else "KEYCODE_ENTER"
         jscode = get_jscode(1, key_js, 1)
         if extraPostDelay <= 0:

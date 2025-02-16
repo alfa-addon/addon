@@ -71,12 +71,9 @@ def check_assistant_servers(time1=timer1, time2=timer2):
             )
 
         if not ASSISTANT_SERVERS:
-            if config.get_setting("assistant_mode", default="este").lower() == "este":
-                ASSISTANT_SERVERS = [ASSISTANT_LOCAL]
-            else:
-                ASSISTANT_SERVERS = config.get_setting(
-                    "assistant_custom_address", default=ASSISTANT_LOCAL
-                ).split(",")
+            ASSISTANT_SERVERS = config.get_setting(
+                "assistant_custom_address", default=ASSISTANT_LOCAL
+            ).split(",")
             if not ASSISTANT_SERVERS[-1]:
                 del ASSISTANT_SERVERS[-1]
             window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS))
@@ -165,7 +162,7 @@ def check_assistant_playing(time1=timer1, time2=timer2):
         ASSISTANT_MODE = (
             "este"
             if ASSISTANT_LOCAL in ASSISTANT_SERVER
-            else "otro" or config.get_setting("assistant_mode").lower()
+            else "otro"
         )
         if config.get_setting("assistant_mode").lower() != ASSISTANT_MODE:
             config.set_setting("assistant_mode", ASSISTANT_MODE)

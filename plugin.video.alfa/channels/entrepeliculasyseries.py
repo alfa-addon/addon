@@ -21,7 +21,7 @@ list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS
 
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = None
 
 canonical = {
              'channel': 'entrepeliculasyseries', 
@@ -183,7 +183,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['thumbnail'] = elem.img.get('data-src', '') or elem.img.get('src', '') \
                                                                   or elem.find('figure', class_='Objf').get('data-src', '')
             elem_json['year'] = elem.find('span', class_='tag').get_text(strip=True).strip()
-            elem_json['plot'] = AlfaChannel.parse_finds_dict(elem, findS.get('plot', {}), c_type=item.c_type)
+            elem_json['plot'] = elem.find('p', class_='entry-content').get_text(strip=True).strip()
             
             if item.c_type == 'peliculas' and movie_path not in elem_json['url']: continue
             if item.c_type == 'series' and tv_path not in elem_json['url']: continue
@@ -271,22 +271,24 @@ def findvideos(item):
 
 def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
+    import ast
+    from lib.pyberishaes import GibberishAES
+
     matches = []
-    
     findS = AHkwargs.get('finds', finds)
-    
     servers = {'streamwish': 'streamwish', 'filelions': 'tiwikiwi', "stape": "streamtape", 
                "netu": "netu ", "filemoon": "tiwikiwi", "streamwish": "streamwish",
                "voex": "voe", "1fichier": "onefichier"}
     IDIOMAS = {'0': 'LAT', '1': 'CAST', '2': 'VOSE'}
-    
+
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-        
+
         try:
+            headers = {'Referer': item.url}
             url = elem.iframe.get('src', '')
-            soup = AlfaChannel.create_soup(url)
+            soup = AlfaChannel.create_soup(url, headers=headers)
             url = soup.find("div", class_="Video").iframe.get("src", '')
             if "/uqlink." in url:
                 url = scrapertools.find_single_match(url, "id=([A-z0-9]+)")
@@ -295,15 +297,38 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['server'] = 'uqload'
                 matches.append(elem_json.copy())
             else:
-                soup = AlfaChannel.create_soup(url).find('div', class_='OptionsLangDisp')
-                for elem in soup.find_all('li'):
-                    lang = elem['data-lang']
-                    url = elem['onclick']
-                    server = elem.span.text.strip()
-                    elem_json['url'] = scrapertools.find_single_match(url, "\('([^']+)'")
-                    elem_json['server'] = servers.get(server, server)
-                    elem_json['language'] = IDIOMAS.get(lang, lang)
-                    matches.append(elem_json.copy())
+                headers = {'Referer': host}
+                soup = AlfaChannel.create_soup(url, headers=headers)
+                matches_servers = soup.find('div', class_='OptionsLangDisp').find_all('li')
+                if not matches_servers:
+                    clave = scrapertools.find_single_match(str(soup), r"CryptoJS\.AES\.decrypt\(encryptedLink,\s*'([^']+)'")
+                    logger.error(clave)
+                    if clave:
+                        matches_servers = scrapertools.find_single_match(str(soup), r'const\s*dataLink\s*=\s*([^;]+);') or []
+                        if matches_servers:
+                            matches_servers = ast.literal_eval(matches_servers)
+                        for langs_in in matches_servers:
+                            lang = langs_in.get('video_language', 'LAT')
+                            for elem in langs_in.get('sortedEmbeds', []):
+                                if not elem.get('link', '') or not elem.get('type', '') == 'video': continue
+                                try:
+                                    elem_json['url'] = GibberishAES(string=elem['link'], pass_=clave).result
+                                except:
+                                    logger.error(elem)
+                                    logger.error(traceback.format_exc())
+                                    continue
+                                elem_json['server'] = servers.get(elem.get('servername', ''), '')
+                                elem_json['language'] = IDIOMAS.get(lang, 'LAT')
+                                matches.append(elem_json.copy())
+                else:
+                    for elem in matches_servers:
+                        lang = elem['data-lang']
+                        url = elem['onclick']
+                        server = elem.span.text.strip()
+                        elem_json['url'] = scrapertools.find_single_match(url, "\('([^']+)'")
+                        elem_json['server'] = servers.get(server, server)
+                        elem_json['language'] = IDIOMAS.get(lang, lang)
+                        matches.append(elem_json.copy())
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())

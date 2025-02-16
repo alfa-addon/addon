@@ -870,9 +870,9 @@ def check_date_real():
     import datetime
     
     try:
-        pages = ['https://worldtimeapi.org/api/ip', 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/Madrid']
+        pages = ['https://timeapi.io/api/Time/current/zone?timeZone=Europe/Madrid', 'https://worldtimeapi.org/api/ip']
         kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
-                  'alfa_s': True, 'timeout': 5, 'cf_assistant': False}
+                  'alfa_s': True, 'timeout': 5, 'cf_assistant': False, 'forced_proxy': None, 'error_check': False}
         
         dia_hoy = datetime.date.today()
         fecha_int = ''
