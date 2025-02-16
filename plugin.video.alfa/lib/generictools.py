@@ -493,7 +493,7 @@ def set_btdigg_timer(btdigg_error):
             return False
 
 
-def get_cached_files_(contentType, FORCED=False, cached=False):
+def get_cached_files_(contentType, FORCED=False, cached=False, structure=True):
     global PASSWORDS, cookies_cached, BTDIGG_TIMEOUT
 
     timer = 15
@@ -519,7 +519,7 @@ def get_cached_files_(contentType, FORCED=False, cached=False):
             FORCED = True
 
     if (contentType == 'password' and (not cached_file_old or FORCED)) or contentType != 'password':
-        cached_file = get_cached_files(contentType)
+        cached_file = get_cached_files(contentType, structure=structure)
         if not cached_file:
             cached_file = error
             logger.error('Error de lectura en %s' % contentType.upper())
@@ -599,7 +599,10 @@ def get_cached_files_(contentType, FORCED=False, cached=False):
                 cookies_cached_bis = cookies_cached[:]
                 cookies_cached = []
                 for cookie in cookies_cached_bis:
-                    if not cookie.get('value') and str(cookie.get('clear', True)) != 'reset':
+                    if not cookie.get('value') and str(cookie.get('clear', True)) != 'reset' \
+                                               and not 'proxies_web' in cookie \
+                                               and not cookie.get('proxies') \
+                                               and not cookie.get('proxies_man') :
                         continue
                     cookies_cached.append(cookie)
                 PASSWORDS['cookies']['cookies_exp'] = cookies_cached[:]
@@ -2320,7 +2323,7 @@ def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], matches_inde
                     elem = elem[1]
                     elem_json['url'] = self.urljoin(host_alt, elem.get('guid', ''))
                     elem_json['title'] = scrapertools.find_single_match(elem.get('torrentName', ''), r'(.*?)\[').strip()
-                    elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem_json['title']), '.+?'+patron_year) or '-'
+                    elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\s*\d+', '', elem_json['title']), '.+?'+patron_year) or '-'
                     if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
                     elem_json['thumbnail'] = self.urljoin(host_alt, elem.get('imagen', ''))
                     elem_json['quality'] = elem.get('calidad', '')
@@ -2658,9 +2661,9 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
     title_clean.append([r'(?i)\s*UNCUT', ''])
     patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[)'
     patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[|\s+-)'
-    patron_sea = r'(?i)Cap.(\d{1,2})\d{2}'
+    patron_sea = r'(?i)Cap.\s*(\d{1,2})\d{2}'
     patron_year = r'\(?(\d{4})\)?'
-    convert = ['.=', '-= ', ':=', '&=and', '  = ']
+    convert = ['.= ', '-= ', ':=', '&=and', '  = ']
     language_alt = []
     quality_alt = ''
     
@@ -2863,12 +2866,12 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                             elem_json['quality'] = elem_json['quality'].capitalize()
                         else:
                             if not elem_json.get('season'):
-                                elem_json['season'] = int(scrapertools.find_single_match(elem.get('title', '').replace(btdigg_label_B, '') or 1, 
-                                                          patron_sea))
+                                elem_json['season'] = int(scrapertools.find_single_match(elem.get('title', '').replace(btdigg_label_B, ''), 
+                                                          patron_sea) or 1)
                             if elem.get('episode'): elem_json['episode'] = elem.get('episode')
 
                         elem_json['title'] = elem.get('title', '').replace(btdigg_label_B, '')
-                        elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem_json['title']), 
+                        elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\s*\d+', '', elem_json['title']), 
                                                                            '.+?'+patron_year) or '-'
                         if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
                         if scrapertools.find_single_match(elem_json['title'], patron_title).strip():
@@ -2887,7 +2890,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                                 elem_json['title'] = re.sub(clean_org, clean_des, elem_json['title']).strip()
                         elem_json['title'] = elem_json['title'].replace('- ', '')
                         title = scrapertools.slugify(elem_json.get('title', ''), strict=False, convert=convert).strip().lower().replace(' ', '_')
-                        elem_json['title'] = clean_title(elem_json['title']).replace(':', '')
+                        elem_json['title'] = clean_title(elem_json['title']).replace(':', '').replace('.', ' ')
                         if elem_json['mediatype'] != 'movie' and quality_control: title = '%s_%s' % (title, elem_json['quality'])
 
                         if elem.get('tmdb_id'): elem_json['tmdb_id'] = elem['tmdb_id']
@@ -3199,12 +3202,12 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     language_alt = []
     matches = []
     matches_index = {}
-    patron_sea = r'(?i)Cap.(\d+)\d{2}'
-    patron_cap = r'(?i)Cap.\d+(\d{2})'
+    patron_sea = r'(?i)Cap.\s*(\d+)\d{2}'
+    patron_cap = r'(?i)Cap.\s*\d+(\d{2})'
     patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[)'
     patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[|\s+-)'
     patron_year = r'\(?(\d{4})\)?'
-    convert = ['.=', '-= ', ':=', '&=and', '  = ']
+    convert = ['.= ', '-= ', ':=', '&=and', '  = ']
     title = '_'
     self = {}
     config.set_setting('tmdb_cache_read', False)
@@ -3275,7 +3278,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                 quality_alt += ' HDTV'
 
             limit_pages = int((btdigg_entries * limit_search) / 10)
-            limit_items_found = int(btdigg_entries * limit_search)
+            limit_items_found = title_search.get('limit_list', 0) or int(btdigg_entries * limit_search)
             itemO.contentType = contentType
             itemO.c_type = 'peliculas' if contentType == 'movie' else 'series'
             cached_str = str(cached[contentType])
@@ -3361,10 +3364,11 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
                     elem['size'] = elem.get('size', '').replace('\xa0', ' ')
 
-                    elem['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem.get('title', '')), '.+?'+patron_year) or '-'
+                    elem['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\s*\d+', '', elem.get('title', '')), '.+?'+patron_year) or '-'
                     if elem['year'] in ['720', '1080', '2160', '-']: del elem['year']
 
-                    elem['title'] = clean_title(elem.get('title', ''))
+                    elem['title'] = elem.get('title', '').replace('Cap.', 'Cap#').replace('cap.', 'Cap#')
+                    elem['title'] = clean_title(elem['title']).replace('.', ' ').replace('Cap#', 'Cap.')
                     title = title_save = elem['title'].replace(btdigg_label_B, '')
 
                     if scrapertools.find_single_match(title_save, patron_title).strip():
@@ -3374,7 +3378,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     else:
                         logger.debug('Error en PATRON: %s / %s' % (elem.get('title_save', '').replace(btdigg_label_B, ''), patron_title))
                         continue
-                    title = title.replace('- ', '').replace('.', ' ')
+                    title = title.replace('- ', '')
                     if contentType == 'tvshow': title = title_save
 
                     if title.lower() in str(cached[contentType]).lower():
@@ -3433,7 +3437,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                 try:
                     if elem_show.get('season_search', ''): elem_json['season_search'] = elem_show['season_search']
                     elem_json['title'] = elem_show.get('title', '').replace(btdigg_label_B, '')
-                    elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem_json['title']), '.+?'+patron_year) or '-'
+                    elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\s*\d+', '', elem_json['title']), '.+?'+patron_year) or '-'
                     if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
                     if scrapertools.find_single_match(elem_json['title'], patron_title).strip():
                         elem_json['title'] = scrapertools.find_single_match(elem_json['title'], patron_title).strip()
@@ -3470,7 +3474,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
                     if item.contentTitle and item.contentTitle.lower() != item.contentSerieName.lower():
                         item.contentTitle = item.contentTitle.replace('- ', '').replace(':', '')
-                        item.contentTitle = clean_title(item.contentTitle).replace(' - ', ' ')
+                        item.contentTitle = clean_title(item.contentTitle).replace(' - ', ' ').replace('.', ' ')
                         if "en espa" in item.contentTitle: item.contentTitle = item.contentTitle[:-11]
                     if item.infoLabels['tmdb_id']: 
                         if item.contentTitle.lower() != item.contentSerieName.lower(): item.infoLabels['title_alt'] = item.contentTitle
@@ -3630,7 +3634,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 elem['title'] = clean_title(elem.get('title', ''))
 
                                 try:
-                                    elem_episode['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem.get('title', '')), 
+                                    elem_episode['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\s*\d+', '', elem.get('title', '')), 
                                                                                           '.+?'+patron_year) or '-'
                                     if elem_episode['year'] in ['720', '1080', '2160']: elem_episode['year'] = '-'
                                     if elem_episode['year'] != '-' and elem_json['year'] != '-' and elem_episode['year'] != elem_json['year']:
@@ -3847,7 +3851,7 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
         elif btdigg_url in item.url and BTDIGG_URL_SEARCH not in item.url and BTDIGG_URL_SEARCH not in item.url_tvshow:
             seasons = '1-%s' % season
             season_low = 1
-        patron_sea = r'(?i)Cap.(\d+)\d{2}'
+        patron_sea = r'(?i)Cap.\s*(\d+)\d{2}'
 
         quality_alt = ''
         language_alt = []
@@ -4212,9 +4216,9 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
             limit_pages = limit_search if domain_alt in str(title_search['urls']) else limit_search / 1.5
             limit_pages_min = (limit_search / 2) if domain_alt in str(title_search['urls']) else 1
             limit_items_found = 10 * 10
-            patron_sea = r'(?i)Cap.(\d+)\d{2}'
-            patron_cap = r'(?i)Cap.\d+(\d{2})'
-            patron_cap_al = r'(?i)Cap.\d+\d{2}(?:_|\s+)\d+(\d{2})'
+            patron_sea = r'(?i)Cap.\s*(\d+)\d{2}'
+            patron_cap = r'(?i)Cap.\s*\d+(\d{2})'
+            patron_cap_al = r'(?i)Cap.\s*\d+\d{2}(?:_|\s+)\d+(\d{2})'
             patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temp|\(|\[)'
             patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temp|\(|\[|\s+-)'
             patron_year = r'\(?(\d{4})\)?'
@@ -4300,7 +4304,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                                                     % (item.contentSerieName, elem_json['season'], elem_json['episode'], elem_json['quality']))
                             continue
                         
-                        elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem.get('title', '')), 
+                        elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\s*\d+', '', elem.get('title', '')), 
                                                                            '.+?'+patron_year) or '-'
                         if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
                         if elem_json['year'] != '-' and item.infoLabels['year'] != '-' and elem_json['year'] != str(item.infoLabels['year']):
@@ -4510,13 +4514,13 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
             limit_pages = limit_search if domain_alt in str(title_search['urls']) else limit_search / 2
             limit_pages_min = (limit_search / 2) if domain_alt in str(title_search['urls']) else 1
             limit_items_found = 10 * 10
-            patron_sea = r'(?i)Cap.(\d+)\d{2}'
-            patron_cap = r'(?i)Cap.\d+(\d{2})'
-            patron_cap_al = r'(?i)Cap.\d+\d{2}(?:_|\s+)\d+(\d{2})'
+            patron_sea = r'(?i)Cap.\s*(\d+)\d{2}'
+            patron_cap = r'(?i)Cap.\s*\d+(\d{2})'
+            patron_cap_al = r'(?i)Cap.\s*\d+\d{2}(?:_|\s+)\d+(\d{2})'
             patron_title = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[)'
             patron_title_b = r'(?i)(.*?)\s*(?:(?:\d{4}\s*)?-*\s*temporada|\(|\[|\s+-)'
             patron_year = r'\(?(\d{4})\)?'
-            convert = ['.=', '-= ', ':=', '&=and', '  = ']
+            convert = ['.= ', '-= ', ':=', '&=and', '  = ']
 
             torrent_params = {
                               'title_prefix': [title_search], 
@@ -4573,7 +4577,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                             episode_al = scrapertools.find_single_match(elem.get('title', ''), patron_cap_al)
                             if episode_al: episode_al = ' al %s' % episode_al.zfill(2)
 
-                        elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem.get('title', '')), 
+                        elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\s*\d+', '', elem.get('title', '')), 
                                                                            '.+?'+patron_year) or '-'
                         if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
                         if elem_json['year'] != '-' and item.infoLabels['year'] != '-' and elem_json['year'] != str(item.infoLabels['year']):

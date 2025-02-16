@@ -591,7 +591,10 @@ def search_results(item):
         url = elem.a["href"]
         thumb = elem.img["src"]
         title = elem.img["alt"]
-        year = elem.find("span", class_="year").text
+        try:
+            year = elem.find("span", class_="year").text
+        except:
+            year = '-'
 
         new_item = Item(
                     channel = item.channel,

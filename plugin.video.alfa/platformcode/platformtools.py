@@ -1430,7 +1430,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                         % (
                             sys.argv[0],
                             item_url,
-                            "channel=infoplus&action=start&from_channel="
+                            "module=infoplus&action=start&from_channel="
                             + item.channel,
                         ),
                     )
@@ -1516,7 +1516,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                     % (
                         sys.argv[0],
                         item.clone(
-                            channel="search",
+                            module="search",
                             action="from_context",
                             from_channel=item.channel,
                             contextual=True,
@@ -1533,7 +1533,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                     % (
                         sys.argv[0],
                         item_url,
-                        "channel=search&action=from_context&search_type=list&page=1&list_type=%s/%s/similar"
+                        "module=search&action=from_context&search_type=list&page=1&list_type=%s/%s/similar"
                         % (mediatype, item.infoLabels["tmdb_id"]),
                     ),
                 )

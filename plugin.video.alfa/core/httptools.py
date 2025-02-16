@@ -2089,7 +2089,7 @@ def downloadpage(url, **opt):
             if (
                 PY3
                 and isinstance(response["data"], bytes)
-                and encoding is not None
+                and encoding not in [None, 'raw']
                 and (
                     "text/" in req.headers.get("Content-Type", "")
                     or "json" in req.headers.get("Content-Type", "")
@@ -2105,6 +2105,7 @@ def downloadpage(url, **opt):
             if (
                 PY3
                 and isinstance(response["data"], bytes)
+                and encoding not in ['raw']
                 and not (
                     "application" in req.headers.get("Content-Type", "")
                     or "javascript" in req.headers.get("Content-Type", "")
@@ -2117,7 +2118,7 @@ def downloadpage(url, **opt):
             logger.error(traceback.format_exc(1))
 
         try:
-            if (
+            if encoding not in ['raw'] and (
                 "text/" in req.headers.get("Content-Type", "")
                 or "json" in req.headers.get("Content-Type", "")
                 or "xml" in req.headers.get("Content-Type", "")
@@ -2167,6 +2168,7 @@ def downloadpage(url, **opt):
                 and "octet-stream" not in req.headers.get("Content-Type", "")
                 and "zip" not in req.headers.get("Content-Type", "")
                 and opt.get("json_to_utf8", True)
+                and encoding not in ['raw']
             ):
                 response["json"] = to_utf8(req.json())
 
