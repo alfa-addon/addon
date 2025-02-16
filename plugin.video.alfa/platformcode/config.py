@@ -157,6 +157,9 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
     '''
     from core import httptools
     from core import filetools
+    
+    def versiontuple(v):
+        return tuple(map(int, (v.split("."))))
 
     versiones = {}
     if not urls:
@@ -174,7 +177,11 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
             import xmltodict
             xml = xmltodict.parse(response.data)
             for addon in xml["addons"]["addon"]:
-                versiones[addon["@id"]] = addon["@version"]
+                # Store the latest version in the repository
+                if(addon["@id"] in versiones):
+                    versiones[addon["@id"]] = addon["@version"] if versiontuple(addon["@version"]) > versiontuple(versiones[addon["@id"]]) else versiones[addon["@id"]]
+                else:
+                    versiones[addon["@id"]] = addon["@version"]
             versiones['url'] = url
             response = httptools.downloadpage(url + xml_repo + '.md5', timeout=5, ignore_response_code=True, alfa_s=True)
 
