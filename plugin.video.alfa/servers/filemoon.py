@@ -1,33 +1,38 @@
-# -*- coding: utf-8 -*-
+# Conector tiwikiwi By Alfa development Group
 # --------------------------------------------------------
-# Conector lulustream By Alfa development Group
-# --------------------------------------------------------
+
 import re
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
 
-video_urls = []
-kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
+
+kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
+
+
+# https://filemooon.link/e/mlx76kltz6tn    
 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
+    global data, server
+    
+    datos = httptools.downloadpage(page_url, **kwargs).data
+    if "not found" in datos:
+        return False,  "[filemoon] El fichero no existe o ha sido borrado"
+    else:
+        page_url = scrapertools.find_single_match(datos, '<iframe src="([^"]+)')
+    
     response = httptools.downloadpage(page_url, **kwargs)
-    global data, server, text
-    server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
     data = response.data
-    if not response.sucess or "Not Found" in data or "File was deleted" in data or "is no longer available" in data:
-        return False, "[lulustream] El fichero no existe o ha sido borrado"
+    if response.code == 404 or "not found" in response.data:
+        return False,  "[filemoon] El fichero no existe o ha sido borrado"
     return True, ""
 
-
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
-    logger.info("(page_url='%s')" % page_url)
+    logger.info("url=" + page_url)
     video_urls = []
-    
-    # data = httptools.downloadpage(page_url, **kwargs).data
     try:
         # enc_data = scrapertools.find_single_match(data, "type='text/javascript'>(eval.*?)?\s+</script>")
         enc_data = scrapertools.find_multiple_matches(data, "text/javascript(?:'|\")>(eval.*?)</script>")
@@ -39,7 +44,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     try:
         matches = re.compile(sources, re.DOTALL).findall(dec_data)
         for url in matches:
-            video_urls.append(['[%s] m3u' %server , url])
+            video_urls.append(['[filemoon] m3u', url])
     except Exception:
         pass
     return video_urls

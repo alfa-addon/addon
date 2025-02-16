@@ -13,6 +13,7 @@
     "tvshow"
   ],
   "login_required": true,
+  "force_unify": true,
   "settings": [
     {
       "id": "user",

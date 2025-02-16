@@ -96,7 +96,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|my.|)(?:porn00|xmegadrive|uiporn|pornhat|pornxbox|porn2best|hobby).(?:org|tv|com|porn)/video(?:s|)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|my.|)(?:porn00|xmegadrive|uiporn|pornxbox|porn2best|hobby).(?:org|tv|com|porn)/video(?:s|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

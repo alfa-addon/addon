@@ -17,6 +17,7 @@ kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'ignore
 # https://jwplayerhls.com/e/ot7d0acd0ct3  720 y 1080
 # https://streamwish.to/e/g00srkwf3uj0|Referer=https://pubjav.com/
 
+
 def test_video_exists(page_url):
     global data
     logger.info("(page_url='%s')" % page_url)
@@ -26,7 +27,7 @@ def test_video_exists(page_url):
         kwargs['headers'] = {'Referer': referer}
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
-    if response.code == 404 or "no longer available" in data: 
+    if response.code == 404 or "no longer available" in data or "Not Found" in data: 
         return False, "[streamwish] El archivo no existe o ha sido borrado"
     return True, ""
 
@@ -50,7 +51,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
-                    video_urls.append(["[streamwish] %s" % quality, url])
+                    video_urls.append(["[streamwish] %sp" % quality, url])
         else:
             video_urls.append(["[streamwish]", m3u8_source])
 

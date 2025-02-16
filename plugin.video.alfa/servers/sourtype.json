@@ -15,10 +15,8 @@
         "pattern": "(https://(?:embed.|)fuqer.com/vid/[0-9-]+(?:/|))",
         "url": "\\1"
       },
-
-
       {
-        "pattern": "(https://(?:www.|)(?:justporn|pulpo69|publicsexhub).(?:com|net)/video/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:justporn|pulpo69|publicsexhub).(?:com|net)/video(?:s|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

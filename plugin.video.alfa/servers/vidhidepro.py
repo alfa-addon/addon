@@ -14,6 +14,7 @@ video_urls = []
 # kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'ignore_response_code': True, 'cf_assistant': False}
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
 
+
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     
@@ -36,9 +37,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     try:
         enc_data = scrapertools.find_single_match(data, "text/javascript(?:'|\")>(eval.*?)</script>")
         dec_data = jsunpack.unpack(enc_data)
-        logger.debug(dec_data)
         url = scrapertools.find_single_match(dec_data, 'sources\:\s*\[\{(?:file|src):"([^"]+)"')
-        logger.debug(url)
         video_urls.append(['[vidhide] m3u', url])
     except Exception:
         dec_data = data

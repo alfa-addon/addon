@@ -42,7 +42,7 @@ host = canonical['host'] or canonical['host_alt'][0]
 
 IDIOMAS = {'Subtitulado': 'VOSE', 'Latino': 'LAT', 'Castellano': 'CAST'}
 SERVER = {'swish': 'Streamwish', 'vgfplay': 'Vidguard', 'playpf': 'Tiwikiwi',
-          'filemoon': 'Tiwikiwi', 'okhd': 'Tiwikiwi'}
+          'filemoon': 'Filemoon', 'okhd': 'Okhd', 'bf0skv': 'Filemoon'}
 
 list_language = list(IDIOMAS.values())
 list_servers = list(SERVER.values())
@@ -205,12 +205,14 @@ def findvideos(item):
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     
-    if config.get_videolibrary_support() and len(
-            itemlist) > 0 and item.extra != 'findvideos' and not item.contentSerieName:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra:
         itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                             url=item.url, action="add_pelicula_to_library", extra="findvideos",
+                             url=item.url, action='add_pelicula_to_library', extra=item.extra,
                              contentTitle=item.contentTitle))
-
+    elif config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             url=item.url, action='add_pelicula_to_library',
+                             contentTitle=item.contentTitle))
     return itemlist
 
 
@@ -218,7 +220,7 @@ def play(item):
     logger.info()
     itemlist = []
     url = httptools.downloadpage(item.url).url
-    if not "vgfplay" in url or "listeamed" in url:
+    if not "vgfplay" in url and not "listeamed" in url and not "bf0skv" in url:
         url += "|Referer=%s" %item.url
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

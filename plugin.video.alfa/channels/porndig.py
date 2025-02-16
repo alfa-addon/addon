@@ -4,6 +4,7 @@ from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
 from core import httptools
+from core import servertools
 from core import urlparse
 from bs4 import BeautifulSoup
 
@@ -214,12 +215,16 @@ def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    url = create_soup(item.url).find('div', class_='video_wrapper').iframe['src']
-    matches = soup.find('div', class_='video_download_wrapper').find_all('a', class_='post_download_link clearfix')
-    for elem in matches:
-        url = elem['href']
-        quality = url[-5:].replace("_", "")
-        url = httptools.downloadpage(url, headers={"referer": item.url}, follow_redirects=False).headers["location"]
-        itemlist.append([quality, url])
+    url = create_soup(item.url).find('div', class_='video_wrapper').iframe['src'] #server
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    
+    
+    # matches = soup.find('div', class_='video_download_wrapper').find_all('a', class_='post_download_link clearfix')
+    # for elem in matches:
+        # url = elem['href']
+        # quality = url[-5:].replace("_", "")
+        # url = httptools.downloadpage(url, headers={"referer": item.url}, follow_redirects=False).headers["location"]
+        # itemlist.append([quality, url])
     return itemlist
 

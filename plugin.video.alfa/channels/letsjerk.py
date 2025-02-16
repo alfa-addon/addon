@@ -9,10 +9,17 @@ from core import servertools
 from core import httptools
 from core import urlparse
 from bs4 import BeautifulSoup
+from modules import autoplay
+from platformcode import unify
 
 # https://letsjerk.tv https://letsjerk.to
 
-                         #  FALTA SERVER https://swiftload.io/e/cfopffhm377
+UNIFY_PRESET = config.get_setting("preset_style", default="Inicial")
+color = unify.colors_file[UNIFY_PRESET]
+
+list_language = []
+list_quality = []
+list_servers = []
 
 canonical = {
              'channel': 'letsjerk', 
@@ -29,12 +36,17 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
+    
+    autoplay.init(item.channel, list_servers, list_quality)
+    
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?order=newest"))
     itemlist.append(Item(channel=item.channel, title="Mas valorados" , action="lista", url=host + "?order=rating_month"))
     itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?order=views_month"))
     itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "?order=comments_month"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories"))
-
+    
+    autoplay.show_option(item.channel, itemlist)
+    
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -98,16 +110,13 @@ def lista(item):
         time = elem.find('em', class_='time_thumb').em#.text.strip()
         quality = elem.find('i', class_='quality')
         if quality:
-            quality = "[COLOR red]HD[/COLOR]"
+            quality = "[COLOR %s]HD[/COLOR]" %color.get('quality','')
         if time:
-            title = "[COLOR yellow]%s[/COLOR] %s %s" % (time.text.strip(),quality,title)
+            title = "[COLOR %s]%s[/COLOR] %s %s" % (color.get('year',''),time.text.strip(),quality,title)
         elif quality:
             title = "%s %s" % (quality,title)
         plot = ""
-        action = "play"
-        if logger.info() is False:
-            action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=url,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle = title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot))
     next_page = soup.find('a', class_='next')
     if next_page:
@@ -121,36 +130,26 @@ def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find('div', class_='video-container')
-    v1 = matches.find_all('source')
-    v2 = matches.find('iframe')
-    if v1:
-        for elem in v1:
-            quality = elem['title']
-            url = elem['src']
-            itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
-    else:
-        url = v2['src']
-        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
-        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    return itemlist
-
-
-def play(item):
-    logger.info()
-    itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find('div', class_='video-container')
-    v1 = matches.find_all('source')
-    v2 = matches.find('iframe')
-    if v1:
-        for elem in v1:
-            quality = elem['title']
-            url = elem['src']
-            itemlist.append(['%sp' %quality, url])
-            itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-    else:
-        url = v2['src']
-        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
-        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    
+    if soup.find_all('a', href=re.compile("/performer/[A-z0-9-]+/")):
+        pornstars = soup.find_all('a', href=re.compile("/performer/[A-z0-9-]+/"))
+        for x, value in enumerate(pornstars):
+            pornstars[x] = value.get_text(strip=True)
+        pornstar = ' & '.join(pornstars)
+        pornstar = "[COLOR %s]%s[/COLOR]" % (color.get('rating_3',''), pornstar)
+        lista = item.contentTitle.split('[/COLOR]')
+        pornstar = pornstar.replace('[/COLOR]', '')
+        pornstar = ' %s' %pornstar
+        if color.get('quality','') in item.contentTitle:
+            lista.insert (2, pornstar)
+        else:
+            lista.insert (1, pornstar)
+        item.contentTitle = '[/COLOR]'.join(lista)
+    
+    matches = soup.find('ul', class_='post-tape').find_all("a")
+    for elem in matches:
+        soup = create_soup(elem['href'])
+        url = soup.find('div', class_='video-container').iframe['src']
+        itemlist.append(Item(channel=item.channel, action="play", title="%s", contentTitle = item.contentTitle, url=url) )
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

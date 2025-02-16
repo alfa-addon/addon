@@ -9,29 +9,14 @@ from platformcode import logger
 
 
 kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
-# chems https://media.cm/wcjxurq8sqtz  error 403
 
-
-# https://filemooon.link/e/mlx76kltz6tn    
-# https://fle-rvd0i9o8-moo.com/ptsd/mlx76kltz6tn
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data, server
-    if "|Referer" in page_url or "|referer" in page_url:
-        url, referer = page_url.split("|")
-        referer = referer.replace('Referer=', '').replace('referer=', '')
-        kwargs['headers'] = {
-            'Referer': referer,
-            'Sec-Fetch-Dest': 'iframe',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'cross-site'
-        }
-        datos = httptools.downloadpage(url, **kwargs).data
-        page_url = scrapertools.find_single_match(datos, '<iframe src="([^\\?]+)')
+    server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
-    server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
     if response.code == 404 or "not found" in response.data:
         return False,  "[%s] El fichero no existe o ha sido borrado" %server
     return True, ""

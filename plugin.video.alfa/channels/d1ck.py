@@ -13,7 +13,6 @@ from AlfaChannelHelper import DictionaryAdultChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
-
 IDIOMAS = {}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
@@ -31,6 +30,9 @@ forced_proxy_opt = 'ProxySSL'
 # https://hardfamily.co/  https://taboofamily.co/  https://brosislove.com/  https://whorehammer.com/  https://freexxxhardcore.com/
 # https://extremeteens.co/  https://brosislove.com/  https://collegegirls.xyz/  https://extremeteens.co/  https://hardcoreteens.co/
 # https://cd-universe.com/  https://hardteens.co/   https://freeporntube.vip/  https://fl1rt.com/ https://porntube.ink/
+
+# https://extremejapanese.co/  https://japteens.co/  https://hardmilfs.co/  https://celebritybukkakeoff.com/
+# https://hotmature.co/  https://unchartedanus.com/
 
 canonical = {
              'channel': 'd1ck', 

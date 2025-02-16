@@ -8,6 +8,10 @@
         "url": "https://vidhidevip.com/v/\\1"
       },
       {
+        "pattern": "(https://(?:filelions|fviplions|azipcdn).(?:sx|to|in|live|online|com|live|top|site)/(?:e|d|v|f|embed)/[a-z0-9]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:dhtpre|nikaplayerr).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
         "url": "\\1"
       },

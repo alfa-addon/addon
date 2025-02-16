@@ -1,10 +1,10 @@
 {
-  "active": true,
+  "active": false,
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "clicknupload.(?:me|com|org|co)/([a-z0-9]+)",
+        "pattern": "clicknupload.(?:me|com|org|co|\\w{2,4})/([a-z0-9]+)",
         "url": "https://clicknupload.co/\\1"
       }
     ]

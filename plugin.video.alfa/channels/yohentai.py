@@ -41,48 +41,49 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(
-        Item(
-            action = "recent",
-            channel = item.channel,
-            title = "Recientes",
-            thumbnail = get_thumb("recents", auto=True),
-            viewType = "tvshows"
-        )
-    )
-    itemlist.append(
-        Item(
-            action = "list_all",
-            channel = item.channel,
-            list_type = "newepisodes",
-            title = "Nuevos episodios",
-            thumbnail = get_thumb("new episodes", auto=True),
-            url = host,
-            viewType = "episodes"
-        )
-    )
-    itemlist.append(
-        Item(
-            action = "list_all",
-            channel = item.channel,
-            list_type = "onair",
-            title = "En emisión",
-            thumbnail = get_thumb("on air", auto=True),
-            url = "{}emision".format(host),
-            viewType = "tvshows"
-        )
-    )
-    itemlist.append(
-        Item(
-            action = "list_all",
-            channel = item.channel,
-            list_type = "popular",
-            title = "Populares",
-            thumbnail = get_thumb("hot", auto=True),
-            url = "{}hentai".format(host),
-            viewType = "tvshows"
-        )
-    )
+    # itemlist.append(
+        # Item(
+            # action = "recent",
+            # channel = item.channel,
+            # title = "Recientes",
+            # thumbnail = get_thumb("recents", auto=True),
+            # viewType = "tvshows"
+        # )
+    # )
+    # itemlist.append(
+        # Item(
+            # action = "list_all",
+            # channel = item.channel,
+            # list_type = "newepisodes",
+            # title = "Nuevos episodios",
+            # thumbnail = get_thumb("new episodes", auto=True),
+            # url = host,
+            # viewType = "episodes"
+        # )
+    # )
+    # itemlist.append(
+        # Item(
+            # action = "list_all",
+            # channel = item.channel,
+            # list_type = "onair",
+            # title = "En emisión",
+            # thumbnail = get_thumb("on air", auto=True),
+            # url = "{}emision".format(host),
+            # viewType = "tvshows"
+        # )
+    # )
+    
+    # itemlist.append(
+        # Item(
+            # action = "list_all",
+            # channel = item.channel,
+            # list_type = "popular",
+            # title = "Populares",
+            # thumbnail = get_thumb("hot", auto=True),
+            # url = "{}search?p=1".format(host),
+            # viewType = "tvshows"
+        # )
+    # )
     itemlist.append(
         Item(
             action = "list_all",
@@ -116,17 +117,17 @@ def mainlist(item):
             viewType = "tvshows"
         )
     )
-    itemlist.append(
-        Item(
-            action = "genres",
-            channel = item.channel,
-            list_type = "status",
-            title = "Estado",
-            thumbnail = get_thumb("on air", auto=True),
-            url = "{}search".format(host),
-            viewType = "tvshows"
-        )
-    )
+    # itemlist.append(
+        # Item(
+            # action = "genres",
+            # channel = item.channel,
+            # list_type = "status",
+            # title = "Estado",
+            # thumbnail = get_thumb("on air", auto=True),
+            # url = "{}search".format(host),
+            # viewType = "tvshows"
+        # )
+    # )
     itemlist.append(
         Item(
             action = "search",
@@ -201,27 +202,34 @@ def genres(item):
     logger.info()
 
     itemlist = []
-    soup = get_source(item.url)
+    soup = get_source(item.url).find_all('div', class_='my-3')
     if item.list_type == 'genres':
-        genres = soup.find('div', class_='box_cats').find_all('div', class_='cat_col')
+        genres = soup[0].find_all('label')
     elif item.list_type == 'year':
-        genres = [x for x in soup.find('div', class_='year_ls').find_all('a') if x.get('href')]
-    elif item.list_type == 'status':
-        genres = [x for x in soup.find('div', class_='estados_ls').find_all('a') if x.get('href') != ""]
+        genres = soup[2].find_all('label')
+    # elif item.list_type == 'status':
+        # genres = [x for x in soup.find('div', class_='estados_ls').find_all('a') if x.get('href') != ""]
 
     for g in genres:
-        genre = g.find('input')['value'] if g.find('input') else ''
-        year = g['href'] if g.get('href') and len(g['href']) == 4 else ''
-        status = g['href'] if g.get('href') and len(g['href']) == 1 else ''
-        title = g.find('span').text if item.list_type == 'genres' else g.text if g.get('href') else ''
-
+        
+        id = g['for'].replace("cb_", "").replace("cba_", "")
+        title = g.text
+        if item.list_type == 'year':
+            year = id
+            genre = ""
+        else:
+            genre = id
+            year = ""
+        
         itemlist.append(
             item.clone(
                 action = 'list_all',
                 title = title,
-                url = '{}search?categoria[]={}&year={}&estado={}&q='.format(host, genre, year, status)
+                url = '{}search?genero={}&fecha={}&p=1'.format(host, genre, year)
             )
         )
+    
+    if item.list_type == 'genres': itemlist.sort(key=lambda x: x.title)
     
     return itemlist
 
@@ -229,23 +237,22 @@ def list_all(item):
     logger.info()
     itemlist = []
     soup = get_source(item.url)
-
+    
     if item.list_type == "recent":
         section = soup.find('div', class_='tvLast').find_all('div', class_='inner_tv')
     else:
-        section = soup.find_all('article')
-
+        section = soup.find('div', class_='container-lg').find_all('li', class_='col')
+    
     for div in section:
         infoLabels = {}
-        infoLabels['year'] = int(div.find('span', class_='date_sld').text) if div.find('span', class_='date_sld') else None
+        infoLabels['year'] = int(div.find('span', class_='text-muted').text) if div.find('span', class_='text-muted') else None
         infoLabels['episode'] = int(div.find('span', class_='episode').text) if div.find('span', class_='episode') else None
-
         action = "episodesxseason" if item.list_type != "newepisodes" else "findvideos"
-        contentTitle = div.find('h2').text if item.list_type == "newepisodes" else div.find('h3').text
+        contentTitle = div.h2.text if item.list_type == "newepisodes" else div.h2.text
         title = "E{}: {}".format(infoLabels['episode'], contentTitle) if infoLabels.get('episode') is not None else contentTitle
-        thumbnail = div.find('img')['data-src'] if item.list_type in ["recent", "newepisodes"] else div.find('img')['src']
-        url = div.find('a')['href']
-
+        thumbnail = div.img['data-src'] if item.list_type in ["recent", "newepisodes"] else div.img['data-src']
+        url = div.a['href']
+        
         itemlist.append(
             Item(
                 action = action,
@@ -259,10 +266,10 @@ def list_all(item):
                 viewType = "episodes"
             )
         )
-
-    nextpage = soup.find('i', class_='fa-arrow-right')
+    
+    nextpage = soup.find('ul', class_='pagination')
     if nextpage:
-        url = scrapertools.find_single_match(item.url, "{}\w+".format(host))
+        nextpage = nextpage.find_all('a')[-1]['href']
         itemlist.append(
             Item(
                 action = 'list_all',
@@ -271,10 +278,10 @@ def list_all(item):
                 list_type = item.list_type,
                 text_color = "yellow",
                 title =  'Siguiente página >',
-                url = "{}{}".format(url, nextpage.parent['href'])
+                url = nextpage #"{}{}".format(url, nextpage.parent['href'])
             )
         )
-
+    
     return itemlist
 
 def episodios(item):
@@ -285,34 +292,37 @@ def episodios(item):
 
 def episodesxseason(item, get_episodes = False):
     logger.info()
-
     itemlist = []
+    
     soup = get_source(item.url)
-    date = formatDate(soup.find('span', class_='date_fls').text.strip())
     fanart = soup.select_one('.Banner').find('img')['src'] if soup.select_one('.Banner') else None
-
-    item.infoLabels['plot'] = soup.find('div', class_='Description').text.strip()
-    item.infoLabels['status'] = soup.select_one('.Type').text.strip()
+    
+    item.infoLabels['plot'] = soup.find('div', class_='mb-3').text.strip()
     item.infoLabels['season'] = 1
-    if date:
-        item.infoLabels['first_air_date'] = date.strftime("%Y/%m/%d")
-        item.infoLabels['premiered'] = item.infoLabels['first_air_date']
-        item.infoLabels['year'] = date.strftime("%Y")
-
-    genmatch = [x.text.strip() for x in soup.find('div', class_='generos').find_all('a')]
-    genmatch.append(item.infoLabels['status'])
-
+    
+    genmatch = [x.text.strip() for x in soup.find('div', class_='lh-lg').find_all('a')]
+    # genmatch.append(item.infoLabels['status'])
+    
     if len(genmatch):
         item.infoLabels['genre'] = ", ".join(genmatch)
         item.infoLabels['plot'] = "[COLOR yellow]Géneros:[/COLOR] {}\n\n{}".format(item.infoLabels['genre'], item.infoLabels['plot'])
-
-
-    matches = soup.find('div', class_='SerieCaps').find_all('a')
-
+    
+    url = soup.find('div', class_='caplist')['data-ajax']
+    token = soup.find(attrs={'name': 'csrf-token'})['content']
+    post= {'_token': token, 'order': 1}
+    headers=''
+    
+    data = httptools.downloadpage(url, post=post, headers=headers, canonical=canonical).json
+    matches = data['eps']
     for match in matches:
         infoLabels = item.infoLabels
-        title, infoLabels['episode'], language = setEpisodeData(item, match.find(class_='moks').text)
-
+        cap = match['num']
+        title = "%sx%s" % (item.infoLabels['season'], cap)
+        infoLabels["episode"] = cap
+        name = item.url.split("/")[-1]
+        name = name.replace("sub-espanol", "")
+        name += "capitulo-%s" % cap
+        url = "%sver/%s" %(host, name)
         itemlist.append(
             item.clone(
                 action = "findvideos",
@@ -320,13 +330,13 @@ def episodesxseason(item, get_episodes = False):
                 contentTitle = item.title,
                 fanart = fanart,
                 infoLabels = infoLabels,
-                language = language,
+                language = "",
                 title = title,
-                url = match['href']
+                url = url
             )
         )
 
-    itemlist.reverse()
+    # itemlist.reverse()
 
     if get_episodes == False and config.get_videolibrary_support() and len(itemlist) > 0:
         if itemlist[0].infoLabels['tmdb_id']:
@@ -344,38 +354,20 @@ def episodesxseason(item, get_episodes = False):
 
 def findvideos(item):
     logger.info()
-
     itemlist = []
     pattern = 'src="(.+?)"'
     soup = get_source(item.url)
-    urls = soup.find_all('div', class_='embed-responsive')
-    urls = [scrapertools.find_single_match(str(x), pattern) for x in urls]
-    servers = soup.find('ul', class_='TPlayerNv').find_all('li')
-    servers = [x['title'].lower() for x in servers]
+    matches = soup.find_all('li', id='play-video')
+    for elem in matches:
+        url = elem.button['data-player']
+        import base64
+        url = base64.b64decode(url).decode("utf8")
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
-    for i in range(len(servers)):
-        if "sbchill" in servers[i]:
-            servers[i] = 'streamsb'
-        itemlist.append(
-            item.clone(
-                action = "play",
-                server = servers[i],
-                title = servers[i].title(),
-                url = urls[i]
-            )
-        )
-
     autoplay.start(itemlist, item)
-
     return itemlist
 
-def play(item):
-    logger.info()
-
-    if host in item.url:
-        data = httptools.downloadpage(item.url).data
-        url = scrapertools.find_single_match(data, 'var redir = "(.+?)"')
-        return [item.clone(url = url)]
 
 def search(item, text):
     logger.info()
