@@ -96,11 +96,24 @@ SERVIDORES = {
     "doodstream": "doodstream",
 }
 
+
+# Función que obtiene la URL del host dinámico de Playdede, que es cambiada por los moderadores de la propia página.
+# Así siempre se tendrá la URL correcta del host pese a que la URL de Playdede cambie.
+def get_dynamic_host():
+    url = 'https://entrarplaydede.com/'
+    logger.info('Downloading page: {}'.format(url))
+    data = httptools.downloadpage(url, timeout=30)
+    logger.info('Page downloaded successfully')
+    soup = BeautifulSoup(data.data, 'html.parser')
+    host_url = soup.find('h1').find('b').find('a').get('href')
+    logger.info('Dynamic host URL: {}'.format(host_url))
+    return host_url
+
 list_language = list(IDIOMAS.values())
 list_quality = ["HD1080", "HD720", "HDTV", "DVDRIP"]
 list_quality_tvshow = list_quality_movies = list_quality
 list_servers = list(SERVIDORES.values())
-host = "https://www2.playdede.link/"
+host = get_dynamic_host()
 assistant = config.get_setting(
     "assistant_version", default=""
 ) and not httptools.channel_proxy_list(host)
