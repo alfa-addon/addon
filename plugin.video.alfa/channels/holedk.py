@@ -57,7 +57,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
+    soup = create_soup(item.url).find('ul', class_='nav')
     if "Canal" in item.title:
         matches = soup.find_all('a', href=re.compile(r"^/director/"))
     else:
@@ -70,6 +70,7 @@ def categorias(item):
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
+    itemlist.sort(key=lambda x: x.title)
     return itemlist
 
 
@@ -88,7 +89,8 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
+    soup = create_soup(item.url, referer=host)
+    
     if "videos" in item.url:
         matches = soup.find_all('div', class_='cont_videos')
     else:
@@ -128,6 +130,12 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "voe" in ser:
             url = "https://voe.sx/e/%s" % id
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+        elif "moon" in ser:
+            url = "https://filemoon.to/e/%s" % id
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+        elif "gua" in ser:
+            url = "https://listeamed.net/e/%s" % id
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "mix" in ser:
             url = "https://mixdrop.is/e/%s" % id

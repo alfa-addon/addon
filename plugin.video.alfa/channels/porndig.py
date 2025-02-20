@@ -173,8 +173,8 @@ def lista(item):
     matches = soup.find_all('section', class_='video_item_medium')
     for elem in matches:
         url = elem.a['href']
-        stitle = elem.img['alt']
-        thumbnail = elem.img['data-src']
+        stitle = elem.h2.text.strip()
+        thumbnail = elem.find('img', class_='thumb_preview')['data-src']
         stime = elem.find('div', class_='bubble').text.strip()
         quality = elem.find('i', class_='pull-right')['class'][1].replace("icon-ic_19_qlt_", "")
         if stime:
@@ -218,7 +218,6 @@ def play(item):
     url = create_soup(item.url).find('div', class_='video_wrapper').iframe['src'] #server
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    
     
     # matches = soup.find('div', class_='video_download_wrapper').find_all('a', class_='post_download_link clearfix')
     # for elem in matches:
