@@ -105,7 +105,13 @@ def get_dynamic_host():
     data = httptools.downloadpage(url, timeout=30)
     logger.info('Page downloaded successfully')
     soup = BeautifulSoup(data.data, 'html.parser')
-    host_url = soup.find('h1').find('b').find('a').get('href')
+    host_url = soup.find('article').find('h1').find('b').find('a').get('href')
+    
+    # Verificar si el host_url contiene 'playdede.link'
+    if 'playdede.link' not in host_url:
+        logger.error('Dynamic host URL does not contain playdede.link')
+        return None
+    
     logger.info('Dynamic host URL: {}'.format(host_url))
     return host_url
 
