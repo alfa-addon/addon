@@ -40,9 +40,9 @@ language = []
 url_replace = []
 
 
-finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['md:container']}]),
+finds = {'find': dict([('find', [{'tag': ['main']}]),
                        #('find_all', [{'tag': ['a'], 'href': re.compile(r"^https://pornone.com/[A-z0-9-]+/[A-z0-9-]+/[0-9]+/?")}])]),
-                       ('find_all', [{'tag': ['a'], 'class': ['tracking-normal']}])]), ## COGE LiveCAM
+                       ('find_all', [{'tag': ['a'], 'class': ['videocard']}])]), ## COGE LiveCAM
 
          'categories': dict([('find', [{'tag': ['main']}]),
                        ('find_all', [{'tag': ['a'], 'class': ['tracking-tighter', 'overflow-hidden']}])]),
@@ -153,9 +153,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['thumbnail'] = img.get('data-original', '') \
                                        or img.get('data-src', '') \
                                        or img.get('src', '')
-            data = elem.find('span', class_='text-f13')
+            data = elem.find('span', class_='durlabel')
             elem_json['stime'] = data.get_text(strip=True) if data else ''
-            elem_json['quality'] = data.img.get('alt', '') if data.img else ''
+            elem_json['quality'] = "HD" if elem.find('span', class_='hdcont') else ''
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -205,7 +205,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/?query=%s" % (item.url, texto.replace(" ", "+"))
+    item.url = "%ssearch/newest/?query=%s" % (item.url, texto.replace(" ", "+"))
     
     try:
         if texto:
