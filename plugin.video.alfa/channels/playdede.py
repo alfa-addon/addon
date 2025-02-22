@@ -114,6 +114,8 @@ list_quality = ["HD1080", "HD720", "HDTV", "DVDRIP"]
 list_quality_tvshow = list_quality_movies = list_quality
 list_servers = list(SERVIDORES.values())
 host = get_dynamic_host()
+if not host.endswith("/"):
+    host += "/"
 assistant = config.get_setting(
     "assistant_version", default=""
 ) and not httptools.channel_proxy_list(host)
@@ -216,7 +218,7 @@ def login():
     logger.info("Iniciando sesión...")
 
     httptools.downloadpage(
-        "{}/ajax.php".format(host),
+        "{}ajax.php".format(host),
         files=credentials,
         add_referer=True,
         add_host=True,
@@ -456,11 +458,14 @@ def list_all(item):
         return itemlist
     
     items = soup.find_all("article", id=re.compile(r"^post-(?:\d+|)"))
-    # items = soup.find('div', id=' archive-content').find_all('article')
     
-    shown_half = 1 if item.half else 0
-    items_half = len(items) // 2
-    items = items[items_half:] if shown_half == 1 else items[:items_half]
+    # Si solo hay un resultado, no dividir en mitades
+    if len(items) == 1:
+        shown_half = 0
+    else:
+        shown_half = 1 if item.half else 0
+        items_half = len(items) // 2
+        items = items[items_half:] if shown_half == 1 else items[:items_half]
     
     for article in items:
         data = article.find("div", class_="data")
@@ -471,11 +476,6 @@ def list_all(item):
         title = data.find("h3").text
         url = article.find("a")["href"]
         url = "{}%s".format(host) % url
-        
-        """
-        if 'tmdb.org' in thumbnail:
-            infoLabels['filtro'] = scrapertools.find_single_match(thumbnail, "/(\w+)\.\w+$")
-        """
         
         it = Item(
             action="findvideos",
@@ -517,11 +517,12 @@ def list_all(item):
     
     btnnext = soup.find("div", class_="pagPlaydede").find_all('a')
     
-    if shown_half == 0:
-        itemlist.append(item.clone(title="Siguiente >", half=1))
-    elif btnnext:
-        btnnext = btnnext[-1]['href']
-        itemlist.append(item.clone(title="Siguiente >", half=0, url=btnnext))
+    if len(items) > 1:
+        if shown_half == 0:
+            itemlist.append(item.clone(title="Siguiente >", half=1))
+        elif btnnext:
+            btnnext = btnnext[-1]['href']
+            itemlist.append(item.clone(title="Siguiente >", half=0, url=btnnext))
     
     return itemlist
 
