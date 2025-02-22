@@ -144,7 +144,6 @@ canonical = {
     "CF_test": False,
     "alfa_s": True,
 }
-host = canonical["host"] or canonical["host_alt"][0]
 __channel__ = canonical["channel"]
 
 timeout = 30
