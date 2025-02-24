@@ -97,33 +97,9 @@ SERVIDORES = {
 }
 
 
-# Función que obtiene la URL del host dinámico de Playdede, que es cambiada por los moderadores de la propia página.
-# Así siempre se tendrá la URL correcta del host pese a que la URL de Playdede cambie.
-def get_dynamic_host():
-    url = 'https://entrarplaydede.com/'
-    logger.info('Downloading page: {}'.format(url))
-    data = httptools.downloadpage(url, timeout=30)
-    logger.info('Page downloaded successfully')
-    soup = BeautifulSoup(data.data, 'html.parser')
-    host_url = soup.find('h1').find('b').find('a').get('href')
-    logger.info('Dynamic host URL: {}'.format(host_url))
-    return host_url
-
-list_language = list(IDIOMAS.values())
-list_quality = ["HD1080", "HD720", "HDTV", "DVDRIP"]
-list_quality_tvshow = list_quality_movies = list_quality
-list_servers = list(SERVIDORES.values())
-host = get_dynamic_host()
-if not host.endswith("/"):
-    host += "/"
-assistant = config.get_setting(
-    "assistant_version", default=""
-) and not httptools.channel_proxy_list(host)
-
+# Definición inicial del canonical con valores estáticos
 canonical = {
     "channel": "playdede",
-    "host": config.get_setting("current_host", "playdede", default=""),
-    "host_alt": [host],
     "host_black_list": [
         "https://playdede.in/",
         "https://playdede.me/",
@@ -134,20 +110,58 @@ canonical = {
         "https://playdede.org/",
         "https://playdede.com/",
     ],
-    "pattern": '<link\s*rel="shortcut\s*icon"[^>]+href="([^"]+)"',
     "set_tls": True,
     "set_tls_min": True,
-    "retries_cloudflare": 1,
+    "CF": False,
+    "CF_test": False,
+    "alfa_s": True
+}
+
+def get_dynamic_host():
+    try:
+        url = 'https://entrarplaydede.com/'
+        data = httptools.downloadpage(url, timeout=30)
+        soup = BeautifulSoup(data.data, 'html.parser')
+        host_url = soup.find('h1').find('b').find('a').get('href')
+        
+        if host_url and host_url not in canonical["host_black_list"]:
+            config.set_setting("current_host", host_url, "playdede")
+            return host_url
+    except:
+        logger.error("Error obteniendo host dinámico")
+    
+    saved_host = config.get_setting("current_host", "playdede", default="")
+    if saved_host and saved_host not in canonical["host_black_list"]:
+        return saved_host
+    
+    return "https://playdede.link/"  # Host por defecto
+
+# Variables globales
+list_language = list(IDIOMAS.values())
+list_quality = ["HD1080", "HD720", "HDTV", "DVDRIP"]
+list_quality_tvshow = list_quality_movies = list_quality
+list_servers = list(SERVIDORES.values())
+
+# Obtener host y configurar
+host = get_dynamic_host()
+if not host.endswith("/"):
+    host += "/"
+
+# Configurar assistant
+assistant = config.get_setting(
+    "assistant_version", default=""
+) and not httptools.channel_proxy_list(host)
+
+# Actualizar canonical con valores dinámicos
+canonical.update({
+    "host_alt": [host],
     "CF_stat": True if assistant else False,
     "session_verify": True if assistant else False,
     "CF_if_assistant": True if assistant else False,
-    "CF_if_NO_assistant": False,
-    "CF": False,
-    "CF_test": False,
-    "alfa_s": True,
-}
-__channel__ = canonical["channel"]
+    "CF_if_NO_assistant": False
+})
 
+__channel__ = canonical["channel"]
 timeout = 30
 show_langs = config.get_setting("show_langs", channel=__channel__)
 account = None
