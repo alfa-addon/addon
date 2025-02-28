@@ -239,7 +239,7 @@ def get_channel_setting(name, channel, default=None):
     @rtype: any
 
     """
-    file_settings = filetools.join(config.get_data_path(), "settings_channels", channel + "_data.json")
+    file_settings = filetools.join(config.get_data_path(True), "settings_channels", channel + "_data.json")
     dict_settings = {}
     dict_file = {}
     
@@ -298,10 +298,10 @@ def set_channel_setting(name, value, channel):
 
     """
     # Creamos la carpeta si no existe
-    if not filetools.exists(filetools.join(config.get_data_path(), "settings_channels")):
-        filetools.mkdir(filetools.join(config.get_data_path(), "settings_channels"))
+    if not filetools.exists(filetools.join(config.get_data_path(True), "settings_channels")):
+        filetools.mkdir(filetools.join(config.get_data_path(True), "settings_channels"))
 
-    file_settings = filetools.join(config.get_data_path(), "settings_channels", channel + "_data.json")
+    file_settings = filetools.join(config.get_data_path(True), "settings_channels", channel + "_data.json")
     dict_settings = {}
 
     dict_file = None

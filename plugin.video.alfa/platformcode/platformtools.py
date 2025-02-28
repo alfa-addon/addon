@@ -1898,6 +1898,9 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
 def is_playing():
     return xbmc_player.isPlaying()
 
+def setInputstreamProp(addon_name, xlistitem, prop, val):
+    xlistitem.setProperty('{}.{}'.format(addon_name, prop), val)
+    logger.info('{}={}'.format(prop, val))
 
 def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info()
@@ -1989,15 +1992,127 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
     set_infolabels(xlistitem, item, True)
 
     # si se trata de un vídeo en formato mpd, se configura el listitem para reproducirlo
-    # con el addon inpustreamaddon implementado en Kodi 17
+    # con el addon inpustreamaddon implementado en Kodi 18
     # el itemlist debe enviarse de esta manera:
     # video_urls.append(['.mpd [CinemaUpload]', url, 0, "", "mpd"])
     # donde el quinto parámetro debe existir (tipo:str o int) para que sea reconocido como un mpd
-    if mpd:
-        if not xbmc.getCondVisibility("System.HasAddon(inputstream.adaptive)"):
-            xbmc.executebuiltin("InstallAddon(inputstream.adaptive)")
-        xlistitem.setProperty("inputstreamaddon", "inputstream.adaptive")
-        xlistitem.setProperty("inputstream.adaptive.manifest_type", "mpd")
+    # https://github.com/xbmc/inputstream.adaptive/wiki/Integration
+    ver = config.get_platform(True)['num_version']
+    ver = int(ver)
+    logger.info('Kodi version {}'.format(str(ver)))
+    if (
+        (ver >= 18) and (mpd or ".m3u8" in mediaurl) and \
+        (config.get_setting('inputstream_mode', default=0) == 1)
+    ):
+        addon_name = 'inputstream.adaptive'
+        if not xbmc.getCondVisibility("System.HasAddon({})".format(addon_name)):
+            try: 
+                xbmc.executebuiltin("InstallAddon({})".format(addon_name), True)
+            except Exception as e:
+                if isinstance(e, bytes):
+                    e = e.decode("utf8", errors="replace")
+                logger.error('Installing {} failed: {}'.format(addon_name, str(e)))
+        
+        if xbmc.getCondVisibility("System.HasAddon({})".format(addon_name)):
+        
+            if mpd:
+                mime = 'application/dash+xml'
+            else:
+                mime = 'application/vnd.apple.mpegurl'
+            
+            xlistitem.setMimeType(mime)
+            logger.info('{}={}'.format("setMimeType", mime))
+            
+            xlistitem.setContentLookup(False)
+            
+            if ver == 18:
+                setaddon = "inputstreamaddon"
+            else:
+                setaddon = "inputstream"
+                
+            xlistitem.setProperty(setaddon, addon_name)
+            logger.info('{}={}'.format(setaddon, addon_name))
+
+            if "|" in mediaurl:
+                mediaurl, headers = mediaurl.split("|", 1)
+                setInputstreamProp(addon_name, xlistitem, "stream_headers", headers)
+                if ver >= 20:
+                    setInputstreamProp(addon_name, xlistitem, "manifest_headers", headers)
+            
+            if ver >= 20:
+                if "?" in mediaurl:
+                    mediaurl, params = mediaurl.split("?", 1)
+                    setInputstreamProp(addon_name, xlistitem, "manifest_params", params)
+                    setInputstreamProp(addon_name, xlistitem, "stream_params", params)
+
+            
+            if ver <= 21:
+                setInputstreamProp(addon_name, xlistitem, "manifest_type", "mpd" if mpd else "hls")
+                
+            if ver >= 21:
+                setInputstreamProp(addon_name, xlistitem, "manifest_config",
+                        '{"hls_fix_mediasequence":true,"hls_ignore_endlist":true,"hls_fix_discsequence":true}')
+                setInputstreamProp(addon_name, xlistitem, "config",
+                        '{"internal_cookies":true,"ssl_verify_peer":false}')
+                    
+            dialog_notification(
+                "InputStream",
+                "InputStream Adaptive",
+                time=3000,
+                sound=False
+            )
+    elif (
+        (ver >= 18) and (".mp4" in mediaurl or ".m3u8" in mediaurl) and \
+        (config.get_setting('inputstream_mode', default=0) == 2)
+    ):
+        addon_name = 'inputstream.ffmpegdirect'
+        if not xbmc.getCondVisibility("System.HasAddon({})".format(addon_name)):
+            try: 
+                xbmc.executebuiltin("InstallAddon({})".format(addon_name), True)
+            except Exception as e:
+                if isinstance(e, bytes):
+                    e = e.decode("utf8", errors="replace")
+                logger.error('Installing {} failed: {}'.format(addon_name, str(e)))
+
+        if xbmc.getCondVisibility("System.HasAddon({})".format(addon_name)):
+        
+            xlistitem.setMimeType('application/x-mpegURL')
+            
+            xlistitem.setContentLookup(False)
+            
+            if ver == 18:
+                setaddon = "inputstreamaddon"
+            else:
+                setaddon = "inputstream"
+                
+            xlistitem.setProperty(setaddon, addon_name)
+            logger.info('{}={}'.format(setaddon, addon_name))
+
+            # https://github.com/xbmc/inputstream.ffmpegdirect
+            setInputstreamProp(addon_name, xlistitem, "is_realtime_stream", 'false')
+                        
+            # open_mode: If the value ffmpeg is supplied the inputstream will be opened with AVFormat.
+            # If the value curl is supplied the inputstream will be opened with cURL. If neither value
+            # is supplied the default is to open HLS, Dash and Smooth Streaming with AVFormat and anything else
+            # as a kodi file. Note that a mimetype or manifest_type property is required to be able to tell
+            # if a stream is HLS or Dash. If using Smooth streaming only a manifest_type property will work as
+            # Smooth Streaming does not have a mimetype.
+            setInputstreamProp(addon_name, xlistitem, "open_mode", 'ffmpeg')
+                        
+            # manifest_type: Allowed values are hls for HLS, mpd for Dash and ism for Smooth Streaming.
+            setInputstreamProp(addon_name, xlistitem, "manifest_type", 'hls')
+                                    
+            # playback_as_live: Should the playback be considerd as live tv, 
+            # allowing skipping from one programme to the next over the entire catchup window, 
+            # if so set to true. Otherwise set to false to treat all programmes as videos.
+            setInputstreamProp(addon_name, xlistitem, "playback_as_live", 'false')
+                                
+            dialog_notification(
+                "InputStream",
+                "InputStream FFmpeg Direct",
+                time=3000,
+                sound=False
+            )
 
     # se lanza el reproductor
     if (

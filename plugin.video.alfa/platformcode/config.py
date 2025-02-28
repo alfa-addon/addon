@@ -676,12 +676,22 @@ def get_runtime_path():
     return translatePath(__settings__.getAddonInfo('Path'))
 
 
-def get_data_path():
-    dev = translatePath(__settings__.getAddonInfo('Profile'))
+def get_data_path(custom=False):
+    from core import filetools
+    def_datapath = __settings__.getAddonInfo('Profile')
+    if custom:
+        datapath = get_setting("datapath") or def_datapath
+    else:
+        datapath = def_datapath
+    
+    dev = translatePath(datapath)
 
-    # Crea el directorio si no existe
-    if not os.path.exists(dev):
-        os.makedirs(dev)
+    # Crea el directorio si no existe o cambia al path por defecto
+    if not filetools.exists(dev):
+        if not filetools.mkdir(dev):
+            if custom and (datapath != def_datapath):
+                set_setting('datapath', def_datapath)
+                return get_data_path()
 
     return dev
 
@@ -704,6 +714,23 @@ def get_cookie_data():
     return cookiedata
 
 
+def check_create_dir(saved_path, default_path):
+    from platformcode import logger
+    from core import filetools
+    saved_path = translatePath(saved_path)
+    default_path = translatePath(default_path)
+    if not filetools.exists(saved_path):
+        # Si el path es por defecto se puede crear, sinó podria ser una unidad desconectada, advertir al usuario.
+        if saved_path == default_path:
+            logger.debug("Creating %s: %s" % (path, saved_path))
+            return filetools.mkdir(saved_path)
+        else:
+            from platformcode import platformtools
+            platformtools.dialog_notification(get_localized_string(60038), "No se ha podido acceder a {}. Verifique la ruta.".format(saved_path))
+            return False
+    return True
+
+
 def verify_directories_created():
     """
     Test if all the required directories are created
@@ -715,6 +742,19 @@ def verify_directories_created():
     logger.info()
     time.sleep(1)
 
+    profile_path = __settings__.getAddonInfo('Profile')
+
+    datapath = get_setting("datapath")
+    def_datapath = profile_path
+    if not datapath:
+        datapath = def_datapath
+        set_setting("datapath", datapath)
+
+    if not check_create_dir(datapath, def_datapath):
+        datapath = def_datapath
+        set_setting("datapath", datapath)
+        check_create_dir(datapath, def_datapath)
+
     config_paths = [["videolibrarypath", "videolibrary"],
                     ["downloadpath", "downloads"],
                     ["downloadlistpath", "downloads/list"],
@@ -722,7 +762,7 @@ def verify_directories_created():
     library_path_exist = True
     for path, default in config_paths:
         saved_path = get_setting(path)
-        default_path = "special://profile/addon_data/plugin.video." + PLUGIN_NAME + "/" + default
+        default_path = profile_path + default
 
         # videoteca
         if path == "videolibrarypath":
@@ -735,18 +775,9 @@ def verify_directories_created():
             saved_path = default_path
             set_setting(path, saved_path)
 
-        saved_path = translatePath(saved_path)
-        default_path = translatePath(default_path)
-        if not filetools.exists(saved_path):
-            # Si el path es por defecto se puede crear, sinó podria ser una unidad desconectada, advertir al usuario.
-            if saved_path == default_path:
-                logger.debug("Creating %s: %s" % (path, saved_path))
-                filetools.mkdir(saved_path)
-            else:
-                from platformcode import platformtools
-                platformtools.dialog_notification(get_localized_string(60038), "No se ha podido acceder a {}. Verifique la ruta.".format(saved_path))
-                if path == "videolibrarypath":
-                    library_path_exist = False
+        if not check_create_dir(saved_path, default_path):
+            if path == "videolibrarypath":
+                library_path_exist = False
 
     if library_path_exist:
         config_paths = [["folder_movies", "CINE"],
