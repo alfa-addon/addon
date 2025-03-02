@@ -36,7 +36,7 @@
         <setting id="shortcut_key" type="action" label="30999"
             action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIg0KfQ==)" />
         <setting id="datapath" type="action" label="90004" 
-            action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZnVuY3Rpb24iLA0KICAgICJmb2xkZXIiOiAicGxhdGZvcm1jb2RlIiwNCiAgICAiZnVuY3Rpb24iOiAicGxhdGZvcm10b29scyIsDQogICAgIm1ldGhvZCI6ICJkaWFsb2dfc2V0X3BhdGgiLA0KICAgICJvcHRpb25zIjogWyJkYXRhcGF0aCIsICI5MDAwNCJdDQp9)" />
+            action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZnVuY3Rpb24iLA0KICAgICJmb2xkZXIiOiAicGxhdGZvcm1jb2RlIiwNCiAgICAiZnVuY3Rpb24iOiAicGxhdGZvcm10b29scyIsDQogICAgIm1ldGhvZCI6ICJkaWFsb2dfc2V0X3BhdGgiLA0KICAgICJvcHRpb25zIjogWyJkYXRhcGF0aCIsIDkwMDA0XQ0KfQ==)" />
     </category>
 
     <category label="70780">
