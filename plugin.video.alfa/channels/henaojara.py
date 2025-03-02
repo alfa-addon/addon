@@ -99,10 +99,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host, action='list_all',
                          thumbnail=get_thumb('newest', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'veronline/category/categorias/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'animeonline/category/categorias/', action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'veronline/category/pelicula/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'animeonline/category/pelicula/', action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host, 
@@ -493,6 +493,30 @@ def get_title_season(url, soup):
     return season
 
 def multiplayer_findvideos(url):
+    kwargs["canonical"] = {}
+    kwargs["headers"] = {}
     kwargs["soup"] = False
-    data = AlfaChannel.create_soup(url, hide_infobox=True, **kwargs)
-    return scrapertools.find_multiple_matches(data.data, r'loadVideo\(\'(.*?)\'\)')
+    kwargs["canonical"]["proxy"] = False
+    kwargs["canonical"]["proxy_web"] = False
+    kwargs["headers"]["Referer"] = host
+
+    url = url.replace('embed.php', 'player.php')
+
+    if '?' in url:
+        path, queryString = url.split('?', 1)
+        if '&' in queryString:
+            queries_in = queryString.split('&')
+            queries_out = []
+            for query in queries_in:
+                if '=' in query:
+                    key, val = query.split('=')
+                    val = val+'ionA#as9ng849fg'
+                    val = base64.b64encode(val.encode("utf-8")).decode('utf8')
+                    queries_out.append('{}={}'.format(key, val))
+            queryString = '&'.join(queries_out)
+        url = '{}?{}'.format(path, queryString)
+        # logger.error(url)
+
+    data = AlfaChannel.create_soup(url, **kwargs)
+    # logger.error(data.data)
+    return scrapertools.find_multiple_matches(data.data, r'loadVideo\(\'\s*([^\']+)\'\)')
