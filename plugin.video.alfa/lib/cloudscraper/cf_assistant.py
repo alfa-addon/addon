@@ -132,6 +132,12 @@ def get_cl(
     if debug or CF_testing or opt.get("CF_testing", False):
         alfa_s = False
 
+    try:
+        if resp.status_code not in [403, 503, 429, 666]:
+            logger.debug("ERROR de descarga: %s. Ignorado por Assistant" % resp.status_code)
+            return resp
+    except Exception:
+        logger.error(traceback.format_exc())
     if not alfa_s:
         logger.debug("ERROR de descarga: %s" % resp.status_code)
     resp.status_code = 503
