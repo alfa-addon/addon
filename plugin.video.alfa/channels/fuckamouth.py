@@ -106,6 +106,12 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    matches = scrapertools.find_multiple_matches(data, '(<iframe[^>]+>)')[1]
+    if matches:
+        url = scrapertools.find_single_match(matches, 'src="([^"]+)"')
+        if not url.startswith("https"):
+            item.url = "https:%s" % url
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle=item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
@@ -124,6 +130,13 @@ def play(item):
     else:
         lista.insert (3, pornstar)
     item.contentTitle = ' '.join(lista)
+    
+    matches = scrapertools.find_multiple_matches(data, '(<iframe[^>]+>)')[1]
+    if matches:
+        url = scrapertools.find_single_match(matches, 'src="([^"]+)"')
+        if not url.startswith("https"):
+            item.url = "https:%s" % url
+
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle=item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
