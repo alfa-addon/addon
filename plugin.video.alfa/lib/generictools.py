@@ -3386,6 +3386,9 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         continue
 
                     item, elem = set_tmdb_to_json(elem, title_search=title_search, title=title_save)
+                    if contentType == 'tvshow' and elem.get('tmdb_id', 'XXX') in str(cached[contentType]).lower():
+                        logger.debug('Error en TÍTULO DUP: %s - %s' % (elem['title'], elem.get('tmdb_id')))
+                        continue
 
                     cached[contentType].append(elem.copy())
 
