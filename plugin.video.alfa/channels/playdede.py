@@ -108,7 +108,7 @@ list_servers = list(SERVIDORES.values())
 
 # https://entrarplaydede.com/
 
-host = "https://www6.playdede.link/"
+host = "https://www7.playdede.link/"
 assistant = config.get_setting(
     "assistant_version", default=""
 ) and not httptools.channel_proxy_list(host)
@@ -118,6 +118,7 @@ canonical = {
     "host": config.get_setting("current_host", "playdede", default=""),
     "host_alt": [host],
     "host_black_list": [
+        "https://www6.playdede.link/",
         "https://www5.playdede.link/" ,"https://www4.playdede.link/", "https://www3.playdede.link/",
         "https://www2.playdede.link/", "https://playdede.in/", "https://playdede.me/",
         "https://playdede.eu/", "https://playdede.us/", "https://playdede.to/",
