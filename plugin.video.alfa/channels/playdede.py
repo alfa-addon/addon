@@ -101,22 +101,10 @@ SERVIDORES = {
     "doodstream": "doodstream",
 }
 
-list_language = list(IDIOMAS.values())
-list_quality = ["HD1080", "HD720", "HDTV", "DVDRIP"]
-list_quality_tvshow = list_quality_movies = list_quality
-list_servers = list(SERVIDORES.values())
 
-# https://entrarplaydede.com/
-
-host = "https://www7.playdede.link/"
-assistant = config.get_setting(
-    "assistant_version", default=""
-) and not httptools.channel_proxy_list(host)
-
+# Definición inicial del canonical con valores estáticos
 canonical = {
     "channel": "playdede",
-    "host": config.get_setting("current_host", "playdede", default=""),
-    "host_alt": [host],
     "host_black_list": [
         "https://www6.playdede.link/",
         "https://www5.playdede.link/" ,"https://www4.playdede.link/", "https://www3.playdede.link/",
@@ -124,21 +112,58 @@ canonical = {
         "https://playdede.eu/", "https://playdede.us/", "https://playdede.to/",
         "https://playdede.nu/", "https://playdede.org/", "https://playdede.com/",
     ],
-    "pattern": '<link\s*rel="shortcut\s*icon"[^>]+href="([^"]+)"',
     "set_tls": True,
     "set_tls_min": True,
-    "retries_cloudflare": 1,
+    "CF": False,
+    "CF_test": False,
+    "alfa_s": True
+}
+
+def get_dynamic_host():
+    try:
+        url = 'https://entrarplaydede.com/'
+        data = httptools.downloadpage(url, timeout=30)
+        soup = BeautifulSoup(data.data, 'html.parser')
+        host_url = soup.find('h1').find('b').find('a').get('href')
+        
+        if host_url and host_url not in canonical["host_black_list"]:
+            config.set_setting("current_host", host_url, "playdede")
+            return host_url
+    except:
+        logger.error("Error obteniendo host dinámico")
+    
+    saved_host = config.get_setting("current_host", "playdede", default="")
+    if saved_host and saved_host not in canonical["host_black_list"]:
+        return saved_host
+    
+    return "https://playdede.link/"  # Host por defecto
+
+# Variables globales
+list_language = list(IDIOMAS.values())
+list_quality = ["HD1080", "HD720", "HDTV", "DVDRIP"]
+list_quality_tvshow = list_quality_movies = list_quality
+list_servers = list(SERVIDORES.values())
+
+# Obtener host y configurar
+host = get_dynamic_host()
+if not host.endswith("/"):
+    host += "/"
+
+# Configurar assistant
+assistant = config.get_setting(
+    "assistant_version", default=""
+) and not httptools.channel_proxy_list(host)
+
+# Actualizar canonical con valores dinámicos
+canonical.update({
+    "host_alt": [host],
     "CF_stat": True if assistant else False,
     "session_verify": True if assistant else False,
     "CF_if_assistant": True if assistant else False,
-    "CF_if_NO_assistant": False,
-    "CF": False,
-    "CF_test": False,
-    "alfa_s": True,
-}
-host = canonical["host"] or canonical["host_alt"][0]
-__channel__ = canonical["channel"]
+    "CF_if_NO_assistant": False
+})
 
+__channel__ = canonical["channel"]
 timeout = 30
 show_langs = config.get_setting("show_langs", channel=__channel__)
 account = None
@@ -460,11 +485,14 @@ def list_all(item):
         return itemlist
     
     items = soup.find_all("article", id=re.compile(r"^post-(?:\d+|)"))
-    # items = soup.find('div', id=' archive-content').find_all('article')
     
-    shown_half = 1 if item.half else 0
-    items_half = len(items) // 2
-    items = items[items_half:] if shown_half == 1 else items[:items_half]
+    # Si solo hay un resultado, no dividir en mitades
+    if len(items) == 1:
+        shown_half = 0
+    else:
+        shown_half = 1 if item.half else 0
+        items_half = len(items) // 2
+        items = items[items_half:] if shown_half == 1 else items[:items_half]
     
     for article in items:
         data = article.find("div", class_="data")
@@ -475,11 +503,6 @@ def list_all(item):
         title = data.find("h3").text
         url = article.find("a")["href"]
         url = "{}%s".format(host) % url
-        
-        """
-        if 'tmdb.org' in thumbnail:
-            infoLabels['filtro'] = scrapertools.find_single_match(thumbnail, "/(\w+)\.\w+$")
-        """
         
         it = Item(
             action="findvideos",
@@ -521,11 +544,12 @@ def list_all(item):
     
     btnnext = soup.find("div", class_="pagPlaydede").find_all('a')
     
-    if shown_half == 0:
-        itemlist.append(item.clone(title="Siguiente >", half=1))
-    elif btnnext:
-        btnnext = btnnext[-1]['href']
-        itemlist.append(item.clone(title="Siguiente >", half=0, url=btnnext))
+    if len(items) > 1:
+        if shown_half == 0:
+            itemlist.append(item.clone(title="Siguiente >", half=1))
+        elif btnnext:
+            btnnext = btnnext[-1]['href']
+            itemlist.append(item.clone(title="Siguiente >", half=0, url=btnnext))
     
     return itemlist
 
