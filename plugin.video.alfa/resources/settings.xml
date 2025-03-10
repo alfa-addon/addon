@@ -25,12 +25,18 @@
         <setting id="player_mode" type="enum" label="30044" default="0"
             values="Direct|SetResolvedUrl|Built-In|Download and Play" />
 
+        <setting id="inputstream_mode" type="enum" 
+            label="90005" default="0"
+            values="None|Adaptive (m3u8)|FFmpeg Direct (mp4, m3u8)" />
+
         <setting label="80760" type="lsep" />
         <setting label="80761" type="text" id="lista_activa" default="alfavorites-default.json" />
 
         <setting label="60531" type="lsep" />
         <setting id="shortcut_key" type="action" label="30999"
             action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIg0KfQ==)" />
+        <setting id="datapath" type="action" label="90004" 
+            action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZnVuY3Rpb24iLA0KICAgICJmb2xkZXIiOiAicGxhdGZvcm1jb2RlIiwNCiAgICAiZnVuY3Rpb24iOiAicGxhdGZvcm10b29scyIsDQogICAgIm1ldGhvZCI6ICJkaWFsb2dfc2V0X3BhdGgiLA0KICAgICJvcHRpb25zIjogWyJkYXRhcGF0aCIsIDkwMDA0XQ0KfQ==)" />
     </category>
 
     <category label="70780">

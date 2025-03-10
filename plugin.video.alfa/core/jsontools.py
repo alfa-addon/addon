@@ -153,10 +153,10 @@ def get_node_from_file(name_file, node, path=None, display=False, debug=False):
     chanver = name_file.replace("_data.json", "")
     contentType = ''
     if not path:
-        path = filetools.join(config.get_data_path(), "settings_channels")
+        path = filetools.join(config.get_data_path(True), "settings_channels")
         contentType = 'alfa_channels'
     else:
-        if config.get_data_path() in path and "settings_servers" in path :
+        if config.get_data_path(True) in path and "settings_servers" in path :
             contentType = 'alfa_servers'
         if config.get_runtime_path() in path and "servers" in path:
             contentType = 'alfa_servers_jsons'
@@ -272,10 +272,10 @@ def update_node(dict_node, name_file, node, path=None, display=False, debug=Fals
     chanver = name_file.replace("_data.json", "")
     contentType = ''
     if not path:
-        path = filetools.join(config.get_data_path(), "settings_channels")
+        path = filetools.join(config.get_data_path(True), "settings_channels")
         contentType = 'alfa_channels'
     else:
-        if config.get_data_path() in path and "settings_servers" in path:
+        if config.get_data_path(True) in path and "settings_servers" in path:
             contentType = 'alfa_servers'
         if config.get_runtime_path() in path and "servers" in path:
             contentType = 'alfa_servers_jsons'

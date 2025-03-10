@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon id="plugin.video.alfa" name="Alfa" version="3.10.5" provider-name="Alfa Addon">
+<addon id="plugin.video.alfa" name="Alfa" version="3.10.6" provider-name="Alfa Addon">
     <requires>
         <import addon="script.module.requests" />
         <import addon="script.module.beautifulsoup4" version="4.5.3" />
@@ -48,10 +48,13 @@
         <source>https://github.com/alfa-addon/addon</source>
         <news>
     [B]Estos son los cambios para esta versión:[/B]
-    • +18                                 • Allcalidad              • Don Torrent
-    • Entrepeliculasyseries     • HDFull                   • LatAnime
-    • PelisPanda                     • Pelitorrent             • Pelisforte
-    • Playdede                        • VerAnime Assistant</news>
+    • +18                                         • Don Torrent
+    • HenaoJara                              • Nuevo: Osjonosu
+    • Playdede                                • SeriesKao
+
+    Agradecemos:
+    • A [B]Llavesuke[/B] por su [I]colaboración[/I] en esta versión
+    • A [B]chinocudeiro1985[/B] por su sugerencia de web</news>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>

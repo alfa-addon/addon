@@ -1,22 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
-import re
-import datetime
 import xbmcgui
 
-PY3 = False
-if sys.version_info[0] >= 3:
-    import urllib.parse as urllib       # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                       # Usamos el nativo de PY2 que es más rápido
-
 from bs4 import BeautifulSoup
-from core import httptools, scrapertools, servertools, tmdb, jsontools
+from core import httptools, scrapertools, servertools, tmdb, jsontools, urlparse
 from core.item import Item
 from platformcode import config, logger, platformtools
 from channelselector import get_thumb
 from modules import autoplay
-from lib import strptime_fix
 
 canonical = {
              'channel': 'hentaila', 
@@ -223,7 +214,6 @@ def labeler_async(itemlist, seekTmdb=False):
 
     threads_num = config.get_setting("tmdb_threads", default=20)
     semaforo = threading.Semaphore(threads_num)
-    lock = threading.Lock()
     r_list = list()
     i = 0
     l_hilo = list()
@@ -280,7 +270,7 @@ def filter_by_selection(item, clearUrl=False):
         matches = dict({'?filter=popular': 'Ordenar por popularidad',
                         '?filter=recent': 'Ordenar por más recientes'}).items()
     for url, title in matches:
-        if clearUrl == True:
+        if clearUrl is True:
             url = url.replace('?', '')
         else:
             if item.param != 'genre':
@@ -568,11 +558,6 @@ def episodesxseason(item, get_episodes = False):
     for article in epmatch:
         scpepnum = str(article.find('h2', class_='h-title').string)
         scpepnum = int(scrapertools.find_single_match(scpepnum, '(\d+)$'))
-        # scpdate = str(article.find('header', class_='h-header').find('time').string)
-        # date = datetime.datetime.strptime(scpdate, "%B %d, %Y")
-        # infoLabels['first_air_date'] = date.strftime("%Y/%m/%d")
-        # infoLabels['premiered'] = infoLabels['first_air_date']
-        # infoLabels['year'] = date.strftime("%Y")
         infoLabels['episode'] = scpepnum
         title = scrapertools.get_season_and_episode(str(item.infoLabels['season']) + 'x' + str(item.infoLabels['episode'])) + ': ' + item.contentSerieName
 
@@ -626,7 +611,7 @@ def episodesxseason(item, get_episodes = False):
                     )
                 )
 
-        if logger.info() != False:
+        if logger.info() is not False:
             itemlist.append(
                 Item(
                     action = "comments",
@@ -660,7 +645,7 @@ def findvideos(item):
         video.title = video.title.replace((config.get_localized_string(70206) % ''), '')
         video.title = video.title.title() + ' [' + item.contentSerieName + ']'
         video.thumbnail = item.thumbnail
-    if logger.info() != False:
+    if logger.info() is not False:
         itemlist.append(
             Item(
                 action = "comments",
@@ -682,7 +667,7 @@ def comments(item):
     apikey = scrapertools.find_single_match(apipage, 'getLoaderVersionFromUrl\(".+?lounge.load\.([^\.]+)')
 
     base_url = 'https://disqus.com/embed/comments/?base=default&f=hentaila-1&t_u='
-    source_url = urllib.quote(item.url, safe = '')
+    source_url = urlparse.quote(item.url, safe = '')
     param_url = '&s_o=default#version='
     url = base_url + source_url + param_url + apikey
     raw_data = httptools.downloadpage(url).data
@@ -712,7 +697,6 @@ def comments(item):
             title = author,
             url = url
         )
-        parentindicator = ''
         if len(itemlist) > 0:
             # Verificamos si el comentario es respuesta a otro comentario
             if itemlist[-1].parent != 'null':
@@ -740,7 +724,7 @@ def show_actions(item):
     logger.info()
     actions = ['Ver comentario', 'Ir a enlace de HLA']
     selection = None
-    if not (logger.info() == False and isinstance(logger.info(), bool)):
+    if logger.info() is not False:
         if item.url != '':
             selection = xbmcgui.Dialog().contextmenu(actions)
         if selection == 0 or item.url == '':
@@ -771,7 +755,7 @@ def search(item, text):
                     )
                 )
             return itemlist
-        except:
+        except Exception:
             for line in sys.exc_info():
                 logger.error("%s" % line)
             return itemlist

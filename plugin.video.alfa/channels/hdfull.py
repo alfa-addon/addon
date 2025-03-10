@@ -57,7 +57,7 @@ canonical = {
              'cf_cookie': '$HOST|cf_clearance' if cf_assistant is True else None, 'cf_jscode': None, 
              'cf_cookies_names': {'cf_clearance': False if cf_assistant is True else True},
              'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
-             'CF_stat': True if cf_assistant is True else False, 'session_verify': True if cf_assistant is True else False, 
+             'CF_stat': True if cf_assistant is True else False, 'session_verify': False, 
              'CF': False, 'CF_test': True, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
