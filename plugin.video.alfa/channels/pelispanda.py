@@ -39,7 +39,7 @@ canonical = {
              'cf_challenge': True, 'cf_returnkey': 'url', 'cf_partial': True, 'cf_debug': debug, 
              'cf_cookies_names': {'cf_clearance': False},
              'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
-             'CF_stat': True if cf_assistant is True else False, 'session_verify': True if cf_assistant is True else False, 
+             'CF_stat': True if cf_assistant is True else False, 'session_verify': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
