@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:vidguard|vembed|bembed|listeamed).\\w{2,4}/(?:e|d|v)/([A-z0-9]+)",
-        "url": "https://bembed.net/e/\\1"
+        "pattern": "https://vudeo.(?:ws|\\w{2,4})/(?:embed-|)([a-z0-9]+).html",
+        "url": "https://vudeo.ws/embed-\\1.html"
       }
     ]
   },
   "free": true,
-  "id": "vidguard",
-  "name": "vidguard",
+  "id": "vudeo",
+  "name": "vudeo",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://vembed.net/assets/img/logo/logo.png"
+  "thumbnail": "https://vudeo.ws/images/logo.png"
 }

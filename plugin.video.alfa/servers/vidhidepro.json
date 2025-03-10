@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:dhtpre|nikaplayerr).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
+        "pattern": "(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
         "url": "\\1"
       },
       {

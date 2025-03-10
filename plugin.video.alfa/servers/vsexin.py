@@ -31,7 +31,13 @@ def get_video_url(page_url, video_password):
     url = scrapertools.find_single_match(url, 'url=([^"]+)')
     # if '69x.' in url:
         # return False, "[vsexin] Servidor no soportado"
-    server = servertools.get_server_from_url(url)
+    # server = servertools.get_server_from_url(url)
+    
+    devuelve = servertools.findvideos(url, True)
+    if devuelve:
+        url = devuelve[0][1]
+        server = devuelve[0][2]
+    
     video_url = servertools.resolve_video_urls_for_playing(server, url)
     if not video_url:
         platformtools.dialog_ok("sdefxcloud: Error", "Error en el servidor: %s" %server)

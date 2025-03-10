@@ -24,10 +24,6 @@
         "url": "https://pbflux.com/\\1"
       },
       {
-        "pattern": "(https://bigwarp.io/(?:embed-|)[a-z0-9]+(?:\\.html|))",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://tubexplayer.com/embed-[a-z0-9]+)",
         "url": "\\1.html"
       },

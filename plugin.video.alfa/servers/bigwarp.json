@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:vidguard|vembed|bembed|listeamed).\\w{2,4}/(?:e|d|v)/([A-z0-9]+)",
-        "url": "https://bembed.net/e/\\1"
+        "pattern": "https://bigwarp.io/(?:embed-|e/|)([a-z0-9]+)(?:\\.html|)",
+        "url": "https://bigwarp.io/dl?op=embed&file_code=\\1"
       }
     ]
   },
   "free": true,
-  "id": "vidguard",
-  "name": "vidguard",
+  "id": "bigwarp",
+  "name": "bigwarp",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://vembed.net/assets/img/logo/logo.png"
+  "thumbnail": "https://bigwarp.io/images/logo.png"
 }

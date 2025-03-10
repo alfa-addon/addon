@@ -1,24 +1,25 @@
 {
-  "id": "dilo",
-  "name": "Dilo",
-  "active": false,
+  "id": "osjonosu",
+  "name": "Osjonosu",
+  "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
-  "thumbnail": "https://s22.postimg.cc/u6efsniqp/dilo.png",
+  "language": ["cast"],
+  "thumbnail": "https://i.imgur.com/0mtPIEI.png",
   "banner": "",
   "fanart": "",
   "categories": [
-    "tvshow",
-    "vos"
+    "movie",
+    "tvshow"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
-      "enabled": false,
-      "visible": false
+      "default": false,
+      "enabled": true,
+      "visible": true
     },
     {
       "id": "filter_languages",
@@ -29,9 +30,7 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "CAST",
-        "LAT",
-        "VOSE"
+        "CAST"
       ]
     }
   ]

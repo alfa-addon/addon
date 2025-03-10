@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:streamwish|embedwish|hlswish|wishfast|playerwish|sfastwish|wishembed|cdnwish|obeywish|flastwish|flaswish|jodwish|swdyu|strwish|swhoi|jwplayerhls|wishonly|cdnstream|playerwish).(?:\\w{2,4})/+(?:e/+|)([A-z0-9]+(:?\\|Referer=[A-z0-9./:\\?]+|))",
+        "pattern": "https://(?:streamwish|embedwish|hlswish|wishfast|playerwish|sfastwish|wishembed|cdnwish|obeywish|flastwish|flaswish|jodwish|swdyu|strwish|swhoi|jwplayerhls|wishonly|cdnstream).(?:\\w{2,4})/+(?:e/+|)([A-z0-9]+(:?\\|Referer=[A-z0-9./:\\?]+|))",
         "url": "https://streamwish.to/e/\\1"
       }
     ]

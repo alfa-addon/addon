@@ -80,11 +80,16 @@ SERVIDORES = {
     "27":  "nitroflare",
     "7567": "ouo",
     "52654": "uploady",
+    "9204": "userload",
+    "66": "ddownload",
+    "1002": "dropark",
+    "1001": "fastclick",
     "filelions": "Vidhidepro",
     "filemoon": "Filemoon",
     "luluvideo": "Lulustream",
     "vembed": "Vidguard",
     "bigwarp": "Tiwikiwi",
+    "waaw": "Netu",
     "voe": "Voe",
     "streamwish": "Streamwish",
     "powvideo": "Powvideo",
@@ -101,14 +106,11 @@ SERVIDORES = {
 canonical = {
     "channel": "playdede",
     "host_black_list": [
-        "https://playdede.in/",
-        "https://playdede.me/",
-        "https://playdede.eu/",
-        "https://playdede.us/",
-        "https://playdede.to/",
-        "https://playdede.nu/",
-        "https://playdede.org/",
-        "https://playdede.com/",
+        "https://www6.playdede.link/",
+        "https://www5.playdede.link/" ,"https://www4.playdede.link/", "https://www3.playdede.link/",
+        "https://www2.playdede.link/", "https://playdede.in/", "https://playdede.me/",
+        "https://playdede.eu/", "https://playdede.us/", "https://playdede.to/",
+        "https://playdede.nu/", "https://playdede.org/", "https://playdede.com/",
     ],
     "set_tls": True,
     "set_tls_min": True,
@@ -180,6 +182,7 @@ def get_source(
     # Verificamos que tenemos una sesión válida, sino, no tiene caso devolver nada
     if "Iniciar sesión" in data.data:
         # Si no tenemos sesión válida, mejor cerramos definitivamente la sesión
+        remove_cookies()
         global account
         if account:
             logout({})
@@ -199,9 +202,20 @@ def get_source(
     return data
 
 
+def remove_cookies():
+    # Borramos las cookies
+    try:
+        httptools.cj.clear()
+        httptools.save_cookies()
+    except Exception:
+        pass
+
+
 def login():
     logger.info()
-
+    
+    remove_cookies()
+    
     usuario = config.get_setting("user", channel=__channel__)
     clave = config.get_setting("pass", channel=__channel__)
     credentials = (
@@ -462,7 +476,6 @@ def list_all(item):
     
     itemlist = []
     soup = get_source(item.url, soup=True)
-    
     if not soup:
         platformtools.dialog_notification(
             "Cambio de estructura",
@@ -651,7 +664,6 @@ def findvideos(item):
     
     matches = soup.findAll("div", class_="playerItem")
     descargas = soup.findAll("div", class_="linkSorter")
-    
     for lst in descargas:
         matches.extend(lst.find_all("li"))
     
@@ -677,6 +689,7 @@ def findvideos(item):
                 server = data.find("h3").text
                 server = SERVIDORES.get(server.lower(), "")
                 url = "%sembed.php?id=%s" % (host, player)
+                
         
         itemlist.append(
             item.clone(

@@ -1156,11 +1156,13 @@ class AlfaChannelHelper:
                     regex_m = ''
                     eval_test = False
                     do_soup = False
+                    regex_sub = ''
                     argument = []
                     strip = ''
                     split = ''
                     json = {}
                     limit = 0
+                    pos = ''
                     if isinstance(f, _dict):
                         attrs = f.copy()
                         tagOR = match if attrs.get('tagOR', '') else False

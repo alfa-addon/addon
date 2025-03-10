@@ -1195,7 +1195,7 @@ def check_webview_version(wvbVersion):
         return
 
     # Comparar la versión de WebView que tiene el Android donde reside la APP con la versión mínima adecuada
-    ver_min = 117
+    ver_min = 133
 
     wvbVersion_list = wvbVersion.split(".")
     wvbVersion_msg = config.get_setting("wvbVersion_msg", default=0)
