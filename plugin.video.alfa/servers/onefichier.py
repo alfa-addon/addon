@@ -1,18 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
-
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import config, logger
 
 
@@ -28,7 +18,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         url = "https://1fichier.com/login.pl"
         logger.info("url=" + url)
         post_parameters = {"mail": user, "pass": password, "lt": "on", "purge": "on", "valider": "Send"}
-        post = urllib.urlencode(post_parameters)
+        post = urlparse.urlencode(post_parameters)
         logger.info("post=" + post)
 
         data = httptools.downloadpage(url, post=post).data
@@ -42,7 +32,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         logger.info("sid_cookie_value=" + sid_cookie_value)
 
         # .1fichier.com  TRUE    /   FALSE   1443553315  SID imC3q8MQ7cARw5tkXeWvKyrH493rR=1yvrjhxDAA0T0iEmqRfNF9GXwjrwPHssAQ
-        cookie = urllib.urlencode({"SID": sid_cookie_value})
+        cookie = urlparse.urlencode({"SID": sid_cookie_value})
 
         # Averigua el nombre del fichero real
         headers = []

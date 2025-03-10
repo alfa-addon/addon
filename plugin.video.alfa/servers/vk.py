@@ -1,19 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido             
-
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import config, logger
 
 
@@ -51,7 +41,7 @@ def login():
     vkpassword = config.get_setting("vkpassword",server="vk")
     post = {"act":"login","role":"al_frame","expire":"","recaptcha":"","captcha_sid":"","captcha_key":"","_origin":"https://vk.com","email":vkemail,"pass":vkpassword, "ip_h":ip_h, "lg_h":lg_h}
     url = "https://login.vk.com/?act=login"
-    url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, post=urllib.urlencode(post)).headers.get("location", "")
+    url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, post=urlparse.urlencode(post)).headers.get("location", "")
     data = httptools.downloadpage(url).data
     if "name: " not in data:
         return False

@@ -5,23 +5,14 @@
 
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import logger
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
 
 
 def test_video_exists(page_url):
     global data
     logger.info("(page_url='%s')" % page_url)
-    page_url = urllib.unquote(page_url)
+    page_url = urlparse.unquote(page_url)
     data = httptools.downloadpage(page_url)
 
     if data.code == 404:

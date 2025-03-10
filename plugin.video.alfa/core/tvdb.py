@@ -7,28 +7,13 @@
 # del addon y también Kodi.
 # ------------------------------------------------------------
 
-#from future import standard_library
-#standard_library.install_aliases()
-#from builtins import str
-from builtins import object
-
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.request as urllib2                            # Es muy lento en PY2.  En PY3 es nativo
-    import urllib.error as urllib_error
-    import urllib.parse as urllib_parse
-else:
-    import urllib2                                              # Usamos el nativo de PY2 que es más rápido
-    import urllib2 as urllib_error
-    import urllib as urllib_parse
-
 import re
 
 from core import jsontools
 from core import scrapertools
+from core import urlparse
+from core.urlparse import urlerror
+from core.urlparse import urlrequest
 from core.item import InfoLabels
 from platformcode import config, logger
 from platformcode import platformtools
@@ -411,8 +396,8 @@ class Tvdb(object):
         params = {"apikey": apikey}
 
         try:
-            req = urllib2.Request(url, data=jsontools.dump(params), headers=DEFAULT_HEADERS)
-            response = urllib2.urlopen(req)
+            req = urlrequest.Request(url, data=jsontools.dump(params), headers=DEFAULT_HEADERS)
+            response = urlrequest.urlopen(req)
             html = response.read()
             response.close()
 
@@ -439,12 +424,12 @@ class Tvdb(object):
         url = HOST + "/refresh_token"
 
         try:
-            req = urllib2.Request(url, headers=DEFAULT_HEADERS)
-            response = urllib2.urlopen(req)
+            req = urlrequest.Request(url, headers=DEFAULT_HEADERS)
+            response = urlrequest.urlopen(req)
             html = response.read()
             response.close()
 
-        except urllib_error.HTTPError as err:
+        except urlerror.HTTPError as err:
             logger.error("err.code es %s" % err.code)
             # si hay error 401 es que el token se ha pasado de tiempo y tenemos que volver a llamar a login
             if err.code == 401:
@@ -538,14 +523,14 @@ class Tvdb(object):
         params = {"airedSeason": "%s" % season, "airedEpisode": "%s" % episode}
 
         try:
-            params = urllib_parse.urlencode(params)
+            params = urlparse.urlencode(params)
 
             url = HOST + "/series/%s/episodes/query?%s" % (_id, params)
             DEFAULT_HEADERS["Accept-Language"] = lang
             logger.debug("url: %s, \nheaders: %s" % (url, DEFAULT_HEADERS))
 
-            req = urllib2.Request(url, headers=DEFAULT_HEADERS)
-            response = urllib2.urlopen(req)
+            req = urlrequest.Request(url, headers=DEFAULT_HEADERS)
+            response = urlrequest.urlopen(req)
             html = response.read()
             response.close()
 
@@ -607,8 +592,8 @@ class Tvdb(object):
             url = HOST + "/series/%s/episodes?page=%s" % (_id, page)
             logger.debug("url: %s, \nheaders: %s" % (url, DEFAULT_HEADERS))
 
-            req = urllib2.Request(url, headers=DEFAULT_HEADERS)
-            response = urllib2.urlopen(req)
+            req = urlrequest.Request(url, headers=DEFAULT_HEADERS)
+            response = urlrequest.urlopen(req)
             html = response.read()
             response.close()
 
@@ -694,13 +679,13 @@ class Tvdb(object):
         try:
             DEFAULT_HEADERS["Accept-Language"] = lang
             logger.debug("url: %s, \nheaders: %s" % (url, DEFAULT_HEADERS))
-            req = urllib2.Request(url, headers=DEFAULT_HEADERS)
-            response = urllib2.urlopen(req)
+            req = urlrequest.Request(url, headers=DEFAULT_HEADERS)
+            response = urlrequest.urlopen(req)
             html = response.read()
             response.close()
 
         except Exception as ex:
-            if isinstance(ex, urllib_error.HTTPError):
+            if isinstance(ex, urlerror.HTTPError):
                 logger.debug("code es %s " % ex.code)
 
             message = "An exception of type %s occured. Arguments:\n%s" % (type(ex).__name__, repr(ex.args))
@@ -753,19 +738,19 @@ class Tvdb(object):
             elif zap2it_id:
                 params["zap2itId"] = zap2it_id
 
-            params = urllib_parse.urlencode(params)
+            params = urlparse.urlencode(params)
 
             DEFAULT_HEADERS["Accept-Language"] = lang
             url = HOST + "/search/series?%s" % params
             logger.debug("url: %s, \nheaders: %s" % (url, DEFAULT_HEADERS))
 
-            req = urllib2.Request(url, headers=DEFAULT_HEADERS)
-            response = urllib2.urlopen(req)
+            req = urlrequest.Request(url, headers=DEFAULT_HEADERS)
+            response = urlrequest.urlopen(req)
             html = response.read()
             response.close()
 
         except Exception as ex:
-            if isinstance(ex, urllib_error.HTTPError):
+            if isinstance(ex, urlerror.HTTPError):
                 logger.debug("code es %s " % ex.code)
 
             message = "An exception of type %s occured. Arguments:\n%s" % (type(ex).__name__, repr(ex.args))
@@ -846,15 +831,15 @@ class Tvdb(object):
 
         try:
             DEFAULT_HEADERS["Accept-Language"] = lang
-            req = urllib2.Request(url, headers=DEFAULT_HEADERS)
+            req = urlrequest.Request(url, headers=DEFAULT_HEADERS)
             logger.debug("url: %s, \nheaders: %s" % (url, DEFAULT_HEADERS))
 
-            response = urllib2.urlopen(req)
+            response = urlrequest.urlopen(req)
             html = response.read()
             response.close()
 
         except Exception as ex:
-            if isinstance(ex, urllib_error.HTTPError):
+            if isinstance(ex, urlerror.HTTPError):
                 logger.debug("code es %s " % ex.code)
 
             message = "An exception of type %s occured. Arguments:\n%s" % (type(ex).__name__, repr(ex.args))
@@ -916,13 +901,13 @@ class Tvdb(object):
 
         try:
 
-            params = urllib_parse.urlencode(params)
+            params = urlparse.urlencode(params)
             DEFAULT_HEADERS["Accept-Language"] = lang
             url = HOST + "/series/%s/images/query?%s" % (_id, params)
             logger.debug("url: %s, \nheaders: %s" % (url, DEFAULT_HEADERS))
 
-            req = urllib2.Request(url, headers=DEFAULT_HEADERS)
-            response = urllib2.urlopen(req)
+            req = urlrequest.Request(url, headers=DEFAULT_HEADERS)
+            response = urlrequest.urlopen(req)
             html = response.read()
             response.close()
 
@@ -956,8 +941,8 @@ class Tvdb(object):
         DEFAULT_HEADERS["Accept-Language"] = lang
         logger.debug("url: %s, \nheaders: %s" % (url, DEFAULT_HEADERS))
 
-        req = urllib2.Request(url, headers=DEFAULT_HEADERS)
-        response = urllib2.urlopen(req)
+        req = urlrequest.Request(url, headers=DEFAULT_HEADERS)
+        response = urlrequest.urlopen(req)
         html = response.read()
         response.close()
 

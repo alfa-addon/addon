@@ -1,23 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from builtins import range
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+# import base64
+# import struct
+# import zlib
+# from hashlib import sha1
 
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
-
-import base64
-import struct
-import zlib
-from hashlib import sha1
-
-from core import filetools
 from core import jsontools
 from core import httptools
 from core import scrapertools
@@ -49,7 +36,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     media_url = ''
 
-    file_sub = ""
+    # file_sub = ""
     
     idiomas = ['deDE', 'ptBR', 'frFR', 'itIT', 'enUS', 'esES', 'esLA']
     index_sub = int(config.get_setting("crunchyrollsub", "crunchyroll"))
@@ -57,9 +44,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     raw_data = scrapertools.find_single_match(data, r'"streams":(\[[^\]]+])')
     
-    if idioma_sub == 'esES' and not idioma_sub in raw_data:
+    if idioma_sub == 'esES' and idioma_sub not in raw_data:
         idioma_sub = 'esLA'
-    elif idioma_sub == 'esLA' and not idioma_sub in raw_data:
+    elif idioma_sub == 'esLA' and idioma_sub not in raw_data:
         idioma_sub = 'esES'
     
     if idioma_sub not in raw_data:

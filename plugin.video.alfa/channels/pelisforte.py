@@ -9,8 +9,9 @@ import re
 from core import urlparse
 from modules import autoplay
 from modules import filtertools
-from core import httptools, scrapertools, jsontools, tmdb
+from core import httptools, scrapertools, tmdb
 from core import servertools
+from core import urlparse
 from core.item import Item
 # from lib.AlfaChannelHelper import ToroFilm
 from platformcode import config, logger
@@ -114,7 +115,8 @@ def list_all(item):
             year = '-'
         
         extra = ""
-        if item.extra: extra= item.extra
+        if item.extra:
+            extra= item.extra
         
         itemlist.append(Item(channel=item.channel, action = "findvideos", url=url, title=title, contentTitle = title, 
                              thumbnail=thumbnail, extra=extra, infoLabels={"year": year}))
@@ -212,7 +214,7 @@ def play(item):
     logger.info()
     itemlist = []
     url = httptools.downloadpage(item.url).url
-    if not "vgfplay" in url and not "listeamed" in url and not "bf0skv" in url:
+    if "vgfplay" not in url and "listeamed" not in url and "bf0skv" not in url:
         url += "|Referer=%s" %item.url
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
@@ -229,7 +231,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -253,7 +255,7 @@ def newest(categoria):
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

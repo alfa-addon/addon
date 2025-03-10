@@ -1,20 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import logger
 
 
@@ -30,7 +20,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for match in matches:
         videourl = match
         videourl = videourl.replace('%5C', '')
-        videourl = urllib.unquote(videourl)
+        videourl = urlparse.unquote(videourl)
         video_urls.append(["[facebook]", videourl])
     for video_url in video_urls:
         logger.info("%s - %s" % (video_url[0], video_url[1]))
