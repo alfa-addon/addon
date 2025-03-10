@@ -1398,6 +1398,15 @@ def downloadpage(url, **opt):
             opt["forced_proxy"] = "ProxyWeb:croxyproxy.com"
         elif opt["forced_proxy_opt"] in ["ProxyCF|FORCE", "ProxyDirect|FORCE"]:
             opt["forced_proxy"] = opt["forced_proxy_opt"].replace("|FORCE", "")
+        elif opt["forced_proxy_opt"] in ["reset"]:
+            if not PY3:
+                from . import proxytools
+            else:
+                from . import proxytools_py3 as proxytools
+            proxytools.add_domain_retried(
+                obtain_domain(url, sub=True), delete="forced"
+            )
+            opt["forced_proxy"] = None
         else:
             opt["forced_proxy"] = opt["forced_proxy_opt"]
 
@@ -1769,11 +1778,7 @@ def downloadpage(url, **opt):
                 logger.error(
                     "Error: %s in url: %s - Reintentando" % (response_code, url)
                 )
-            forced_proxy_web = (
-                "ProxyWeb:croxyproxy.com"
-                if not opt.get("CF", False)
-                else "ProxyWeb:hidester.com"
-            )
+            forced_proxy_web = "ProxyWeb:croxyproxy.com"
             opt["forced_proxy"] = (
                 opt.get("forced_proxy", "")
                 or opt.get("forced_proxy_retry", "")

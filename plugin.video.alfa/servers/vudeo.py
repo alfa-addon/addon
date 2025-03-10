@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------
-# Conector Uqload By Alfa development Group
+# Conector Vudeo By Alfa development Group
 # --------------------------------------------------------
 
 from core import httptools
@@ -12,8 +12,8 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
     data = httptools.downloadpage(page_url)
-    if data.code == 404 or 'File was deleted' in data.data:
-        return False, "[Uqload] El archivo no existe o  ha sido borrado"
+    if data.code != 200 or 'File was deleted' in data.data:
+        return False, "[Vudeo] El archivo no existe o  ha sido borrado"
 
     return True, ""
 
@@ -25,6 +25,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     matches = scrapertools.find_multiple_matches(data.data, patron)
     domain = httptools.obtain_domain(page_url, scheme=True)
     for url in matches:
-        url = url+'|Referer='+domain
-        video_urls.append(["[uqload]", url])
+        url = '{}|Referer={}/'.format(url, domain)
+        video_urls.append(["[vudeo]", url])
     return video_urls

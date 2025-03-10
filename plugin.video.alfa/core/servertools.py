@@ -604,10 +604,10 @@ def get_server_setting(name, server, default=None):
 
         """
     # Creamos la carpeta si no existe
-    if not filetools.exists(filetools.join(config.get_data_path(), "settings_servers")):
-        filetools.mkdir(filetools.join(config.get_data_path(), "settings_servers"))
+    if not filetools.exists(filetools.join(config.get_data_path(True), "settings_servers")):
+        filetools.mkdir(filetools.join(config.get_data_path(True), "settings_servers"))
 
-    file_settings = filetools.join(config.get_data_path(), "settings_servers", server + "_data.json")
+    file_settings = filetools.join(config.get_data_path(True), "settings_servers", server + "_data.json")
     dict_settings = {}
     dict_file = {}
     if filetools.exists(file_settings):
@@ -639,10 +639,10 @@ def get_server_setting(name, server, default=None):
 
 def set_server_setting(name, value, server):
     # Creamos la carpeta si no existe
-    if not filetools.exists(filetools.join(config.get_data_path(), "settings_servers")):
-        filetools.mkdir(filetools.join(config.get_data_path(), "settings_servers"))
+    if not filetools.exists(filetools.join(config.get_data_path(True), "settings_servers")):
+        filetools.mkdir(filetools.join(config.get_data_path(True), "settings_servers"))
 
-    file_settings = filetools.join(config.get_data_path(), "settings_servers", server + "_data.json")
+    file_settings = filetools.join(config.get_data_path(True), "settings_servers", server + "_data.json")
     dict_settings = {}
     dict_file = None
 
