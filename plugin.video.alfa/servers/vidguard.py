@@ -3,17 +3,9 @@
 # Conector vidguard By Alfa development Group
 # --------------------------------------------------------
 
-
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
+
+from core import urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -36,8 +28,6 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    if "/d/" in page_url or  "/v/" in page_url:
-        page_url = page_url.replace("/d/", "/e/").replace("/v/", "/e/")
     data = httptools.downloadpage(page_url).data
     r = re.search(r'eval\("window\.ADBLOCKER\s*=\s*false;\\n(.+?);"\);</script', data)
     if r:

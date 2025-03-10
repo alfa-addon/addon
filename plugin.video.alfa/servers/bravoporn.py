@@ -36,11 +36,10 @@ def get_video_url(page_url, video_password):
         data = str(data)
         patron = "([0-9]+)\s*:\s*'([^']+)'"
         matches = re.compile(patron, re.DOTALL).findall(data)
-        logger.debug(matches)
         for quality, url in matches:
             video_urls.append(["[%s] %s" % (server, quality), url])
     else:
-        if soup.video.find("source"):
+        if soup.find("video"):
             matches = soup.video.find_all("source")
         if soup.find("dl8-video"):
             matches = soup.find("dl8-video").find_all("source")  ####  sexVR
@@ -75,5 +74,6 @@ def get_video_url(page_url, video_password):
                 url = "http:%s" % url
             url += "|Referer=%s" % page_url
             video_urls.append(["[%s] %s" % (server, quality), url])
+
     video_urls.sort(key=lambda item: int(re.sub("\D", "", item[0])))
     return video_urls

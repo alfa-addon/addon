@@ -8,7 +8,7 @@
         "url": "https://d0000d.com/e/\\1"
       },
       {
-        "pattern": "http(?:s|)://(?:dooood|ds2play|d0o0d|do0od|d0000d|d000d|ds2video|dooodster).(?:watch|to|so|com|\\w{2,4})/(?:e|d)/([a-z0-9#]+)",
+        "pattern": "http(?:s|)://(?:dooood|ds2play|d0o0d|do0od|d0000d|d000d|ds2video|dooodster|vidply).(?:watch|to|so|com|\\w{2,4})/(?:e|d)/([a-z0-9#]+)",
         "url": "https://d0000d.com/e/\\1"
       }
     ]

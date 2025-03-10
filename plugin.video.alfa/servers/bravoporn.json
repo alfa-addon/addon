@@ -96,7 +96,7 @@
         "url": "https://celebsnudeworld.com/embed/\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:anysex|fapality).com/[0-9]+/)",
+        "pattern": "(https://(?:www.|)fapality.com/[0-9]+/)",
         "url": "\\1"
       },
       {
@@ -113,6 +113,10 @@
       },
       {
         "pattern": "(https://(?:www.|)(?:collectionofbestporn|xerotica|sexvr).com/video/[A-z0-9-]+.html)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)anysex.com/video/[0-9]+/[A-z0-9-]+)",
         "url": "\\1"
       },
       {
