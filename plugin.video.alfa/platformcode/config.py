@@ -714,7 +714,7 @@ def get_cookie_data():
     return cookiedata
 
 
-def check_create_dir(saved_path, default_path):
+def check_create_dir(path, saved_path, default_path):
     from platformcode import logger
     from core import filetools
     saved_path = translatePath(saved_path)
@@ -750,10 +750,10 @@ def verify_directories_created():
         datapath = def_datapath
         set_setting("datapath", datapath)
 
-    if not check_create_dir(datapath, def_datapath):
+    if not check_create_dir("datapath", datapath, def_datapath):
         datapath = def_datapath
         set_setting("datapath", datapath)
-        check_create_dir(datapath, def_datapath)
+        check_create_dir("datapath", datapath, def_datapath)
 
     config_paths = [["videolibrarypath", "videolibrary"],
                     ["downloadpath", "downloads"],
@@ -775,7 +775,7 @@ def verify_directories_created():
             saved_path = default_path
             set_setting(path, saved_path)
 
-        if not check_create_dir(saved_path, default_path):
+        if not check_create_dir(path, saved_path, default_path):
             if path == "videolibrarypath":
                 library_path_exist = False
 
