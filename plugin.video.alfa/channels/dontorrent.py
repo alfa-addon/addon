@@ -25,10 +25,10 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.webcam/", "https://elitedivx.net/", "https://lilatorrent.com/", 
+             'host_alt': ["https://dontorrent.schule/", "https://elitedivx.net/", "https://lilatorrent.com/", 
                           "https://mastorrents.net/", "https://reinventorrent.org/", "https://todotorrents.org/", 
                           "https://www18.dontorrent.link/"], 
-             'host_black_list': ["https://dontorrent.trade/", "https://dontorrent.tube/", 
+             'host_black_list': ["https://dontorrent.webcam/", "https://dontorrent.trade/", "https://dontorrent.tube/", 
                                  "https://dontorrent.games/", "https://dontorrent.wiki/", "https://dontorrent.football/", 
                                  "https://dontorrent.auction/", "https://dontorrent.co/", "https://dontorrent.foundation/", 
                                  "https://www17.dontorrent.link/", "https://dontorrent.yoga/", "https://tomadivx.net/", 
@@ -132,7 +132,7 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['text-center']}]},
                          [r'(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?|\s+final', ''], 
                          [r'(?i)\s+\[*sub.*.*\s*int\w*\]*|poster', ''], 
                          [r'(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], [r'\d?\d?&#.*', ''], [r'\d+[x|×]\d+.*', ''], 
-                         [r'[\(|\[]\s*[\)|\]]', ''], [r'(?i)\s*-*\s*\d{1,2}[^t]*\s*temp\w*\s*(?:\[.*?\])?', '']],
+                         [r'[\(|\[]\s*[\)|\]]', ''], [r'(?i)\s*-\s*\d{1,2}[^t]*\s*temp\w*\s*(?:\[.*?\])?', '']],
          'quality_clean': [[r'(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'language_clean': [], 
          'url_replace': [], 
@@ -431,6 +431,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elem_json['title'] = elem_a.get_text('|', strip=True)
                     elem_json['quality'] = '*%s' % (scrapertools.find_single_match(elem_a.get_text('|', strip=True), 
                                                                 r'\[([^\]]+)\]').replace('Subs. integrados', '').strip() or 'HDTV')
+                    elem_json['quality'] = 'HDTV-720p' if '720p' in elem_json['quality'] else 'HDTV'
                     elem_json['language'] = '*'
 
                 except Exception:
@@ -457,6 +458,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elem_json['plot'] = info.find('hr', class_='my-2').find_next('p').get_text(strip=True)
                     elem_json['thumbnail'] = elem_a.img.get("src", "")
                     elem_json['quality'] = '*%s' % re.sub(r'(?i)\(|\)|Ninguno', '', elem_a.get_text(strip=True))
+                    if tv_path in elem_json['url']:
+                        elem_json['quality'] = 'HDTV-720p' if '720p' in elem_json['quality'] else 'HDTV'
                     elem_json['language'] = '*'
 
                 except Exception:
@@ -493,6 +496,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     else:
                         elem_json['title'] = re.sub(r'(?i)\s*\(.*?\).*?$', '', elem_a.get_text()).rstrip('.')
                         elem_json['quality'] = '*%s' % scrapertools.find_single_match(elem_a.get_text(), r'\((.*?)\)').replace('Ninguno', '')
+                        elem_json['quality'] = 'HDTV-720p' if '720p' in elem_json['quality'] else 'HDTV'
                     if '3d' in elem_json['title'].lower() and '3d' not in elem_json['quality'].lower():
                         elem_json['quality'] = '%s,3d' % elem_json['quality']
                     elem_json['language'] = '*'

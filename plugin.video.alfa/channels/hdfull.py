@@ -33,18 +33,19 @@ debug = config.get_setting('debug_report', default=False)
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hdfull.today/", "https://hd-full.sbs/", "https://hdfull.monster/", "https://hd-full.vip/"], 
+             "host_alt": ["https://hdfull.today/", "https://hdfull.cv/", "https://hd-full.biz/", "https://hdfull.blog/"], 
              "host_alt_main": 2, 
              'host_verification': '%slogin', 
-             "host_black_list": ["https://hd-full.biz/", "https://hd-full.me/", "https://hd-full.fit/", 
-                                 "https://hd-full.info/", "https://hdfull.blog/", "https://hd-full.life/", 
+             "host_black_list": ["https://hd-full.me/", 
+                                 "https://hd-full.fit/", "https://hd-full.info/", "https://hd-full.life/", 
 
-                                 "https://hdfull.one/", "https://hdfull.buzz/", "https://hdfull.tel/", 
-                                 "https://hdfull.cfd/", "https://hdfull.sbs/", 
+                                 "https://hdfull.monster/", "https://hdfull.one/", "https://hdfull.buzz/", 
+                                 "https://hdfull.tel/", "https://hdfull.cfd/", "https://hd-full.sbs/", 
+                                 "https://hdfull.sbs/", 
 
                                  "https://hd-full.lol/", "https://hd-full.co/", "https://hdfull.quest/", 
                                  "https://hd-full.in/", "https://hd-full.im/", "https://hd-full.one/", 
-                                 "https://hdfull.icu/", "https://hdfull.org/", 
+                                 "https://hdfull.icu/", "https://hdfull.org/", "https://hd-full.vip/", 
                                  "https://hdfull.life/", "https://hdfull.digital/", "https://hdfull.work/", 
                                  "https://hdfull.video/", "https://hdfull.cloud/", "https://hdfull.wtf/", 
                                  "https://hdfull.fun/", "https://hdfull.lol/", "https://hdfull.store/", 
@@ -57,7 +58,7 @@ canonical = {
              'cf_cookie': '$HOST|cf_clearance' if cf_assistant is True else None, 'cf_jscode': None, 
              'cf_cookies_names': {'cf_clearance': False if cf_assistant is True else True},
              'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
-             'CF_stat': True if cf_assistant is True else False, 'session_verify': False, 
+             'CF_stat': True if cf_assistant is True else False, 
              'CF': False, 'CF_test': True, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
