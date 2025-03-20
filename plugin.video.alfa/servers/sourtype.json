@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|)(?:nonktube|leslez|teenxy).com/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:nonktube|leslez|teenxy|fleshed|xrares).com/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -100,6 +100,9 @@
         "url": "\\1"
       },
      {
+        "pattern": "(https://(?:www.|)efukt.com/[A-z0-9-_]+.html)",
+        "url": "\\1"
+      },     {
         "pattern": "(https://(?:www.|)(?:yrprno|youcrazyx|trendyporn|yespornplease|hentaiprno|daftsextube).(?:com|sexy)/video/[A-z0-9-]+.html)",
         "url": "\\1"
       },
@@ -129,10 +132,6 @@
       },
       {
         "pattern": "(https://cheemsporn.com/videos/[0-9]+/[0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-     {
-        "pattern": "(https://(?:www.|)pornxs.com/(?:embed/|)[0-9]+)",
         "url": "\\1"
       },
      {

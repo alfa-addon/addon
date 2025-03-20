@@ -11,6 +11,7 @@ from core import httptools
 from core import urlparse
 from bs4 import BeautifulSoup
 
+
 canonical = {
              'channel': 'fullporner', 
              'host': config.get_setting("current_host", 'fullporner', default=''), 
@@ -131,6 +132,7 @@ def findvideos(item):
     url = soup.find('div', class_='single-video').iframe['src']
     if "xiaoshenke" in url:
         id = scrapertools.find_single_match(url, "/(\d+)")
+        id = id[::-1]
         url = "https://www.porntrex.com/embed/%s" % id
     if url.startswith("//"):
         url = "https:%s" % url
@@ -154,6 +156,7 @@ def play(item):
     url = soup.find('div', class_='single-video').iframe['src']
     if "xiaoshenke" in url:
         id = scrapertools.find_single_match(url, "/(\d+)")
+        id = id[::-1]
         url = "https://www.porntrex.com/embed/%s" % id
     if url.startswith("//"):
         url = "https:%s" % url

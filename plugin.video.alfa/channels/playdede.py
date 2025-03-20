@@ -62,7 +62,7 @@ SERVIDORES = {
     "7701": "filemoon",
     "6183": "playtube",
     "7561": "streamwish",
-    "153": "Vidhidepro",
+    "153": "vidhidepro",
     "10": "rapidgator",
     "1195": "streamvid",
     "6187": "vidguard",
@@ -84,86 +84,61 @@ SERVIDORES = {
     "66": "ddownload",
     "1002": "dropark",
     "1001": "fastclick",
-    "filelions": "Vidhidepro",
-    "filemoon": "Filemoon",
-    "luluvideo": "Lulustream",
-    "vembed": "Vidguard",
-    "bigwarp": "Tiwikiwi",
-    "waaw": "Netu",
-    "voe": "Voe",
-    "streamwish": "Streamwish",
-    "powvideo": "Powvideo",
-    "streamplay": "Streamplay",
-    "streamtape": "Streamtape",
-    "vtube": "Playtube",
-    "streamsilk": "Streamsilk",
+    "filelions": "vidhidepro",
+    "filemoon": "filemoon",
+    "luluvideo": "lulustream",
+    "vembed": "vidguard",
+    "bigwarp": "tiwikiwi",
+    "waaw": "netu",
+    "voe": "voe",
+    "streamwish": "streamwish",
+    "powvideo": "powvideo",
+    "streamplay": "streamplay",
+    "streamtape": "streamtape",
+    "vtube": "playtube",
+    "streamsilk": "streamsilk",
     "vidmoly": "vidmoly",
     "doodstream": "doodstream",
 }
 
-
-# Definición inicial del canonical con valores estáticos
-canonical = {
-    "channel": "playdede",
-    "host_black_list": [
-        "https://www6.playdede.link/",
-        "https://www5.playdede.link/" ,"https://www4.playdede.link/", "https://www3.playdede.link/",
-        "https://www2.playdede.link/", "https://playdede.in/", "https://playdede.me/",
-        "https://playdede.eu/", "https://playdede.us/", "https://playdede.to/",
-        "https://playdede.nu/", "https://playdede.org/", "https://playdede.com/",
-    ],
-    "set_tls": True,
-    "set_tls_min": True,
-    "CF": False,
-    "CF_test": False,
-    "alfa_s": True
-}
-
-def get_dynamic_host():
-    try:
-        url = 'https://entrarplaydede.com/'
-        data = httptools.downloadpage(url, timeout=30)
-        soup = BeautifulSoup(data.data, 'html.parser')
-        host_url = soup.find('h1').find('b').find('a').get('href')
-        
-        if host_url and host_url not in canonical["host_black_list"]:
-            config.set_setting("current_host", host_url, "playdede")
-            return host_url
-    except:
-        logger.error("Error obteniendo host dinámico")
-    
-    saved_host = config.get_setting("current_host", "playdede", default="")
-    if saved_host and saved_host not in canonical["host_black_list"]:
-        return saved_host
-    
-    return "https://playdede.link/"  # Host por defecto
-
-# Variables globales
 list_language = list(IDIOMAS.values())
 list_quality = ["HD1080", "HD720", "HDTV", "DVDRIP"]
 list_quality_tvshow = list_quality_movies = list_quality
-list_servers = list(SERVIDORES.values())
+list_servers = list(set(SERVIDORES.values()))
 
-# Obtener host y configurar
-host = get_dynamic_host()
-if not host.endswith("/"):
-    host += "/"
+# https://entrarplaydede.com/
 
-# Configurar assistant
+host = "https://www8.playdede.link/"
 assistant = config.get_setting(
     "assistant_version", default=""
 ) and not httptools.channel_proxy_list(host)
 
-# Actualizar canonical con valores dinámicos
-canonical.update({
+canonical = {
+    "channel": "playdede",
+    "host": config.get_setting("current_host", "playdede", default=""),
     "host_alt": [host],
+    "host_black_list": [
+        "https://www7.playdede.link/", "https://www6.playdede.link/",
+        "https://www5.playdede.link/", "https://www4.playdede.link/", "https://www3.playdede.link/",
+        "https://www2.playdede.link/", "https://playdede.in/", "https://playdede.me/",
+        "https://playdede.eu/", "https://playdede.us/", "https://playdede.to/",
+        "https://playdede.nu/", "https://playdede.org/", "https://playdede.com/",
+    ],
+    "pattern": '<link\s*rel="shortcut\s*icon"[^>]+href="([^"]+)"',
+    "set_tls": True,
+    "set_tls_min": True,
+    "retries_cloudflare": 1,
     "CF_stat": True if assistant else False,
     "session_verify": True if assistant else False,
     "CF_if_assistant": True if assistant else False,
-    "CF_if_NO_assistant": False
-})
-
+    "CF_if_NO_assistant": False,
+    "CF": False,
+    "CF_test": False,
+    "alfa_s": True,
+}
+host = canonical["host"] or canonical["host_alt"][0]
 __channel__ = canonical["channel"]
+
 timeout = 30
 show_langs = config.get_setting("show_langs", channel=__channel__)
 account = None
@@ -213,7 +188,6 @@ def remove_cookies():
 
 def login():
     logger.info()
-    
     remove_cookies()
     
     usuario = config.get_setting("user", channel=__channel__)
@@ -485,14 +459,11 @@ def list_all(item):
         return itemlist
     
     items = soup.find_all("article", id=re.compile(r"^post-(?:\d+|)"))
+    # items = soup.find('div', id=' archive-content').find_all('article')
     
-    # Si solo hay un resultado, no dividir en mitades
-    if len(items) == 1:
-        shown_half = 0
-    else:
-        shown_half = 1 if item.half else 0
-        items_half = len(items) // 2
-        items = items[items_half:] if shown_half == 1 else items[:items_half]
+    shown_half = 1 if item.half else 0
+    items_half = len(items) // 2
+    items = items[items_half:] if shown_half == 1 else items[:items_half]
     
     for article in items:
         data = article.find("div", class_="data")
@@ -503,6 +474,11 @@ def list_all(item):
         title = data.find("h3").text
         url = article.find("a")["href"]
         url = "{}%s".format(host) % url
+        
+        """
+        if 'tmdb.org' in thumbnail:
+            infoLabels['filtro'] = scrapertools.find_single_match(thumbnail, "/(\w+)\.\w+$")
+        """
         
         it = Item(
             action="findvideos",
@@ -544,12 +520,11 @@ def list_all(item):
     
     btnnext = soup.find("div", class_="pagPlaydede").find_all('a')
     
-    if len(items) > 1:
-        if shown_half == 0:
-            itemlist.append(item.clone(title="Siguiente >", half=1))
-        elif btnnext:
-            btnnext = btnnext[-1]['href']
-            itemlist.append(item.clone(title="Siguiente >", half=0, url=btnnext))
+    if shown_half == 0:
+        itemlist.append(item.clone(title="Siguiente >", half=1))
+    elif btnnext:
+        btnnext = btnnext[-1]['href']
+        itemlist.append(item.clone(title="Siguiente >", half=0, url=btnnext))
     
     return itemlist
 
@@ -666,6 +641,7 @@ def findvideos(item):
     descargas = soup.findAll("div", class_="linkSorter")
     for lst in descargas:
         matches.extend(lst.find_all("li"))
+    # logger.debug(matches)
     
     for elem in matches:
         if not elem.find(class_='reportLink'): continue
@@ -681,6 +657,7 @@ def findvideos(item):
             if not server:
                 server = elem.span.b.text
                 server = SERVIDORES.get(server.lower(), "")
+            # logger.debug(url +"      "+ elem.get("data-provider"))
         else:
             data = elem.find("div", class_="meta")
             
@@ -689,7 +666,7 @@ def findvideos(item):
                 server = data.find("h3").text
                 server = SERVIDORES.get(server.lower(), "")
                 url = "%sembed.php?id=%s" % (host, player)
-                
+            # logger.debug(url +"      "+ server)
         
         itemlist.append(
             item.clone(

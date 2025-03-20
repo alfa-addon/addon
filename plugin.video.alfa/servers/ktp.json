@@ -36,6 +36,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "https://(?:www.|)heroero.com/embed/([0-9]+)",
+        "url": "https://heroero.com/videos/\\1/a/"
+      },
+      {
         "pattern": "(https://\\w{2,4}.huyamba.\\w{2,4}/video/[0-9]+(?:/|))",
         "url": "\\1"
       },
