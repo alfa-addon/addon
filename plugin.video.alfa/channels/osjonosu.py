@@ -35,7 +35,7 @@ kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = "/pelicula"
 tv_path = '/serie'
-language = ['LAT']
+language = ['CAST']
 url_replace = []
 
 AlfaChannel_class = DooPlay(host, canonical=canonical, channel=canonical['channel'], language=language, idiomas=IDIOMAS, 
@@ -167,7 +167,7 @@ def findvideos(item):
 
 def post_process_findvideos(elem, new_item, item, **AHkwargs):
     if "player.osjonosu.xyz" not in new_item.url:
-        return False
+        new_item.server = 'oculto' #este servidor no existe, esto me permite ocultar cualquier enlace que no sea de osjonosu (trailers).
 
     return new_item
 
