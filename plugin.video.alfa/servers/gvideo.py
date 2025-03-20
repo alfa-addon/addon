@@ -1,20 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
-
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import logger
+
 import codecs
+import sys
+
+PY3 = sys.version_info >= (3,)
+
 if PY3:
     from alfaresolver_py3 import failed_link
 else:
@@ -70,7 +65,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
             
             #data = data.decode('unicode-escape', errors='replace')
             data = codecs.decode(data, 'unicode-escape')
-            data = urllib.unquote_plus(urllib.unquote_plus(data))
+            data = urlparse.unquote_plus(urlparse.unquote_plus(data))
 
             headers_string = httptools.get_url_headers(page_url, forced=True)
             streams = scrapertools.find_multiple_matches(data,
@@ -78,12 +73,12 @@ def get_video_url(page_url, user="", password="", video_password=""):
 
         itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '43': '360p', '59': '480p'}
         for itag, video_url in streams:
-            if not video_url in urls:
+            if video_url not in urls:
                 video_url += headers_string
                 video_urls.append([itags.get(itag, ''), video_url])
                 urls.append(video_url)
             video_urls.sort(key=lambda video_urls: int(video_urls[0].replace("p", "")))
-    except:
+    except Exception:
         pass
     if not video_urls:
         return failed_link(page_url)

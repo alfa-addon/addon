@@ -4,26 +4,20 @@
 # -*- By the Alfa Development Group -*-
 
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urllib
-else:
-    import urllib
 
 import re
 import base64
 
 from modules import autoplay, renumbertools
-from platformcode import config, logger, unify, platformtools
-from core import tmdb, httptools, servertools, scrapertools
+from platformcode import config, logger, platformtools
+from core import tmdb, httptools, servertools, scrapertools, urlparse
 from core.item import Item
-from core.jsontools import json
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from modules import filtertools
 from lib import alfa_assistant
+
+PY3 = sys.version_info[0] >= 3
 
 
 IDIOMAS = {"audio castellano": "CAST", "audio latino": "LAT", "subtitulado": "VOSE"}
@@ -175,7 +169,7 @@ def get_value_by_url(sources, url, returnkey='source', partial=False, decode=Tru
 
         if decode:
             data = base64.b64decode(data).decode('utf-8', 'ignore')
-    except:
+    except Exception:
         pass
     
     return data
@@ -210,7 +204,7 @@ def list_all(item):
         filtro_tmdb = list({"original_language": "ja"}.items())
         try:
             year = info_2.find("span", text=re.compile(r"\d{4}")).text.split(",")[-1]
-        except:
+        except Exception:
             year = '-'
         new_item = Item(
                     channel = item.channel,
@@ -220,11 +214,12 @@ def list_all(item):
                     url = url,
                 )
 
-        if "online" in url and not "pelicula" in url:
+        if "online" in url and "pelicula" not in url:
             new_item.action = "seasons"
             new_item.contentSerieName = title
             new_item.contentType = 'tvshow'
-            if new_item.infoLabels['year'] == '-': new_item.infoLabels['year'] = ''
+            if new_item.infoLabels['year'] == '-':
+                new_item.infoLabels['year'] = ''
         else:
             new_item.action = "findvideos"
             new_item.contentTitle = title
@@ -248,7 +243,7 @@ def list_all(item):
                 url = next_page,
             )
         )
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -282,19 +277,19 @@ def latest(item):
             season, episode = scrapertools.find_single_match(info.img["alt"], '(?i)(?:(\d{1,2}))?\s*Cap\s*(\d{1,3})')
             season = int(season)
             episode = int(episode)
-        except:
+        except Exception:
             season = 1
             episode = int(scrapertools.find_single_match(info.img["alt"], '(?i)(?:\d{1,2})?\s*Cap\s*(\d{1,3})') or 1)
         
         try:
             tag = info.find("span", class_="quality").text
-        except:
+        except Exception:
             tag = ""
 
         ftitle = title +': '+ stitle
         ftitle = "%s [COLOR silver] (%s)[/COLOR]" % (ftitle, tag) if tag else ftitle        
         
-        filtro_tmdb = list({"original_language": "ja"}.items())
+        # filtro_tmdb = list({"original_language": "ja"}.items())
 
         itemlist.append(
             Item(
@@ -322,7 +317,7 @@ def latest(item):
                 url = next_page
             )
         )
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -335,7 +330,7 @@ def seasons(item):
     page = get_source(item.url, soup=True)
     if not page:
         return itemlist
-    tags = get_tags(page, item.contentSerieName)
+    # tags = get_tags(page, item.contentSerieName)
     soup = page.find("div", id="seasons")
 
     matches = soup.find_all("div", class_="se-c")
@@ -424,7 +419,8 @@ def episodesxseasons(item):
         except Exception:
             elemseason = 1
         
-        if elemseason != season: continue
+        if elemseason != season:
+            continue
 
         epi_list = elem.find("ul", class_="episodios")
 
@@ -593,7 +589,7 @@ def search_results(item):
         title = elem.img["alt"]
         try:
             year = elem.find("span", class_="year").text
-        except:
+        except Exception:
             year = '-'
 
         new_item = Item(
@@ -604,7 +600,7 @@ def search_results(item):
                     url = url
                 )
 
-        if "online" in url and not "pelicula" in url:
+        if "online" in url and "pelicula" not in url:
             new_item.action = "seasons"
             new_item.contentSerieName = title
             new_item.contentType = 'tvshow'
@@ -630,12 +626,12 @@ def search(item, texto):
     try:
         if texto != "":
             item.first = 0
-            item.url = "{}?s={}".format(item.url, urllib.quote_plus(texto))
+            item.url = "{}?s={}".format(item.url, urlparse.quote_plus(texto))
             return search_results(item)
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -647,7 +643,7 @@ def play(item):
     itemlist = []
     item.setMimeType = 'application/vnd.apple.mpegurl'
     
-    if not 'embed.php' in item.url:
+    if 'embed.php' not in item.url:
         return [item]
 
     data = get_source(item.url)

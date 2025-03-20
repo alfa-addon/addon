@@ -7,7 +7,6 @@ import re
 
 from core import urlparse
 from core import httptools
-from core import scrapertools
 from platformcode import logger
 from lib import aadecode
 import base64

@@ -1,14 +1,22 @@
 from __future__ import absolute_import, unicode_literals
 import sys
 
-PY3 = sys.version_info[0] == 3
+PY3 = sys.version_info > (3,)
 
 if PY3:
     import urllib.parse as _urllib
     import urllib.parse as _urlparse
+    import urllib.error as urlerror
+    import urllib.request as urlrequest
+    from html import unescape as _unescape
+    unescape = _unescape
 else:
     import urllib as _urllib
     import urlparse as _urlparse
+    import urllib2 as urlrequest
+    import urllib2 as urlerror
+    from HTMLParser import HTMLParser as _HTMLParser
+    unescape = _HTMLParser().unescape
 
 
 def urljoin(base, *paths, **kwargs):

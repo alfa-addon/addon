@@ -1,18 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from core.item import Item
 from platformcode import config, logger
 
@@ -92,7 +84,7 @@ def search(item, texto):
     try:
         itemlist = entradas(item)
         return itemlist
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -115,7 +107,7 @@ def newest(categoria):
                 itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))
@@ -147,8 +139,8 @@ def cat(item):
     for bloque in bloques:
         matches = scrapertools.find_multiple_matches(bloque, "<li><a href=(.*?)>(.*?)<")
         for _scrapedurl, scrapedtitle in matches:
-            scrapedurl = urllib.urljoin(host, _scrapedurl)
-            if not "TODO" in scrapedtitle:
+            scrapedurl = urlparse.urljoin(host, _scrapedurl)
+            if "TODO" not in scrapedtitle:
                 itemlist.append(item.clone(action="entradas", title=scrapedtitle, url=scrapedurl))
 
     return itemlist
@@ -164,7 +156,7 @@ def destacados(item):
     data = scrapertools.unescape(data)
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)"> ></a>')
     if next_page != "":
-        data2 = scrapertools.unescape(httptools.downloadpage(urllib.urljoin(host, next_page), canonical=canonical).data)
+        data2 = scrapertools.unescape(httptools.downloadpage(urlparse.urljoin(host, next_page), canonical=canonical).data)
         data += data2
     else:
         data2 = ""
@@ -181,8 +173,8 @@ def destacados(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for _scrapedurl, _scrapedthumbnail, scrapedtitle, year, scrapedplot, genero, extra in matches:
         infolab = {'plot': scrapedplot, 'genre': genero}
-        scrapedurl = urllib.urljoin(host, _scrapedurl)
-        scrapedthumbnail = urllib.urljoin(host, urllib.quote(_scrapedthumbnail))
+        scrapedurl = urlparse.urljoin(host, _scrapedurl)
+        scrapedthumbnail = urlparse.urljoin(host, urlparse.quote(_scrapedthumbnail))
         title = scrapedtitle
         if "full_hd" in extra:
             quality = "3D"
@@ -201,7 +193,7 @@ def destacados(item):
 
     next_page = scrapertools.find_single_match(data2, '<a href="([^"]+)"> ></a>')
     if next_page:
-        itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=urllib.urljoin(host, next_page),
+        itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=urlparse.urljoin(host, next_page),
                                    text_color=color3))
 
     return itemlist
@@ -219,8 +211,8 @@ def entradas(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for  _scrapedurl, _scrapedthumbnail, scrapedtitle, year, genero, scrapedplot in matches:
         infolab = {'plot': scrapedplot, 'genre': genero}
-        scrapedurl = urllib.urljoin(host, _scrapedurl)
-        scrapedthumbnail = urllib.urljoin(host, _scrapedthumbnail)
+        scrapedurl = urlparse.urljoin(host, _scrapedurl)
+        scrapedthumbnail = urlparse.urljoin(host, _scrapedthumbnail)
         title = scrapedtitle
         if "3D" in genero:
             quality = "3D"
@@ -238,7 +230,7 @@ def entradas(item):
     next_page = scrapertools.find_single_match(data, '<a class=last>.*?</a></li><li><a href=(.*?)>.*?</a>')
     next_page = scrapertools.htmlclean(next_page)
     if next_page:
-        itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=urllib.urljoin(host, next_page),
+        itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=urlparse.urljoin(host, next_page),
                                    text_color=color3))
     return itemlist
 
@@ -256,10 +248,10 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(bloque, patron)
     
     for _url, quality in matches:
-        url = httptools.get_url_headers(urllib.urljoin(host, _url), forced=True)
+        url = httptools.get_url_headers(urlparse.urljoin(host, _url), forced=True)
         
         for _url_sub, label in subs:
-            url_sub = urllib.urljoin(host, urllib.quote(_url_sub))
+            url_sub = urlparse.urljoin(host, urlparse.quote(_url_sub))
             title = "Ver video en [[COLOR %s]%s[/COLOR]] Sub %s" % (color3, quality, label)
             itemlist.append(item.clone(action="play", server="directo", title=title,
                                        url=url, subtitle=url_sub, extra=item.url, quality=quality, language = label))
@@ -284,7 +276,7 @@ def play(item):
         data = httptools.downloadpage(item.subtitle, headers={'Referer': item.extra}).data
         filetools.write(ficherosubtitulo, data)
         subtitle = ficherosubtitulo
-    except:
+    except Exception:
         subtitle = ""
         logger.error("Error al descargar el subtítulo")
 

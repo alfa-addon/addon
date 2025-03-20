@@ -4,10 +4,8 @@
 # -*- By the Alfa Develop Group -*-
 
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-from core import httptools, servertools, tmdb
+from core import httptools, servertools, tmdb, urlparse
 from platformcode import logger, config
 from channelselector import get_thumb
 from core.item import Item
@@ -15,11 +13,11 @@ from modules import autoplay
 from modules import filtertools
 from core.jsontools import json
 
+PY3 = sys.version_info[0] >= 3
+
 if PY3:
-    import urllib.parse as urllib
     from alfaresolver_py3 import yacc
 else:
-    import urllib
     from alfaresolver import yacc
 
 canonical = {
@@ -43,7 +41,7 @@ def read_api(path = '/', query = {}):
     q['language'] = 'es-ES'
     if query:
         q.update(query)
-    query_string = urllib.urlencode(q)
+    query_string = urlparse.urlencode(q)
 
     url = "https://api.playhublite.com/api/v2{}?{}".format(path, query_string)
     logger.info(url, True)
@@ -294,7 +292,7 @@ def search(item, texto):
             return itemlist
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

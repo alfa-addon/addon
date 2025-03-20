@@ -6,30 +6,22 @@
 # ---------------------------------------------------------------------------
 
 from __future__ import division
-from past.utils import old_div
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urllib                                             # Es muy lento en PY2.  En PY3 es nativo
-    import urllib.request as urllib2
-    import urllib.error as urllib_error
-else:
-    import urllib                                                             # Usamos el nativo de PY2 que es más rápido
-    import urllib2
-    import urllib2 as urllib_error
-
 
 import os
 import re
 import socket
 import threading
 import time
+import traceback
+import sys
 
 import xbmc
 import xbmcgui
-from core import downloadtools, filetools
+from core import downloadtools
+from core import filetools
+from core import urlparse
+from core.urlparse import urlerror
+from core.urlparse import urlrequest
 from platformcode import config, logger
 
 
@@ -55,11 +47,24 @@ def download_and_play(url, file_name, download_path):
         dialog.update(0)
 
         while not cancelled and download_thread.is_alive():
-            dialog.update(download_thread.get_progress(), config.get_localized_string(60313) + '\n' + 
-                          "Velocidad: " + str(int(old_div(download_thread.get_speed(), 1024))) + " KB/s " + str(
-                              download_thread.get_actual_size()) + "MB de " + str(
-                              download_thread.get_total_size()) + "MB" + 
-                          "Tiempo restante: " + str(downloadtools.sec_to_hms(download_thread.get_remaining_time())))
+            # Obtenemos los valores necesarios
+            progress = download_thread.get_progress()
+            speed_kb = download_thread.get_speed() // 1024
+            current_size = download_thread.get_actual_size()
+            total_size = download_thread.get_total_size()
+            remaining_time = downloadtools.sec_to_hms(download_thread.get_remaining_time())
+
+            # Construimos el mensaje de forma legible y mantenible
+            message = "{}\nVelocidad: {} KB/s, {}MB de {}MB, Tiempo restante: {}".format(
+                config.get_localized_string(60313),
+                speed_kb,
+                current_size,
+                total_size,
+                remaining_time
+            )
+
+            # Actualizamos el diálogo con el progreso y el mensaje formateado
+            dialog.update(progress, message)
             xbmc.sleep(1000)
 
             if dialog.iscanceled():
@@ -230,7 +235,7 @@ class DownloadThread(threading.Thread):
         logger.info("url=" + self.url)
 
         # Crea el fichero
-        existSize = 0
+        # existSize = 0
         f = open(self.file_name, 'wb')
         grabado = 0
 
@@ -245,7 +250,7 @@ class DownloadThread(threading.Thread):
             for additional_header in additional_headers:
                 logger.info("additional_header: " + additional_header)
                 name = re.findall("(.*?)=.*?", additional_header)[0]
-                value = urllib.unquote_plus(re.findall(".*?=(.*?)$", additional_header)[0])
+                value = urlparse.unquote_plus(re.findall(".*?=(.*?)$", additional_header)[0])
                 headers.append([name, value])
 
             self.url = self.url.split("|")[0]
@@ -255,18 +260,18 @@ class DownloadThread(threading.Thread):
         socket.setdefaulttimeout(60)
 
         # Crea la petición y añade las cabeceras
-        h = urllib2.HTTPHandler(debuglevel=0)
-        request = urllib2.Request(self.url)
+        h = urlrequest.HTTPHandler(debuglevel=0)
+        request = urlrequest.Request(self.url)
         for header in headers:
             logger.info("Header=" + header[0] + ": " + header[1])
             request.add_header(header[0], header[1])
 
         # Lanza la petición
-        opener = urllib2.build_opener(h)
-        urllib2.install_opener(opener)
+        opener = urlrequest.build_opener(h)
+        urlrequest.install_opener(opener)
         try:
             connexion = opener.open(request)
-        except urllib_error.HTTPError as e:
+        except urlerror.HTTPError as e:
             logger.error("error %d (%s) al abrir la url %s" % (e.code, e.msg, self.url))
             # print e.code
             # print e.msg
@@ -282,7 +287,7 @@ class DownloadThread(threading.Thread):
 
         try:
             totalfichero = int(connexion.headers["Content-Length"])
-        except:
+        except Exception:
             totalfichero = 1
 
         self.total_size = int(float(totalfichero) / float(1024 * 1024))
@@ -314,8 +319,8 @@ class DownloadThread(threading.Thread):
                 grabado = grabado + len(bloqueleido)
                 logger.info("grabado=%d de %d" % (grabado, totalfichero))
                 percent = int(float(grabado) * 100 / float(totalfichero))
-                self.progress = percent;
-                totalmb = float(float(totalfichero) / (1024 * 1024))
+                self.progress = percent
+                # totalmb = float(float(totalfichero) / (1024 * 1024))
                 descargadosmb = float(float(grabado) / (1024 * 1024))
                 self.actual_size = int(descargadosmb)
 
@@ -328,15 +333,14 @@ class DownloadThread(threading.Thread):
                         bloqueleido = connexion.read(blocksize)
                         after = time.time()
                         if (after - before) > 0:
-                            self.velocidad = old_div(len(bloqueleido), ((after - before)))
+                            self.velocidad = len(bloqueleido) // ((after - before))
                             falta = totalfichero - grabado
                             if self.velocidad > 0:
-                                self.tiempofalta = old_div(falta, self.velocidad)
+                                self.tiempofalta = falta // self.velocidad
                             else:
                                 self.tiempofalta = 0
                         break
-                    except:
-                        import sys
+                    except Exception:
                         reintentos = reintentos + 1
                         logger.info("ERROR en la descarga del bloque, reintento %d" % reintentos)
                         for line in sys.exc_info():
@@ -349,9 +353,7 @@ class DownloadThread(threading.Thread):
 
                     return -2
 
-            except:
-                import traceback, sys
-                from pprint import pprint
+            except Exception:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 lines = traceback.format_exception(exc_type, exc_value, exc_tb)
                 for line in lines:

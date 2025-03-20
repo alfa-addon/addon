@@ -2,20 +2,11 @@
 
 from __future__ import division
 from __future__ import print_function
-from builtins import object
-from past.utils import old_div
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import patch
-
-if PY3:
-    import urllib.request as urllib2                                            # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib2                                                              # Usamos el nativo de PY2 que es más rápido
-
 import traceback
 
+from core.urlparse import urlrequest
 from platformcode import logger
 
 class Cursor(object):
@@ -35,15 +26,15 @@ class Cursor(object):
                 file = self._file._client.api_req({'a': 'g', 'g': 1, 'p': self._file.file_id})
                 self._file.url = file["g"]
 
-        req = urllib2.Request(self._file.url)
+        req = urlrequest.Request(self._file.url)
         req.headers['Range'] = 'bytes=%s-' % (offset)
         try:
-            self.conn = urllib2.urlopen(req)
+            self.conn = urlrequest.urlopen(req)
             try:
                 self.prepare_decoder(offset)
-            except:
+            except Exception:
                 logger.error(traceback.format_exc())
-        except:
+        except Exception:
             self.mega_request(offset, True)
 
     def read(self, n=None):
@@ -71,23 +62,24 @@ class Cursor(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._file.cursors.remove(self)
-        if len(self._file.cursors) == 0: self._file.cursor = False
+        if len(self._file.cursors) == 0:
+            self._file.cursor = False
         
     def decode(self, data):
         return self.decryptor.decrypt(data)
 
     def prepare_decoder(self, offset):
-        initial_value = self.initial_value + int(old_div(offset, 16))
+        initial_value = self.initial_value + (offset // 16)
         try:
             patch.unfix_path()
             from Cryptodome.Cipher import AES
             from Cryptodome.Util import Counter
             patch.fix_path()
-        except:
+        except Exception:
             from Crypto.Cipher import AES
             from Crypto.Util import Counter
         self.decryptor = AES.new(self._file._client.a32_to_str(self.k), AES.MODE_CTR, counter = Counter.new(128, initial_value = initial_value))
 
-        rest = offset - int(old_div(offset, 16)) * 16
+        rest = offset - (offset // 16) * 16
         if rest:
             self.decode(b'\0' * rest)

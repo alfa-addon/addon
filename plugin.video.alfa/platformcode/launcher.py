@@ -3,27 +3,18 @@
 # XBMC Launcher (xbmc / kodi)
 # ------------------------------------------------------------
 
-#from future import standard_library
-#standard_library.install_aliases()
-#from builtins import str
+
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.error as urllib2                              # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib2                                              # Usamos el nativo de PY2 que es más rápido
-
 import os
-import sys
-import time
 
+from core.urlparse import urlerror
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 from platformcode.logger import WebErrorException
 from platformcode import configurator
+
+PY3 = sys.version_info[0] >= 3
 
 
 def start():
@@ -449,7 +440,8 @@ def run(item=None):
                         "folder" : "modules" if item.contentModule else "channels",
                         "type" : "module" if item.contentModule else "channel"
                     }
-                    if item.contentModule: del item.contentModule
+                    if item.contentModule:
+                        del item.contentModule
 
                     logger.info("item.module")
                     module_name = item.contentChannel
@@ -488,7 +480,7 @@ def run(item=None):
                 elif not config.get_setting('install_trakt'):
                     config.set_setting('install_trakt', True)
 
-    except urllib2.URLError as e:
+    except urlerror.URLError as e:
         import traceback
         logger.error(traceback.format_exc())
 
@@ -563,17 +555,17 @@ def reorder_itemlist(itemlist):
                  [config.get_localized_string(60336), '[D]']]
 
     for item in itemlist:
-        if not PY3:
-            old_title = unicode(item.title, "utf8").lower().encode("utf8")
-        else:
+        if PY3:
             old_title = item.title.lower()
+        else:
+            old_title = item.title.decode("utf8").lower().encode("utf8")
         for before, after in to_change:
             if before in item.title:
                 item.title = item.title.replace(before, after)
                 break
 
         if not PY3:
-            new_title = unicode(item.title, "utf8").lower().encode("utf8")
+            new_title = item.title.decode("utf8").lower().encode("utf8")
         else:
             new_title = item.title.lower()
         if old_title != new_title:
@@ -632,7 +624,7 @@ def play_from_library(item):
     import xbmcgui
     import xbmcplugin
     import xbmc
-    from time import sleep, time
+    from time import sleep
     from modules import nextep
     from modules import autoplay
     from modules import videolibrary
@@ -707,7 +699,8 @@ def play_from_library(item):
                     # El usuario elige el mirror
                     opciones = []
                     for i in itemlist:
-                        if '%s' in i.title and i.action == 'play' and i.server: i.title = i.title % i.server.capitalize()
+                        if '%s' in i.title and i.action == 'play' and i.server:
+                            i.title = i.title % i.server.capitalize()
                         opciones.append(i.title)
 
                     # Se abre la ventana de seleccion
@@ -737,7 +730,8 @@ def play_from_library(item):
                                 "folder" : "modules" if item.contentModule else "channels",
                                 "type" : "module" if item.contentModule else "channel"
                             }
-                            if item.contentModule: del item.contentModule
+                            if item.contentModule:
+                                del item.contentModule
 
                             logger.info("item.%s" % module_type['type'])
                             module_name = item.contentChannel

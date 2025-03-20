@@ -3,20 +3,12 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
-
 import re
 
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import urlparse
 from channelselector import get_thumb
 from core import tmdb
 from core.item import Item
@@ -173,7 +165,7 @@ def search(item, texto):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -257,7 +249,7 @@ def findvideos(item):
             server = "directo"
         else:
             scrapedurl = scrapertools.find_single_match(scrapedurl, '.*?url=([^&]+)?')
-            scrapedurl = urllib.unquote(scrapedurl)
+            scrapedurl = urlparse.unquote(scrapedurl)
 
         if scrapedurl != '':
             itemlist.append(Item(channel=item.channel, title='%s', url=scrapedurl, action='play',

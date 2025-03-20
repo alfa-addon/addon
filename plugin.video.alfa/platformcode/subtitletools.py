@@ -1,17 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-#from builtins import str
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
 
 import os
 import re
@@ -23,14 +13,20 @@ from core import filetools
 from core import httptools
 from core import jsontools
 from core import scrapertools
+from core import urlparse
 from core.item import Item
 
 import xbmc
 import xbmcgui
 from platformcode import config, logger
 
-if PY3: allchars = str.maketrans('', '')
-if not PY3: allchars = string.maketrans('', '')
+PY3 = sys.version_info[0] >= 3
+
+if PY3:
+    allchars = str.maketrans('', '')
+else:
+    allchars = string.maketrans('', '')
+
 deletechars = ',\\/:*"<>|?'
 
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'timeout': (5, 30), 
@@ -54,20 +50,19 @@ def regex_tvshow(compare, file, sub=""):
                          r'[\\\\/\\._ \\[\\(-]([0-9]+)x([0-9]+)([^\\\\/]*)$',
                          r'[\\\\/\\._ \\[\\(-]([0-9]+)X([0-9]+)([^\\\\/]*)$'
                          ]
-    sub_info = ""
+    # sub_info = ""
     tvshow = 0
 
     for regex in regex_expressions:
         response_file = re.findall(regex, file)
         if len(response_file) > 0:
-            print("Regex File Se: %s, Ep: %s," % (str(response_file[0][0]), str(response_file[0][1]),))
             tvshow = 1
             if not compare:
                 title = re.split(regex, file)[0]
                 for char in ['[', ']', '_', '(', ')', '.', '-']:
                     title = title.replace(char, ' ')
-                if title.endswith(" "): title = title.strip()
-                print("title: %s" % title)
+                if title.endswith(" "):
+                    title = title.strip()
                 return title, response_file[0][0], response_file[0][1]
             else:
                 break
@@ -77,10 +72,10 @@ def regex_tvshow(compare, file, sub=""):
             response_sub = re.findall(regex, sub)
             if len(response_sub) > 0:
                 try:
-                    sub_info = "Regex Subtitle Ep: %s," % (str(response_sub[0][1]),)
+                    # sub_info = "Regex Subtitle Ep: %s," % (str(response_sub[0][1]),)
                     if (int(response_sub[0][1]) == int(response_file[0][1])):
                         return True
-                except:
+                except Exception:
                     pass
         return False
     if compare:
@@ -114,7 +109,7 @@ def set_Subtitle():
             subtitle_path = config.get_setting("subtitlepath_keyboard")
             long_v = len(subtitle_path)
             if long_v > 0:
-                if subtitle_path.startswith("http") or subtitle_path[long_v - 4, long] in exts:
+                if subtitle_path.startswith("http") or subtitle_path[long_v - 4, long_v] in exts:
                     logger.info("Con subtitulo : " + subtitle_path)
                     xbmc.Player().setSubtitles(subtitle_path)
                     return
@@ -136,7 +131,7 @@ def set_Subtitle():
                 if os.path.splitext(Subname)[1] in exts:
                     logger.info("Con subtitulo : " + filetools.split(Subname)[1])
                     xbmc.Player().setSubtitles((Subname))
-        except:
+        except Exception:
             logger.error("error al cargar subtitulos")
 
             # Limpia los caracteres unicode
@@ -144,7 +139,7 @@ def set_Subtitle():
 
 def _normalize(title, charset='utf-8'):
     '''Removes all accents and illegal chars for titles from the String'''
-    if isinstance(title, unicode):
+    if not isinstance(title, bytes):
         title = string.translate(title, allchars, deletechars)
         try:
             title = title.encode("utf-8")
@@ -156,7 +151,7 @@ def _normalize(title, charset='utf-8'):
         try:
             # iso-8859-1
             title = title.decode(charset).encode('utf-8')
-            title = normalize('NFKD', unicode(title, 'utf-8'))
+            title = normalize('NFKD', title.decode('utf-8'))
             title = title.encode('ASCII', 'ignore')
         except UnicodeEncodeError:
             logger.error("Error de encoding")
@@ -188,7 +183,7 @@ def searchSubtitle(item):
     if not filetools.exists(subtitlepath):
         try:
             filetools.mkdir(subtitlepath)
-        except:
+        except Exception:
             logger.error("error no se pudo crear path subtitulos")
             return
 
@@ -196,7 +191,7 @@ def searchSubtitle(item):
     if not filetools.exists(path_movie_subt):
         try:
             filetools.mkdir(path_movie_subt)
-        except:
+        except Exception:
             logger.error("error no se pudo crear el path Movies")
             return
     full_path_tvshow = ""
@@ -204,13 +199,13 @@ def searchSubtitle(item):
     if not filetools.exists(path_tvshow_subt):
         try:
             filetools.mkdir(path_tvshow_subt)
-        except:
+        except Exception:
             logger.error("error no pudo crear el path Tvshows")
             return
     if item.show in item.title:
-        title_new = title = urllib.unquote_plus(item.title)
+        title_new = title = urlparse.unquote_plus(item.title)
     else:
-        title_new = title = urllib.unquote_plus(item.show + " - " + item.title)
+        title_new = title = urlparse.unquote_plus(item.show + " - " + item.title)
     path_video_temp = filetools.translatePath(filetools.join(config.get_runtime_path(), "resources", "subtitle.mp4"))
     if not filetools.exists(path_video_temp):
         logger.error("error : no existe el video temporal de subtitulos")
@@ -251,7 +246,7 @@ def searchSubtitle(item):
         xbmcPlayer.play(playlist)
 
         # xbmctools.launchplayer(full_path_video_new,listitem)
-    except:
+    except Exception:
         copy = False
         logger.error("Error : no se pudo copiar")
 
@@ -279,7 +274,7 @@ def saveSubtitleName(item):
         title = item.show + " - " + item.title
     try:
         title = _normalize(title)
-    except:
+    except Exception:
         pass
 
     tvshow_title, season, episode = regex_tvshow(False, title)
@@ -335,7 +330,7 @@ def get_from_subdivx(sub_url, sub_data=None, sub_dir='', item=Item(), sub_url_al
             sub = extract_file_online(sub_dir, filename)
             if sub and filetools.exists(filename):
                 filetools.remove(filename)
-        except:
+        except Exception:
            logger.info('sub no valido')
     else:
        logger.info('sub no valido')
@@ -356,29 +351,33 @@ def get_from_subscene(sub_url, sub_data=None, sub_dir='', item=Item()):
     try:
         sub = False
         host = httptools.obtain_domain(sub_url, scheme=True)
-        if not sub_dir: sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
-        sub_dir_init = sub_dir
+        if not sub_dir:
+            sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
+        # sub_dir_init = sub_dir
         sub_dir = filetools.join(sub_dir, sub_url.split('/')[-1])
-        res = filetools.mkdir(sub_dir)
+        filetools.mkdir(sub_dir)
 
-        if not sub_data: sub_data = httptools.downloadpage(sub_url, soup=True, **kwargs)
+        if not sub_data:
+            sub_data = httptools.downloadpage(sub_url, soup=True, **kwargs)
         if sub_data.sucess:
             languages = sub_data.soup.find_all('td', class_="language-start", id=re.compile('(?i)english|spanish'))
 
             spanish = False
             for language in languages:
                 lang = language.get('id', '')
-                if 'spanish' in lang: spanish = True
+                if 'spanish' in lang:
+                    spanish = True
                 elem = language.find_all_next('td', class_="a1")
                 
                 try:
                     for subtitle in elem:
                         if lang.lower() in subtitle.a.get('href', ''):
-                            sub_sub_url = urllib.urljoin(host, subtitle.a.get('href', ''))
+                            sub_sub_url = urlparse.urljoin(host, subtitle.a.get('href', ''))
                             sub_name = '%s-%s' % (sub_url.split('/')[-1], lang)
                         else:
                             break
-                        if item.contentType != 'episode': break
+                        if item.contentType != 'episode':
+                            break
 
                         sub_title = subtitle.a.find('span', class_=False).get_text(strip=True)
                         if item.contentEpisodeNumber:
@@ -388,24 +387,28 @@ def get_from_subscene(sub_url, sub_data=None, sub_dir='', item=Item()):
                         if scrapertools.find_single_match(sub_title, pattern):
                             if item.contentEpisodeNumber:
                                 season, episode = scrapertools.find_single_match(sub_title, pattern)
-                                if int(season) != item.contentSeason or int(episode) != item.contentEpisodeNumber: continue
+                                if int(season) != item.contentSeason or int(episode) != item.contentEpisodeNumber:
+                                    continue
                             else:
                                 season = scrapertools.find_single_match(sub_title, pattern)
-                                if int(season) != item.contentSeason: continue
+                                if int(season) != item.contentSeason:
+                                    continue
                             break
 
-                    if not sub_sub_url: continue
+                    if not sub_sub_url:
+                        continue
                     data_dl = httptools.downloadpage(sub_sub_url, soup=True, **kwargs)
 
                     if data_dl.sucess:
-                        zip_url = urllib.urljoin(host, data_dl.soup.find('li', class_="clearfix")\
+                        zip_url = urlparse.urljoin(host, data_dl.soup.find('li', class_="clearfix")\
                                                                    .find('div', class_="download")\
                                                                    .find('a').get('href', ''))
                     
                         if zip_url:
                             file_id = "%s.zip" % sub_name
                             filename = os.path.join(sub_dir, file_id)
-                            if filetools.exists(filename): filetools.remove(filename, silent=True)
+                            if filetools.exists(filename):
+                                filetools.remove(filename, silent=True)
 
                             data_dl = httptools.downloadpage(zip_url, **kwargs)
                             if data_dl.sucess:
@@ -418,23 +421,26 @@ def get_from_subscene(sub_url, sub_data=None, sub_dir='', item=Item()):
                                 except Exception:
                                     xbmc.executebuiltin('Extract("%s", "%s")' % (filename, sub_dir))
                                 time.sleep(1)
-                                res = filetools.remove(filename, silent=True)
+                                filetools.remove(filename, silent=True)
                                 sub = True
 
-                except:
+                except Exception:
                    logger.error('sub no valido')
                    logger.error(traceback.format_exc())
 
         if sub:
             sub = ''
             subtitles = filetools.listdir(sub_dir)
-            if subtitles: item.subtitle = []
+            if subtitles:
+                item.subtitle = []
             for subtitle in subtitles:
-                if spanish and ('spa' not in subtitle or 'esp' not in subtitle or 'cas' not in subtitle): continue
+                if spanish and ('spa' not in subtitle or 'esp' not in subtitle or 'cas' not in subtitle):
+                    continue
                 item.subtitle += [filetools.join(sub_dir, subtitle)]
                 break
             for subtitle in subtitles:
-                if subtitle not in item.subtitle: item.subtitle += [filetools.join(sub_dir, subtitle)]
+                if subtitle not in item.subtitle:
+                    item.subtitle += [filetools.join(sub_dir, subtitle)]
 
     except Exception:
         logger.error(traceback.format_exc())
@@ -479,7 +485,8 @@ def get_from_subdl(sub_url, sub_data=None, sub_dir='', item=Item()):
         for language in ['spanish', 'english']:
             if sub_titles.get('groupedSubtitles', {}).get(language):
                 for sub_title in sub_titles['groupedSubtitles'][language]:
-                    if sub_title.get('quality', '') not in ['webdl', 'bluray']: continue
+                    if sub_title.get('quality', '') not in ['webdl', 'bluray']:
+                        continue
                     link = sub_url_alt + sub_title.get('link', '')
                     file_id = '%s.zip' % sub_title.get('title', '')
                     filename = os.path.join(sub_dir, file_id)
@@ -490,7 +497,7 @@ def get_from_subdl(sub_url, sub_data=None, sub_dir='', item=Item()):
                         if sub and filetools.exists(filename):
                             filetools.remove(filename)
                         break
-                    except:
+                    except Exception:
                        logger.info('sub no valido')
 
     else:
@@ -550,7 +557,8 @@ def download_subtitles(item):
         for x, subtitle in enumerate(subtitles):
             data_dl = ''
             if not subtitle.startswith('http'):
-                if not item.subtitle: item.subtitle = subtitle
+                if not item.subtitle:
+                    item.subtitle = subtitle
                 continue
 
             subtitle_path_name = filetools.join(subtitles_path, subtitle.split('/')[-1])
@@ -560,7 +568,8 @@ def download_subtitles(item):
                     data_dl = funtion(subtitle, data_dl, subtitles_path, item)
                     if data_dl:
                         item.subtitle = data_dl
-                        if isinstance(item.subtitle, list): logger.debug(item.subtitle)
+                        if isinstance(item.subtitle, list):
+                            logger.debug(item.subtitle)
                         data_dl = ''
                         break
 
@@ -569,8 +578,9 @@ def download_subtitles(item):
 
             if data_dl: 
                 res = filetools.write(subtitle_path_name, data_dl.data)
-                if res and not item.subtitle: item.subtitle = subtitle_path_name
-    except:
+                if res and not item.subtitle:
+                    item.subtitle = subtitle_path_name
+    except Exception:
         logger.error(traceback.format_exc())
 
     return item

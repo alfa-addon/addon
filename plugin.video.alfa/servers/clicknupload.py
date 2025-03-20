@@ -1,18 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
-
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import logger
 
 page = ""
@@ -45,7 +35,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     media = scrapertools.find_single_match(data, "onClick=\"window.open\('([^']+)'")
     logger.error(media)
     # Solo es necesario codificar la ultima parte de la url
-    url_strip = urllib.quote(media.rsplit('/', 1)[1])
+    url_strip = urlparse.quote(media.rsplit('/', 1)[1])
     media_url = media.rsplit('/', 1)[0] + "/" + url_strip
 
     video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [clicknupload]", media_url])
