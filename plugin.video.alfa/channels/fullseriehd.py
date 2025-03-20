@@ -32,8 +32,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'fullseriehd', 
              'host': config.get_setting("current_host", 'fullseriehd', default=''), 
-             'host_alt': ["https://megaxserie.me/"], 
-             'host_black_list': ["https://megaserie.me/", "https://megaserie.net/"], 
+             'host_alt': ["https://seriesmega.org/"], 
+             'host_black_list': ["https://megaxserie.me/", "https://megaserie.me/", "https://megaserie.net/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
