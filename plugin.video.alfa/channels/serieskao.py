@@ -18,7 +18,7 @@ from modules import autoplay
 from bs4 import BeautifulSoup
 
 
-IDIOMAS = {'2': 'VOSE', "0": "LAT", "1": "CAST"}
+IDIOMAS = {'2': 'VOSE', "0": "LAT", "1": "CAST", "JAP": "JA"}
 
 list_language = list(IDIOMAS.values())
 
@@ -126,7 +126,7 @@ def list_all(item):
         if year == '':
             year = '-'
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumbnail, infoLabels={"year": year})
-        if "/serie/" in url:
+        if "/serie/" in url or "/anime/" in url:
             new_item.contentSerieName = title
             new_item.action = "seasons"
             new_item.context = filtertools.context(item, list_language, list_quality)
@@ -204,58 +204,79 @@ def findvideos(item):
     itemlist = list()
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, "video\[1\] = '([^']+)")
-    soup = create_soup(url)
-    matches = soup.find('div', class_='OptionsLangDisp').find_all('li')
-    for elem in matches:
-        url = elem['onclick']
-        lang = elem['data-lang']
-        url = scrapertools.find_single_match(url, "go_to_player(?:Vast|)\('([^']+)")
-        # url = "https://api.mycdn.moe/player/?id=%s" %url
-        # soup = create_soup(url)
-        # video_url = soup.iframe['src']
-        if url.startswith("http"):
-            video_url = url
-        elif url:
-            try:
-                video_url = base64.b64decode(url).decode()
-            except (ValueError, TypeError):
+    
+    if "embed69.org" in url:
+        # entrepeliculasyseries ya tenía esto solucionado así que gran parte de esto lo he copiado de allí
+        import ast
+        from lib.pyberishaes import GibberishAES
+        
+        data = httptools.downloadpage(url).data
+        clave = scrapertools.find_single_match(data, r"CryptoJS\.AES\.decrypt\(encrypted,\s*'([^']+)'")
+        dataLinkString = scrapertools.find_single_match(data, r"dataLink\s*=\s*([^;]+)")
+        
+        if clave and dataLinkString:
+            dataLink = ast.literal_eval(dataLinkString)
+            for langSection in dataLink:
+                language = langSection.get('video_language', 'LAT')
+                language = IDIOMAS.get(language, language)
+                for elem in langSection['sortedEmbeds']:
+                    if elem['servername'] != "download":
+                        video_url = GibberishAES(string=elem['link'], pass_=clave).result
+                        itemlist.append(Item(channel=item.channel, title='%s', action='play', url=video_url,
+                                               language=language, infoLabels=item.infoLabels))
+    else:
+        soup = create_soup(url)
+        matches = soup.find('div', class_='OptionsLangDisp').find_all('li')
+        for elem in matches:
+            url = elem['onclick']
+            lang = elem['data-lang']
+            url = scrapertools.find_single_match(url, "go_to_player(?:Vast|)\('([^']+)")
+            # url = "https://api.mycdn.moe/player/?id=%s" %url
+            # soup = create_soup(url)
+            # video_url = soup.iframe['src']
+            if url.startswith("http"):
                 video_url = url
-        else:
-            continue
+            elif url:
+                try:
+                    video_url = base64.b64decode(url).decode()
+                except (ValueError, TypeError):
+                    video_url = url
+            else:
+                continue
 
-        if "embedsito" in video_url:
-            continue
-        if "plusvip.net" in video_url:
-            continue
-            # # Con un continue aquí el siguiente código nunca se va a ejecutar, lo comento.
-            # try:
-            #     url_pattern = "(?:[\w\d]+://)?[\d\w]+\.[\d\w]+/moe\?data=(.+)$"
-            #     source_pattern = "this\[_0x5507eb\(0x1bd\)\]='(.+?)'"
+            if "embedsito" in video_url:
+                continue
+            if "plusvip.net" in video_url:
+                continue
+                # # Con un continue aquí el siguiente código nunca se va a ejecutar, lo comento.
+                # try:
+                #     url_pattern = "(?:[\w\d]+://)?[\d\w]+\.[\d\w]+/moe\?data=(.+)$"
+                #     source_pattern = "this\[_0x5507eb\(0x1bd\)\]='(.+?)'"
 
-            #     data = httptools.downloadpage(video_url).data
-            #     url = scrapertools.find_single_match(video_url, url_pattern)
-            #     source = scrapertools.find_single_match(data, source_pattern)
+                #     data = httptools.downloadpage(video_url).data
+                #     url = scrapertools.find_single_match(video_url, url_pattern)
+                #     source = scrapertools.find_single_match(data, source_pattern)
 
-            #     source_url = "https://plusvip.net{}".format(source)
-            #     data = httptools.downloadpage(source_url, post={'link': url},
-            #                                 referer=video_url)
-            #     video_url = data.json["link"]
-            # except Exception as e:
-            #     logger.error(e)
-        if "uptobox=" in video_url:
-            url = scrapertools.find_single_match(video_url, 'uptobox=([A-z0-9]+)')
-            video_url = "https://uptobox.com/%s" %url
-        if "1fichier=" in video_url:
-            url = scrapertools.find_single_match(video_url, '1fichier=\?([A-z0-9]+)')
-            video_url = "https://1fichier.com/?%s" %url
-        if "/embedsito.net/" in video_url:
-            data = httptools.downloadpage(video_url).data
-            url = scrapertools.find_single_match(data, 'var shareId = "([^"]+)"')
-            video_url = "https://www.amazon.com/clouddrive/share/%s" %url
-        language = IDIOMAS.get(lang, lang)
-        if "plusvip" not in video_url:
-            itemlist.append(Item(channel=item.channel, title='%s', action='play', url=video_url,
-                                       language=language, infoLabels=item.infoLabels))
+                #     source_url = "https://plusvip.net{}".format(source)
+                #     data = httptools.downloadpage(source_url, post={'link': url},
+                #                                 referer=video_url)
+                #     video_url = data.json["link"]
+                # except Exception as e:
+                #     logger.error(e)
+            if "uptobox=" in video_url:
+                url = scrapertools.find_single_match(video_url, 'uptobox=([A-z0-9]+)')
+                video_url = "https://uptobox.com/%s" %url
+            if "1fichier=" in video_url:
+                url = scrapertools.find_single_match(video_url, '1fichier=\?([A-z0-9]+)')
+                video_url = "https://1fichier.com/?%s" %url
+            if "/embedsito.net/" in video_url:
+                data = httptools.downloadpage(video_url).data
+                url = scrapertools.find_single_match(data, 'var shareId = "([^"]+)"')
+                video_url = "https://www.amazon.com/clouddrive/share/%s" %url
+            language = IDIOMAS.get(lang, lang)
+            if "plusvip" not in video_url:
+                itemlist.append(Item(channel=item.channel, title='%s', action='play', url=video_url,
+                                           language=language, infoLabels=item.infoLabels))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
