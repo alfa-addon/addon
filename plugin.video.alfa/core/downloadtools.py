@@ -6,33 +6,21 @@
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
-from past.utils import old_div
-#from future import standard_library
-#standard_library.install_aliases()
-#from builtins import str
 
 import sys
-PY3 = False
-VFS = True
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; VFS = False
-
-if PY3:
-    import urllib.parse as urllib   # Es muy lento en PY2.  En PY3 es nativo
-    import urllib.request as urllib2
-    import urllib.error as urllib_error
-else:
-    import urllib                   # Usamos el nativo de PY2 que es más rápido
-    import urllib2
-    import urllib2 as urllib_error
-
 import re
+import os
 import socket
 import time
+import ssl
 
 from platformcode import config, logger
 from core import filetools
+from core import urlparse
+from core.urlparse import urlerror
+from core.urlparse import urlrequest
 
-import ssl
+PY3 = VFS = sys.version_info >= (3,)
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -107,11 +95,11 @@ def limpia_nombre_excepto_1(s):
     # Titulo de entrada
     # Convierte a unicode
     try:
-        s = unicode(s, "utf-8")
+        s = s.decode("utf-8")
     except UnicodeError:
         # logger.info("no es utf-8")
         try:
-            s = unicode(s, "iso-8859-1")
+            s = s.decode("iso-8859-1")
         except UnicodeError:
             # logger.info("no es iso-8859-1")
             pass
@@ -188,7 +176,7 @@ def downloadbest(video_urls, title, continuar=False):
         try:
             fullpath = getfilefromtitle(url, title.strip())
         # Si falla, es porque la URL no vale para nada
-        except:
+        except Exception:
             import traceback
             logger.error(traceback.format_exc())
             continue
@@ -197,7 +185,7 @@ def downloadbest(video_urls, title, continuar=False):
         try:
             ret = downloadfile(url, fullpath, continuar=continuar)
         # Llegados a este punto, normalmente es un timeout
-        except urllib_error.URLError as e:
+        except urlerror.URLError:
             import traceback
             logger.error(traceback.format_exc())
             ret = -2
@@ -288,7 +276,7 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
             for additional_header in additional_headers:
                 logger.info("additional_header: " + additional_header)
                 name = re.findall("(.*?)=.*?", additional_header)[0]
-                value = urllib.unquote_plus(re.findall(".*?=(.*?)$", additional_header)[0])
+                value = urlparse.unquote_plus(re.findall(".*?=(.*?)$", additional_header)[0])
                 headers.append([name, value])
 
             url = url.split("|")[0]
@@ -297,8 +285,8 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
         # Timeout del socket a 60 segundos
         socket.setdefaulttimeout(60)
 
-        h = urllib2.HTTPHandler(debuglevel=0)
-        request = urllib2.Request(url)
+        h = urlrequest.HTTPHandler(debuglevel=0)
+        request = urlrequest.Request(url)
         for header in headers:
             logger.info("Header=" + header[0] + ": " + header[1])
             request.add_header(header[0], header[1])
@@ -306,11 +294,11 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
         if exist_size > 0:
             request.add_header('Range', 'bytes=%d-' % (exist_size,))
 
-        opener = urllib2.build_opener(h)
-        urllib2.install_opener(opener)
+        opener = urlrequest.build_opener(h)
+        urlrequest.install_opener(opener)
         try:
             connexion = opener.open(request)
-        except urllib_error.HTTPError as e:
+        except urlerror.HTTPError as e:
             logger.error("error %d (%s) al abrir la url %s" %
                          (e.code, e.msg, url))
             f.close()
@@ -356,19 +344,19 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
                         bloqueleido = connexion.read(blocksize)
                         after = time.time()
                         if (after - before) > 0:
-                            velocidad = old_div(len(bloqueleido), (after - before))
+                            velocidad = len(bloqueleido) // (after - before)
                             falta = totalfichero - grabado
                             if velocidad > 0:
-                                tiempofalta = old_div(falta, velocidad)
+                                tiempofalta = falta // velocidad
                             else:
                                 tiempofalta = 0
                             # logger.info(sec_to_hms(tiempofalta))
                             if not silent:
                                 progreso.update(percent, "%.2fMB/%.2fMB (%d%%) %.2f Kb/s %s falta " %
-                                                (descargadosmb, totalmb, percent, old_div(velocidad, 1024),
+                                                (descargadosmb, totalmb, percent, velocidad // 1024,
                                                  sec_to_hms(tiempofalta)))
                         break
-                    except:
+                    except Exception:
                         reintentos += 1
                         logger.info("ERROR en la descarga del bloque, reintento %d" % reintentos)
                         import traceback
@@ -381,7 +369,7 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
                         f.close()
                         progreso.close()
                         return -1
-                except:
+                except Exception:
                     pass
 
                 # Ha habido un error en la descarga
@@ -393,7 +381,7 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
 
                     return -2
 
-            except:
+            except Exception:
                 import traceback
                 logger.error(traceback.print_exc())
 
@@ -405,7 +393,7 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
 
                 return -2
 
-    except:
+    except Exception:
         if url.startswith("rtmp"):
             error = downloadfileRTMP(url, nombrefichero, silent)
             if error and not silent:
@@ -414,7 +402,6 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
         else:
             ret = -2
             import traceback
-            from pprint import pprint
             exc_type, exc_value, exc_tb = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value, exc_tb)
             for line in lines:
@@ -424,13 +411,13 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
 
     try:
         f.close()
-    except:
+    except Exception:
         pass
 
     if not silent:
         try:
             progreso.close()
-        except:
+        except Exception:
             pass
 
     logger.info("Fin descarga del fichero")
@@ -452,7 +439,7 @@ def downloadfileRTMP(url, nombrefichero, silent):
 
     if not filetools.isfile(rtmpdump_cmd) and not silent:
         from platformcode import platformtools
-        advertencia = platformtools.dialog_ok("Falta " + rtmpdump_cmd, "Comprueba que rtmpdump está instalado")
+        platformtools.dialog_ok("Falta " + rtmpdump_cmd, "Comprueba que rtmpdump está instalado")
         return True
 
     valid_rtmpdump_options = ["help", "url", "rtmp", "host", "port", "socks", "protocol", "playpath", "playlist",
@@ -481,13 +468,13 @@ def downloadfileRTMP(url, nombrefichero, silent):
         rtmpdump_args = [rtmpdump_cmd] + rtmpdump_args + ["-o", nombrefichero]
         from os import spawnv, P_NOWAIT
         logger.info("Iniciando descarga del fichero: %s" % " ".join(rtmpdump_args))
-        rtmpdump_exit = spawnv(P_NOWAIT, rtmpdump_cmd, rtmpdump_args)
+        spawnv(P_NOWAIT, rtmpdump_cmd, rtmpdump_args)
         if not silent:
             from platformcode import platformtools
-            advertencia = platformtools.dialog_ok("La opción de descarga RTMP es experimental",
+            platformtools.dialog_ok("La opción de descarga RTMP es experimental",
                                                   "y el vídeo se descargará en segundo plano.",
                                                   "No se mostrará ninguna barra de progreso.")
-    except:
+    except Exception:
         return True
 
     return
@@ -530,16 +517,16 @@ def downloadfileGzipped(url, pathfichero):
     # Timeout del socket a 60 segundos
     socket.setdefaulttimeout(10)
 
-    h = urllib2.HTTPHandler(debuglevel=0)
-    request = urllib2.Request(url, txdata, txheaders)
+    h = urlrequest.HTTPHandler(debuglevel=0)
+    request = urlrequest.Request(url, txdata, txheaders)
     # if existSize > 0:
     #    request.add_header('Range', 'bytes=%d-' % (existSize, ))
 
-    opener = urllib2.build_opener(h)
-    urllib2.install_opener(opener)
+    opener = urlrequest.build_opener(h)
+    urlrequest.install_opener(opener)
     try:
         connexion = opener.open(request)
-    except urllib_error.HTTPError as e:
+    except urlerror.HTTPError as e:
         logger.error("error %d (%s) al abrir la url %s" %
                      (e.code, e.msg, url))
         progreso.close()
@@ -589,7 +576,7 @@ def downloadfileGzipped(url, pathfichero):
         bloquedata = gzipper.read()
         gzipper.close()
         logger.info("Iniciando descarga del fichero, bloqueleido=%s" % len(bloqueleido))
-    except:
+    except Exception:
         logger.error("ERROR : El archivo a descargar no esta comprimido con Gzip")
         f.close()
         progreso.close()
@@ -621,17 +608,17 @@ def downloadfileGzipped(url, pathfichero):
                     gzipper.close()
                     after = time.time()
                     if (after - before) > 0:
-                        velocidad = old_div(len(bloqueleido), (after - before))
+                        velocidad = len(bloqueleido) // (after - before)
                         falta = totalfichero - grabado
                         if velocidad > 0:
-                            tiempofalta = old_div(falta, velocidad)
+                            tiempofalta = falta // velocidad
                         else:
                             tiempofalta = 0
                         logger.info(sec_to_hms(tiempofalta))
                         progreso.update(percent, "%.2fMB/%.2fMB (%d%%) %.2f Kb/s %s falta " %
-                                        (descargadosmb, totalmb, percent, old_div(velocidad, 1024), sec_to_hms(tiempofalta)))
+                                        (descargadosmb, totalmb, percent, velocidad // 1024, sec_to_hms(tiempofalta)))
                     break
-                except:
+                except Exception:
                     reintentos += 1
                     logger.info("ERROR en la descarga del bloque, reintento %d" % reintentos)
                     for line in sys.exc_info():
@@ -652,7 +639,7 @@ def downloadfileGzipped(url, pathfichero):
 
                 return -2
 
-        except:
+        except Exception:
             logger.info("ERROR en la descarga del fichero")
             for line in sys.exc_info():
                 logger.error("%s" % line)
@@ -694,7 +681,7 @@ def downloadIfNotModifiedSince(url, timestamp):
 
     # Comprueba si ha cambiado
     inicio = time.clock()
-    req = urllib2.Request(url)
+    req = urlrequest.Request(url)
     req.add_header('If-Modified-Since', fecha_formateada)
     req.add_header('User-Agent',
                    'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; es-ES; rv:1.9.2.12) Gecko/20101026 Firefox/3.6.12')
@@ -702,14 +689,14 @@ def downloadIfNotModifiedSince(url, timestamp):
     updated = False
 
     try:
-        response = urllib2.urlopen(req)
+        response = urlrequest.urlopen(req)
         data = response.read()
 
         # Si llega hasta aquí, es que ha cambiado
         updated = True
         response.close()
 
-    except urllib_error.URLError as e:
+    except urlerror.URLError as e:
         # Si devuelve 304 es que no ha cambiado
         if hasattr(e, 'code'):
             logger.info("Codigo de respuesta HTTP : %d" % e.code)
@@ -762,7 +749,7 @@ def download_all_episodes(item, channel, first_episode="", preferred_server="vid
             logger.info("episode=" + episode_item.title)
             episode_title = scrapertools.find_single_match(episode_item.title, "(\d+x\d+)")
             logger.info("episode=" + episode_title)
-        except:
+        except Exception:
             import traceback
             logger.error(traceback.format_exc())
             continue
@@ -779,7 +766,7 @@ def download_all_episodes(item, channel, first_episode="", preferred_server="vid
         # Extrae los mirrors
         try:
             mirrors_itemlist = channel.findvideos(episode_item)
-        except:
+        except Exception:
             mirrors_itemlist = servertools.find_video_items(episode_item)
         print(mirrors_itemlist)
 
@@ -875,7 +862,7 @@ def download_all_episodes(item, channel, first_episode="", preferred_server="vid
                         try:
                             from platformcode import platformtools
                             platformtools.dialog_ok("plugin", "Descarga abortada")
-                        except:
+                        except Exception:
                             pass
                         return
                     else:

@@ -450,7 +450,6 @@ def list_all(item):
     
     itemlist = []
     soup = get_source(item.url, soup=True)
-    logger.debug(soup)
     if not soup:
         platformtools.dialog_notification(
             "Cambio de estructura",

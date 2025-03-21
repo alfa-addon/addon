@@ -1,18 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
-
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import logger
 
 data = ''
@@ -45,7 +35,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     # Si el enlace es directo de upstream
     if "uptobox" not in page_url:
-        if not data: data = httptools.downloadpage(page_url).data
+        if not data:
+            data = httptools.downloadpage(page_url).data
         if "Video not found" in data:
             page_url = page_url.replace("uptostream.com/iframe/", "uptobox.com/")
             data = httptools.downloadpage(page_url).data
@@ -53,7 +44,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         else:
             video_urls = uptostream(data)
     else:
-        if not data: data = httptools.downloadpage(page_url).data
+        if not data:
+            data = httptools.downloadpage(page_url).data
         # Si el archivo tiene enlace de streaming se redirige a upstream
         if "Streaming link:" in data:
             page_url = "http://uptostream.com/iframe/" + scrapertools.find_single_match(page_url,
@@ -118,7 +110,7 @@ def uptobox(url, data):
     for m in media:
         if "uptobox.com" in m:
             media = m
-            url_strip = urllib.quote(media.rsplit('/', 1)[1])
+            url_strip = urlparse.quote(media.rsplit('/', 1)[1])
             media_url = media.rsplit('/', 1)[0] + "/" + url_strip
             video_urls.append([media_url[-4:] + " [uptobox]", media_url])
             break

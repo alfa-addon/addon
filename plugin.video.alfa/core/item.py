@@ -3,26 +3,19 @@
 # Item is the object we use for representing data 
 # --------------------------------------------------------------------------------
 
-#from builtins import str
-from builtins import object
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-    from html.parser import unescape
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
-    from HTMLParser import HTMLParser
-    unescape = HTMLParser().unescape
+from __future__ import unicode_literals
 
 import base64
 import copy
 
+from core import urlparse
+from core.urlparse import unescape
 from core import jsontools as json
+
+import sys
+PY3 = sys.version_info >= (3,)
+if PY3:
+    unicode = str
 
 
 class InfoLabels(dict):
@@ -34,7 +27,7 @@ class InfoLabels(dict):
             # forzamos int() en season y episode
             try:
                 super(InfoLabels, self).__setitem__(name, int(value))
-            except:
+            except Exception:
                 pass
 
         elif name in ['IMDBNumber', 'imdb_id']:
@@ -55,7 +48,7 @@ class InfoLabels(dict):
     def __getitem__(self, key):
         try:
             return super(InfoLabels, self).__getitem__(key)
-        except:
+        except Exception:
             return self.__missing__(key)
 
     def __missing__(self, key):
@@ -170,7 +163,8 @@ class Item(object):
         Función llamada al modificar cualquier atributo del item, modifica algunos atributos en función de los datos
         modificados.
         """
-        if PY3: name = self.toutf8(name)
+        if PY3:
+            name = self.toutf8(name)
         value = self.toutf8(value)
         if name == "__dict__":
             for key in value:
@@ -295,7 +289,7 @@ class Item(object):
         @type parentContent: item
         """
         # Comprueba que parentContent sea un Item
-        if not type(parentContent) == type(self):
+        if not isinstance(parentContent, type(self)):
             return
         # Copia todos los atributos que empiecen por "content" y esten declarados y los infoLabels
         for attr in parentContent.__dict__:
@@ -353,7 +347,7 @@ class Item(object):
         if not dump:
             # set a str to avoid b64encode fails
             dump = "".encode("utf8")
-        return str(urllib.quote(base64.b64encode(dump)))
+        return str(urlparse.quote(base64.b64encode(dump)))
 
     def fromurl(self, url):
         """
@@ -368,16 +362,16 @@ class Item(object):
             url = url.split("?")[1]
         decoded = False
         try:
-            str_item = base64.b64decode(urllib.unquote(url))
+            str_item = base64.b64decode(urlparse.unquote(url))
             json_item = json.load(str_item, object_hook=self.toutf8)
             if json_item is not None and len(json_item) > 0:
                 self.__dict__.update(json_item)
                 decoded = True
-        except:
+        except Exception:
             pass
 
         if not decoded:
-            url = urllib.unquote_plus(url)
+            url = urlparse.unquote_plus(url)
             dct = dict([[param.split("=")[0], param.split("=")[1]] for param in url.split("&") if "=" in param])
             self.__dict__.update(dct)
             self.__dict__ = self.toutf8(self.__dict__)
@@ -400,7 +394,7 @@ class Item(object):
         """
         if path:
             #open(path, "wb").write(json.dump(self.__dict__))
-            res = filetools.write(path, json.dump(self.__dict__))
+            filetools.write(path, json.dump(self.__dict__))
         else:
             return json.dump(self.__dict__)
 
@@ -458,9 +452,9 @@ class Item(object):
         @type value: str
         """
         try:
-            unicode_title = unicode(value, "utf8", "ignore")
+            unicode_title = value.decode("utf8", errors="ignore")
             return unescape(unicode_title).encode("utf8")
-        except:
+        except Exception:
             if PY3 and isinstance(value, bytes):
                 value = value.decode("utf8")
             return value
@@ -474,13 +468,14 @@ class Item(object):
         else:
             value = self.__dict__
 
-        if isinstance(value, unicode):
+        if not PY3 and isinstance(value, unicode):
             value = value.encode("utf8")
-            if PY3: value = value.decode("utf8")
+            if PY3:
+                value = value.decode("utf8")
             return value
 
         elif not PY3 and isinstance(value, str):
-            return unicode(value, "utf8", "ignore").encode("utf8")
+            return value.decode("utf8", errors="ignore").encode("utf8")
             
         elif PY3 and isinstance(value, bytes):
             return value.decode("utf8")

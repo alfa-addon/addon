@@ -3,18 +3,8 @@
 # XBMC Library Tools
 # ------------------------------------------------------------
 
-#from future import standard_library
-#standard_library.install_aliases()
-#from builtins import str
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-    
-if PY3:
-    import urllib.request as urllib2                                # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib2                                                  # Usamos el nativo de PY2 que es más rápido
-    
+
 import os
 import threading
 import time
@@ -23,9 +13,12 @@ import re
 import xbmc
 from core import filetools
 from core import jsontools
+from core import scrapertools
+from core.urlparse import urlrequest
 from platformcode import config, logger
 from platformcode import platformtools
-from core import scrapertools
+
+PY3 = sys.version_info[0] >= 3
 
 
 def mark_auto_as_watched(item):
@@ -101,7 +94,7 @@ def sync_trakt_addon(path_folder):
         try:
             from resources.lib.traktapi import traktAPI
             traktapi = traktAPI()
-        except:
+        except Exception:
             return
 
         shows = traktapi.getShowsWatched({})
@@ -193,7 +186,7 @@ def sync_trakt_addon(path_folder):
                             serie.library_playcounts.update({serie.title: 1})
 
                         logger.debug("los valores nuevos %s " % serie.library_playcounts)
-                        res = write_nfo(tvshow_file, head_nfo, serie)
+                        write_nfo(tvshow_file, head_nfo, serie)
 
                         break
                     else:
@@ -202,7 +195,7 @@ def sync_trakt_addon(path_folder):
                 else:
                     logger.error("no se ha podido obtener el id, trakt tiene: %s" % show_aux['ids'])
 
-            except:
+            except Exception:
                 import traceback
                 logger.error(traceback.format_exc())
 
@@ -376,14 +369,14 @@ def mark_season_as_watched_on_kodi(item, value=1):
         return                                                                  # Ya está actualizando
     
     try:
-        data = get_data(payload)
+        get_data(payload)
         
         """
         # Recargamos el Skin para que actualice los widgets.  Dejamos un tiempo para que termine la actualización
         xbmc.executebuiltin('ReloadSkin()')
         time.sleep(1)
         """
-    except:
+    except Exception:
         pass
 
 
@@ -411,9 +404,9 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
     if config.get_setting("videolibrary_xbmc_db_location"):
         return
 
-    request_season = ''
-    if item.contentSeason:
-        request_season = ' and c12= %s' % item.contentSeason
+    # request_season = ''
+    # if item.contentSeason:
+    #     request_season = ' and c12= %s' % item.contentSeason
     
     if item.video_path:
         path = item.video_path
@@ -422,11 +415,11 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
     
     fields = 'strFileName, playCount'
     if item.contentType == 'movie':
-        video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+        # video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
         view = 'movie'
         search = ' or uniqueid_value like "%s"' % item.infoLabels['tmdb_id']
     else:
-        video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+        # video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
         if item.contentType == 'tvshow':
             view = 'season'
             fields = 'season, playCount, episodes'
@@ -555,10 +548,6 @@ def mark_content_as_watched_on_alfa(path):
         elif playCount >= 1:
             playCount_final = 1
 
-        elif not PY3 and isinstance(title_plain, (str, unicode)):
-            title_plain = title_plain.decode("utf-8").encode("utf-8")   #Hacemos esto porque si no genera esto: u'title_plain'
-        elif PY3 and isinstance(var, bytes):
-            title_plain = title_plain.decode('utf-8')
         item.library_playcounts.update({title_plain: playCount_final})  #actualizamos el playCount del .nfo
 
     if item.infoLabels['mediatype'] == "tvshow":                        #Actualizamos los playCounts de temporadas y Serie
@@ -567,7 +556,7 @@ def mark_content_as_watched_on_alfa(path):
                 season_num = int(scrapertools.find_single_match(season, 'season (\d+)'))    #salvamos el núm, de Temporada
                 item = check_season_playcount(item, season_num)    #llamamos al método que actualiza Temps. y Series
 
-    res = write_nfo(path, head_nfo, item)
+    write_nfo(path, head_nfo, item)
     
     #logger.debug(item)
 
@@ -587,13 +576,13 @@ def get_data(payload):
         try:
             try:
                 xbmc_port = config.get_setting("videolibrary_xbmc_db_port")
-            except:
+            except Exception:
                 xbmc_port = 0
 
             xbmc_json_rpc_url = "http://" + config.get_setting("videolibrary_xbmc_db_host") + ":" + str(
                 xbmc_port) + "/jsonrpc"
-            req = urllib2.Request(xbmc_json_rpc_url, data=jsontools.dump(payload), headers=headers)
-            f = urllib2.urlopen(req)
+            req = urlrequest.Request(xbmc_json_rpc_url, data=jsontools.dump(payload), headers=headers)
+            f = urlrequest.urlopen(req)
             response = f.read()
             f.close()
 
@@ -663,7 +652,7 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
     while xbmc.getCondVisibility('Library.IsScanningVideo()'):
         xbmc.sleep(500)
 
-    data = get_data(payload)
+    get_data(payload)
 
 
 def clean(mostrar_dialogo=False):
@@ -740,7 +729,7 @@ def set_content(content_type, silent=False):
                         # Instalar metadata.themoviedb.org
                         xbmc.executebuiltin('InstallAddon(%s)' % metadata_name, True)
                         logger.info("Instalado el Scraper de películas de TheMovieDB")
-                    except:
+                    except Exception:
                         pass
 
                 continuar = (install and xbmc.getCondVisibility('System.HasAddon(%s)' % metadata_name))
@@ -765,7 +754,7 @@ def set_content(content_type, silent=False):
                         xbmc.executebuiltin('InstallAddon(%s)' % metadata_name, True)
                         if xbmc.getCondVisibility('System.HasAddon(%s)' % metadata_name):
                             continuar = True
-                    except:
+                    except Exception:
                         pass
 
                 continuar = (install and continuar)
@@ -793,7 +782,7 @@ def set_content(content_type, silent=False):
                         # Instalar metadata.tvshows.themoviedb.org
                         xbmc.executebuiltin('InstallAddon(%s)' % metadata_name, True)
                         logger.info("Instalado el Scraper de series de The TVDB")
-                    except:
+                    except Exception:
                         pass
 
                 continuar = (install and xbmc.getCondVisibility('System.HasAddon(%s)' % metadata_name))
@@ -819,7 +808,7 @@ def set_content(content_type, silent=False):
                         xbmc.executebuiltin('InstallAddon(%s)' % metadata_name, True)
                         if xbmc.getCondVisibility('System.HasAddon(%s)' % metadata_name):
                             continuar = True
-                    except:
+                    except Exception:
                         pass
 
                 continuar = (install and continuar)
@@ -960,7 +949,8 @@ def execute_sql_kodi(sql, silent=False, file_db=''):
     @return: lista con el resultado de la consulta
     @rtype records: list of tuples
     """
-    if not silent: logger.info()
+    if not silent:
+        logger.info()
     nun_records = 0
     records = None
 
@@ -981,14 +971,16 @@ def execute_sql_kodi(sql, silent=False, file_db=''):
                 break
 
     if file_db:
-        if not silent: logger.info("Archivo de BD: %s" % file_db)
+        if not silent:
+            logger.info("Archivo de BD: %s" % file_db)
         conn = None
         try:
             import sqlite3
             conn = sqlite3.connect(file_db)
             cursor = conn.cursor()
 
-            if not silent: logger.info("Ejecutando sql: %s" % sql)
+            if not silent:
+                logger.info("Ejecutando sql: %s" % sql)
             cursor.execute(sql)
             conn.commit()
 
@@ -1002,9 +994,10 @@ def execute_sql_kodi(sql, silent=False, file_db=''):
                 nun_records = conn.total_changes
 
             conn.close()
-            if not silent or silent == 'found': logger.info("Consulta ejecutada. Registros: %s" % nun_records)
+            if not silent or silent == 'found':
+                logger.info("Consulta ejecutada. Registros: %s" % nun_records)
 
-        except:
+        except Exception:
             logger.error("Error al ejecutar la consulta sql: " + str(sql))
             if conn:
                 conn.close()

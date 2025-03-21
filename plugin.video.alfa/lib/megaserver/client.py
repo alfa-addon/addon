@@ -5,14 +5,6 @@ from __future__ import print_function
 from builtins import range
 from builtins import object
 from past.utils import old_div
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
 
 import patch
 import base64
@@ -20,9 +12,11 @@ import json
 import random
 import struct
 import time
+import traceback
 from threading import Thread
 
 from core import httptools
+from core import urlparse
 from platformcode import logger
 
 from .file import File
@@ -97,7 +91,7 @@ class Client(object):
         if len(self.files) > 1:
             return "http://" + self.ip + ":" + str(self.port) + "/playlist.pls"
         else:
-            return "http://" + self.ip + ":" + str(self.port) + "/" + urllib.quote(self.files[0].name.encode("utf8"))
+            return "http://" + self.ip + ":" + str(self.port) + "/" + urlparse.quote(self.files[0].name.encode("utf8"))
 
     def get_files(self):
         files = []
@@ -105,7 +99,7 @@ class Client(object):
         if self.files:
             for file in self.files:
                 n = file.name.encode("utf8")
-                u = "http://" + self.ip + ":" + str(self.port) + "/" + urllib.quote(n)
+                u = "http://" + self.ip + ":" + str(self.port) + "/" + urlparse.quote(n)
                 s = file.size
                 file_id = file.file_id
                 enc_url = file.url
@@ -118,7 +112,7 @@ class Client(object):
                 else:
                     return files
 
-            except:
+            except Exception:
                 logger.error(traceback.format_exc())
                 pass
 
@@ -200,7 +194,7 @@ class Client(object):
           patch.unfix_path()
           from Cryptodome.Cipher import AES
           patch.fix_path()
-      except:
+      except Exception:
           from Crypto.Cipher import AES
       decryptor = AES.new(key, AES.MODE_CBC, b'\0' * 16)
       return decryptor.decrypt(data)

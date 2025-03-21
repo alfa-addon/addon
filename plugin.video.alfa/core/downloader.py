@@ -21,7 +21,6 @@ metodos:
 from __future__ import division
 from builtins import range
 from builtins import object
-from past.utils import old_div
 from core import urlparse
 
 import sys
@@ -36,14 +35,10 @@ import ssl
 from threading import Thread, Lock
 
 from core import filetools, jsontools
+from core.urlparse import urlrequest
 from platformcode import logger, config
 
 PY3 = VFS = sys.version_info[0] >= 3
-
-if PY3:
-    import urllib.request as urllib2
-else:
-    import urllib2
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -80,7 +75,7 @@ class Downloader(object):
     @property
     def remaining_time(self):
         if self.speed[0] and self._file_size:
-            t = old_div((self.size[0] - self.downloaded[0]), self.speed[0])
+            t = (self.size[0] - self.downloaded[0]) // self.speed[0]
         else:
             t = 0
 
@@ -212,14 +207,8 @@ class Downloader(object):
         time.sleep(1)
 
         while self.state == self.states.downloading:
-            self._average_speed = old_div(
-                (self.downloaded[0] - self._start_downloaded),
-                (time.time() - self._start_time),
-            )
-            self._speed = old_div(
-                (self.downloaded[0] - self._start_downloaded),
-                (time.time() - self._start_time),
-            )
+            self._average_speed = (self.downloaded[0] - self._start_downloaded) // (time.time() - self._start_time)
+            self._speed = (self.downloaded[0] - self._start_downloaded) // (time.time() - self._start_time)
             # self._speed = (self.downloaded[0] - downloaded) / (time.time()  -t)
 
             if time.time() - t > 5:
@@ -368,8 +357,8 @@ class Downloader(object):
     def __get_download_headers__(self):
         if self.url.startswith("https"):
             try:
-                conn = urllib2.urlopen(
-                    urllib2.Request(
+                conn = urlrequest.urlopen(
+                    urlrequest.Request(
                         self.url.replace("https", "http"), headers=self._headers
                     )
                 )
@@ -381,13 +370,13 @@ class Downloader(object):
         for x in range(3):
             try:
                 if not sys.hexversion > 0x0204FFFF:
-                    conn = urllib2.urlopen(
-                        urllib2.Request(self.url, headers=self._headers)
+                    conn = urlrequest.urlopen(
+                        urlrequest.Request(self.url, headers=self._headers)
                     )
                     conn.fp._sock.close()
                 else:
-                    conn = urllib2.urlopen(
-                        urllib2.Request(self.url, headers=self._headers), timeout=5
+                    conn = urlrequest.urlopen(
+                        urlrequest.Request(self.url, headers=self._headers), timeout=5
                     )
 
             except Exception:
@@ -473,9 +462,7 @@ class Downloader(object):
         else:
             return (
                 value,
-                old_div(value, 1024.0 ** int(math.log(value, 1024))),
-                units[int(math.log(value, 1024))],
-            )
+                value, 1024.0 ** int(math.log(value, 1024))) // units[int(math.log(value, 1024))]
 
     def __get_download_info__(self):
         # Continuamos con una descarga que contiene la info al final del archivo
@@ -573,10 +560,10 @@ class Downloader(object):
             end = ""
         headers.update({"Range": "bytes=%s-%s" % (start, end)})
         if not sys.hexversion > 0x0204FFFF:
-            conn = urllib2.urlopen(urllib2.Request(self.url, headers=headers))
+            conn = urlrequest.urlopen(urlrequest.Request(self.url, headers=headers))
         else:
-            conn = urllib2.urlopen(
-                urllib2.Request(self.url, headers=headers), timeout=5
+            conn = urlrequest.urlopen(
+                urlrequest.Request(self.url, headers=headers), timeout=5
             )
         return conn
 
@@ -733,7 +720,7 @@ class Downloader(object):
                 try:
                     start = time.time()
                     buffer = connection.read(self._block_size)
-                    speed.append(old_div(len(buffer), ((time.time() - start) or 0.001)))
+                    speed.append(len(buffer) // ((time.time() - start) or 0.001))
                 except Exception:
                     logger.info("ID: %s Error al descargar los datos" % id)
                     self._download_info["parts"][id]["status"] = self.states.error
@@ -750,9 +737,7 @@ class Downloader(object):
                         self._buffer[id].append(buffer)
                         self._download_info["parts"][id]["current"] += len(buffer)
                         if len(speed) > 10:
-                            velocidad_minima = old_div(
-                                old_div(sum(speed), len(speed)), 3
-                            )
+                            velocidad_minima = (sum(speed) // len(speed)) // 3
                             velocidad = speed[-1]
                             vm = self.__change_units__(velocidad_minima)
                             v = self.__change_units__(velocidad)
