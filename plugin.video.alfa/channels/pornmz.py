@@ -20,7 +20,7 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-     ############################# cloudflare ###################################
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -156,8 +156,13 @@ def findvideos(item):
         url += "|Referer=%s" % item.url
         itemlist.append(item.clone(action="play", title=quality, url=url) )
     if not matches:
-        url = soup.find('iframe')['src']
-        url = create_soup(url).find('iframe')['src']
+        url = soup.find('div', class_='responsive-player').find(re.compile("(?:iframe|source)"))['src']
+        if "php?q=" in url:
+            import base64
+            url = url.split('php?q=')
+            url_decode = base64.b64decode(url[-1]).decode("utf8")
+            url = AlfaChannel.do_unquote(url_decode)
+            url = scrapertools.find_single_match(url, '<iframe src="([^"]+)"')
         itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist[::-1]
@@ -180,8 +185,13 @@ def play(item):
         url += "|Referer=%s" % item.url
         itemlist.append(['%s' %quality, url])
     if not matches:
-        url = soup.find('iframe')['src']
-        url = create_soup(url).find('iframe')['src']
+        url = soup.find('div', class_='responsive-player').find(re.compile("(?:iframe|source)"))['src']
+        if "php?q=" in url:
+            import base64
+            url = url.split('php?q=')
+            url_decode = base64.b64decode(url[-1]).decode("utf8")
+            url = AlfaChannel.do_unquote(url_decode)
+            url = scrapertools.find_single_match(url, '<iframe src="([^"]+)"')
         itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist[::-1]
