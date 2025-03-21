@@ -14,6 +14,8 @@ from core import jsontools as json
 
 import sys
 PY3 = sys.version_info >= (3,)
+if PY3:
+    unicode = str
 
 
 class InfoLabels(dict):
@@ -466,7 +468,7 @@ class Item(object):
         else:
             value = self.__dict__
 
-        if not isinstance(value, bytes):
+        if not PY3 and isinstance(value, unicode):
             value = value.encode("utf8")
             if PY3:
                 value = value.decode("utf8")

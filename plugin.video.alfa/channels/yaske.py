@@ -28,8 +28,16 @@ SERVER = {
 
 IDIOMAS = {"es": "CAST", "la": "LAT", "en_ES": "VOSE", "sub-es": "VOSE"}
 
+CALIDADES = {
+    "69efbcea-12fa-4de8-bd19-02fa4f3278e0":"HD-1080p",
+    "0cff0831-29ef-402d-8261-2c9f1880d807":"HD-720p",
+    "d9297a62-c289-4780-8c00-dab7d3249839":"HD-TS",
+    "5f744bff-7374-40c2-8f22-bb493823d3b9":"CAM",
+    "042a13b8-ea18-4e56-9d4e-aec2684746ec":"SD"
+}
+
 list_language = list(IDIOMAS.values())
-list_quality = []
+list_quality = list(CALIDADES.values())
 list_servers = list(set(SERVER.values()))
 
 __channel__='yaske'
@@ -259,7 +267,7 @@ def findvideos(item):
             continue
         else: 
             links.append(hash)
-        quality = elem['quality']
+        quality = CALIDADES.get(elem['quality'], 'HD-1080p')
         lang = elem['language']
         domain = elem['domain'].split(".")[0]
         if domain in ["katfile", "nitroflare", "dailyuploads"]:
