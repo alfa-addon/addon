@@ -32,10 +32,11 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    if "emturbovid" in page_url:
-        patron = "urlPlay\s*=\s*'([^')]+)'"
-    else:
-        patron = 'urlPlay\s*=\s*"([^")]+)"'
+    # if "emturbovid" in page_url:
+        # patron = "urlPlay\s*=\s*'([^')]+)'"
+    # else:
+        # patron = 'urlPlay\s*=\s*"([^")]+)"'
+    patron = 'data-hash\s*=\s*"([^")]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
         if server not in url:

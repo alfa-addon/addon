@@ -135,7 +135,7 @@ def episodios(item):
     logger.info()
     itemlist = list()
     data = httptools.downloadpage(item.url, canonical=canonical).data
-    patron  = '<a href="([^"]+)" target="_blank" class="fa fa-download".*?'
+    patron  = '<a target="_blank" class="fa fa-download" href="([^"]+)".*?'
     patron += 'Episodio ([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedepi in matches:
@@ -231,9 +231,10 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    
     if "/paste/" not in item.url:
-        data = httptools.downloadpage(item.url, canonical=canonical).data.replace("&quot;",'"').replace("amp;","").replace("#038;","")
-        url = scrapertools.find_single_match(data, '<span><a rel="nofollow" target="_blank" href="([^"]+)"')
+        data = httptools.downloadpage(item.url).data
+        url = scrapertools.find_single_match(data, '<div class="TPTblCn">.*?href="([^"]+)"')
         data = httptools.downloadpage(url).data
     else:
         data = httptools.downloadpage(item.url).data
