@@ -503,12 +503,13 @@ def check_proxy(url, **opt):
         url = proxy_data["url"]
         proxy_data["stat"] = proxy_data.get("stat", "").replace(",P", ", P")
 
-        if proxy_data.get("dict", {}).get("https", ""):
-            proxy_data["dict"]["http"] = str("http://" + proxy_data["dict"]["https"])
-            proxy_data["dict"]["https"] = proxy_data["dict"]["http"]
-        elif proxy_data.get("dict", {}).get("http", ""):
-            proxy_data["dict"]["https"] = str("http://" + proxy_data["dict"]["http"])
-            proxy_data["dict"]["http"] = proxy_data["dict"]["https"]
+        if not "proxy_addr_forced" in proxy_data:
+            if proxy_data.get("dict", {}).get("https", ""):
+                proxy_data["dict"]["http"] = str("http://" + proxy_data["dict"]["https"])
+                proxy_data["dict"]["https"] = proxy_data["dict"]["http"]
+            elif proxy_data.get("dict", {}).get("http", ""):
+                proxy_data["dict"]["https"] = str("http://" + proxy_data["dict"]["http"])
+                proxy_data["dict"]["http"] = proxy_data["dict"]["https"]
 
     return url, proxy_data, opt
 
