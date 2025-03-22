@@ -151,7 +151,7 @@ def run(item=None):
     item = monkey_patch_modules(item)
 
     try:
-        if not config.get_setting('tmdb_active'):
+        if config.get_setting('tmdb_active') is None:
             config.set_setting('tmdb_active', True)
 
         # Special action for playing a video from the library
