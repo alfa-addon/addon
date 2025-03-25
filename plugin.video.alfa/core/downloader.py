@@ -462,7 +462,9 @@ class Downloader(object):
         else:
             return (
                 value,
-                value, 1024.0 ** int(math.log(value, 1024))) // units[int(math.log(value, 1024))]
+                value // 1024.0 ** int(math.log(value, 1024)),
+                units[int(math.log(value, 1024))]
+            )
 
     def __get_download_info__(self):
         # Continuamos con una descarga que contiene la info al final del archivo
