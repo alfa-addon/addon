@@ -12,18 +12,12 @@ kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'igno
 
 
 # https://filemooon.link/e/mlx76kltz6tn    
+# https://filemoon.to/  error
 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data, server
-    
-    datos = httptools.downloadpage(page_url, **kwargs).data
-    if "not found" in datos:
-        return False,  "[filemoon] El fichero no existe o ha sido borrado"
-    else:
-        page_url = scrapertools.find_single_match(datos, '<iframe src="([^"]+)')
-        
     
     kwargs['headers'] = {
         'Referer': page_url,
@@ -32,9 +26,16 @@ def test_video_exists(page_url):
         'Sec-Fetch-Site': 'cross-site'
     }
     
+    page_url = httptools.downloadpage(page_url, follow_redirects=False, **kwargs).headers["location"]
+    datos = httptools.downloadpage(page_url, **kwargs).data
+    
+    if "not found" in datos:
+        return False,  "[filemoon] El fichero no existe o ha sido borrado"
+    else:
+        page_url = scrapertools.find_single_match(datos, '<iframe src="([^"]+)')
+    
     response = httptools.downloadpage(page_url, referer=page_url, **kwargs)
     data = response.data
-    
     if response.code == 404 or "not found" in response.data:
         return False,  "[filemoon] El fichero no existe o ha sido borrado"
     return True, ""

@@ -5,15 +5,15 @@
     "patterns": [
       {
         "pattern": "https://(?:filemo+n|bf0skv|klcams|eliota[a-z]+).(?:sx|to|in|top|nl|lat|\\w{2,4})/(?:e|d)/([a-z0-9]+)",
-        "url": "https://filemoon.to/e/\\1"
+        "url": "https://filemooon.link/e/\\1"
       },
       {
         "pattern": "https://moonembed.(?:sx|to|in|top|nl|xyz)/(?:e|d)/([a-z0-9]+)",
-        "url": "https://filemoon.to/e/\\1"
+        "url": "https://filemooon.link/e/\\1"
       },
       {
         "pattern": "https://x08.(?:online||\\w{2,4})/(?:e|d)/([a-z0-9]+)",
-        "url": "https://filemoon.to/e/\\1"
+        "url": "https://filemooon.link/e/\\1"
       }
     ]
   },
