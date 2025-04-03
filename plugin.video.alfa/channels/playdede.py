@@ -88,7 +88,7 @@ SERVIDORES = {
     "filemoon": "filemoon",
     "luluvideo": "lulustream",
     "vembed": "vidguard",
-    "bigwarp": "tiwikiwi",
+    "bigwarp": "bigwarp",
     "waaw": "netu",
     "voe": "voe",
     "streamwish": "streamwish",

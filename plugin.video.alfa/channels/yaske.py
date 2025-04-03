@@ -257,8 +257,10 @@ def findvideos(item):
         series = data['title']['is_series']
     
     videos = data['title']['videos']
-    videos += data['title']['downloads']
-    videos += data['alternative_videos']
+    if data['title'].get('downloads', ''):
+        videos += data['title']['downloads']
+    elif data.get('alternative_videos', ''):
+        videos += data['alternative_videos']
     links = []
     for elem in videos:
         # link = elem['src']
