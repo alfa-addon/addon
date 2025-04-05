@@ -84,7 +84,6 @@ def mainlist(item):
     return itemlist
 
 
-
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
@@ -125,11 +124,11 @@ def lista(item):
             for idioma in idiomas:
                 lang = idioma['language']
                 language.append(IDIOMAS.get(lang, lang))
-
+        
         year = '-'
         if elem.get('year', ''):
             year = elem['year']
-
+        
         new_item = Item(channel=item.channel, title=title, thumbnail=thumbnail, 
                         language=language, infoLabels={"year": year})
         if series:
@@ -174,7 +173,11 @@ def seasons(item):
     
     url = "%sapi/v1/titles/%s?loader=titlePage" %(host, item.id)
     data = httptools.downloadpage(url, referer=host, canonical=canonical).json
-    item.season_num = data['seasons']['total']
+    
+    try:
+        item.season_num = data['title']['primary_video']['season_num']# if data['title'].get('primary_video', '') else data['seasons']['total']
+    except:
+        item.season_num = data['seasons']['total']
     
     total = int(item.season_num)
     te = 1
@@ -192,7 +195,7 @@ def seasons(item):
     tmdb.set_infoLabels_itemlist(itemlist, True)
     
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url,
+        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url, id= item.id,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
     return itemlist
 
@@ -235,7 +238,7 @@ def episodios(item):
     logger.info()
     itemlist = []
     templist = seasons(item)
-    for tempitem in templist:
+    for tempitem in templist[:-1]:
         itemlist += episodesxseasons(tempitem)
     return itemlist
 
