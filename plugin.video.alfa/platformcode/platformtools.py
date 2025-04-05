@@ -22,6 +22,7 @@ import xbmcaddon
 
 from channelselector import get_thumb
 from core import channeltools
+from core import servertools
 from core import httptools
 from core import scrapertools
 from core import jsontools
@@ -1990,6 +1991,12 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         xlistitem.setThumbnailImage(thumb)
 
     set_infolabels(xlistitem, item, True)
+    
+    force_inputstream = ''
+    
+    if item.server:
+        server_params = servertools.get_server_parameters(item.server)
+        force_inputstream = server_params.get("force_inputstream", '')
 
     # si se trata de un vídeo en formato mpd, se configura el listitem para reproducirlo
     # con el addon inpustreamaddon implementado en Kodi 18
@@ -2002,7 +2009,8 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info('Kodi version {}'.format(str(ver)))
     if (
         (ver >= 18) and (mpd or ".m3u8" in mediaurl) and \
-        (config.get_setting('inputstream_mode', default=0) == 1)
+        (config.get_setting('inputstream_mode', default=0) == 1 or force_inputstream == "adaptive") and \
+        force_inputstream != "none" and force_inputstream != "ffmpegdirect"
     ):
         addon_name = 'inputstream.adaptive'
         if not xbmc.getCondVisibility("System.HasAddon({})".format(addon_name)):
@@ -2063,7 +2071,8 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
             )
     elif (
         (ver >= 18) and (".mp4" in mediaurl or ".m3u8" in mediaurl) and \
-        (config.get_setting('inputstream_mode', default=0) == 2)
+        (config.get_setting('inputstream_mode', default=0) == 2 or force_inputstream == "ffmpegdirect") and \
+        force_inputstream != "none"
     ):
         addon_name = 'inputstream.ffmpegdirect'
         if not xbmc.getCondVisibility("System.HasAddon({})".format(addon_name)):
