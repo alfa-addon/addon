@@ -32,7 +32,7 @@ forced_proxy_opt = 'ProxySSL'
 # https://cd-universe.com/  https://hardteens.co/   https://freeporntube.vip/  https://fl1rt.com/ https://porntube.ink/
 
 # https://extremejapanese.co/  https://japteens.co/  https://hardmilfs.co/  https://celebritybukkakeoff.com/
-# https://hotmature.co/  https://unchartedanus.com/
+# https://hotmature.co/  https://unchartedanus.com/  https://milfz.com/
 
 canonical = {
              'channel': 'd1ck', 
