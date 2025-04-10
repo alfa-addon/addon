@@ -38,6 +38,10 @@
       {
         "pattern": "(https://doodporn.xyz/(?:e|d)/[a-z0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://cybervynx.com/(?:e|d)/[a-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },
