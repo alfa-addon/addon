@@ -15,7 +15,7 @@ kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'ignore
 
 # https://wishonly.site/e/4ihupegt08mc 
 # https://jwplayerhls.com/e/ot7d0acd0ct3  720 y 1080
-# https://streamwish.to/e/g00srkwf3uj0|Referer=https://pubjav.com/
+# https://streamwish.to/e/g00srkwf3uj0|Referer=https://pubjav.com/  480 720 1080
 
 
 def test_video_exists(page_url):
@@ -27,7 +27,7 @@ def test_video_exists(page_url):
         referer = referer.replace('Referer=', '').replace('referer=', '')
         kwargs['headers'] = {'Referer': referer}
     
-    page_url = httptools.downloadpage(page_url, follow_redirects=False).headers["location"]
+    # page_url = httptools.downloadpage(page_url, follow_redirects=False).headers["location"]
     
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data

@@ -6,6 +6,7 @@ from core import httptools
 from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
+from core import urlparse
 
 
 kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
@@ -43,18 +44,28 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
+
     try:
-        # enc_data = scrapertools.find_single_match(data, "type='text/javascript'>(eval.*?)?\s+</script>")
-        enc_data = scrapertools.find_multiple_matches(data, "text/javascript(?:'|\")>(eval.*?)</script>")
-        dec_data = jsunpack.unpack(enc_data[-1])
-    except Exception:
-        dec_data = data
-    # sources = 'file:"([^"]+)",label:"([^"]+)"'
-    sources = 'sources\:\s*\[\{(?:file|src):"([^"]+)"'
-    try:
-        matches = re.compile(sources, re.DOTALL).findall(dec_data)
-        for url in matches:
-            video_urls.append(['[filemoon] m3u', url])
-    except Exception:
-        pass
+        pack = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
+        unpacked = jsunpack.unpack(pack)
+        
+        m3u8_source = scrapertools.find_single_match(unpacked, '\{(?:file|"hls\d+"):"([^"]+)"\}')
+        
+        if "master.m3u8" in m3u8_source:
+            datos = httptools.downloadpage(m3u8_source).data
+            if isinstance(datos, bytes):
+                datos = "".join(chr(x) for x in bytes(datos))
+            
+            if datos:
+                matches_m3u8 = re.compile('#EXT-X-STREAM-INF.*?RESOLUTION=\d+x(\d*)[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+                ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+                for quality, url in matches_m3u8:
+                    url =urlparse.urljoin(m3u8_source,url)
+                    video_urls.append(['[filemoon] %s' % quality, url])
+        else:
+            video_urls.append(['[filemoon] m3u', m3u8_source])
+
+    except Exception as e:
+        logger.error(e)
+        unpacked = data
     return video_urls
