@@ -106,7 +106,9 @@ def lista(item):
         if "svg+" in thumbnail:
             thumbnail = elem.img['data-lazy-src']
         if "xxxscenes" not in item.url:
-            year = elem.find('div', class_='jtip-top').a.text.strip()
+            year = elem.find('div', class_='jtip-top').a
+            if year:
+                year = year.text.strip()
         else:
             year = ""
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,

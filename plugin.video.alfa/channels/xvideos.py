@@ -248,24 +248,24 @@ def play(item):
         item.url = httptools.downloadpage(item.url).url
     
     soup = create_soup(item.url)
-    # pornstars = soup.find_all('a', href=re.compile("/models/[A-z0-9-]+/"))
-    pornstars = soup.find_all('li', class_="model")
-    for x , value in enumerate(pornstars):
-        pornstars[x] = value.text.strip()
-    pornstar = ' & '.join(pornstars)
-    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
-    plot = ""
-    if len(pornstars) <= 3:
-        lista = item.contentTitle.split('[/COLOR]')
-        pornstar = pornstar.replace('[/COLOR]', '')
-        pornstar = ' %s' %pornstar
-        if "[COLOR red]" in item.title:
-            lista.insert (4, pornstar)
+    if soup.find('li', class_="model"):
+        pornstars = soup.find_all('a', href=re.compile("/models/[A-z0-9-]+"))
+        for x , value in enumerate(pornstars):
+            pornstars[x] = value.text.strip()
+        pornstar = ' & '.join(pornstars)
+        pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+        plot = ""
+        if len(pornstars) <= 3:
+            lista = item.contentTitle.split('[/COLOR]')
+            pornstar = pornstar.replace('[/COLOR]', '')
+            pornstar = ' %s' %pornstar
+            if "[COLOR red]" in item.title:
+                lista.insert (2, pornstar)
+            else:
+                lista.insert (1, pornstar)
+            item.contentTitle = '[/COLOR]'.join(lista)
         else:
-            lista.insert (2, pornstar)
-        item.contentTitle = '[/COLOR]'.join(lista)
-    else:
-        plot = pornstar
+            plot = pornstar
     
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url, plot=plot ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

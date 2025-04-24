@@ -24,17 +24,18 @@ def test_video_exists(page_url):
         'Referer': page_url,
         'Sec-Fetch-Dest': 'iframe',
         'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'cross-site'
+        'Sec-Fetch-Site': 'cross-site',
+        # 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0'
     }
+    kwargs['random_headers'] = True
     
-    page_url = httptools.downloadpage(page_url, follow_redirects=False, **kwargs).headers["location"]
+    # page_url = httptools.downloadpage(page_url, follow_redirects=False, **kwargs).headers["location"]
+    
     datos = httptools.downloadpage(page_url, **kwargs).data
-    
     if "not found" in datos:
         return False,  "[filemoon] El fichero no existe o ha sido borrado"
     else:
         page_url = scrapertools.find_single_match(datos, '<iframe src="([^"]+)')
-    
     response = httptools.downloadpage(page_url, referer=page_url, **kwargs)
     data = response.data
     if response.code == 404 or "not found" in response.data:
@@ -44,7 +45,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-
+    # logger.debug(data)
     try:
         pack = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
         unpacked = jsunpack.unpack(pack)
