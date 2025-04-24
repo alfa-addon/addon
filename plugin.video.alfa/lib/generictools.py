@@ -67,6 +67,7 @@ except Exception:
     logger.error(traceback.format_exc())
 
 channel_py = "wolfmax4k"
+channel_py_urls = ["Oficial.url", channel_py]
 channel_py_episode_list = {}
 idioma_busqueda = 'es'
 idioma_busqueda_VO = 'es,en'
@@ -90,6 +91,7 @@ SIZE_MATCHES = 5000
 kwargs_json = {"indent": 2, "skipkeys": True, "sort_keys": True, "ensure_ascii": True}
 cookies_cached = []
 DEBUG = config.get_setting('debug_report', default=False) if not TEST_ON_AIR else False
+TITLES_SEARCH = {}
 
 
 def convert_url_base64(url, host='', referer=None, rep_blanks=True, force_host=False, item=Item()):
@@ -494,7 +496,7 @@ def set_btdigg_timer(btdigg_error):
 
 
 def get_cached_files_(contentType, FORCED=False, cached=False, structure=True):
-    global PASSWORDS, cookies_cached, BTDIGG_TIMEOUT
+    global PASSWORDS, cookies_cached, BTDIGG_TIMEOUT, TITLES_SEARCH
 
     timer = 15
     cached_file = {}
@@ -543,6 +545,7 @@ def get_cached_files_(contentType, FORCED=False, cached=False, structure=True):
         cookies_cached_exp = PASSWORDS.get('cookies', {}).get('cookies_exp', [])[:] or cached_file_old.get('cookies', {}).get('cookies_exp', [])[:]
         cookies_cached = [] if cached_file else cookies_cached_exp[:]
         BTDIGG_TIMEOUT = tuple(PASSWORDS.get('cookies', {}).get('caching', {}).get('timeout', [])) or BTDIGG_TIMEOUT
+        TITLES_SEARCH = PASSWORDS.get('cookies', {}).get('caching', {}).get('titles_search', {})
 
         for cookie in PASSWORDS.get('cookies', {}).get('cookies', []):
             if not cookie.get('channel'): continue
@@ -2113,6 +2116,8 @@ def search_btdigg_free_format_parse(self, item, titles_search=BTDIGG_SEARCH, con
             if limit_search > 0 and limit_search <= 10: title_search['limit_search'] = limit_search
 
     for title_search in titles_search_:
+        if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
+            title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
         if item.btdigg or BTDIGG_URL_SEARCH in item.url:
             title_search['urls'] = [url]
             if contentType == 'list' and url and not title_search.get('title_tail', []):
@@ -2630,7 +2635,7 @@ def AH_find_btdigg_ENTRY_SEASON_from_BTDIGG(self, contentType='tvshow', language
     return matches_btdigg, matches_index
 
 
-def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}, channel_alt=channel_py, 
+def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}, channel_alt=channel_py_urls, 
                                         channel_entries=15, btdigg_entries=45, titles_search=[], **AHkwargs):
     logger.info('"%s": %s' % (len(matches), item.c_type))
     global DEBUG, TEST_ON_AIR, cached_btdigg
@@ -2691,13 +2696,21 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
             if '[' in item.season_search:
                 quality_alt = search_btdigg_free_format_parse(self, item.clone(), BTDIGG_SEARCH, item.contentType)[0].get('quality_alt', {})
                 if quality_alt: quality_alt += ' '
-            titles_search = [{'urls': ['%s ' + quality_alt + channel_alt], 'checks': ['Cast', 'Esp', 'Spanish', channel_alt.replace('4k', '')], 
-                              'contentType': 'movie', 'limit_search': 1.5}]
+            if len(channel_alt) > 1:
+                titles_search = [{'urls': ['%s ' + quality_alt + channel_alt[0], '%s ' + quality_alt + channel_alt[-1]], 
+                                  'checks': ['Cast', 'Esp', 'Spanish', channel_alt[-1].replace('4k', '')], 
+                                  'contentType': 'movie', 'limit_search': 1.5}]
+            else:
+                titles_search = [{'urls': ['%s ' + quality_alt + channel_alt[0]], 
+                                  'checks': ['Cast', 'Esp', 'Spanish', channel_alt[-1].replace('4k', '')], 
+                                  'contentType': 'movie', 'limit_search': 1.5}]
             if not item.AH_find_btdigg_ENTRY_from_BTDIGG:
                 titles_search.append({'urls': ['%s ' + (quality_alt or 'Bluray ') + 'Castellano'], 
-                                      'checks': ['Cast', 'Esp', 'Spanish', channel_alt.replace('4k', '')], 
+                                      'checks': ['Cast', 'Esp', 'Spanish', channel_alt[-1].replace('4k', '')], 
                                       'contentType': 'movie', 'limit_search': 1.5})
-            titles_search.append({'urls': ['%s ' + (quality_alt or 'HDTV 720p')], 'checks': ['Cap.'], 'contentType': 'tvshow', 'limit_search': 5})
+            titles_search.append({'urls': ['%s ' + (quality_alt or 'HDTV 720p ') +  channel_alt[0], 
+                                           '%s ' + (quality_alt or 'HDTV 720p ') +  channel_alt[-1]], 
+                                  'checks': ['Cap.'], 'contentType': 'tvshow', 'limit_search': 5})
             if item.c_type == 'search' or item.AH_find_btdigg_ENTRY_from_BTDIGG:
                 titles_search = search_btdigg_free_format_parse(self, item, titles_search, item.c_type, **AHkwargs)
 
@@ -2747,13 +2760,15 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
         for title_search in titles_search:
             if x >= 888888 and x < 999999: break
             if contentType and title_search.get('contentType', 'movie') != contentType: continue
+            if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
+                title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
 
             if not item.btdigg:
                 quality_alt = '720p 1080p 2160p 4kwebrip 4k'
                 if item.c_type in ['peliculas', 'movie', 'search'] and 'HDTV' not in str(title_search['urls']):
                     quality_alt += ' bluray rip screener'
                     language_alt = ['DUAL', 'CAST', 'LAT']
-                    if item.c_type in ['search'] and channel_alt in str(title_search['urls']):
+                    if item.c_type in ['search'] and (channel_alt[0] in str(title_search['urls']) or channel_alt[-1] in str(title_search['urls'])):
                         quality_alt += ' HDTV'
                 else:
                     if not quality_control:
@@ -2763,7 +2778,8 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
 
             limit_search = int((title_search.get('limit_search', 2) * channel_entries) / 10)
             limit_pages = limit_search
-            limit_pages_min = limit_search if (channel_alt in str(title_search['urls']) or 'HDTV' in str(title_search['urls'])) \
+            limit_pages_min = limit_search if (channel_alt[0] in str(title_search['urls']) or channel_alt[-1] in str(title_search['urls']) \
+                                               or 'HDTV' in str(title_search['urls'])) \
                                            else limit_search / 2
             interface = str(config.get_setting('btdigg_status', server='torrent'))
             limit_items_found = 5 * 10 if interface != '200' else 10 * 10
@@ -2978,7 +2994,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
     return matches_btdigg, matches_index
 
 
-def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, titles_search=[], **AHkwargs):
+def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py_urls, titles_search=[], **AHkwargs):
     logger.info('"%s"' % len(matches))
     global DEBUG, TEST_ON_AIR
     if self: TEST_ON_AIR = self.TEST_ON_AIR
@@ -3048,7 +3064,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, titl
         matches_btdigg = matches_inter[:channel_entries]
         matches = []
 
-        if False: # channeltools.is_enabled(channel_alt):
+        if False: # channeltools.is_enabled(channel_alt[-1]):
             matches_btdigg, matches_index = AH_find_btdigg_list_all_from_channel_py(self, item, matches=matches_btdigg, 
                                                                                     matches_index=matches_index, channel_alt=channel_alt, 
                                                                                     channel_entries=channel_entries, btdigg_entries=btdigg_entries, 
@@ -3062,7 +3078,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, titl
         x = 0
         for elem_json in matches_btdigg:
             #logger.error(elem_json)
-            if 'magnet' in elem_json.get('url', '') or btdigg_url in elem_json.get('url', '') or channel_alt in elem_json.get('thumbnail', ''):
+            if 'magnet' in elem_json.get('url', '') or btdigg_url in elem_json.get('url', '') or channel_alt[-1] in elem_json.get('thumbnail', ''):
 
                 season = elem_json.get('season', 0)
                 if elem_json['mediatype'] not in ['episode'] and elem_json.get('season', 0): del elem_json['season']
@@ -3185,14 +3201,18 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
         config.set_setting('btdigg_status', False, server='torrent')
     except Exception as e:
         logger.error('ERROR en titles_search: %s / %s' % (window.getProperty("alfa_cached_btdigg_movie"), str(e)))
-        titles_search = [{'urls': ['%sesp ' + channel_py], 'checks': ['Cast', 'Esp', 'Spanish', '%s' \
-                                                           % channel_py.replace('4k', '')], 'contentType': 'movie', 'limit_search': 10}, 
+        titles_search = [{'urls': ['%sesp ' + channel_py_urls[0]], 'checks': ['Cast', 'Esp', 'Spanish', '%s' \
+                                              % channel_py_urls[-1].replace('4k', '')], 'contentType': 'movie', 'limit_search': 10}, 
+                         {'urls': ['%sesp ' + channel_py_urls[-1]], 'checks': ['Cast', 'Esp', 'Spanish', '%s' \
+                                              % channel_py_urls[-1].replace('4k', '')], 'contentType': 'movie', 'limit_search': 10}, 
                          {'urls': ['%sBluray Castellano'], 'checks': ['Cast', 'Esp', 'Spanish', '%s' \
-                                                             % channel_py.replace('4k', '')], 'contentType': 'movie', 'limit_search': 3}, 
-                         {'urls': ['%sHDTV 720p ' + channel_py], 'checks': ['Cap.'], 'contentType': 'tvshow', 'limit_search': 7}, 
-                         {'urls': ['%sHDTV 720p'], 'checks': ['Cap.'], 'contentType': 'tvshow', 'limit_search': 3}, 
-                         {'urls': ['%s ' + channel_py], 'checks': ['Cap.'], 'contentType': 'episode', 'limit_search': 5, 'error_reset': 5}, 
-                         {'urls': ['%s Temporada #!'], 'checks': ['Cap.'], 'contentType': 'episode', 'limit_search': 5, 'error_reset': 5}]
+                                                           % channel_py_urls[-1].replace('4k', '')], 'contentType': 'movie', 'limit_search': 3}, 
+                         {'urls': ['%sHDTV 720p ' + channel_py_urls[0]], 'checks': ['Cap.'], 'contentType': 'tvshow', 'limit_search': 15}, 
+                         {'urls': ['%sHDTV 720p ' + channel_py_urls[-1]], 'checks': ['Cap.'], 'contentType': 'tvshow', 'limit_search': 15}, 
+                         {'urls': ['%s ' + channel_py_urls[0]], 'checks': ['Cap.'], 'contentType': 'episode', 
+                                                                'limit_search': 5, 'error_reset': 5}, 
+                         {'urls': ['%s ' + channel_py_urls[-1]], 'checks': ['Cap.'], 'contentType': 'episode', 
+                                                                 'limit_search': 5, 'error_reset': 5}]
     titles_search_save = copy.deepcopy(titles_search)
     get_cached_files_('password', cached=True)
 
@@ -3260,11 +3280,13 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
         for title_search in titles_search:
             contentType = title_search.get('contentType', 'movie')
             limit_search = title_search.get('limit_search', 1)
-            if contentType == 'episode': continue
+            if contentType in ['episode']: continue
             if limit_search <= 0: continue
             if title_search.get('cached_%s' % contentType, False):
                 cached[contentType] = get_cached_files_(contentType, FORCED=True)
                 continue
+            if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
+                title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
 
             if not cached[contentType]: contentType_time = time.time()
             counters['temp_%ss' % contentType] = round((time.time() - contentType_time)/60, 2)
@@ -3528,6 +3550,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         limit_search = title_search.get('limit_search', 1)
                         if contentType != title_search.get('contentType', ''): continue
                         if limit_search <= 0: continue
+                        if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
+                            title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
                         if (error_reset_time + title_search.get('error_reset', 5)*60) < time.time():
                             error_reset_time = time.time()
                             config.set_setting('btdigg_status', False, server='torrent')
@@ -3644,6 +3668,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     elem_episode['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\s*\d+', '', 
                                                                                           elem.get('title', '').replace(btdigg_label_B, '')), 
                                                                                           '.+?'+patron_year) or '-'
+                                    if elem_episode['year'].isnumeric() and int(elem_episode['year']) < 2000: elem_episode['year'] = '-'
                                     if elem_episode['year'] in ['720', '1080', '2160']: elem_episode['year'] = '-'
                                     if elem_episode['year'] != '-' and elem_json['year'] != '-' and elem_episode['year'] != elem_json['year']:
                                         if DEBUG: logger.debug('YEAR diff: %s / %s' % (elem_json['year'], elem_episode['year']))
@@ -3782,7 +3807,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     DEBUG = False
 
 
-def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkwargs):
+def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py_urls, **AHkwargs):
     logger.info()
     global channel_py_episode_list, DEBUG, TEST_ON_AIR, VIDEOLIBRARY_UPDATE
     if self: TEST_ON_AIR = self.TEST_ON_AIR
@@ -3889,7 +3914,8 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
                 titles_search = search_btdigg_free_format_parse(self, item, BTDIGG_SEARCH, contentType, **AHkwargs)
                 BTDIGG_SEARCH_STAT = True
             else:
-                titles_search.extend([{'urls': ['%s HDTV ' + domain_alt], 'checks': ['Cap.'], 'contentType': contentType, 'limit_search': 8}])
+                titles_search.extend([{'urls': ['%s HDTV ' + domain_alt[0], '%s HDTV ' + domain_alt[-1]], 
+                                       'checks': ['Cap.'], 'contentType': contentType, 'limit_search': 8}])
             if not channel_py_strict:
                 if titles_search_finds and len(titles_search_finds) > 1:
                     titles_search.extend(titles_search_finds[1:])
@@ -3909,10 +3935,16 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
         for title_search in titles_search:
             if x >= 888888 and x < 999999: break
             if title_search.get('contentType', contentType) != contentType: continue
+            if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
+                title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
 
             limit_search = title_search.get('limit_search', 8)
-            limit_pages = limit_search if domain_alt in str(title_search['urls']) else limit_search / 2
-            limit_pages_min = (limit_search / 2) if domain_alt in str(title_search['urls']) else 1
+            limit_pages = limit_search if (domain_alt[0] in str(title_search['urls']) \
+                                           or domain_alt[-1] in str(title_search['urls'])) \
+                                       else limit_search / 2
+            limit_pages_min = (limit_search / 2) if (domain_alt[0] in str(title_search['urls']) \
+                                                     or domain_alt[-1] in str(title_search['urls'])) \
+                                                 else 1
             limit_items_found = 10 * 10
 
             torrent_params = {
@@ -4017,7 +4049,7 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
     return matches
 
 
-def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHkwargs):
+def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py_urls, **AHkwargs):
     logger.info()
     global channel_py_episode_list, DEBUG, TEST_ON_AIR, VIDEOLIBRARY_UPDATE
     if self: TEST_ON_AIR = self.TEST_ON_AIR
@@ -4202,10 +4234,12 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
             titles_search = search_btdigg_free_format_parse(self, item, BTDIGG_SEARCH, contentType, **AHkwargs)
             BTDIGG_SEARCH_STAT = True
         elif quality_alt ==  'HDTV':
-            titles_search.extend([{'urls': ['%s HDTV ' + domain_alt], 'checks': ['Cap.'], 'contentType': contentType, 'limit_search': 8}])
+            titles_search.extend([{'urls': ['%s HDTV ' + domain_alt[0], '%s HDTV ' + domain_alt[-1]], 
+                                   'checks': ['Cap.'], 'contentType': contentType, 'limit_search': 8}])
         elif year > 2020:
-            titles_search.extend([{'urls': ['%s HDTV ' + domain_alt, '%s 4K ' + domain_alt], 'checks': ['Cap.'], 
-                                   'contentType': contentType, 'limit_search': 8}])
+            titles_search.extend([{'urls': ['%s HDTV ' + domain_alt[0], '%s HDTV ' + domain_alt[-1], 
+                                            '%s 4K ' + domain_alt[0], '%s 4K ' + domain_alt[-1]], 
+                                   'checks': ['Cap.'], 'contentType': contentType, 'limit_search': 8}])
         if not channel_py_strict:
             if titles_search_finds and len(titles_search_finds) > 1:
                 titles_search.extend(titles_search_finds[1:])
@@ -4219,10 +4253,16 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
         for title_search in titles_search:
             if x >= 888888 and x < 999999: break
             if title_search.get('contentType', contentType) != contentType: continue
+            if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
+                title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
 
             limit_search = title_search.get('limit_search', 8)
-            limit_pages = limit_search if domain_alt in str(title_search['urls']) else limit_search / 1.5
-            limit_pages_min = (limit_search / 2) if domain_alt in str(title_search['urls']) else 1
+            limit_pages = limit_search if (domain_alt[0] in str(title_search['urls']) \
+                                           or domain_alt[-1] in str(title_search['urls'])) \
+                                       else limit_search / 1.5
+            limit_pages_min = (limit_search / 2) if (domain_alt[0] in str(title_search['urls']) \
+                                                     or domain_alt[-1] in str(title_search['urls'])) \
+                                                 else 1
             limit_items_found = 10 * 10
             patron_sea = r'(?i)Cap.\s*(\d+)\d{2}'
             patron_cap = r'(?i)Cap.\s*\d+(\d{2})'
@@ -4381,7 +4421,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
     return matches
 
 
-def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **AHkwargs):
+def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py_urls, **AHkwargs):
     logger.info('Look-up: %s' % AHkwargs.get('btdigg_lookup', False))
     global DEBUG, TEST_ON_AIR
     if self: TEST_ON_AIR = self.TEST_ON_AIR
@@ -4493,9 +4533,11 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
             BTDIGG_SEARCH_STAT = True
         if item.contentType == 'movie':
             if not titles_search:
-                titles_search = [{'urls': ['%s ' + domain_alt], 'checks': ['Cast', 'Esp', 'Spanish', domain_alt.replace('4k', '')], 
+                titles_search = [{'urls': ['%s ' + domain_alt[0], '%s ' + domain_alt[-1]], 
+                                  'checks': ['Cast', 'Esp', 'Spanish', domain_alt[-1].replace('4k', '')], 
                                   'contentType': 'movie', 'limit_search': 4},
-                                 {'urls': ['%s Bluray Castellano'], 'checks': ['Cast', 'Esp', 'Spanish', domain_alt.replace('4k', '')],
+                                 {'urls': ['%s Bluray Castellano'], 
+                                  'checks': ['Cast', 'Esp', 'Spanish', domain_alt[-1].replace('4k', '')],
                                   'contentType': 'movie', 'limit_search': 4}]
             if not item.btdigg:
                 quality_alt =  '720p 1080p 2160p 4kwebrip 4k bluray rip screener'
@@ -4518,10 +4560,16 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
         for title_search in titles_search:
             if x >= 888888 and x < 999999: break
             if title_search.get('contentType', 'movie') != item.contentType: continue
+            if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
+                title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
 
             limit_search = title_search.get('limit_search', 4)
-            limit_pages = limit_search if domain_alt in str(title_search['urls']) else limit_search / 2
-            limit_pages_min = (limit_search / 2) if domain_alt in str(title_search['urls']) else 1
+            limit_pages = limit_search if (domain_alt[0] in str(title_search['urls']) \
+                                           or domain_alt[-1] in str(title_search['urls'])) \
+                                       else limit_search / 2
+            limit_pages_min = (limit_search / 2) if (domain_alt[0] in str(title_search['urls']) \
+                                                     or domain_alt[-1] in str(title_search['urls'])) \
+                                                 else 1
             limit_items_found = 10 * 10
             patron_sea = r'(?i)Cap.\s*(\d+)\d{2}'
             patron_cap = r'(?i)Cap.\s*\d+(\d{2})'
