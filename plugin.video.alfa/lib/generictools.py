@@ -3216,6 +3216,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     titles_search_save = copy.deepcopy(titles_search)
     get_cached_files_('password', cached=True)
 
+    use_assistant_save = None
     error_reset_time = function_elapsed = time.time()
     btdigg_entries = 15
     disable_cache = True
@@ -3325,6 +3326,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                 if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
                     raise Exception("CANCEL")
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
+                use_assistant = use_assistant_save
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                     ASSISTANT_SERVERS = eval(window.getProperty("alfa_assistant_servers") or '127.0.0.1')
@@ -3344,7 +3346,10 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         raise Exception("CANCEL")
 
                 torrent_params_save = copy.deepcopy(torrent_params)
-                for zzz in range(retries):
+                for ret_c, zzz in enumerate(range(retries)):
+                    if ret_c > retries / 2:
+                        use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
+                        use_assistant_save = use_assistant
                     torrent_params = find_alternative_link(itemO, torrent_params=torrent_params, cache=disable_cache, 
                                                            use_assistant=use_assistant, timeout_req=timeout_req)
                     if torrent_params.get('find_alt_link_code', '200') == '200':
@@ -3352,6 +3357,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
                         logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
                         break
+                    if use_assistant:
+                        use_assistant_save = use_assistant = None
                     counters['err_%ss' % contentType] += 1
                     stat_l = []; stat_l.insert(0, 'Error en BTDIGG: %s-%s' \
                                         % (str(torrent_params.get('find_alt_link_code', '')), contentType.upper()))
@@ -3590,6 +3597,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                             if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
                                 raise Exception("CANCEL")
                             use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
+                            use_assistant = use_assistant_save
                             other_season = False
                             try:
                                 alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
@@ -3610,7 +3618,10 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     raise Exception("CANCEL")
 
                             torrent_params_save = copy.deepcopy(torrent_params)
-                            for zzz in range(retries*2):
+                            for ret_c, zzz in enumerate(range(retries*2)):
+                                if ret_c > retries / 2:
+                                    use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
+                                    use_assistant_save = use_assistant
                                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, 
                                                                        cache=disable_cache, use_assistant=use_assistant, timeout_req=timeout_req)
                                 if torrent_params.get('find_alt_link_code', '200') == '200':
@@ -3621,6 +3632,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     torrent_params['find_alt_link_result'] = []
                                     torrent_params['find_alt_link_next'] = ''
                                     break
+                                if use_assistant:
+                                    use_assistant_save = use_assistant = None
                                 counters['err_%ss' % contentType] += 1
                                 stat_l = []; stat_l.insert(0, 'Error en BTDIGG: %s-%s' \
                                                     % (str(torrent_params.get('find_alt_link_code', '')), contentType.upper()))
