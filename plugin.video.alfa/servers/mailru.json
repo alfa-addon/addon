@@ -10,6 +10,10 @@
       {
         "pattern": "my.mail.ru/(?:videos|video)/embed/(?!mail|inbox)([\\w]+)",
         "url": "http://my.mail.ru/+/video/meta/\\1"
+      },
+      {
+        "pattern": "(https://my.mail.ru/mail/bestomanga/video/embed/_myvideo/[\\d]+)",
+        "url": "\\1"
       }
     ]
   },

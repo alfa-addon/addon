@@ -22,7 +22,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    logger.debug(data)
     matches = scrapertools.find_multiple_matches(data, '"url(\d+)":"([^"]+)"')
     for calidad, url in matches:
         url = url.replace("\/", "/")
