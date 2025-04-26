@@ -22,8 +22,8 @@ else:
 
 SERVER = {
           "hlswish": "streamwish", "playerwish": "streamwish", "ghbrisk": "streamwish", "iplayerhls": "streamwish",
-           "listeamed": "vidguard", "1fichier":"onefichier", "luluvdo": "lulustream",
-           "dhtpre": "vidhidepro", "peytonepre": "vidhidepro"
+           "listeamed": "vidguard", "1fichier":"onefichier", "luluvdo": "lulustream", "lulu": "lulustream",
+           "dhtpre": "vidhidepro", "peytonepre": "vidhidepro", "smoothpre": "vidhidepro"
           }
 
 IDIOMAS = {"es": "CAST", "la": "LAT", "en_ES": "VOSE", "sub-es": "VOSE"}
@@ -274,7 +274,7 @@ def findvideos(item):
             links.append(hash)
         quality = CALIDADES.get(elem['quality'], 'HD-1080p')
         lang = elem['language']
-        domain = elem['domain'].split(".")[0]
+        domain = elem['domain'].split(".")[0].lower()
         if domain in ["katfile", "nitroflare", "dailyuploads"]:
             continue
         language = IDIOMAS.get(lang, lang)
@@ -300,9 +300,21 @@ def findvideos(item):
 
 def play(item):
     logger.info()
-    itemlist = []
     
     url = alfaresolver.go_to_the_pub(item.url)
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    return itemlist
+    
+    devuelve = servertools.findvideosbyserver(url, item.server)
+    if devuelve:
+        item.url =  devuelve[0][1]
+    
+    return [item]
+
+
+# def play(item):
+    # logger.info()
+    # itemlist = []
+    
+    # url = alfaresolver.go_to_the_pub(item.url)
+    # itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # return itemlist

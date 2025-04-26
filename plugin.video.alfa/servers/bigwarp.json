@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://bigwarp.io/(?:embed-|e/|)([a-z0-9]+)(?:\\.html|)",
+        "pattern": "https://bigwarp.io/(?:embed-|e/|dl\\?op\\=embed&file_code\\=|)([a-z0-9]+)(?:\\.html|)",
         "url": "https://bigwarp.io/dl?op=embed&file_code=\\1"
       }
     ]
