@@ -116,7 +116,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)anysex.com/video/[0-9]+/[A-z0-9-]+)",
+        "pattern": "(https://(?:www.|ru.|de.|es.|)anysex.com/video/[0-9]+/[A-z0-9-]+)",
         "url": "\\1"
       },
       {
