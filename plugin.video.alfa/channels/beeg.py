@@ -168,7 +168,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             
             elem_json['url'] = "%s%s" % (host, id)
             elem_json['title'] = title
-            elem_json['thumbnail'] = "https://thumbs-015.externulls.com/videos/%s/%s.jpg" %(id, th2[0])
+            elem_json['thumbnail'] = "https://thumbs.externulls.com/videos/%s/0.webp?size=480x270" %id
             elem_json['stime'] = stime
         except:
             logger.error(elem)

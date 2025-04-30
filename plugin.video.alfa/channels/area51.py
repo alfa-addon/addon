@@ -41,7 +41,7 @@ url_replace = []
 
 finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['video-list', 'list-videos']}]),
                        ('find_all', [{'tag': ['div'], 'class': ['item', 'video-item']}])]),
-         'categories': dict([('find', [{'tag': ['div'], 'class': ['models_list', 'list-models', 'category_list','list-categories', 'video-list', 'list-videos', 'list-channels', 'list-sponsors']}]),
+         'categories': dict([('find', [{'tag': ['div'], 'class': ['models_list', 'list-models', 'list-categories','list-categories', 'video-list', 'list-videos', 'list-channels', 'list-sponsors']}]),
                              ('find_all', [{'tag': ['div', 'a'], 'class': ['item', 'video-item']}])]),
          'search': {}, 
          'get_quality': {}, 
@@ -62,7 +62,7 @@ finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['video-list', 'list
                             'section_cantidad': dict([('find', [{'tag': ['span'], 'class': ['videos']}]),
                                                       ('get_text', [{'tag': '', 'strip': True, '@TEXT': '(\d+)'}])])
                             },
-         'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
+         'controls': {'url_base64': False, 'cnt_tot': 25, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
                                      idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -81,7 +81,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=host + "search/?sort_by=duration&from_videos=1"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "channels/?sort_by=avg_videos_popularity&from=1", extra="Canal"))
     itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "models/?sort_by=total_videos&from=1", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "category/", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
