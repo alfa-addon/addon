@@ -1207,19 +1207,23 @@ def monitor_domains_update(options=None):
             if 'forced_proxy_ifnot_assistant' in canonical_http: del canonical_http['forced_proxy_ifnot_assistant']
             opt = {'timeout': 10, 'method': 'GET', 'proxy_retries': 0, 'canonical': canonical_http, 'alfa_s': True, 'retry_alt': False}
 
-            response = httptools.downloadpage(canonical_http['host_alt'][0], **opt)
+            idx = canonical_http.get('host_alt_main', 0)
+            response = httptools.downloadpage(canonical_http['host_alt'][idx], **opt)
 
             if not response.sucess:
                 current_host = config.get_setting("current_host", channel, default='')
-                if current_host and current_host != canonical_http['host_alt'][0]:
+                if len(canonical_http['host_alt']) > 1 and 'host_alt_main' in canonical_http:
+                    current_host = canonical_http['host_alt'][idx]
+                if current_host and current_host != canonical_http['host_alt'][idx]:
                     response = httptools.downloadpage(current_host, **opt)
 
                 if not response.sucess:
                     if channel in ['hdfull']:
                         url = 'https://dominioshdfull.com/'
                         response = httptools.downloadpage(url, soup=True, **opt)
-                        if response.sucess and response.soup.find('div', class_='offset-md-4'):
-                            url = response.soup.find('div', class_='offset-md-4').a.get('href', '').rstrip('/')
+                        if response.sucess and response.soup.find('div', class_='row g-3 btns mt-1 mb-5 g-md-5').find('div', class_='offset-md-4'):
+                            url = response.soup.find('div', class_='row g-3 btns mt-1 mb-5 g-md-5').find('div', class_='offset-md-4')\
+                                               .a.get('href', '').rstrip('/')
                             if url and (url + '/') not in canonical_http['host_alt'] and (url + '/') not in canonical_http['host_black_list']:
                                 url += '/'
                                 response = httptools.downloadpage(url, **opt)
@@ -1236,12 +1240,12 @@ def monitor_domains_update(options=None):
                         alfa_domains_list[channel] = server_domains_list[channel].copy()
                     continue
 
-            if not canonical['host_alt'][0].endswith('/'): response.canonical = response.canonical.rstrip('/')
-            if response.canonical and response.canonical != canonical['host_alt'][0] \
+            if not canonical['host_alt'][idx].endswith('/'): response.canonical = response.canonical.rstrip('/')
+            if response.canonical and response.canonical != canonical['host_alt'][idx] \
                                   and response.canonical not in canonical['host_black_list'] \
                                   and response.canonical not in server_domains_list.get(channel, {}).get('host_black_list', []):
 
-                host_alt = canonical['host_alt'][0]
+                host_alt = canonical['host_alt'][idx]
                 if server_domains_list.get(channel):
                     alfa_domains_list[channel] = server_domains_list[channel].copy()
                 else:
@@ -1253,11 +1257,11 @@ def monitor_domains_update(options=None):
                     current_host = config.get_setting("current_host", channel, default='')
                     if current_host and current_host != response.canonical:
                         config.set_setting("current_host", response.canonical, channel)
-                    if alfa_domains_list[channel]['host_alt'][0] not in alfa_domains_list[channel]['host_black_list']:
-                        alfa_domains_list[channel]['host_black_list'].insert(0, alfa_domains_list[channel]['host_alt'][0])
+                    if alfa_domains_list[channel]['host_alt'][idx] not in alfa_domains_list[channel]['host_black_list']:
+                        alfa_domains_list[channel]['host_black_list'].insert(0, alfa_domains_list[channel]['host_alt'][idx])
                     if response.canonical not in alfa_domains_list[channel]['host_alt']:
-                        del alfa_domains_list[channel]['host_alt'][0]
-                        alfa_domains_list[channel]['host_alt'].insert(0, response.canonical)
+                        del alfa_domains_list[channel]['host_alt'][idx]
+                        alfa_domains_list[channel]['host_alt'].insert(idx, response.canonical)
 
                 if not alfa_domains_errors.get(channel) and alfa_domains_list[channel] != server_domains_list.get(channel, {}):
                     alfa_domains_errors[channel] = alfa_domains_list[channel]
