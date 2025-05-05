@@ -25,9 +25,9 @@ def test_video_exists(page_url):
         'Sec-Fetch-Dest': 'iframe',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'cross-site',
-        # 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0'
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0'
     }
-    kwargs['random_headers'] = True
+    # kwargs['random_headers'] = True
     
     # page_url = httptools.downloadpage(page_url, follow_redirects=False, **kwargs).headers["location"]
     
