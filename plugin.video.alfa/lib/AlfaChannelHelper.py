@@ -43,7 +43,7 @@ CONTEXT_TORRENT = [{"title": "Copiar a Mis Torrents",
                     "module": "url"}]
 DOMAIN_ALT = 'wolfmax4k'
 DOMAIN_ALT_S = 'wolfmax'
-DOMAIN_ALT_URLS = ['Oficial.url', DOMAIN_ALT]
+DOMAIN_ALT_URLS = ['.mkv', '.avi', 'Oficial.url', DOMAIN_ALT]
 DEFAULT = 'default'
 UNIFY_PRESET = config.get_setting("preset_style", default="Inicial")
 KWARGS = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 'forced_proxy_opt': None, 'cf_assistant': False}
