@@ -31,7 +31,7 @@ def test_video_exists(page_url):
     
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
-    
+    # logger.debug(data)
     if response.code == 404 or "no longer available" in data or "Not Found" in data: 
         return False, "[streamwish] El archivo no existe o ha sido borrado"
     return True, ""
@@ -44,7 +44,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         pack = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
         unpacked = jsunpack.unpack(pack)
         
-        m3u8_source = scrapertools.find_single_match(unpacked, '\{(?:file|"hls\d+"):"([^"]+)"\}')
+        m3u8_source = scrapertools.find_single_match(unpacked, '(?:file|"hls\d+"):"([^"]+)"\}')
         
         if "master.m3u8" in m3u8_source:
             datos = httptools.downloadpage(m3u8_source).data
@@ -54,8 +54,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             if datos:
                 matches_m3u8 = re.compile('#EXT-X-STREAM-INF.*?RESOLUTION=\d+x(\d*)[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+                logger.debug(matches_m3u8)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
+                    logger.debug(url)
                     video_urls.append(["[streamwish] %sp" % quality, url])
         else:
             video_urls.append(["[streamwish]", m3u8_source])

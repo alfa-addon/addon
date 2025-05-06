@@ -82,10 +82,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="CamCaps" , action="submenu", url= "https://camcaps.to/", chanel="camcaps", thumbnail= "https://camcaps.to/images/logo/logo.png", cat="yes"))
     # itemlist.append(Item(channel=item.channel, title="FansTube" , action="submenu", url= "https://fanstube.net/", chanel="fanstube", thumbnail = "https://i.postimg.cc/gJH23yWB/fanstube.png"))
     # itemlist.append(Item(channel=item.channel, title="LeakedBay" , action="submenu", url= "https://leakedbay.com/", chanel="leakedbay", thumbnail = "https://i.postimg.cc/qvwwDSGk/leakedbay.png"))
-    itemlist.append(Item(channel=item.channel, title="NSFWcrave" , action="submenu", url= "https://www.nsfwcrave.com/", chanel="nsfwcrave", thumbnail = "https://www.nsfwcrave.com/images/logo/logo.png", cat="yes"))
+    ## OUT itemlist.append(Item(channel=item.channel, title="NSFWcrave" , action="submenu", url= "https://www.nsfwcrave.com/", chanel="nsfwcrave", thumbnail = "https://www.nsfwcrave.com/images/logo/logo.png", cat="yes"))
     itemlist.append(Item(channel=item.channel, title="RealLifeCam" , action="submenu", url= "https://reallifecam.to/", chanel="reallifecam", thumbnail = "https://reallifecam.to/images/logo/logo.png", cat="yes"))
-    itemlist.append(Item(channel=item.channel, title="VoyeurHouse" , action="submenu", url= "https://voyeur-house.to/", chanel="voyeurhouse", thumbnail = "https://voyeur-house.to/images/logo/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="VoyeurFunHouse" , action="submenu", url= "https://www.voyeur-house.fun/", chanel="voyeurfun", thumbnail = "https://www.voyeur-house.fun/images/logo/logo.png"))
+    ## OUT  itemlist.append(Item(channel=item.channel, title="VoyeurHouse" , action="submenu", url= "https://voyeur-house.to/", chanel="voyeurhouse", thumbnail = "https://voyeur-house.to/images/logo/logo.png"))
+    ## CLOUFLARE itemlist.append(Item(channel=item.channel, title="VoyeurFunHouse" , action="submenu", url= "https://www.voyeur-house.fun/", chanel="voyeurfun", thumbnail = "https://www.voyeur-house.fun/images/logo/logo.png"))
     itemlist.append(Item(channel=item.channel, title="VoyeurLifeHouse" , action="submenu", url= "https://www.voyeur-house.life/", chanel="voyeurlife", thumbnail = "https://www.voyeur-house.life/images/logo/logo.png"))
     itemlist.append(Item(channel=item.channel, title="ChaturbateVideo" , action="submenu", url= "https://www.chaturbate-video.xyz/", chanel="chaturbate-video", thumbnail = "https://www.chaturbate-video.xyz/images/logo/logo.png", cat="yes"))
 

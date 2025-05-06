@@ -80,18 +80,28 @@ def lista(item):
         id = elem['id']
         thumbnail = elem['popularSnapshotTimestamp']
         server = elem['snapshotServer']
+        # presets = presets[::-1]
+        quality = ""
+        if elem['presets']:
+            presets = elem['presets']
+            quality = presets[0]
+            presets.pop()
+        
         title = elem['username']
         pais = elem['country']
+        if quality:
+            title += " [COLOR red]%s[/COLOR]" %quality
         if pais:
             title += " (%s)" %pais
         thumbnail = "https://img.strpst.com/thumbs/%s/%s_webp" %(thumbnail, id)
-        if not url or "_240p" in url:
-            url = "https://b-hls-03.doppiocdn.com/hls/%s/%s.m3u8" %(id, id)
+        if "_240p" in url:
+            url = url.replace("_240p", "")
+            # url = "https://edge-hls.doppiocdn.com/hls/%s/master/%s.m3u8" %(id, id)
         plot = ""
         action = "play"
         if logger.info() is False:
             action = "findvideos"
-        itemlist.append(Item(channel = item.channel, action=action, title=title, thumbnail=thumbnail, url = url,
+        itemlist.append(Item(channel = item.channel, action=action, title=title, thumbnail=thumbnail, url = url, presets=presets,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
                                
     count= data['filteredCount']
@@ -114,5 +124,9 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
+    # logger.debug(item.presets)
+    # for quality in item.presets:
+        
+        # itemlist.append(['[stripchat] .m3u ', item.url])
     itemlist.append(Item(channel = item.channel, action="play", title=item.url, contentTitle = item.title, url=item.url, server="Directo" ))
     return itemlist

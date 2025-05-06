@@ -32,8 +32,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         pack = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
         unpacked = jsunpack.unpack(pack)
         
-        m3u8_source = scrapertools.find_single_match(unpacked, '\{(?:file|"hls\d+"):"([^"]+)"\}')
-        
+        m3u8_source = scrapertools.find_single_match(unpacked, '\{(?:file|"hls\d+"|src):"([^"]+)"')
         if "master.m3u8" in m3u8_source:
             datos = httptools.downloadpage(m3u8_source).data
             if isinstance(datos, bytes):
