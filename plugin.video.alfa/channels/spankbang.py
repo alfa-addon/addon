@@ -10,7 +10,7 @@ from core import httptools
 from core import urlparse
 from bs4 import BeautifulSoup
 
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = ''
 timeout = 45
 
 canonical = {
@@ -18,8 +18,8 @@ canonical = {
              'host': config.get_setting("current_host", 'spankbang', default=''), 
              'host_alt': ["https://es.spankbang.com/"], 
              'host_black_list': [], 
-             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 4, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
-             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'cf_assistant': False, 'CF_stat': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

@@ -18,13 +18,19 @@ list_language = list(IDIOMAS.values())
 list_quality = ['default']
 list_servers = []
 
+forced_proxy_opt = ''
+timeout = 45
+
+#### ImputStream
+
 canonical = {
              'channel': 'camsoda', 
              'host': config.get_setting("current_host", 'camsoda', default=''), 
              'host_alt': ["https://www.camsoda.com/"], 
              'host_black_list': [], 
-             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'cf_assistant': False, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'cf_assistant': False, 'CF_stat': True, 
+             'CF': True, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
@@ -32,7 +38,7 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    httptools.downloadpage(host, canonical=canonical).data
+    httptools.downloadpage(host, canonical=canonical, timeout=timeout).data
     
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "api/v1/browse/react/?gender-hide=m,t&perPage=98&p=1"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "api/v1/tags/index?page=1"))
@@ -56,7 +62,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).json
+    data = httptools.downloadpage(item.url, canonical=canonical, timeout=timeout).json
     for elem in data['tag_list']:
         name = elem['tag_slug']
         cantidad = elem['tag_count']
@@ -79,7 +85,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).json
+    data = httptools.downloadpage(item.url, canonical=canonical, timeout=timeout).json
     for elem in data['userList']:
         title = elem['username']
         is_on = elem['status']
@@ -108,7 +114,8 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).json
+    data = httptools.downloadpage(item.url, canonical=canonical, timeout=timeout).json
+    logger.debug(data)
     server = data['edge_servers']
     token = data['token']
     dir = data['stream_name']
@@ -126,7 +133,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).json
+    data = httptools.downloadpage(item.url, canonical=canonical, timeout=timeout).json
     server = data['edge_servers']
     token = data['token']
     dir = data['stream_name']
