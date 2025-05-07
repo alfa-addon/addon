@@ -22,7 +22,6 @@ import xbmcaddon
 
 from channelselector import get_thumb
 from core import channeltools
-from core import servertools
 from core import httptools
 from core import scrapertools
 from core import jsontools
@@ -1995,6 +1994,7 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
     force_inputstream = ''
     
     if item.server:
+        from core import servertools
         server_params = servertools.get_server_parameters(item.server)
         force_inputstream = server_params.get("force_inputstream", '')
 
@@ -2070,7 +2070,7 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
                 sound=False
             )
     elif (
-        (ver >= 18) and (".mp4" in mediaurl or ".m3u8" in mediaurl) and \
+        (ver > 18) and (".mp4" in mediaurl or ".m3u8" in mediaurl) and \
         (config.get_setting('inputstream_mode', default=0) == 2 or force_inputstream == "ffmpegdirect") and \
         force_inputstream != "none"
     ):
