@@ -2,10 +2,7 @@
 # --------------------------------------------------------
 # Conector streamwish By Alfa development Group
 # --------------------------------------------------------
-
-import sys
 import re
-
 from core import httptools
 from core import scrapertools
 from core import urlparse
@@ -46,21 +43,20 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     try:
         pack = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
         unpacked = jsunpack.unpack(pack)
+        logger.debug(unpacked)
         
-        m3u8_source = scrapertools.find_single_match(unpacked, '(?:file|"hls\d+"):"([^"]+)"\}')
+        m3u8_source = scrapertools.find_single_match(unpacked, '(?:file|"hls2"):"([^"]+)"') ##evitar "hls4"
         
         if "master.m3u8" in m3u8_source:
             datos = httptools.downloadpage(m3u8_source).data
-            if sys.version_info[0] >= 3 and isinstance(datos, bytes):
+            if isinstance(datos, bytes):
                 datos = "".join(chr(x) for x in bytes(datos))
             
             if datos:
                 matches_m3u8 = re.compile('#EXT-X-STREAM-INF.*?RESOLUTION=\d+x(\d*)[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
-                logger.debug(matches_m3u8)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
-                    logger.debug(url)
                     video_urls.append(["[streamwish] %sp" % quality, url])
         else:
             video_urls.append(["[streamwish]", m3u8_source])
@@ -69,4 +65,3 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         logger.error(e)
         unpacked = data
     return video_urls
-
