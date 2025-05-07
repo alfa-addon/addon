@@ -1,7 +1,9 @@
 # Conector tiwikiwi By Alfa development Group
 # --------------------------------------------------------
 
+import sys
 import re
+
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
@@ -54,7 +56,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         
         if "master.m3u8" in m3u8_source:
             datos = httptools.downloadpage(m3u8_source).data
-            if isinstance(datos, bytes):
+            if sys.version_info[0] >= 3 and isinstance(datos, bytes):
                 datos = "".join(chr(x) for x in bytes(datos))
             
             if datos:

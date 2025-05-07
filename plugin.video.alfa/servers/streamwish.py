@@ -2,7 +2,10 @@
 # --------------------------------------------------------
 # Conector streamwish By Alfa development Group
 # --------------------------------------------------------
+
+import sys
 import re
+
 from core import httptools
 from core import scrapertools
 from core import urlparse
@@ -31,7 +34,7 @@ def test_video_exists(page_url):
     
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
-    # logger.debug(data)
+    
     if response.code == 404 or "no longer available" in data or "Not Found" in data: 
         return False, "[streamwish] El archivo no existe o ha sido borrado"
     return True, ""
@@ -48,7 +51,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         
         if "master.m3u8" in m3u8_source:
             datos = httptools.downloadpage(m3u8_source).data
-            if isinstance(datos, bytes):
+            if sys.version_info[0] >= 3 and isinstance(datos, bytes):
                 datos = "".join(chr(x) for x in bytes(datos))
             
             if datos:
@@ -66,3 +69,4 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         logger.error(e)
         unpacked = data
     return video_urls
+
