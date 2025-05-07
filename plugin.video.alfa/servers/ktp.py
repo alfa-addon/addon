@@ -12,8 +12,9 @@ from platformcode import logger
 from lib.kt_player import decode
 
 # kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'ignore_response_code': True, 'cf_assistant': False}
-kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'ignore_response_code': True, 'cf_assistant': False}
-
+# kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'ignore_response_code': True, 'cf_assistant': False}
+kwargs = {'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 
+          'timeout': 45, 'cf_assistant': False, 'CF_stat': True, 'CF': True}
 #https://trahkino.cc/video/353484/ necesita "False"
 
 def test_video_exists(page_url):
