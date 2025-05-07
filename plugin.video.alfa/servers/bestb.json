@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "http(?:s|)://dood(?:stream|s|).(?:watch|to|com|\\w{2,4})/(?:e|d)/([a-z0-9#]+)",
-        "url": "https://d0000d.com/e/\\1"
-      },
-      {
-        "pattern": "http(?:s|)://(?:dooood|ds2play|d0o0d|do0od|d0000d|d000d|ds2video|do7go|dooodster|vidply|all3do).(?:watch|to|so|com|\\w{2,4})/(?:e|d)/([a-z0-9#]+)",
-        "url": "https://d0000d.com/e/\\1"
+        "pattern": "(https://(?:bestwish|bestb|streamup).(?:stream|\\w{2,4}))/([A-z0-9-]+)",
+        "url": "https://bestb.stream/data.php?filecode=\\2|\\1"
       }
     ]
   },
   "free": true,
-  "id": "doodstream",
-  "name": "doodstream",
+  "id": "bestb",
+  "name": "bestb",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/vTbw1YRM/doodstream.png"
+  "thumbnail": "https://streamup.cc/panel/assets/images/streamup.png"
 }
