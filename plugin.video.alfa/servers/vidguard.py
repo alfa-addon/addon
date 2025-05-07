@@ -13,6 +13,7 @@ import base64
 import binascii
 from core import jsontools
 
+# https://vembed.net/e/MAlwEMZea4OJ39X  #360 720 1080
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
@@ -20,8 +21,6 @@ def test_video_exists(page_url):
     if "<h2>WE ARE SORRY</h2>" in data or 'Not Found' in data or 'The requested video was not found.' in data:
         return False, "[4tube] El fichero no existe o ha sido borrado"
     return True, ""
-
-# https://vembed.net/e/MAlwEMZea4OJ39X  #360 720 1080
 
 
 def get_video_url(page_url, video_password):
@@ -65,6 +64,6 @@ def sig_decode(url):
         t[i + 1], t[i] = t[i], t[i + 1]
     s=""
     for v in t:
-        s += chr(v)
+        s += chr(v) if isinstance(v, int) else v
     url = url.replace(sig, s[:-5])
     return url

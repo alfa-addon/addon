@@ -42,5 +42,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://vembed.net/assets/img/logo/logo.png"
+  "thumbnail": "https://vembed.net/assets/img/logo/logo.png",
+  "force_inputstream": "adaptive"
 }
