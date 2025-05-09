@@ -167,6 +167,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://www.pornoxo.com/(?:videos|embed)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://www.serviporno.com/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
