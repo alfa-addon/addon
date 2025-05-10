@@ -119,7 +119,7 @@ def lista(item):
             actor = x.replace("actors-", "").replace("-", " ")
             actriz += "%s, " %actor
         if actriz:
-            title = "(%s) %s" %(actriz[:-2], title)
+            title = "[COLOR cyan]%s[/COLOR] %s" %(actriz[:-2], title)
         if stime:
             stime = stime.text.strip()
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,title)

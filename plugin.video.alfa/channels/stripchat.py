@@ -22,6 +22,8 @@ canonical = {
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
+
+
 host = canonical['host'] or canonical['host_alt'][0]
 hosta = "%sapi/front/models?limit=40&offset=0&sortBy=stripRanking&primaryTag=%s&filterGroupTags=[[\"%s\"]]"
     # 'https://stripchat.com/api/external/v4/widget/?limit=100&modelsCountry=&modelsLanguage=&modelsList=&tag=%s'
