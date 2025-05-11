@@ -10,6 +10,7 @@ from platformcode import logger
 
 # https://xfuntaxy.upns.xyz/#onaa9w
 # https://amg.upns.live/#x6diue
+# https://88z.io/#tapgfp  xtapes
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
