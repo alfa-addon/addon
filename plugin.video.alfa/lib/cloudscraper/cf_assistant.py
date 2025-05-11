@@ -672,7 +672,7 @@ def get_source(
         Cookie = opt.get("cf_cookie_send")
     if headers is None and opt.get("headers") and isinstance(opt["headers"], dict):
         headers = opt["headers"].copy()
-    logger.debug("HEADERS: %s" % headers)
+    #logger.debug("HEADERS: %s" % headers)
     encoding = opt.get("encoding", "UTF-8") or "UTF-8"
     if "cf_removeAllCookies" in opt and removeAllCookies is not False:
         removeAllCookies = opt["cf_removeAllCookies"]
@@ -768,7 +768,7 @@ def get_source(
 
             if Cookie or (headers and isinstance(headers, dict) and headers.get("Cookie")):
                 Cookies_send = setup_cookies(Cookie, domain, headers)
-                if Cookies_send and not opt.get("post") and not opt.get("cf_jscode"):
+                if Cookies_send and not opt.get("post") and not opt.get("cf_jscode") and not 'btdig.com' in url:
                     extraPostDelay += 2
                 logger.debug("Cookies_send: %s" % Cookies_send)
 

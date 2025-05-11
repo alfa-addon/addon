@@ -3353,11 +3353,13 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
                 torrent_params_save = copy.deepcopy(torrent_params)
                 for ret_c, zzz in enumerate(range(retries)):
-                    if ret_c > retries / 2:
+                    if ret_c > retries / retries*0.8:
                         use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                         use_assistant_save = use_assistant
                     torrent_params = find_alternative_link(itemO, torrent_params=torrent_params, cache=disable_cache, 
                                                            use_assistant=use_assistant, timeout_req=timeout_req)
+                    if use_assistant and str(config.get_setting('btdigg_status', server='torrent', default=False)) == 'RESET':
+                        use_assistant_save = use_assistant = None
                     if torrent_params.get('find_alt_link_code', '200') == '200':
                         break
                     if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
@@ -3447,7 +3449,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         x = 999999
                         break
 
-                if monitor.waitForAbort(5):
+                if monitor.waitForAbort(1):
                     config.set_setting('tmdb_cache_read', True)
                     return
 
@@ -3634,6 +3636,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     use_assistant_save = use_assistant
                                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, 
                                                                        cache=disable_cache, use_assistant=use_assistant, timeout_req=timeout_req)
+                                if use_assistant and str(config.get_setting('btdigg_status', server='torrent', default=False)) == 'RESET':
+                                    use_assistant_save = use_assistant = None
                                 if torrent_params.get('find_alt_link_code', '200') == '200':
                                     break
                                 if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
@@ -3794,7 +3798,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                             if monitor.waitForAbort(1):
                                 config.set_setting('tmdb_cache_read', True)
                                 return
-                        if monitor.waitForAbort(5):
+                        if monitor.waitForAbort(1):
                             config.set_setting('tmdb_cache_read', True)
                             return
 
