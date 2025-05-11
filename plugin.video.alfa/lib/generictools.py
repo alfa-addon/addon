@@ -3522,7 +3522,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
                     if item.contentTitle and item.contentTitle.lower() != item.contentSerieName.lower():
                         item.contentTitle = item.contentTitle.replace('- ', '').replace(':', '')
-                        item.contentTitle = clean_title(item.contentTitle).replace(' - ', ' ').replace('.', ' ')
+                        item.contentTitle = scrapertools.slugify(item.contentTitle, strict=False, convert=convert).strip()
                         if "en espa" in item.contentTitle: item.contentTitle = item.contentTitle[:-11]
                     if item.infoLabels['tmdb_id']: 
                         if item.contentTitle.lower() != item.contentSerieName.lower(): item.infoLabels['title_alt'] = item.contentTitle
