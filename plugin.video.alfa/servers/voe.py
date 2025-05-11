@@ -96,6 +96,5 @@ def voe_decode(ct, luts):
     ct = base64.b64decode(txt)
     txt = ''.join([chr(i - 3) for i in ct])
     txt = base64.b64decode(txt[::-1])
-    logger.debug(txt)
     return json.loads(txt)
     
