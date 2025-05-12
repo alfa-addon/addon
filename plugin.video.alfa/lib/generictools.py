@@ -546,6 +546,8 @@ def get_cached_files_(contentType, FORCED=False, cached=False, structure=True):
         cookies_cached = [] if cached_file else cookies_cached_exp[:]
         BTDIGG_TIMEOUT = tuple(PASSWORDS.get('cookies', {}).get('caching', {}).get('timeout', [])) or BTDIGG_TIMEOUT
         TITLES_SEARCH = PASSWORDS.get('cookies', {}).get('caching', {}).get('titles_search', {})
+        if PASSWORDS.get('cookies', {}).get('cookies', []) and 'cookies' in PASSWORDS['cookies']['cookies'][0]:
+            TITLES_SEARCH['cookies'] = PASSWORDS['cookies']['cookies'][0]['cookies']
 
         for cookie in PASSWORDS.get('cookies', {}).get('cookies', []):
             if not cookie.get('channel'): continue
@@ -2122,6 +2124,8 @@ def search_btdigg_free_format_parse(self, item, titles_search=BTDIGG_SEARCH, con
     for title_search in titles_search_:
         if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
             title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
+        if 'cookies' in TITLES_SEARCH and 'cookies' not in title_search:
+            title_search['cookies'] = TITLES_SEARCH['cookies']
         if item.btdigg or BTDIGG_URL_SEARCH in item.url:
             title_search['urls'] = [url]
             if contentType == 'list' and url and not title_search.get('title_tail', []):
@@ -2768,6 +2772,8 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
             if contentType and title_search.get('contentType', 'movie') != contentType: continue
             if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
                 title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
+            if 'cookies' in TITLES_SEARCH and 'cookies' not in title_search:
+                title_search['cookies'] = TITLES_SEARCH['cookies']
 
             if not item.btdigg:
                 quality_alt = '720p 1080p 2160p 4kwebrip 4k'
@@ -3294,6 +3300,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                 continue
             if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
                 title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
+            if 'cookies' in TITLES_SEARCH and 'cookies' not in title_search:
+                title_search['cookies'] = TITLES_SEARCH['cookies']
 
             if not cached[contentType]: contentType_time = time.time()
             counters['temp_%ss' % contentType] = round((time.time() - contentType_time)/60, 2)
@@ -3360,6 +3368,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                                            use_assistant=use_assistant, timeout_req=timeout_req)
                     if use_assistant and str(config.get_setting('btdigg_status', server='torrent', default=False)) == 'RESET':
                         use_assistant_save = use_assistant = None
+                        get_cached_files_('password', FORCED=True, cached=True)
                     if torrent_params.get('find_alt_link_code', '200') == '200':
                         break
                     if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
@@ -3571,6 +3580,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         if limit_search <= 0: continue
                         if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
                             title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
+                        if 'cookies' in TITLES_SEARCH and 'cookies' not in title_search:
+                            title_search['cookies'] = TITLES_SEARCH['cookies']
                         if (error_reset_time + title_search.get('error_reset', 5)*60) < time.time():
                             error_reset_time = time.time()
                             config.set_setting('btdigg_status', False, server='torrent')
@@ -3638,6 +3649,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                                                        cache=disable_cache, use_assistant=use_assistant, timeout_req=timeout_req)
                                 if use_assistant and str(config.get_setting('btdigg_status', server='torrent', default=False)) == 'RESET':
                                     use_assistant_save = use_assistant = None
+                                    get_cached_files_('password', FORCED=True, cached=True)
                                 if torrent_params.get('find_alt_link_code', '200') == '200':
                                     break
                                 if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
@@ -3974,6 +3986,8 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py_urls, *
             if title_search.get('contentType', contentType) != contentType: continue
             if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
                 title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
+            if 'cookies' in TITLES_SEARCH and 'cookies' not in title_search:
+                title_search['cookies'] = TITLES_SEARCH['cookies']
 
             limit_search = title_search.get('limit_search', 8)
             limit_pages = limit_search if (idx < 2 or domain_alt[idx] in str(title_search['urls']) \
@@ -4293,6 +4307,8 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py_urls, 
             if title_search.get('contentType', contentType) != contentType: continue
             if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
                 title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
+            if 'cookies' in TITLES_SEARCH and 'cookies' not in title_search:
+                title_search['cookies'] = TITLES_SEARCH['cookies']
 
             limit_search = title_search.get('limit_search', 8)
             limit_pages = limit_search if (idx < 2 or domain_alt[idx] in str(title_search['urls']) \
@@ -4602,6 +4618,8 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py_urls
             if title_search.get('contentType', 'movie') != item.contentType: continue
             if TITLES_SEARCH.get('checks_def') and not title_search.get('checks_def'):
                 title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
+            if 'cookies' in TITLES_SEARCH and 'cookies' not in title_search:
+                title_search['cookies'] = TITLES_SEARCH['cookies']
 
             limit_search = title_search.get('limit_search', 4)
             limit_pages = limit_search if (domain_alt[0] in str(title_search['urls']) \

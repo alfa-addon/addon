@@ -1083,9 +1083,9 @@ def get_source(
                     dom = cookie.get("urls", "")
                     if dom:
                         dom = urlparse.urlparse(dom[0]).netloc or dom[0]
-                    logger.debug("dominios: %s => %s" % (domain, dom))
+                    if Cookie is not False: logger.debug("dominios: %s => %s" % (domain, dom))
 
-                    if domain.lstrip(".") in dom:
+                    if Cookie is not False and domain.lstrip(".") in dom:
                         for cookie_part in cookieslist.split(";"):
                             try:
                                 name, val = scrapertools.find_single_match(
