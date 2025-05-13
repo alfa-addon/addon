@@ -3229,6 +3229,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
     excludes = ['torrenting']
     use_assistant_save = None
+    use_assistant_org = None
     error_reset_time = function_elapsed = time.time()
     btdigg_entries = 15
     disable_cache = True
@@ -3339,7 +3340,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
             while x < limit_pages and not monitor.abortRequested():
                 if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
                     raise Exception("CANCEL")
-                use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
+                use_assistant_org = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 use_assistant = use_assistant_save
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
@@ -3375,12 +3376,13 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
                         break
                     if use_assistant:
-                        use_assistant_save = use_assistant = None
+                        use_assistant_save = use_assistant = use_assistant_org = None
                     counters['err_%ss' % contentType] += 1
                     stat_l = []; stat_l.insert(0, 'Error en BTDIGG: %s-%s' \
                                         % (str(torrent_params.get('find_alt_link_code', '')), contentType.upper()))
                     stat_l.extend(list(counters.values())); stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
-                    window.setProperty("alfa_cached_btdigg_error", stat % tuple(stat_l))
+                    if not use_assistant_org:
+                        window.setProperty("alfa_cached_btdigg_error", stat % tuple(stat_l))
                     logger.error(stat % tuple(stat_l))
                     if monitor.waitForAbort(1 * 60):
                         return
@@ -3619,7 +3621,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         while x < limit_pages and not monitor.abortRequested():
                             if window.getProperty("alfa_cached_btdigg_stat") == 'TIMEOUT_CANCEL':
                                 raise Exception("CANCEL")
-                            use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
+                            use_assistant_org = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {})\
+                                                            .get('assistant', True))
                             use_assistant = use_assistant_save
                             other_season = False
                             try:
@@ -3648,7 +3651,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, 
                                                                        cache=disable_cache, use_assistant=use_assistant, timeout_req=timeout_req)
                                 if use_assistant and str(config.get_setting('btdigg_status', server='torrent', default=False)) == 'RESET':
-                                    use_assistant_save = use_assistant = None
+                                    use_assistant_save = use_assistant = use_assistant_org = None
                                     get_cached_files_('password', FORCED=True, cached=True)
                                 if torrent_params.get('find_alt_link_code', '200') == '200':
                                     break
@@ -3664,7 +3667,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 stat_l = []; stat_l.insert(0, 'Error en BTDIGG: %s-%s' \
                                                     % (str(torrent_params.get('find_alt_link_code', '')), contentType.upper()))
                                 stat_l.extend(list(counters.values())); stat_l.extend([round((time.time() - function_elapsed)/60, 2)])
-                                window.setProperty("alfa_cached_btdigg_error", stat % tuple(stat_l))
+                                if not use_assistant_org:
+                                    window.setProperty("alfa_cached_btdigg_error", stat % tuple(stat_l))
                                 logger.error(stat % tuple(stat_l))
                                 if monitor.waitForAbort(1 * 60):
                                     return
