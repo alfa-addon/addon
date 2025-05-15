@@ -43,6 +43,7 @@ CONTEXT_TORRENT = [{"title": "Copiar a Mis Torrents",
                     "module": "url"}]
 DOMAIN_ALT = 'wolfmax4k'
 DOMAIN_ALT_S = 'wolfmax'
+DOMAIN_ALT_URLS = ['.mkv', '.avi', 'Oficial.url', DOMAIN_ALT]
 DEFAULT = 'default'
 UNIFY_PRESET = config.get_setting("preset_style", default="Inicial")
 KWARGS = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 'forced_proxy_opt': None, 'cf_assistant': False}
@@ -1520,7 +1521,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if 'matches' in  AHkwargs: del AHkwargs['matches']
             item.btdigg = item.season_search = item.texto.replace('%20', ' ').replace('+', ' ')
             item.texto = '%s%s' % (BTDIGG_URL_SEARCH, item.texto)
-            item.matches = self.find_btdigg_list_all(item, matches, finds_controls.get('channel_alt', DOMAIN_ALT), **AHkwargs)
+            item.matches = self.find_btdigg_list_all(item, matches, finds_controls.get('channel_alt', DOMAIN_ALT_URLS), **AHkwargs)
         elif item.c_type == 'search' and self.btdigg_search and ('|' in item.texto or '[' in item.texto):
             item.season_search = item.texto.replace('%20', ' ').replace('+', ' ')
             item.texto = item.texto.split('|')[0].strip() if '|' in item.texto else item.texto.split('[')[0].strip()
@@ -1571,7 +1572,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                      and item.c_type == 'search' and item.extra != 'find_seasons')) \
                                      and not item.btdig_in_use:
                         if 'matches' in  AHkwargs: del AHkwargs['matches']
-                        matches = self.find_btdigg_list_all(item, matches, finds_controls.get('channel_alt', DOMAIN_ALT), **AHkwargs)
+                        matches = self.find_btdigg_list_all(item, matches, finds_controls.get('channel_alt', DOMAIN_ALT_URLS), **AHkwargs)
 
                     if not matches and item.extra != 'continue':
                         logger.error('NO MATCHES: %s' % finds_out)
@@ -2355,7 +2356,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                      and matches[-1].get('season', 1) < item.infoLabels.get('number_of_seasons', 1)):
                     AHkwargs['btdigg_contentSeason'] = btdigg_contentSeason
                 if 'matches' in AHkwargs: del AHkwargs['matches']
-                matches = self.find_btdigg_seasons(item, matches, finds_controls.get('domain_alt', DOMAIN_ALT), **AHkwargs)
+                matches = self.find_btdigg_seasons(item, matches, finds_controls.get('domain_alt', DOMAIN_ALT_URLS), **AHkwargs)
 
             if not matches:
                 if not finds_out:
@@ -2697,7 +2698,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if self.btdigg:
             if BTDIGG_URL_SEARCH in item.url and item.matches_cached: matches = item.matches_cached[:]
             if 'matches' in AHkwargs: del AHkwargs['matches']
-            matches = self.find_btdigg_episodes(item, matches, finds_controls.get('domain_alt', DOMAIN_ALT), **AHkwargs)
+            matches = self.find_btdigg_episodes(item, matches, finds_controls.get('domain_alt', DOMAIN_ALT_URLS), **AHkwargs)
 
         if not matches:
             logger.error('NO MATCHES: %s' % finds_out)
@@ -3115,7 +3116,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         if self.btdigg:
             if AHkwargs.get('matches'): del AHkwargs['matches']
-            matches = self.find_btdigg_findvideos(item, item.matches or matches, finds_controls.get('domain_alt', DOMAIN_ALT), **AHkwargs)
+            matches = self.find_btdigg_findvideos(item, item.matches or matches, finds_controls.get('domain_alt', DOMAIN_ALT_URLS), **AHkwargs)
         
         if not matches:
             if item.emergency_urls and not item.videolibray_emergency_urls:     # Hay urls de emergencia?
@@ -3204,7 +3205,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     if 'BLOQUEO' in elem.get('size', ''): AHkwargs['btdigg_lookup'] = True
             else:
                 if AHkwargs.get('matches'): del AHkwargs['matches']
-                matches_btdigg = self.find_btdigg_findvideos(item, [], finds_controls.get('domain_alt', DOMAIN_ALT), **AHkwargs)
+                matches_btdigg = self.find_btdigg_findvideos(item, [], finds_controls.get('domain_alt', DOMAIN_ALT_URLS), **AHkwargs)
                 for elem in matches_btdigg:
                     options.append((lang, elem))
                     btdig_in_use = True

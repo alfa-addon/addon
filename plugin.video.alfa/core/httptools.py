@@ -503,12 +503,13 @@ def check_proxy(url, **opt):
         url = proxy_data["url"]
         proxy_data["stat"] = proxy_data.get("stat", "").replace(",P", ", P")
 
-        if proxy_data.get("dict", {}).get("https", ""):
-            proxy_data["dict"]["http"] = str("http://" + proxy_data["dict"]["https"])
-            proxy_data["dict"]["https"] = proxy_data["dict"]["http"]
-        elif proxy_data.get("dict", {}).get("http", ""):
-            proxy_data["dict"]["https"] = str("http://" + proxy_data["dict"]["http"])
-            proxy_data["dict"]["http"] = proxy_data["dict"]["https"]
+        if not "proxy_addr_forced" in proxy_data:
+            if proxy_data.get("dict", {}).get("https", ""):
+                proxy_data["dict"]["http"] = str("http://" + proxy_data["dict"]["https"])
+                proxy_data["dict"]["https"] = proxy_data["dict"]["http"]
+            elif proxy_data.get("dict", {}).get("http", ""):
+                proxy_data["dict"]["https"] = str("http://" + proxy_data["dict"]["http"])
+                proxy_data["dict"]["http"] = proxy_data["dict"]["https"]
 
     return url, proxy_data, opt
 
@@ -1293,6 +1294,8 @@ def downloadpage(url, **opt):
     ):
         opt["forced_proxy_ifnot_assistant"] = opt["canonical"]["forced_proxy_ifnot_assistant"]
         opt["ignore_response_code"] = True
+    if "cloudscraper_active" not in opt and "cloudscraper_active" in opt.get("canonical", {}):
+        opt["cloudscraper_active"] = opt["canonical"]["cloudscraper_active"]
     if "set_tls" not in opt and "set_tls" in opt.get("canonical", {}):
         opt["set_tls"] = opt["canonical"]["set_tls"]
     if (opt.get("set_tls", "") or opt.get("set_tls", "") is None) and opt.get(
@@ -1922,12 +1925,12 @@ def downloadpage(url, **opt):
                 )
                 if ssl_version and ssl:
                     if PY3:
-                        if ssl_context == ssl.PROTOCOL_TLS_CLIENT:
+                        if ssl_version == ssl.PROTOCOL_TLS_CLIENT:
                             opt["set_tls"] = ssl.PROTOCOL_TLSv1_2
-                    if ssl_context == ssl.PROTOCOL_TLSv1_2:
+                    if ssl_version == ssl.PROTOCOL_TLSv1_2:
                         opt["set_tls"] = ssl.PROTOCOL_TLSv1_1
-                    if ssl_context == ssl.PROTOCOL_TLSv1_1:
-                        opt["set_tls"] = False
+                    if ssl_version == ssl.PROTOCOL_TLSv1_1:
+                        opt["set_tls"] = None
                 if opt["retries_cloudflare"] > 0:
                     time.sleep(1)
                 opt["retries_cloudflare"] -= 1

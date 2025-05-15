@@ -673,10 +673,10 @@ def get_generic_call(
         if not alfa_s:
             logger.info("##Assistant headers: %s" % headers)
 
-    timeout = int(timeout) + extraPostDelay
-    serverCall += "&extraPostDelay=%s" % (extraPostDelay * 1000)
+    timeout = int(timeout + extraPostDelay)
+    serverCall += "&extraPostDelay=%s" % int(extraPostDelay * 1000)
     if not alfa_s:
-        logger.info("##Assistant delay-after-js-load: %s" % str(extraPostDelay * 1000))
+        logger.info("##Assistant delay-after-js-load: %s" % str(int(extraPostDelay * 1000)))
     serverCall += "&removeAllCookies=%s" % removeAllCookies
     if not alfa_s:
         logger.info("##Assistant removeAllCookies: %s" % str(removeAllCookies))

@@ -38,5 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.imgur.com/0mtPIEI.png"
+  "thumbnail": "https://i.imgur.com/0mtPIEI.png",
+  "force_inputstream": "adaptive"
 }

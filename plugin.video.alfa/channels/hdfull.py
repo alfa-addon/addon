@@ -33,24 +33,27 @@ debug = config.get_setting('debug_report', default=False)
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hdfull.today/", "https://hdfull.cv/", "https://hd-full.biz/", "https://hdfull.blog/"], 
+             "host_alt": ["https://hdfull.sbs/", "https://hdfull.today/", "https://hdfull.help/", "https://hd-full.biz/", 
+                          "https://hdfull.cfd/", "https://hdfull.org/"], 
              "host_alt_main": 2, 
-             'host_verification': '%slogin', 
-             "host_black_list": ["https://hd-full.me/", 
+             "host_verification": '%slogin', 
+             "host_black_list": ["https://hdfull.one/", "https://hdfull.blog/", 
+
+                                 "https://hd-full.me/", 
                                  "https://hd-full.fit/", "https://hd-full.info/", "https://hd-full.life/", 
 
-                                 "https://hdfull.monster/", "https://hdfull.one/", "https://hdfull.buzz/", 
-                                 "https://hdfull.tel/", "https://hdfull.cfd/", "https://hd-full.sbs/", 
-                                 "https://hdfull.sbs/", 
+                                 "https://hdfull.cv/", "https://hdfull.monster/", "https://hdfull.buzz/", 
+                                 "https://hdfull.tel/", "https://hd-full.sbs/", 
 
                                  "https://hd-full.lol/", "https://hd-full.co/", "https://hdfull.quest/", 
                                  "https://hd-full.in/", "https://hd-full.im/", "https://hd-full.one/", 
-                                 "https://hdfull.icu/", "https://hdfull.org/", "https://hd-full.vip/", 
+                                 "https://hdfull.icu/", "https://hd-full.vip/", 
                                  "https://hdfull.life/", "https://hdfull.digital/", "https://hdfull.work/", 
                                  "https://hdfull.video/", "https://hdfull.cloud/", "https://hdfull.wtf/", 
                                  "https://hdfull.fun/", "https://hdfull.lol/", "https://hdfull.store/", 
                                  "https://new.hdfull.one/", "https://hdfull.top/", "https://hdfull.bz/"],
              'pattern': r'<meta\s*property="og:url"\s*content="([^"]+)"', 
+             "canonical_no_check_list": [],
              'set_tls': True, 'set_tls_min': False, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': cf_assistant, 
              'cf_assistant_ua': True, 'cf_assistant_get_source': True if cf_assistant == 'force' else False, 
              'cf_no_blacklist': True, 'cf_removeAllCookies': False if cf_assistant == 'force' else True,
@@ -66,6 +69,7 @@ host_main = canonical['host_alt'][canonical.get('host_alt_main', 0)]
 host_save = host
 host_thumb = 'https://hdfullcdn.cc/'
 _silence = config.get_setting('silence_mode', channel=canonical['channel'])
+if host in canonical['canonical_no_check_list']: canonical['canonical_check'] = False
 
 timeout = (5, 20)
 kwargs = {}
@@ -1319,7 +1323,7 @@ def verify_domain_alt(url, post=None, headers={}, soup=False, json=False, alfa_s
     if window and not window.getProperty("AH_hdfull_domain"):
         url_rest = url.replace(host_alt, '')
         canonical_alt = canonical.copy()
-    
+
         for host_alt in canonical['host_alt']:
             canonical_alt['host'] = host_alt
             canonical_alt['host_alt'] = [host_alt]
