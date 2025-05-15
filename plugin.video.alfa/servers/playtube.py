@@ -2,12 +2,16 @@
 # --------------------------------------------------------
 # Conector playtube By Alfa development Group
 # --------------------------------------------------------
+
+import sys
 import re
+
 import codecs
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
+from core import urlparse
 
 
 def test_video_exists(page_url):
@@ -28,9 +32,21 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     pack = scrapertools.find_single_match(data.data, 'p,a,c,k,e,d.*?</script>')
     unpacked = jsunpack.unpack(pack)
-    url =""
-    url = scrapertools.find_single_match(unpacked, 'src="([^"]+)"')# + "|referer=%s" %(page_url)
-    if not url:
-        url = scrapertools.find_single_match(unpacked, '(?:file|src):"([^"]+)') + "|referer=%s" %(page_url)
-    video_urls.append(['m3u8 [%s]' %server, url] )
+    m3u8_source =""
+    m3u8_source = scrapertools.find_single_match(unpacked, 'src="([^"]+)"')# + "|referer=%s" %(page_url)
+    if not m3u8_source:
+        m3u8_source = scrapertools.find_single_match(unpacked, '(?:file|src):"([^"]+)') #+ "|referer=%s" %(page_url)
+    if "master.m3u8" in m3u8_source:
+        datos = httptools.downloadpage(m3u8_source).data
+        if sys.version_info[0] >= 3 and isinstance(datos, bytes):
+            datos = "".join(chr(x) for x in bytes(datos))
+        
+        if datos:
+            matches_m3u8 = re.compile('#EXT-X-STREAM-INF.*?RESOLUTION=\d+x(\d*)[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+            ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+            for quality, url in matches_m3u8:
+                url =urlparse.urljoin(m3u8_source,url)
+                video_urls.append(['[%s] %s' %(server, quality), url])
+    else:
+        video_urls.append(['m3u8 [%s]' %server, m3u8_source] )
     return video_urls

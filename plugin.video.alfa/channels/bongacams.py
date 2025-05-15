@@ -17,8 +17,8 @@ canonical = {
              'host': config.get_setting("current_host", 'bongacams', default=''), 
              'host_alt': ["https://bongacams.com/"], 
              'host_black_list': [], 
-             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 3, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             'CF': False, 'CF_test': False, 'alfa_s': True, 'CF_stat': True
              # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              # 'CF': False, 'CF_test': False, 'alfa_s': True
             }

@@ -109,7 +109,11 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    soup = AlfaChannel.create_soup(item.url, **kwargs)
+    
+    soup = AlfaChannel.create_soup(item.url, canonical_check=False, **kwargs)
+    if not host in AlfaChannel.response.url:
+        item.url = AlfaChannel.response.url
+    
     if soup.find('div', class_='tags-wrap').find_all('a', href=re.compile("/(?:pornstars|models|model|pornosztarok)/[A-z0-9-]+/")):
         pornstars = soup.find('div', class_='tags-wrap').find_all('a', href=re.compile("/(?:pornstars|models|model|pornosztarok)/[A-z0-9-]+/"))
         for x, value in enumerate(pornstars):

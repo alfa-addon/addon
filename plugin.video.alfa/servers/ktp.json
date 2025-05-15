@@ -84,7 +84,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://www.(?:camwhores|camwhoreshd|camvideos|cwtvembeds|lesbianbliss).(?:tv|com|org)/embed/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:camwhores|camwhoreshd|camvideos|cwtvembeds|lesbianbliss|shareanynudes).(?:tv|com|org)/(?:embed|video)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -92,7 +92,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://(?:www.|)(?:sloppyfans|nudes7|hornyfap|mypornhere|asianviralhub|viralpornhub|amateurest|in35|thothub|thothd).(?:tv|com|org|to|lol|xxx)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:sloppyfans|nudes7|hornyfap|asianviralhub|viralpornhub|amateurest|in35|thothub).(?:tv|com|org|to|lol|xxx)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(http(?:s|)://(?:www.|)(?:thothd).(?:tv|com|org|to|lol|xxx)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -114,6 +118,10 @@
       {
         "pattern": "(https://www.sunporno.com/v/[0-9]+/[A-z0-9-.]+(?:/|))",
         "url": "\\1"
+      },
+      {
+        "pattern": "justporn.com/(?:embed|video)/([0-9]+)",
+        "url": "https://www.justporn.com/video/\\1/a"
       },
       {
         "pattern": "(https://pornox.hu/(?:porno|video)/[0-9]+/[A-z0-9-.]+(?:/|))",
@@ -156,7 +164,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://(?:www.|)(?:cambro|camvideos|alotporn).(?:tv|com)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:cambro|camvideos).(?:tv|com)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

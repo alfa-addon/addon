@@ -21,6 +21,8 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
+####  OUT los ktp estan vacios
+
 canonical = {
              'channel': 'bigtitslust', 
              'host': config.get_setting("current_host", 'bigtitslust', default=''), 

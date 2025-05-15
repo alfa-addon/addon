@@ -2,11 +2,15 @@
 # --------------------------------------------------------
 # Conector vidhide By Alfa development Group
 # --------------------------------------------------------
+
+import sys
 import re
+
 from core import httptools, jsontools
 from core import scrapertools
 from platformcode import logger
 from lib import jsunpack
+from core import urlparse
 
 video_urls = []
 
@@ -22,6 +26,9 @@ def test_video_exists(page_url):
         page_url, referer = page_url.split("|")
         referer = referer.replace('Referer=', '').replace('referer=', '')
         kwargs['headers'] = {'Referer': referer}
+    
+    # page_url = httptools.downloadpage(page_url, follow_redirects=False).headers["location"]
+    
     response = httptools.downloadpage(page_url, **kwargs)
     global data
     data = response.data
@@ -37,8 +44,22 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     try:
         enc_data = scrapertools.find_single_match(data, "text/javascript(?:'|\")>(eval.*?)</script>")
         dec_data = jsunpack.unpack(enc_data)
-        url = scrapertools.find_single_match(dec_data, 'sources\:\s*\[\{(?:file|src):"([^"]+)"')
-        video_urls.append(['[vidhide] m3u', url])
+        m3u8_source = scrapertools.find_single_match(dec_data, '\{(?:file|src|"hls2"):"([^"]+)"')
+        
+        if "master.m3u8" in m3u8_source:
+            datos = httptools.downloadpage(m3u8_source).data
+            if sys.version_info[0] >= 3 and isinstance(datos, bytes):
+                datos = "".join(chr(x) for x in bytes(datos))
+            
+            if datos:
+                matches_m3u8 = re.compile('#EXT-X-STREAM-INF.*?RESOLUTION=\d+x(\d*)[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+                ## matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+                for quality, url in matches_m3u8:
+                    url =urlparse.urljoin(m3u8_source,url)
+                    video_urls.append(["[vidhide] %sp" % quality, url])
+        else:
+            video_urls.append(['[vidhide] m3u', m3u8_source])
+
     except Exception:
         dec_data = data
     return video_urls

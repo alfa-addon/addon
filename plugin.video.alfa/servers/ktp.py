@@ -12,9 +12,12 @@ from platformcode import logger
 from lib.kt_player import decode
 
 # kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'ignore_response_code': True, 'cf_assistant': False}
-kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'ignore_response_code': True, 'cf_assistant': False}
+# kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'ignore_response_code': True, 'cf_assistant': False}
+kwargs = {'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 6, 'ignore_response_code': True, 
+          'timeout': 45, 'cf_assistant': False, 'CF_stat': True, 'CF': True}
 
-#https://trahkino.cc/video/353484/ necesita "False"
+# https://trahkino.cc/video/353484/ necesita "False"
+# https://www.porn00.org/ necesita "None"
 
 def test_video_exists(page_url):
     
@@ -59,19 +62,25 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 url = decode(url, license_code)
             elif url.startswith("/get_file/"):
                 url = urlparse.urljoin(page_url, url)
-            if "HD" in quality:
+            if "HD" in quality and not "Full" in quality:
                 quality = "720p"
             if "?br=" in url: url = url.split("?br=")[0]
             # url += "|verifypeer=false"
             url += "|Referer=%s" % page_url
             video_urls.append(['[ktplayer] %s' % quality, url])
+        
         if "lq" in quality.lower() or "high" in quality.lower() or "low" in quality.lower():
             invert= "true"
-    if invert:
+        elif "mq" in quality.lower() or "hq" in quality.lower() or "full" in quality.lower(): ### 4kporn
+            invert= "false"
+    
+    if "true" in invert:
         video_urls.reverse()
+    elif "false" in invert:
+        return video_urls
     else:
         video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-   
+    
     if not url:
         url = scrapertools.find_single_match(data, '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?')
         video_urls.append(['[ktplayer]', url])

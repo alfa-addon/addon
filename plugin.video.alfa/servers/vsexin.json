@@ -46,5 +46,6 @@
       "visible": false
     }
   ],
-  "thumbnail": ""
+  "thumbnail": "",
+  "force_inputstream": "ffmpegdirect"
 }

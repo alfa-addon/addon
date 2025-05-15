@@ -155,8 +155,8 @@ def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    if soup.find_all('a', href=re.compile(r"/girl/[a-z0-9-]+")):
-        pornstars = soup.find_all('a', href=re.compile(r"/girl/[a-z0-9-]+"))
+    if soup.find_all('a', href=re.compile(r"/(?:girl|chica)/[a-z0-9-]+")):
+        pornstars = soup.find_all('a', href=re.compile(r"/(?:girl|chica)/[a-z0-9-]+"))
         for x, value in enumerate(pornstars):
             pornstars[x] = value.get_text(strip=True)
         pornstar = ' & '.join(pornstars)

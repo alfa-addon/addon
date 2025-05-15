@@ -10,22 +10,23 @@ from core import httptools
 from core import scrapertools
 from platformcode import logger
 
-data = ""
-host = "https://d0000d.com"    #"https://dood.la"
 count = 5
 retries = count
 forced_proxy_opt = 'ProxySSL'
 
-kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0,
+kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 0,
           'CF': True, 'cf_assistant': False, 'ignore_response_code': True}
 
 
 def test_video_exists(page_url):
-    global data, retries
+    global data, retries, host, redir
     
-    # page_url = page_url.replace('/d/', '/e/')
     logger.info("(page_url='%s'; retry=%s)" % (page_url, retries))
     
+    page_url = httptools.downloadpage(page_url, follow_redirects=False).headers["location"]
+    redir = page_url
+    server = scrapertools.get_domain_from_url(page_url)#.split(".")
+    host = "https://%s" %server
     response = httptools.downloadpage(page_url, **kwargs)
     
     if '/d/' in page_url and scrapertools.find_single_match(response.data, ' <iframe src="([^"]+)"'):
@@ -46,9 +47,9 @@ def test_video_exists(page_url):
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
-    global data, retries
-    retries = count
     logger.info("url=" + page_url)
+    
+    retries = count
     video_urls = list()
     label = scrapertools.find_single_match(data, r'type:\s*"video/([^"]+)"')
     js_code = scrapertools.find_single_match(data, ("(function\s?makePlay.*?})"))
@@ -59,15 +60,19 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     base_url = scrapertools.find_single_match(data, r"\$.get\('(/pass[^']+)'")
     new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True, **kwargs).data
     
-    while "We are checking your browser" in new_data or "5xx-error-landing" in new_data:
-        retries -= 1
-        time.sleep(count - retries)
-        new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True, **kwargs).data
-        if retries < 0:
-            return video_urls
+    # while "We are checking your browser" in new_data or "5xx-error-landing" in new_data or "token=" in new_data:
+        # retries -= 1
+        # time.sleep(count - retries)
+        # new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True, **kwargs).data
+        # if retries < 0:
+            # return video_urls
     
     new_data = re.sub(r'\s+', '', new_data)
-    url = new_data + makeplay + "|Referer=%s" % page_url
+    
+    if "X-Amz-" in new_data:
+        url = new_data
+    else:
+        url = new_data + makeplay + "|Referer=%s" % redir
     video_urls.append(['%s [doodstream]' % label, url])
     
     return video_urls

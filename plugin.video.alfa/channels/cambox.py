@@ -90,7 +90,7 @@ def mainlist(item):
     # itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "channels/?sort_by=avg_videos_popularity&from=1", extra="Canal"))
     itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "models/?sort_by=avg_videos_rating&from=1", extra="PornStar"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    # itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 

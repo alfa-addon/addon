@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://vidhide(?:pro|pre|vip|plus|hub|).com/(?:f|v|embed|d|file)/([A-z0-9]+)",
+        "pattern": "https://vidhide(?:pro|pre|vip|plus|hub|).(?:com|\\w{2,4})/(?:f|v|/v|embed|d|file)/([A-z0-9]+)",
         "url": "https://vidhidevip.com/v/\\1"
       },
       {

@@ -22,6 +22,8 @@ canonical = {
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
+
+
 host = canonical['host'] or canonical['host_alt'][0]
 hosta = "%sapi/front/models?limit=40&offset=0&sortBy=stripRanking&primaryTag=%s&filterGroupTags=[[\"%s\"]]"
     # 'https://stripchat.com/api/external/v4/widget/?limit=100&modelsCountry=&modelsLanguage=&modelsList=&tag=%s'
@@ -59,7 +61,6 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).json
     for elem in data['liveTagGroups']:
-        logger.debug(elem['tags'])
         for list in elem['tags']:
             title = re.sub(r"tagLanguage|autoTag|age|ethnicity|privatePrice|specifics|specific|^do|subculture", "", list) # |bodyType|hairColor
             title = title.capitalize()
@@ -76,23 +77,35 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).json
     for elem in data['models']:
-        url = elem['hlsPlaylist']
+        ref = elem['hlsPlaylist']
         id = elem['id']
         thumbnail = elem['popularSnapshotTimestamp']
         server = elem['snapshotServer']
-        title = elem['username']
+        quality = ""
+        if elem['presets']:
+            presets = elem['presets']
+            quality = presets[0]
+            presets.pop()
+            presets = ','.join(presets[::-1])
+        name = elem['username']
         pais = elem['country']
+        title = name
+        if quality:
+            title += " [COLOR red]%s[/COLOR]" %quality
         if pais:
             title += " (%s)" %pais
         thumbnail = "https://img.strpst.com/thumbs/%s/%s_webp" %(thumbnail, id)
-        if not url or "_240p" in url:
-            url = "https://b-hls-03.doppiocdn.com/hls/%s/%s.m3u8" %(id, id)
+        if "_240p" in ref:
+            ref = ref.replace("_240p", "")
+            # url = "https://edge-hls.doppiocdn.com/hls/%s/master/%s.m3u8" %(id, id)
+        url = "https://stripchat.com/api/front/v1/broadcasts/%s" %name
+        url += "|%s" %ref
         plot = ""
         action = "play"
         if logger.info() is False:
             action = "findvideos"
-        itemlist.append(Item(channel = item.channel, action=action, title=title, thumbnail=thumbnail, url = url,
-                               plot=plot, fanart=thumbnail, contentTitle=title ))
+        itemlist.append(Item(channel = item.channel, action=action, title=title, contentTitle=title, url=url,
+                             thumbnail=thumbnail, fanart=thumbnail, plot=plot ))
                                
     count= data['filteredCount']
     current_page = scrapertools.find_single_match(item.url, ".*?&offset=(\d+)")
@@ -107,12 +120,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel = item.channel, action="play", title="Directo", url=item.url ))
+    
+    itemlist.append(Item(channel = item.channel, action="play", contentTitle = item.contentTitle, url=item.url, server="stripchat" ))
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel = item.channel, action="play", title=item.url, contentTitle = item.title, url=item.url, server="Directo" ))
+    
+    itemlist.append(Item(channel = item.channel, action="play", contentTitle = item.contentTitle, url=item.url, server="stripchat" ))
     return itemlist

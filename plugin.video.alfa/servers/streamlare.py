@@ -52,7 +52,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         
         if "xxxxxxxxxxxxxxmaster.m3u8" in media_url:
             data = httptools.downloadpage(media_url, **kwargs).data
-            if isinstance(data, bytes):
+            if sys.version_info[0] >= 3 and isinstance(data, bytes):
                 data = "".join(chr(x) for x in bytes(data))
             
             if data:

@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:vidguard|vembed|bembed|listeamed|embedv).\\w{2,4}/(?:e|d|v)/([A-z0-9]+)",
-        "url": "https://bembed.net/e/\\1"
-      },
-      {
-        "pattern": "((?:bigbuttshub2|bigbuttshub).\\w{2,4}/(?:e|d|v)/[A-z0-9]+)",
-        "url": "https://\\1"
+        "pattern": "(https://www.camsoda.com/api/v1/video/vtoken/[A-z0-9-]+)",
+        "url": "\\1?username=guest_22596"
       }
     ]
   },
   "free": true,
-  "id": "vidguard",
-  "name": "vidguard",
+  "id": "camsoda",
+  "name": "camsoda",
   "settings": [
     {
       "default": false,
@@ -42,6 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://vembed.net/assets/img/logo/logo.png",
-  "force_inputstream": "adaptive"
+  "thumbnail": "https://cachew.camsoda.com/assets/img/camsoda-logo-160x50.png",
+  "force_inputstream": "ffmpegdirect"
 }

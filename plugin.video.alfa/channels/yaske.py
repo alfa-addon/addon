@@ -22,8 +22,8 @@ else:
 
 SERVER = {
           "hlswish": "streamwish", "playerwish": "streamwish", "ghbrisk": "streamwish", "iplayerhls": "streamwish",
-           "listeamed": "vidguard", "1fichier":"onefichier", "luluvdo": "lulustream",
-           "dhtpre": "vidhidepro", "peytonepre": "vidhidepro"
+           "listeamed": "vidguard", "1fichier":"onefichier", "luluvdo": "lulustream", "lulu": "lulustream",
+           "dhtpre": "vidhidepro", "peytonepre": "vidhidepro", "smoothpre": "vidhidepro"
           }
 
 IDIOMAS = {"es": "CAST", "la": "LAT", "en_ES": "VOSE", "sub-es": "VOSE"}
@@ -84,7 +84,6 @@ def mainlist(item):
     return itemlist
 
 
-
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
@@ -125,11 +124,11 @@ def lista(item):
             for idioma in idiomas:
                 lang = idioma['language']
                 language.append(IDIOMAS.get(lang, lang))
-
+        
         year = '-'
         if elem.get('year', ''):
             year = elem['year']
-
+        
         new_item = Item(channel=item.channel, title=title, thumbnail=thumbnail, 
                         language=language, infoLabels={"year": year})
         if series:
@@ -174,7 +173,11 @@ def seasons(item):
     
     url = "%sapi/v1/titles/%s?loader=titlePage" %(host, item.id)
     data = httptools.downloadpage(url, referer=host, canonical=canonical).json
-    item.season_num = data['seasons']['total']
+    
+    try:
+        item.season_num = data['title']['primary_video']['season_num']# if data['title'].get('primary_video', '') else data['seasons']['total']
+    except:
+        item.season_num = data['seasons']['total']
     
     total = int(item.season_num)
     te = 1
@@ -192,7 +195,7 @@ def seasons(item):
     tmdb.set_infoLabels_itemlist(itemlist, True)
     
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url,
+        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url, id= item.id,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
     return itemlist
 
@@ -235,7 +238,7 @@ def episodios(item):
     logger.info()
     itemlist = []
     templist = seasons(item)
-    for tempitem in templist:
+    for tempitem in templist[:-1]:
         itemlist += episodesxseasons(tempitem)
     return itemlist
 
@@ -257,8 +260,10 @@ def findvideos(item):
         series = data['title']['is_series']
     
     videos = data['title']['videos']
-    videos += data['title']['downloads']
-    videos += data['alternative_videos']
+    if data['title'].get('downloads', ''):
+        videos += data['title']['downloads']
+    elif data.get('alternative_videos', ''):
+        videos += data['alternative_videos']
     links = []
     for elem in videos:
         # link = elem['src']
@@ -269,7 +274,7 @@ def findvideos(item):
             links.append(hash)
         quality = CALIDADES.get(elem['quality'], 'HD-1080p')
         lang = elem['language']
-        domain = elem['domain'].split(".")[0]
+        domain = elem['domain'].split(".")[0].lower()
         if domain in ["katfile", "nitroflare", "dailyuploads"]:
             continue
         language = IDIOMAS.get(lang, lang)
@@ -295,9 +300,21 @@ def findvideos(item):
 
 def play(item):
     logger.info()
-    itemlist = []
     
     url = alfaresolver.go_to_the_pub(item.url)
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    return itemlist
+    
+    devuelve = servertools.findvideosbyserver(url, item.server)
+    if devuelve:
+        item.url =  devuelve[0][1]
+    
+    return [item]
+
+
+# def play(item):
+    # logger.info()
+    # itemlist = []
+    
+    # url = alfaresolver.go_to_the_pub(item.url)
+    # itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # return itemlist

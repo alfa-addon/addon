@@ -8,6 +8,10 @@
         "url": "https://vk.com/video_ext.php?oid=\\1&id=\\2&hash=\\3"
       },
       {
+        "pattern": "(/video_ext.php\\?oid=[0-9]+&id=[0-9]+)",
+        "url": "https://vkvideo.ru\\1"
+      },
+      {
         "pattern": "(vk\\.[a-z]+\\/video[0-9]+_[0-9]+)",
         "url": "https://\\1"
       }

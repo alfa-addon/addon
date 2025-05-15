@@ -96,6 +96,7 @@ def section_matches(item, matches_int, **AHkwargs):
         try:
             
             elem_json['url'] = elem.a.get("href", '')
+            elem_json['url'] += "?page=1"
             if elem.img: elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
                                                                                      or elem.img.get('data-src', '') \
                                                                                      or elem.img.get('src', '')
