@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://vidhide(?:pro|pre|vip|plus|).com/(?:f|v|embed|d|file)/([A-z0-9]+)",
+        "pattern": "https://vidhide(?:pro|pre|vip|plus|hub|).com/(?:f|v|embed|d|file)/([A-z0-9]+)",
         "url": "https://vidhidevip.com/v/\\1"
       },
       {
@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?i)(?:dhtpre|nikaplayerr|ryderjet|peytonepre|smoothpre).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
+        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|smoothpre).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
         "url": "\\1"
       },
       {
