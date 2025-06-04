@@ -100,7 +100,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "https://(?:www.|)((?:12milf|allnporn|hitprn)).com/([A-z0-9-]+/)",
+        "pattern": "https://(?:www.|)((?:12milf|allnporn|hitprn|hitrpn)).com/([A-z0-9-]+/)",
         "url": "https://www.\\1.com/\\2"
       },
       {

@@ -130,10 +130,6 @@ def findvideos(item):
     itemlist = []
     soup = create_soup(item.url)
     url = soup.find('div', class_='single-video').iframe['src']
-    if "xiaoshenke" in url:
-        id = scrapertools.find_single_match(url, "/(\d+)")
-        id = id[::-1]
-        url = "https://www.porntrex.com/embed/%s" % id
     if url.startswith("//"):
         url = "https:%s" % url
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
@@ -154,10 +150,6 @@ def play(item):
     lista.insert (2, pornstar)
     item.contentTitle = ' '.join(lista)    
     url = soup.find('div', class_='single-video').iframe['src']
-    if "xiaoshenke" in url:
-        id = scrapertools.find_single_match(url, "/(\d+)")
-        id = id[::-1]
-        url = "https://www.porntrex.com/embed/%s" % id
     if url.startswith("//"):
         url = "https:%s" % url
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))

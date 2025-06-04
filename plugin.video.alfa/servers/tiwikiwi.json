@@ -28,10 +28,6 @@
         "url": "\\1.html"
       },
       {
-        "pattern": "(https://ghbrisk.com/(?:e|d)/[a-z0-9]+)",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://iplayerhls.com/(?:e/|d/|)[a-z0-9]+)",
         "url": "\\1"
       },

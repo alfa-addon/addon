@@ -27,8 +27,9 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
     
-    data = httptools.downloadpage(page_url).data
-    if "Not found" in data or "File is no longer available" in data or "Error 404" in data:
+    response = httptools.downloadpage(page_url)
+    data = response.data
+    if response.code == 404 or "Not found" in data or "File is no longer available" in data or "Error 404" in data:
         return False, "[Voe] El fichero no existe o ha sido borrado"
     
     if "permanentToken" in data:
