@@ -500,21 +500,21 @@ def multiplayer_findvideos(url):
     kwargs["canonical"]["proxy_web"] = False
     kwargs["headers"]["Referer"] = host
 
-    url = url.replace('embed.php', 'player.php')
+    # url = url.replace('embed.php', 'player.php')
 
-    if '?' in url:
-        path, queryString = url.split('?', 1)
-        if '&' in queryString:
-            queries_in = queryString.split('&')
-            queries_out = []
-            for query in queries_in:
-                if '=' in query:
-                    key, val = query.split('=')
-                    val = val+'ionA#as9ng849fg'
-                    val = base64.b64encode(val.encode("utf-8")).decode('utf8')
-                    queries_out.append('{}={}'.format(key, val))
-            queryString = '&'.join(queries_out)
-        url = '{}?{}'.format(path, queryString)
+    # if '?' in url:
+        # path, queryString = url.split('?', 1)
+        # if '&' in queryString:
+            # queries_in = queryString.split('&')
+            # queries_out = []
+            # for query in queries_in:
+                # if '=' in query:
+                    # key, val = query.split('=')
+                    # val = val+'ionA#as9ng849fg'
+                    # val = base64.b64encode(val.encode("utf-8")).decode('utf8')
+                    # queries_out.append('{}={}'.format(key, val))
+            # queryString = '&'.join(queries_out)
+        # url = '{}?{}'.format(path, queryString)
         # logger.error(url)
 
     data = AlfaChannel.create_soup(url, **kwargs)
