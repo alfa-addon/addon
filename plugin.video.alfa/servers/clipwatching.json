@@ -6,6 +6,10 @@
       {
         "pattern": "(?:clipwatching|highstream).\\w{2,4}/(?:embed-|)([A-z0-9_]+)",
         "url": "https://highstream.tv/embed-\\1.html"
+      },
+      {
+        "pattern": "(?:lamovie).\\w{2,4}/(?:embed-|)([A-z0-9_]+)",
+        "url": "https://lamovie.link/embed-\\1.html"
       }
     ]
   },
