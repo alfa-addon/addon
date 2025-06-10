@@ -4,8 +4,12 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://player.osjonosu.xyz/embed.php\\?id=([0-9]+)",
-        "url": "https://player.osjonosu.xyz/embed.php?id=\\1"
+        "pattern": "(https://player.osjonosu.\\w{2,4}/embed.php\\?id=[0-9]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://player.osjonosu.\\w{2,4}/video/[A-z0-9-_]+)",
+        "url": "\\1"
       }
     ]
   },

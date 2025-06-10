@@ -23,8 +23,8 @@ forced_proxy_opt = 'ProxyCF'
 canonical = {
              'channel': 'osjonosu', 
              'host': config.get_setting("current_host", 'osjonosu', default=''), 
-             'host_alt': ["https://oscar220374.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://osjonosu.es/"], 
+             'host_black_list': ["https://oscar220374.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -42,6 +42,7 @@ AlfaChannel_class = DooPlay(host, canonical=canonical, channel=canonical['channe
                             list_language=list_language, list_servers=list_servers, url_replace=url_replace, debug=debug)
 finds = AlfaChannel_class.finds
 finds['controls']['add_video_to_videolibrary'] = True
+finds['controls']['cnt_tot'] = 30
 
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -64,6 +65,12 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title='Sagas', action='section', url=host,
                          thumbnail=get_thumb('genres', auto=True), c_type='peliculas'))
+
+    itemlist.append(Item(channel=item.channel, title='Infantil', url=host + 'genero/infantiles/', action='list_all',
+                         thumbnail=get_thumb('all', auto=True), c_type='peliculas'))
+
+    itemlist.append(Item(channel=item.channel, title='Tendencia', url=host + 'tendencias/', action='list_all',
+                         thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True), c_type='search'))
@@ -166,9 +173,10 @@ def findvideos(item):
 
 
 def post_process_findvideos(elem, new_item, item, **AHkwargs):
-    if "player.osjonosu.xyz" not in new_item.url:
+    
+    if "player.osjonosu" not in new_item.url:
         new_item.server = 'oculto' #este servidor no existe, esto me permite ocultar cualquier enlace que no sea de osjonosu (trailers).
-
+    
     return new_item
 
 

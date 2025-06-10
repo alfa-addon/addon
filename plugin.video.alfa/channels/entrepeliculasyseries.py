@@ -21,7 +21,7 @@ list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS
 
-forced_proxy_opt = None
+forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'entrepeliculasyseries', 
@@ -301,7 +301,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 soup = AlfaChannel.create_soup(url, headers=headers)
                 matches_servers = soup.find('div', class_='OptionsLangDisp').find_all('li')
                 if not matches_servers:
-                    clave = scrapertools.find_single_match(str(soup), r"CryptoJS\.AES\.decrypt\(encryptedLink,\s*'([^']+)'")
+                    clave = scrapertools.find_single_match(str(soup), r"decryptLink\(server.link, '(.+?)'\),")
                     logger.error(clave)
                     if clave:
                         matches_servers = scrapertools.find_single_match(str(soup), r'const\s*dataLink\s*=\s*([^;]+);') or []
@@ -311,12 +311,9 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                             lang = langs_in.get('video_language', 'LAT')
                             for elem in langs_in.get('sortedEmbeds', []):
                                 if not elem.get('link', '') or not elem.get('type', '') == 'video': continue
-                                try:
-                                    elem_json['url'] = GibberishAES(string=elem['link'], pass_=clave).result
-                                except:
-                                    logger.error(elem)
-                                    logger.error(traceback.format_exc())
-                                    continue
+                                from lib.crylink import crylink
+                                elem_json['url'] = crylink(elem['link'], clave)
+                                if not elem_json['url']: continue
                                 elem_json['server'] = servers.get(elem.get('servername', ''), '')
                                 elem_json['language'] = IDIOMAS.get(lang, 'LAT')
                                 matches.append(elem_json.copy())
