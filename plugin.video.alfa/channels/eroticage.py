@@ -28,12 +28,13 @@ canonical = {
              'host': config.get_setting("current_host", 'eroticage', default=''), 
              'host_alt': ["https://www.eroticage.net/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'cf_assistant': False, 'CF_stat': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 5
+timeout = 45
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = ''

@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "http(?:s|)://dood(?:stream|s|).(?:watch|to|com|\\w{2,4})/(?:e|d)/([a-z0-9#]+)",
-        "url": "https://d0000d.com/e/\\1"
-      },
-      {
-        "pattern": "http(?:s|)://(?:dooood|ds2play|d0o0d|do0od|d0000d|d000d|ds2video|do7go|dooodster|vidply|all3do|doply|vide0).(?:watch|to|so|com|\\w{2,4})/(?:e|d)/([a-z0-9#]+)",
-        "url": "https://d0000d.com/e/\\1"
+        "pattern": "https://savefiles.com/(?:e|d)/([A-z0-9]+)",
+        "url": "https://savefiles.com/dl?op=embed&file_code=\\1&auto=0&referer="
       }
     ]
   },
   "free": true,
-  "id": "doodstream",
-  "name": "doodstream",
+  "id": "savefiles",
+  "name": "savefiles",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/vTbw1YRM/doodstream.png"
+  "thumbnail": "https://i.postimg.cc/Pf8FyZqx/savefiles.png"
 }

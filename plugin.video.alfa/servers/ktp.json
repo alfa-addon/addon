@@ -44,7 +44,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:mix.|\\w{2,4}.|)(?:onlinetube|pornoreka).(?:tv|\\w{2,4})/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:mix.|x.|\\w{2,4}.|)(?:onlinetube|pornoreka).(?:tv|\\w{2,4})/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -173,10 +173,6 @@
       },
       {
         "pattern": "(https://www.(?:tabooporn|teenpornvideo).(?:tv|sex)/videos/[0-9]+/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://max.porn/videos/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

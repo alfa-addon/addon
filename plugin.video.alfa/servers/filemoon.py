@@ -40,7 +40,7 @@ def test_video_exists(page_url):
         page_url = scrapertools.find_single_match(datos, '<iframe src="([^"]+)')
     response = httptools.downloadpage(page_url, referer=page_url, **kwargs)
     data = response.data
-    if response.code == 404 or "not found" in response.data:
+    if response.code == 404 or "not found" in data or "server maintenance" in data:
         return False,  "[filemoon] El fichero no existe o ha sido borrado"
     return True, ""
 
