@@ -256,7 +256,7 @@
         "url": "\\1/a/"
       },
       {
-        "pattern": "(https://(?:www.|\\w{2,4}.|)sslkn.(?:com|\\w{2,4})/(?:video|videos|embed)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|\\w{2,4}.|)(?:sslkn|sosalkino).(?:com|\\w{2,4})/(?:video|videos|embed)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
