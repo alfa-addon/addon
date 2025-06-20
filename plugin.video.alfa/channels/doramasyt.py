@@ -131,10 +131,11 @@ def list_all(item):
     logger.info()
 
     itemlist = list()
-
+    
     soup = create_soup(item.url)
-    matches = soup.find_all("li", class_="col mb-5 ficha_efecto")
-
+    # matches = soup.find_all("li", class_="col mb-5 ficha_efecto")
+    matches = soup.find_all("li", class_="ficha_efecto")
+    
     for elem in matches:
         try:
             season = 0
@@ -292,7 +293,7 @@ def search(item, texto):
     
     try:
         texto = texto.replace(" ", "+")
-        item.url = item.url + texto
+        item.url = "%sbuscar?q=%s" %(host, texto)
         item.first = 0
         if texto != '':
             return list_all(item)
