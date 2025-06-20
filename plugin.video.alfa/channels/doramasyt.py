@@ -234,29 +234,35 @@ def episodios(item):
     
     return itemlist
 
+SERVER = {"mxdrop": "Mixdrop", 'listeamed': "Vidguard", "luluvdo": "Lulustream", "dhcplay": "Streamwish", "vide0": "Doodstream"}
 
 def findvideos(item):
     logger.info()
-
     itemlist = list()
-
+    
     soup = create_soup(item.url)
     matches = soup.find_all("button", class_="play-video")
-
     for elem in matches:
-        url = base64.b64decode(elem["data-player"]).decode("utf-8")
-
-        itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language=item.language,
-                             infoLabels=item.infoLabels))
-
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
-
+        server = ''
+        # url = base64.b64decode(elem["data-player"]).decode("utf-8")
+        if "eyJpdi" in elem['data-player']:
+            url = "%sreproductor?video=%s&token=<?php echo Session::get(" %(host,elem['data-player'])
+            server = elem.text.strip()
+            server = SERVER.get(server,server)
+            itemlist.append(Item(channel=item.channel, server = server, url=url, action='play', language=item.language,
+                                  infoLabels=item.infoLabels))
+        else:
+            url = elem['data-player']
+            server = servertools.get_server_from_url(url)
+            itemlist.append(Item(channel=item.channel, server = server, url=url, action='play', language=item.language,
+                                  infoLabels=item.infoLabels))
+    
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_idiomas)
-
+    
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
-
+    
     return itemlist
 
 
@@ -268,9 +274,13 @@ def play(item):
     if "monoschinos" in item.url:
         data = httptools.downloadpage(item.url).data
         url = scrapertools.find_single_match(data, "file: '([^']+)'")
-
         itemlist.append(item.clone(url=url, server=""))
         itemlist = servertools.get_servers_itemlist(itemlist)
+    
+    if "reproductor?" in item.url:
+        soup = create_soup(item.url)
+        url = soup.iframe.get('src', '')
+        itemlist.append(item.clone(url=url))
     else:
         itemlist.append(item)
 
