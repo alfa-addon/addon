@@ -29,6 +29,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     unpacked = jsunpack.unpack(packed)
     # mixdrop like to change var name very often, hoping that will catch every
     list_vars = scrapertools.find_multiple_matches(unpacked, r'MDCore\.\w+\s*=\s*"([^"]+)"')
+    logger.debug(list_vars)
     for var in list_vars:
         if '.mp4' in var:
             media_url = var
@@ -37,7 +38,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         media_url = ''
 
     if not media_url.startswith('http'):
-        media_url = 'http:%s' % media_url
+        media_url = 'https:%s' % media_url
+    
+    media_url += "|User-Agent=%s&Referer=%s" % (httptools.get_user_agent(), page_url)
+    
     video_urls.append(["[Mixdrop] %s" % ext, media_url])
-
+    
     return video_urls
