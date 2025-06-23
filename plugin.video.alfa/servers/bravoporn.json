@@ -124,6 +124,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)longvideos.xxx(?:/\\w{2}|)/(?:videos|video|embed)/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)pornez.net/player/\\?v=[A-z0-9-]+)",
         "url": "\\1"
       },
