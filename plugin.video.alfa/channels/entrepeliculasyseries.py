@@ -280,7 +280,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                "netu": "netu ", "filemoon": "tiwikiwi", "streamwish": "streamwish",
                "voex": "voe", "1fichier": "onefichier"}
     IDIOMAS = {'0': 'LAT', '1': 'CAST', '2': 'VOSE'}
-
+    logger.debug(matches_int)
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
@@ -299,10 +299,11 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             else:
                 headers = {'Referer': host}
                 soup = AlfaChannel.create_soup(url, headers=headers)
-                matches_servers = soup.find('div', class_='OptionsLangDisp').find_all('li')
+                matches_servers = soup.find('div', class_='OptionsLangDisp')
+                
                 if not matches_servers:
                     clave = scrapertools.find_single_match(str(soup), r"decryptLink\(server.link, '(.+?)'\),")
-                    logger.error(clave)
+                    
                     if clave:
                         matches_servers = scrapertools.find_single_match(str(soup), r'const\s*dataLink\s*=\s*([^;]+);') or []
                         if matches_servers:
@@ -317,8 +318,9 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                                 elem_json['server'] = servers.get(elem.get('servername', ''), '')
                                 elem_json['language'] = IDIOMAS.get(lang, 'LAT')
                                 matches.append(elem_json.copy())
+                
                 else:
-                    for elem in matches_servers:
+                    for elem in matches_servers.find_all('li'):
                         lang = elem['data-lang']
                         url = elem['onclick']
                         server = elem.span.text.strip()

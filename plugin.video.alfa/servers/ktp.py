@@ -3,6 +3,7 @@
 # Conector vipporns By Alfa development Group
 # --------------------------------------------------------
 import re
+from datetime import datetime
 
 from core import httptools
 from core import scrapertools
@@ -64,7 +65,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 url = urlparse.urljoin(page_url, url)
             if "HD" in quality and not "Full" in quality:
                 quality = "720p"
-            if "?br=" in url: url = url.split("?br=")[0]
+            if "?br=" in url:
+                url += "&rnd=" + str(int(datetime.now().timestamp() * 1000))
+            
             # url += "|verifypeer=false"
             url += "|Referer=%s" % page_url
             video_urls.append(['[ktplayer] %s' % quality, url])
