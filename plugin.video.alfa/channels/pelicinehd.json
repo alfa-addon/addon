@@ -1,0 +1,29 @@
+{
+  "id": "pelicinehd",
+  "name": "Pelicinehd",
+  "active": true,
+  "adult": false,
+  "language": ["lat", "cast", "vose"],
+  "thumbnail": "https://pelicinehd.com/wp-content/uploads/2024/12/cropped-cropped-logo-pelicine-1.webp",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "movie"
+  ],
+  "force_unify": true,
+  "settings": [
+    {
+      "id": "host_lang",
+      "type": "list",
+      "label": "Mostrar todo en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "Castellano",
+        "Subtitulado"
+      ]
+    }
+  ]
+}
