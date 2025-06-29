@@ -53,6 +53,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         unpacked = jsunpack.unpack(pack)
         
         m3u8_source = scrapertools.find_single_match(unpacked, '\{(?:file|"hls\d+"):"([^"]+)"\}')
+        host = httptools.obtain_domain(page_url, scheme=True)
+        headers = httptools.default_headers.copy()
+        headers = "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host, host)
         
         if "master.m3u8" in m3u8_source:
             datos = httptools.downloadpage(m3u8_source).data
@@ -64,9 +67,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
-                    video_urls.append(['[filemoon] %s' % quality, url])
+                    video_urls.append(['[filemoon] %s' % quality, url+headers])
         else:
-            video_urls.append(['[filemoon] m3u', m3u8_source])
+            video_urls.append(['[filemoon] m3u', m3u8_source+headers])
 
     except Exception as e:
         logger.error(e)
