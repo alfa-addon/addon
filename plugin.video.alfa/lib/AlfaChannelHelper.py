@@ -2278,6 +2278,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                         matches_seasons = []
 
                 if not matches and matches_seasons and ('profile' in finds_controls or not matches_post):
+                    season_save = 0
                     for elem in matches_seasons:
                         elem_json = {}
 
@@ -2316,6 +2317,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                         elem_json['season'] = int(elem_json['season'])
                                     except Exception:
                                         elem_json['season'] = 1
+                                if season_save == elem_json['season']:
+                                    continue
+                                season_save = elem_json['season']
 
                                 if finds.get('season_url'):
                                     elem_json['url'] = finds['season_url'] if str(finds['season_url']) != self.host else item.url
