@@ -164,7 +164,8 @@ class AlfaChannelHelper:
                             self.finds_controls_updated[key_c] = eval('%s' % value_c)
 
             if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and 'host' in self.canonical \
-                                    and 'host_alt' in self.canonical and 'host_black_list' in self.canonical:
+                                    and 'host_alt' in self.canonical and 'host_black_list' in self.canonical \
+                                    and self.canonical.get('update_host_list', True):
                 if self.channel in self.domains_updated and (self.domains_updated[self.channel].get('host_alt') \
                                                              or self.domains_updated[self.channel].get('UPDATE_CANONICAL')):
                     if self.host != self.domains_updated[self.channel].get('host_alt', [''])[0] or self.host != self.canonical['host_alt'][0] \

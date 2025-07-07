@@ -26,8 +26,8 @@ canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
              'host_alt': ["https://dontorrent.loan/", "https://reinventorrent.org/", "https://todotorrents.org/", 
-                          "https://www19.dontorrent.link/", "https://elitedivx.net/", "https://lilatorrent.com/"], 
-             'host_black_list': ["https://dontorrent.jetzt/", "https://dontorrent.institute/", 
+                          "https://www20.dontorrent.link/", "https://elitedivx.net/", "https://lilatorrent.com/"], 
+             'host_black_list': ["https://www19.dontorrent.link/", "https://dontorrent.jetzt/", "https://dontorrent.institute/", 
                                  "https://dontorrent.news/", "https://dontorrent.haus/", "https://dontorrent.homes/", 
                                  "https://dontorrent.report/", "https://dontorrent.gift/", "https://dontorrent.download/", 
                                  "https://mastorrents.net/", "https://dontorrent.group/", "https://dontorrent.website/",
@@ -79,7 +79,7 @@ canonical = {
              'pattern_proxy': r'<a[^>]*class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>', 
              'proxy_url_test': 'pelicula/25159/The-Batman', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'CF': False, 'CF_test': False, 'alfa_s': True, 'update_host_list': False
             }
 host = canonical['host'] or canonical['host_alt'][0]
 channel = canonical['channel']
