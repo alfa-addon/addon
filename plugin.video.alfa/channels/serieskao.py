@@ -208,20 +208,21 @@ def findvideos(item):
     if "embed69.org" in url:
         # entrepeliculasyseries ya tenía esto solucionado así que gran parte de esto lo he copiado de allí
         import ast
-        from lib.pyberishaes import GibberishAES
         
         data = httptools.downloadpage(url).data
-        clave = scrapertools.find_single_match(data, r"CryptoJS\.AES\.decrypt\(encrypted,\s*'([^']+)'")
+        clave = scrapertools.find_single_match(data, r"decryptLink\(server.link, '(.+?)'\),")
         dataLinkString = scrapertools.find_single_match(data, r"dataLink\s*=\s*([^;]+)")
-        
+
         if clave and dataLinkString:
+            dataLinkString = dataLinkString.replace(r"\/", "/")
             dataLink = ast.literal_eval(dataLinkString)
             for langSection in dataLink:
                 language = langSection.get('video_language', 'LAT')
                 language = IDIOMAS.get(language, language)
                 for elem in langSection['sortedEmbeds']:
                     if elem['servername'] != "download":
-                        video_url = GibberishAES(string=elem['link'], pass_=clave).result
+                        from lib.crylink import crylink
+                        video_url = crylink(elem['link'], clave)
                         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=video_url,
                                                language=language, infoLabels=item.infoLabels))
     else:
