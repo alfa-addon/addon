@@ -10,6 +10,8 @@ from core import httptools
 from core import urlparse
 from bs4 import BeautifulSoup
 
+##############      CF2
+
 canonical = {
              'channel': 'pornxbit', 
              'host': config.get_setting("current_host", 'pornxbit', default=''), 
@@ -19,7 +21,6 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-# gounlimited, woolf, openload
 
 def mainlist(item):
     logger.info()
