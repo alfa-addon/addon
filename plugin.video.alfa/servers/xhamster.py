@@ -20,18 +20,20 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    patron = '\{"url":"([^"]+)","fallback":"","quality":"(\d+p)",'
+    patron = '\{"url":"([^"]+)","fallback":(?:"[^"]+"|),"quality":"(\d+p)",'
     matches = scrapertools.find_multiple_matches(data, patron)
     patron2 = '"(\d+p)":\{"url":"([^"]+)"'
     matches2 = scrapertools.find_multiple_matches(data, patron2)
     if not matches:
         for quality,url in matches2:
             url =  url.replace("\/", "/")
-            url += "|Referer=%s&verifypeer=false" %page_url
+            if "referer=" in url: continue
+            # url += "|Referer=%s&verifypeer=false" %page_url
             video_urls.append(["[xhamster] %s" %quality, url])
     for url,quality in matches:
         url =  url.replace("\/", "/")
-        url += "|Referer=%s&verifypeer=false" %page_url
+        if "referer=" in url: continue
+        # url += "|Referer=%s&verifypeer=false" %page_url
         video_urls.append(["[xhamster] %s" %quality, url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls
