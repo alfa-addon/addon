@@ -46,21 +46,6 @@
         <platform>all</platform>
         <license>GNU GPL v3</license>
         <source>https://github.com/alfa-addon/addon</source>
-        <news>
-    [B]Estos son los cambios para esta versión:[/B]
-    - +18
-    - Don Torrent
-    - Gran Torrent
-    - Hack Torrent
-    - HDFull
-    - HDFullS: Desactivado
-    - Mejortorrent
-    - Osjonosu: Desactivado
-    - Pelispanda
-    - Pelitorrent
-    - Playdede
-    - SeriesKao
-    - Yaske</news>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>

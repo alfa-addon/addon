@@ -1,70 +1,50 @@
-# Release script for Alfa Addon 
-name: release
+# 2025 (C) Alfa Development Group
+# Developed by SistemaRayoXP
+name: Bump add-on version & release
 
 on:
-  push:
-    branches:
-      - master
-      - devel
-    paths:
-        - '.github/workflows/release.yml'
-
   workflow_dispatch:
 
-# Set permissions for GitHub key
 permissions: write-all
+
+env:
+  GIT_USER_NAME: Alfa Development Group
+  GIT_USER_EMAIL: 145614550+alfa-addon@users.noreply.github.com
+  GITHUB_REPOSITORY: alfa-addon/addon
+  ADDON: plugin.video.alfa
 
 jobs:
   deploy:
-    name: Deploy Job
+    name: Deploy add-on
     runs-on: ubuntu-latest
-    if: ${{ github.event.head_commit.message == 'release' || github.event_name == 'workflow_dispatch'}}
-
-    env:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-      GIT_USER_NAME: Alfa Addon
-      GIT_USER_EMAIL: alfa-addon@users.noreply.github.com
-      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      GITHUB_REPOSITORY: alfa-addon/addon
-      ADDON_REPOSITORY: alfa-repo
-      ADDON: 'plugin.video.alfa'
 
     steps:
-      - name: Installing environment tools
-        run: sudo snap install --classic hub
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - name: Install environment tools
+        working-directory: ${{ github.workspace }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xmlstarlet jq
+          pip install -r requirements-ci.txt
 
-      - name: Configure Python 3.8 
-        uses: actions/setup-python@v2
+      - name: Bump version and release on GitHub
+        id: release
+        working-directory: ${{ github.workspace }}
+        run: |
+          VERSION=$(scripts/release.sh -qbcgv)
+          ZIP_FILE=$(scripts/release.sh -qz)
+          gh release create "Alfa-v$VERSION" "$ZIP_FILE"
+          url=$(gh api repos/$GITHUB_REPOSITORY/releases/latest --jq '.assets[0].browser_download_url')
+          echo "url=$url" >> $GITHUB_OUTPUT
+
+      - uses: peter-evans/repository-dispatch@v3
         with:
-          python-version: '3.8'
-
-      - name: Checkout repo
-        uses: actions/checkout@v2
-
-      - name: Start deployment
-        run: |
-          # Deploying
-          echo "Entering Git repo directory"
-          cd ${{ github.workspace }}
-          echo "Downloading deployment script"
-          wget https://raw.githubusercontent.com/alfa-addon/travis_scripts/master/deploy_addon.py
-          echo "pip-installing lxml"
-          pip install lxml
-          echo "Preparing ZIP"
-          python deploy_addon.py -z
-          echo "- Deploying to Kodi repository"
-          python deploy_addon.py -r
-      - name: Release on GitHub
-        run: |
-          echo "Entering Git repo directory"
-          cd ${{ github.workspace }}
-          echo "Getting assets"
-          assets=()
-          for asset in ./*.zip; do
-            assets+=("-a" "${asset}")
-          done
-          echo "Getting add-on version"
-          python deploy_addon.py -v
-          git_tag="$(cat version)"
-          echo "Releasing the kraken"
-          hub release create "${assets[@]}" -m "Alfa-v${git_tag}" "Alfa-v${git_tag}"
+          token: ${{ secrets.REPO_TOKEN }}
+          repository: ${{ env.GITHUB_REPOSITORY }}
+          event-type: update-repo
+          client-payload: >-
+            {
+              "addon_id": "${{ env.ADDON }}",
+              "url": "${{ steps.release.outputs.url }}"
+            }
