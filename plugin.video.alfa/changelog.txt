@@ -1,14 +1,17 @@
-    [B]Estos son los cambios para esta versión:[/B]
-    - +18
-    - Don Torrent
-    - Gran Torrent
-    - Hack Torrent
-    - HDFull
-    - HDFullS: Desactivado
-    - Mejortorrent
-    - Osjonosu: Desactivado
-    - Pelispanda
-    - Pelitorrent
-    - Playdede
-    - SeriesKao
-    - Yaske
+
+        [B]Estos son los cambios para esta versión:[/B]
+        
+        • +18
+        • Cine24H
+        • Divxtotal
+        • Dontorrent
+        • DoramasYT
+        • EntrePeliculasySeries
+        • Hacktorrent
+        • HenaoJara
+        • MejorTorrent
+        • Osjonosu
+        • Pelicinehd
+        • Pelispanda
+        • SeriesKao
+        
