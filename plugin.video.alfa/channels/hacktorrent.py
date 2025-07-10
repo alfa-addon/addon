@@ -235,7 +235,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['mediatype'] = 'movie' if elem.get('type', 'pelicula') == 'pelicula' else 'tvshow'
             elem_json['title'] = elem.get('title', '')
             elem_json['url'] = '%swp-json/wpreact/v1/%s/%s/' % (host, elem_json['mediatype'] if elem_json['mediatype'] == 'movie' \
-                                                                                             else 'serie' if item.extra != 'animes' \
+                                                                                             else 'serie' if (item.extra != 'animes' \
+                                                                                                and elem.get('type', '') != 'anime') \
                                                                                              else 'anime', elem.get('slug', ''))
             if elem_json['mediatype'] in ['tvshow']: elem_json['url'] = elem_json['url'] + 'related/'
             elem_json['thumbnail'] = elem.get('featured', '')
@@ -252,7 +253,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             logger.error(traceback.format_exc())
             continue
 
-        if item.extra in ['Idioma', 'anime']: AlfaChannel.filter_languages = 0
+        if item.extra in ['Idioma', 'anime'] or elem.get('type', '') == 'anime': AlfaChannel.filter_languages = 0
 
     return matches
 
@@ -293,6 +294,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
     if anime_path.rstrip('s') in item.url: AlfaChannel.filter_languages = 0
 
+    if matches_int and not isinstance(matches_int[0], list):
+        matches_int = [matches_int]
     for elem_season in matches_int:
         if not elem_season or elem_season[0].get('season', 0) != item.infoLabels['season']: continue
         

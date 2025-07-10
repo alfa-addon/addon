@@ -1957,7 +1957,8 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
     pre_url, _headers = data[0], data[1]
     _headers = dict(urlparse.parse_qsl(_headers))
     headers.update(_headers)
-    mediaurl = "{}|{}".format(pre_url, urlparse.urlencode(headers))
+    # De momento descartamos los headers de alfa por cosas...
+    mediaurl = "{}|{}".format(pre_url, urlparse.urlencode(_headers))
 
     if len(data) > 2:
         mediaurl += "|{}".format("|".join(data[2:]))

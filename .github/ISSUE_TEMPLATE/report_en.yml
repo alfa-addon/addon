@@ -1,0 +1,102 @@
+# 2025 (C) Alfa Development Group
+name: Report a bug
+description: Report a bug related to Alfa
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Support is primarily provided through the forum. You must follow the forum steps to have your report attended on GitHub.
+
+        If you're experiencing an issue with Alfa and want to report it, follow this guide to correctly report the bug so the staff can assist you.
+
+        ## Verify
+        First, _**make sure you're using the latest version of the add-on**_. If the issue relates to a specific channel or server, ensure that you can access the channel's website and that the issue isn't caused by the website itself (e.g., the website doesn't load or a particular section changed).
+
+        Once you've confirmed that the issue with the channel or server is exclusive to Alfa, or if the problem lies within an internal Alfa component (autoplay, trakt, etc.), report it following the steps described below.
+
+  - type: checkboxes
+    id: verified
+    attributes:
+      label: Did you verify that the bug is from Alfa?
+      description: Confirm the error occurs exclusively within Alfa and not on the website itself. We cannot do anything if the issue is with the website.
+      options:
+        - label: I verified the bug occurs only in Alfa
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Generate the report
+        Completely close Kodi (or your media player), reopen it, wait a couple of minutes, and go to Alfa's main menu.
+
+        If you can enter Alfa and it functions minimally, select the option "Report a Bug" and follow these steps:
+        1. Reproduce the issue
+        2. Return to the main menu and select "Report a Bug" again
+          1. Copy the generated report URL
+          2. Report the issue on the forum as described in the next section, attaching the URL of your report (the one you generated and copied in the previous step).
+
+        If you _**CANNOT**_ enter Alfa, the best solution is to install the add-on **Kodi Logfile Uploader** from the Kodi repository. Follow these steps:
+        1. From the **Add-ons** menu, select **Install from repository**
+        2. Select the **Kodi Add-on repository**
+        3. Select **Program add-ons**
+        4. Select **Kodi Logfile Uploader** and install it
+
+        In Alfa:
+        1. Activate **"Generate Detailed Log"** from Alfa's Settings menu. This step is _**MANDATORY**_
+        2. **Restart Kodi**, wait a few minutes, **reproduce the issue**, then continue to the next step
+        3. From the Add-ons menu, Program add-ons, select **Kodi Logfile Uploader**
+        4. Select **Upload**
+        5. Copy the URL displayed on-screen, like: _https://paste.kodi.tv/xyz_
+        6. **Report the issue** as described in the next section, **including the URL of your report** (the one generated and copied previously)
+        7. **Disable** _"Generate Detailed Log"_ from the **Alfa Settings** menu
+
+  - type: input
+    id: log
+    attributes:
+      label: Bug report link
+      description: 'Enter the link to the Alfa-generated bug report. If you cannot generate a link for any reason, write "No link available"'
+      placeholder: https://logs.alfa-addon.com/ABCDEF123456
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Prepare your report
+        Use GitHub's search function to check if your issue has already been reported.
+        - If it already exists, post your comment there with as many details as possible.
+        - If no related issue exists, create a new one with the following details:
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: Enter the operating system where you run Kodi and Alfa
+      placeholder: Windows 10, Android TV 11, macOS 10.17, Debian 12.1...
+
+  - type: input
+    id: alfa
+    attributes:
+      label: Alfa version
+      description: This should always be the latest version. Consider this a filter to check if your error is due to an outdated version.
+      placeholder: 3.x.x
+
+  - type: dropdown
+    id: kodi
+    attributes:
+      label: Kodi version
+      description: Enter the Kodi version you're experiencing the bug on. Currently, we support Kodi 18, 19, and 20.
+      multiple: false
+      options:
+        - Kodi 18
+        - Kodi 19
+        - Kodi 20
+        - Kodi 21
+      default: 2
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description of the issue
+      description: Describe your issue with Alfa in detail
+      placeholder: Describe your problem here
