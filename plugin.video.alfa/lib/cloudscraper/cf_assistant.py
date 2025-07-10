@@ -23,6 +23,7 @@ PATH_BL = filetools.join(config.get_runtime_path(), "resources", "cf_assistant_b
 patron_domain = "(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)"
 httptools = None
 cf_challenges_list = ["https://challenges.cloudflare.com", "https://www.google.com/recaptcha/api2/anchor?"]
+gov_blocks = ["fbi.gov"]
 
 if config.is_xbmc() and config.get_platform(True)["num_version"] >= 14:
     monitor = xbmc.Monitor()  # For Kodi >= 14
@@ -786,6 +787,7 @@ def get_source(
                 headers_post = headers.copy()
                 headers = {}
                 headers_post["Content-Type"] = "application/x-www-form-urlencoded"
+                headers_post['X-Requested-With'] = 'XMLHttpRequest'
                 #headers_post["Access-Control-Allow-Origin"] = "*"
                 #headers_post["Origin"] = host_name.rstrip("/")
 
@@ -795,7 +797,7 @@ def get_source(
                 if isinstance(opt.get("post"), dict):
                     for key, value in list(opt["post"].items()):
                         post_str += "%s=%s&" % (key, urlparse.quote(value))
-                    post_str = post_str.rstrip("&")
+                    post_str = postData = post_str.rstrip("&")
                 else:
                     post_str = str(opt["post"]).replace("'", '"')
 
@@ -804,7 +806,7 @@ def get_source(
                 if not "function" in jscode:
                     jscode = None
                     headers = headers_post.copy()
-                    postData = str(opt["post"]).replace("'", '"')
+                    postData = post_str or str(opt["post"]).replace("'", '"')
                 else:
                     extraPostDelay += 2
 
@@ -985,6 +987,10 @@ def get_source(
                 for html_source in data_assistant["htmlSources"]:
                     if html_source.get("url", "") != url:
                         urls_ignored += [html_source.get("url", "")]
+                        for gov_block in gov_blocks:
+                            if gov_block in html_source.get("url", ""):
+                                retry = True
+                                data_assistant["cookies"] = None
                         if not alfa_s:
                             logger.debug("Url ignored: %s" % html_source.get("url", ""))
                         continue
@@ -1257,11 +1263,15 @@ def get_jscode(count, key, n_iframe, timeout=3, url="", headers="", postData="",
         %s
         %s
 
-        http.onreadystatechange = function() {//Call a function when the state changes.
+        http.onload = function() {//Call a function when loaded.
             if(http.readyState == 4 && http.status == 200) {
-                return(http.responseText);
+                //document.body.innerHTML = http.response; // Respuesta del servidor
+                return(http.response);
             }
-        }
+        };
+        http.onerror = function() {//Call a function when error.
+            return(http.status);
+        };
         http.send(params);
         """  % (url, postData, headers, Cookies_send),
         'COOKIES': """

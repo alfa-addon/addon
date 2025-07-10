@@ -2774,6 +2774,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                 title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
             if 'cookies' in TITLES_SEARCH and 'cookies' not in title_search:
                 title_search['cookies'] = TITLES_SEARCH['cookies']
+            excludes = title_search.get('excludes', []) or TITLES_SEARCH.get('excludes', [])
 
             if not item.btdigg:
                 quality_alt = '720p 1080p 2160p 4kwebrip 4k'
@@ -2921,6 +2922,12 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                         elem_json['title'] = elem_json['title'].replace('- ', '')
                         title = scrapertools.slugify(elem_json.get('title', ''), strict=False, convert=convert).strip().lower().replace(' ', '_')
                         elem_json['title'] = clean_title(elem_json['title']).replace(':', '').replace('.', ' ')
+                        drop = False
+                        for exc in excludes:
+                            if exc not in elem['title'].lower(): continue
+                            logger.debug('Error en PATRON: %s / %s' % (elem.get('title_save', '').replace(btdigg_label_B, ''), patron_title))
+                            drop = True
+                        if drop: continue
                         if elem_json['mediatype'] != 'movie' and quality_control: title = '%s_%s' % (title, elem_json['quality'])
 
                         if elem.get('tmdb_id'): elem_json['tmdb_id'] = elem['tmdb_id']
@@ -3227,7 +3234,6 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     titles_search_save = copy.deepcopy(titles_search)
     get_cached_files_('password', cached=True)
 
-    excludes = ['torrenting']
     use_assistant_save = None
     use_assistant_org = None
     error_reset_time = function_elapsed = time.time()
@@ -3303,6 +3309,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                 title_search['checks_def'] = TITLES_SEARCH['checks_def'][:]
             if 'cookies' in TITLES_SEARCH and 'cookies' not in title_search:
                 title_search['cookies'] = TITLES_SEARCH['cookies']
+            excludes = title_search.get('excludes', []) or TITLES_SEARCH.get('excludes', [])
 
             if not cached[contentType]: contentType_time = time.time()
             counters['temp_%ss' % contentType] = round((time.time() - contentType_time)/60, 2)
@@ -3431,7 +3438,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     drop = False
                     for exc in excludes:
                         if exc not in elem['title'].lower(): continue
-                        logger.debug('Error en PATRON: %s / %s' % (elem.get('title_save', '').replace(btdigg_label_B, ''), patron_title))
+                        logger.debug('Error en EXCLUDE: %s / %s' % (elem.get('title_save', '').replace(btdigg_label_B, ''), exc))
                         drop = True
                     if drop: continue
                     title = title.replace('- ', '')
@@ -3740,7 +3747,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     drop = False
                                     for exc in excludes:
                                         if exc not in elem['title'].lower(): continue
-                                        if DEBUG: logger.debug('Error en PATRON: %s / %s' % (elem_episode['title'], patron_title))
+                                        logger.debug('Error en EXCLUDE: %s / %s' % (elem_episode['title'], exc))
                                         drop = True
                                     if drop: continue
                                     elem_episode['title'] = clean_title(elem_episode['title']).replace('- ', '').replace('.', ' ')
