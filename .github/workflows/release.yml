@@ -9,8 +9,9 @@ permissions: write-all
 
 env:
   GIT_USER_NAME: Alfa Development Group
-  GIT_USER_EMAIL: 145614550+alfa-addon@users.noreply.github.com
+  GIT_USER_EMAIL: alfa-add-on@users.noreply.github.com
   GITHUB_REPOSITORY: alfa-addon/addon
+  KODI_REPOSITORY: alfa-addon/alfa-repo
   ADDON: plugin.video.alfa
 
 jobs:
@@ -46,7 +47,7 @@ jobs:
       - uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.REPO_TOKEN }}
-          repository: ${{ env.GITHUB_REPOSITORY }}
+          repository: ${{ env.KODI_REPOSITORY }}
           event-type: update-repo
           client-payload: >-
             {
