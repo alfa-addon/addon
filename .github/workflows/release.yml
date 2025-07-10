@@ -31,6 +31,8 @@ jobs:
       - name: Bump version and release on GitHub
         id: release
         working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(scripts/release.sh -qbcgv)
           ZIP_FILE=$(scripts/release.sh -qz)
