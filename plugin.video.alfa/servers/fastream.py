@@ -7,6 +7,7 @@ import sys
 from core import httptools, scrapertools
 from platformcode import config, logger
 from lib import jsunpack
+from core import urlparse
 
 PY3 = sys.version_info >= (3,)
 
@@ -48,6 +49,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     # servertools.parse_hls se encarga de mostrar las calidades
     m3u = scrapertools.find_single_match(data, 'file:"([^"]+)"')
-    video_urls.append(["[fastream] .m3u8", m3u])
+    host = httptools.obtain_domain(page_url, scheme=True)
+    headers = httptools.default_headers.copy()
+    headers = "|{0}&Referer={1}/&Origin={1}".format(urlparse.urlencode(headers), host)
+    video_urls.append(["[fastream] .m3u8", m3u+headers])
     
     return video_urls

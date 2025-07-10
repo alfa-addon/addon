@@ -135,7 +135,7 @@ def search(item, texto, **AHkwargs):
     
     # item.url = "%sbuscar/?q=%s&sort_by=video_viewed&from_videos=1" % (host, texto.replace(" ", "+"))
     # item.url = "%ssearch/%s/" % (host, texto.replace(" ", "-"))
-    item.url = "%ssearch/?q=%s&sort_by=post_date&from_videos=1" % (host, texto.replace(" ", "+"))
+    item.url = "%ssearch/%s/?sort_by=post_date&from=1" % (host, texto.replace(" ", "-"))
     
     try:
         if texto:

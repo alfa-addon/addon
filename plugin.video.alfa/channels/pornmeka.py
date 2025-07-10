@@ -132,10 +132,10 @@ def play(item):
         url = item.url
     else:
         url = soup.iframe['src']
-        url = url.replace("embed", "videos").replace('lol', 'tv')
-        name = item.url.split("/")[-2]
-        url += "/%s/" %name
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
+        soup = AlfaChannel.create_soup(url, **kwargs)
+        data = str(soup).replace('\\"', '"')
+        url = scrapertools.find_single_match(data, '"preview":"([^"]+)"')
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
     return itemlist

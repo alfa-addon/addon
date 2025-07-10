@@ -112,6 +112,8 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='thumb-list__item')
     for elem in matches:
+        if not elem.get('data-video-id',''):
+            continue
         if "Not available in " in elem.text: #Geolocalizacion
             continue
         if "Solo para el dueño" in elem.a.text: #Solo para el dueño

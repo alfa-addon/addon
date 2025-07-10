@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|smoothpre).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
+        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|smoothpre|movearnpre|seraphinapl).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
         "url": "\\1"
       },
       {

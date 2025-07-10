@@ -28,10 +28,6 @@
         "url": "\\1.html"
       },
       {
-        "pattern": "(https://ghbrisk.com/(?:e|d)/[a-z0-9]+)",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://iplayerhls.com/(?:e/|d/|)[a-z0-9]+)",
         "url": "\\1"
       },
@@ -70,5 +66,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/CxdyWRcN/tiwikiwi.png"
+  "thumbnail": "https://i.postimg.cc/CxdyWRcN/tiwikiwi.png",
+  "force_inputstream": "adaptive"
 }

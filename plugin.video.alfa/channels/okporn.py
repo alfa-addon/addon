@@ -21,6 +21,8 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
+####   No se ven thumbs   https://okporn.xxx/contents/videos_screenshots/14000/14644/526x298/11.jpg
+
 canonical = {
              'channel': 'okporn', 
              'host': config.get_setting("current_host", 'okporn', default=''), 

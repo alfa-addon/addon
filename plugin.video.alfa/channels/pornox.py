@@ -41,7 +41,7 @@ language = []
 url_replace = []
 
 
-finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['video-list', 'list-videos', 'thumbs_video', 'thumbs_list', 'thumbs', 'items-videos']}]),
+finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['list-videos', 'main-container']}]),
                        ('find_all', [{'tag': ['div'], 'class': ['item', 'video-item', 'th']}])]),
          'categories': dict([('find', [{'tag': ['div'], 'class': ['models_list', 'list-models', 'category_list', 'list-categories', 'video-list', 'list-videos', 'list-channels', 'list-sponsors', 'thumbs', 'thumbs_list', 'categories_list']}]),
                              ('find_all', [{'tag': ['div', 'a'], 'class': ['item', 'video-item', 'thumb', 'holder-item', 'th']}])]),
@@ -50,9 +50,9 @@ finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['video-list', 'list
          'get_quality_rgx': '', 
          'next_page': {},
          'next_page_rgx': [['&from_videos=\d+', '&from_videos=%s'], ['&from=\d+', '&from=%s']], 
-         'last_page': dict([('find', [{'tag': ['div', 'nav'], 'class': ['pagination']}]), 
-                            ('find_all', [{'tag': ['a'], '@POS': [-2], 
-                                           '@ARG': 'data-parameters', '@TEXT': '\:(\d+)'}])]), 
+         'last_page': dict([('find', [{'tag': ['div'], 'class': ['load-more']}]), 
+                            ('find_all', [{'tag': ['a'], '@POS': [-1], 
+                                           '@ARG': 'data-max-queries'}])]), 
          'plot': {}, 
          'findvideos': {},
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
@@ -60,7 +60,7 @@ finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['video-list', 'list
          'url_replace': [], 
          'profile_labels': {
                             },
-         'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
+         'controls': {'url_base64': False, 'cnt_tot': 25, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
                                      idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -71,15 +71,15 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host + "kereses/?sort_by=post_date&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=host + "search/?sort_by=video_viewed_month&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorada" , action="list_all", url=host + "search/?sort_by=rating_month&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Favoritas" , action="list_all", url=host + "search/?sort_by=most_favourited&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Comentadas" , action="list_all", url=host + "search/?sort_by=most_commented&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=host + "search/?sort_by=duration&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "szexcsatorna/?sort_by=total_videos&from=01", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "pornosztarok/?sort_by=total_videos&from=01", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "szex-kategoriak/?sort_by=title", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host + "en/kereses/?sort_by=post_date&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=host + "en/kereses/?sort_by=video_viewed_month&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorada" , action="list_all", url=host + "en/kereses/?sort_by=rating_month&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas Favoritas" , action="list_all", url=host + "en/kereses/?sort_by=most_favourited&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas Comentadas" , action="list_all", url=host + "en/kereses/?sort_by=most_commented&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=host + "en/kereses/?sort_by=duration&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "en/szexcsatorna/?sort_by=total_videos&from=01", extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "en/pornosztarok/?sort_by=total_videos&from=01", extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "en/szex-kategoriak/?sort_by=title", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -146,8 +146,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    # item.url = "%ssearch/%s/?sort_by=post_date&from_videos=01" % (host,texto.replace(" ", "-"))
-    item.url = "%skereses/?q=%s&sort_by=post_date&from_videos=1" % (host, texto.replace(" ", "+"))
+    item.url = "%sen/kereses/?q=%s&sort_by=post_date&from_videos=1" % (host, texto.replace(" ", "+"))
     
     try:
         if texto:

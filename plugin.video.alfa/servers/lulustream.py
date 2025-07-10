@@ -2,15 +2,20 @@
 # --------------------------------------------------------
 # Conector lulustream By Alfa development Group
 # --------------------------------------------------------
+import sys
+
 import re
+
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
+from core import urlparse
 from platformcode import logger
 
 video_urls = []
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
 
+host = "https://lulustream.com"
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
@@ -36,10 +41,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         dec_data = data
     # sources = 'file:"([^"]+)",label:"([^"]+)"'
     sources = 'sources\:\s*\[\{(?:file|src):"([^"]+)"'
+    
     try:
         matches = re.compile(sources, re.DOTALL).findall(dec_data)
         for url in matches:
-            video_urls.append(['[%s] m3u' %server , url])
+            headers = httptools.default_headers.copy()
+            url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+            video_urls.append(['[lulustream] m3u', url])
     except Exception:
         pass
     return video_urls

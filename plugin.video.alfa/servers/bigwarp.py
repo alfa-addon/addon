@@ -16,7 +16,7 @@ def test_video_exists(page_url):
     global data
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
-    if response.code == 404 or "not found" in response.data:
+    if response.code == 404 or "has been deleted" in response.data:
         return False,  "[bigwarp] El fichero no existe o ha sido borrado"
     return True, ""
 

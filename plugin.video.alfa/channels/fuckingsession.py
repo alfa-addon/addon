@@ -109,30 +109,18 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     
     matches = []
     findS = AHkwargs.get('finds', finds)
-    srv_ids = {"dood": "Doodstream",
-               "Streamtape": "Streamtape ",
-               "sbthe": "Streamsb",
-               "VOE": "voe",
-               "mixdrop.co": "Mixdrop",
-               "Upstream": "Upstream"}
-
+    
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-
+        
         try:
             if isinstance(elem, str):
                 elem_json['url'] = elem
                 if elem_json['url'].endswith('.jpg'): continue
             else:
                 elem_json['url'] = elem.get("href", "") or elem.get("src", "")
-            if AlfaChannel.obtain_domain(elem_json['url']):
-                elem_json['server'] = AlfaChannel.obtain_domain(elem_json['url']).split('.')[-2]
-            else: 
-                elem_json['server'] = "dutrag"  ### Quitar los watch/YnqAKRJybm2PJ  aparecen en movies
-            if elem_json['server'] in ["Netu", "trailer", "k2s", "dutrag"]: continue
-            if elem_json['server'] in srv_ids:
-                elem_json['server'] = srv_ids[elem_json['server']]
+            elem_json['server'] = ''
             elem_json['language'] = ''
 
         except:

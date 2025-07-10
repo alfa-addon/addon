@@ -21,13 +21,15 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
+####  CF
+
 canonical = {
              'channel': 'pornstreams', 
              'host': config.get_setting("current_host", 'pornstreams', default=''), 
              'host_alt': ["https://pornstreams.co/"], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'CF': True, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 

@@ -140,6 +140,9 @@ def findvideos(item):
         elif "mix" in ser:
             url = "https://mixdrop.is/e/%s" % id
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+        elif "lulu" in ser:
+            url = "https://lulustream.com/e/%s" % id
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "ntu" in ser:
             continue
         else:

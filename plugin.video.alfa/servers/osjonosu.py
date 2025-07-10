@@ -26,11 +26,14 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     try:
-        pack = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
-        unpacked = jsunpack.unpack(pack)
-        unpacked = unpacked.replace("\\'", "'")
-        url = scrapertools.find_single_match(unpacked, "sources\:\s*\[\{'(?:file|src)':'([^']+)'")
-        url = host+url
+        url=""
+        url = scrapertools.find_single_match(data, "\{\s*file:\s*'([^']+)'")
+        if not url:
+            pack = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
+            unpacked = jsunpack.unpack(pack)
+            unpacked = unpacked.replace("\\'", "'")
+            url = scrapertools.find_single_match(unpacked, "sources\:\s*\[\{'(?:file|src)':'([^']+)'")
+            url = host+url
         video_urls.append(['[osjonosu] m3u8', url])
     except Exception:
         logger.error("[osjonosu] Failed to get video url.")
