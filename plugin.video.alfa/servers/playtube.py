@@ -13,6 +13,7 @@ from lib import jsunpack
 from platformcode import logger
 from core import urlparse
 
+# https://streamhub.ink/e/irltc117vcdd  Web server is down
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
