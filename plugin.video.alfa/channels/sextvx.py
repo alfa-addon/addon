@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+
+import re
+
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -24,6 +27,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "es/recent/"))
     itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "es/popular/"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "es/pornstars/"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "es/categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -48,13 +52,29 @@ def categorias(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='video')
     for elem in matches:
+        logger.debug(elem)
+        t = elem.find('div', class_='thumb-info')
+        title = t.a.text.strip()
+        cantidad = t.span.text.strip().replace(" videos", "").replace("ondemand_video ", "")
+        title = "%s (%s)" %(title, cantidad)
         url = elem.a['href']
-        title = elem.img['alt']
-        thumbnail = elem.img['data-src']
+        if elem.img.get('alt', ''):
+            # title = elem.img['alt']
+            thumbnail = elem.img['data-src']
+        else:
+            thumbnail = elem.img['src']
         url = urlparse.urljoin(item.url,url)
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
+    
+    next_page = soup.find('li', class_='next')
+    if next_page:
+        next_page = next_page.a['href']
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    
+    # itemlist.sort(key=lambda x: x.title)
     return itemlist
 
 
@@ -74,8 +94,9 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('div', class_='video')
+    matches = soup.find_all('div', class_='video') ## id = re.compile(r"^div-\d+"
     for elem in matches:
+        if not elem.get('id', ''): continue
         url = elem.a['href']
         title = elem.img['alt']
         if "search_query" in item.url:
@@ -114,6 +135,19 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
+    soup = create_soup(item.url)
+    if soup.find('div', id='video-infos'):
+        pornstars = soup.find('div', id='video-infos').find_all('a', href=re.compile("/pornstar/\d+/[A-z0-9-]+"))
+        for x , value in enumerate(pornstars):
+            pornstars[x] = value['title'].replace(" videos", "")
+        pornstar = ' & '.join(pornstars)
+        pornstar = " [COLOR cyan]%s" % pornstar
+        lista = item.contentTitle.split('[/COLOR]')
+        if "[COLOR red]" in item.contentTitle:
+            lista.insert (2, pornstar)
+        else:
+            lista.insert (1, pornstar)
+        item.contentTitle = '[/COLOR]'.join(lista)    
     itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

@@ -14,6 +14,8 @@ from channelselector import get_thumb
 from modules import autoplay
 from lib import strptime_fix
 
+#####  OUT julio 2025
+
 IDIOMAS = {'VOSE': 'VOSE', 'CAST': 'CAST'}
 
 list_language = list(IDIOMAS.values())

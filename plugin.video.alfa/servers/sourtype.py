@@ -5,11 +5,8 @@ from core import urlparse
 from platformcode import logger
 from bs4 import BeautifulSoup
 
-forced_proxy_opt = 'ProxySSL'
-
-# kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'ignore_response_code': True, 'cf_assistant': False}
-kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
-
+kwargs = {'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 6, 'ignore_response_code': True, 
+          'timeout': 45, 'cf_assistant': False, 'CF_stat': True, 'CF': True}
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
@@ -47,6 +44,7 @@ def get_video_url(page_url, video_password):
             url += "|Referer=%s" % page_url
             video_urls.append(["[%s] mp4" %(server), url])
         return video_urls
+    logger.debug(matches)
     for elem in matches:
         url = elem['src']
         if server not in url:
