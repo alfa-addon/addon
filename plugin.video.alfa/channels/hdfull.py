@@ -13,6 +13,8 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
+from modules import renumbertools
+
 import ast
 from platformcode.platformtools import dialog_notification, dialog_ok, itemlist_refresh, itemlist_update, show_channel_settings
 from lib.alfa_assistant import is_alfa_installed
@@ -254,6 +256,8 @@ def mainlist(item):
         itemlist.append(Item(channel=item.channel, action="logout", url="", folder=False, refresh=True, 
                              title="[COLOR steelblue][B]Desloguearse[/B][/COLOR]",
                              plot="Para cambiar de usuario", thumbnail=get_thumb("back.png")))
+
+    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
@@ -671,7 +675,13 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if str_:
                 elem_json['plot_extend'] += str_.replace('[COLOR blue](Visto)[/COLOR]', '')
                 elem_json['playcount'] = 1 if 'Visto' in str_ else 0
-            if item.extra not in ['listas_res', 'estreno', 'actualizadas']: elem_json = add_context(elem_json, str_)
+
+            if elem_json['mediatype'] == 'tvshow':
+                elem_json['context'] = renumbertools.context(item)
+
+            if item.extra not in ['listas_res', 'estreno', 'actualizadas']:
+                elem_json = add_context(elem_json, str_)
+            
 
         except Exception:
             logger.error(elem)
@@ -808,9 +818,6 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         if not isinstance(elem, _dict): continue
 
         try:
-            elem_json['season'] = elem.get('season', 0)
-            elem_json['episode'] = elem.get('episode', 0)
-
             if elem.get('show', {}) and not isinstance(elem['show'], _dict): 
                 elem['show'] = ast.literal_eval(elem['show'])
             elem_json['title'] = elem.get('show', {}).get('title', {}).get('es', '').strip() \
@@ -827,6 +834,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
             elem_json['thumbnail'] = AlfaChannel.urljoin(host, "thumbs/" + (elem.get('thumbnail', '') or elem.get('thumb', '')))
             #elem_json['thumbnail'] += '|User-Agent=%s' % AlfaChannel.httptools.get_user_agent()
+            
+            elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
+                                                        item.contentSerieName, int(elem.get('season', 0)), int(elem.get('episode', 0)))
 
             elem_json['mediatype'] = 'episode'
             path = tv_path
