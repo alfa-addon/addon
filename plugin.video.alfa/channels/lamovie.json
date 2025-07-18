@@ -1,0 +1,66 @@
+{
+  "id": "lamovie",
+  "name": "LaMovie",
+  "active": true,
+  "adult": false,
+  "language": ["lat", "cast", "vose"],
+  "thumbnail": "https://i.imgur.com/x266NQg.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "movie",
+    "tvshow",
+    "anime"
+  ],
+  "force_unify": true,
+  "version": 1,
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": false,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Episodios de Series",
+      "default": false,
+      "enabled": false,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_anime",
+      "type": "bool",
+      "label": "Incluir en Novedades - Episodios de anime",
+      "default": false,
+      "enabled": false,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": false,
+      "enabled": false,
+      "visible": false
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "Latino",
+        "Castellano",
+        "Subtitulado"
+      ]
+    }
+  ]
+}
+
