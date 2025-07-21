@@ -17,6 +17,7 @@ forced_proxy_opt = 'ProxySSL'
 kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 0,
           'CF': True, 'cf_assistant': False, 'ignore_response_code': True}
 
+######### Si esta WARP 1.1.1.1 activado da error
 
 def test_video_exists(page_url):
     global data, retries, host, redir
