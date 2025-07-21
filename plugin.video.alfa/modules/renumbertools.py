@@ -65,16 +65,48 @@ def context(item):
     return _context
 
 
-def show_option(channel, itemlist):
+def show_option(channel, itemlist, status=True):
     if access():
-        itemlist.append(Item(module=__module__, title="[COLOR yellow]{}[/COLOR]".format(config.get_localized_string(70765)),
-                             action="load", channel=channel, thumbnail=get_thumb("setting_0.png")))
+        if status is None:
+            return itemlist
+
+        if status is True or get_json_renumerate(channel):
+            itemlist.append(Item(module=__module__, title="[COLOR yellow]{}[/COLOR]".format(config.get_localized_string(70765)),
+                                 action="load", channel=channel, thumbnail=get_thumb("setting_0.png")))
 
     return itemlist
 
 
 def load(item):
     return mainlist(channel=item.channel)
+
+
+def get_json_renumerate(channel, show="", show_lower=False, 
+                        tag_tvshow_renumerate=TAG_TVSHOW_RENUMERATE, tag_season_episode=TAG_SEASON_EPISODE):
+    #logger.info((channel, show, show_lower))
+    result = [] if show else {}
+    show = show.strip()
+
+    if channel:
+        dict_series = jsontools.get_node_from_file(channel, tag_tvshow_renumerate)
+
+        if show_lower:
+            # ponemos en minusculas el key, ya que previamente hemos hecho lo mismo con show.
+            show = show.lower()
+            for key in list(dict_series.keys()):
+                new_key = key.lower()
+                if new_key != key:
+                    dict_series[new_key] = dict_series[key]
+                    del dict_series[key]
+
+        if not show and dict_series:
+            result = dict_series.copy()
+
+        elif show and dict_series and show in dict_series:
+            result = dict_series[show].get(tag_season_episode, [])[:]
+            result.sort(key=lambda el: int(el[0]), reverse=True)
+
+    return result
 
 
 def mainlist(channel):
@@ -88,7 +120,7 @@ def mainlist(channel):
     """
     logger.info()
     itemlist = []
-    dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+    dict_series = get_json_renumerate(channel)
 
     idx = 0
     for tvshow in sorted(dict_series):
@@ -110,7 +142,7 @@ def mainlist(channel):
 
 
 def get_data(channel, show):
-    dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+    dict_series = get_json_renumerate(channel)
     data = dict_series.get(show, {})
     # logger.info(data, True)
     if data:
@@ -132,7 +164,7 @@ def config_item(item):
     ventana = RenumberWindow('RenumberDialog.xml', config.get_runtime_path(), show=item.show, channel=item.channel, data=data)
    
 
-def numbered_for_trakt(channel, show, season, episode):
+def numbered_for_trakt(channel, show, season, episode, item=""):
     """
     Devuelve la temporada y episodio convertido para que se marque correctamente en tratk.tv
 
@@ -154,20 +186,18 @@ def numbered_for_trakt(channel, show, season, episode):
 
         new_season = season
         new_episode = episode
-        dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+        if item and 'contentSeasonRenumList' in item and isinstance(item.contentSeasonRenumList, list):
+            dict_series = item.contentSeasonRenumList[:]
+        else:
+            dict_series = get_json_renumerate(channel, show=show, show_lower=True)
+            if item:
+                item.contentSeasonRenumList = dict_series[:]
 
-        # ponemos en minusculas el key, ya que previamente hemos hecho lo mismo con show.
-        for key in list(dict_series.keys()):
-            new_key = key.lower()
-            if new_key != key:
-                dict_series[new_key] = dict_series[key]
-                del dict_series[key]
+        if dict_series:
+            logger.debug("ha encontrado algo: %s" % dict_series)
 
-        if show in dict_series:
-            logger.debug("ha encontrado algo: %s" % dict_series[show])
-
-            if len(dict_series[show]['season_episode']) > 1:
-                for row in dict_series[show]['season_episode']:
+            if len(dict_series) > 1:
+                for row in dict_series:
 
                     if new_episode > row[1]:
                         new_episode -= row[1]
@@ -175,10 +205,10 @@ def numbered_for_trakt(channel, show, season, episode):
                         break
 
             else:
-                new_season = dict_series[show]['season_episode'][0][0]
-                new_episode += dict_series[show]['season_episode'][0][1]
+                new_season = dict_series[0][0]
+                new_episode += dict_series[0][1]
 
-        logger.debug("%s:%s" % (new_season, new_episode))
+            logger.debug("%s:%s desde %s:%s" % (new_season, new_episode, season, episode))
     else:
         # no se tiene acceso se devuelven los datos.
         new_season = season
@@ -193,7 +223,7 @@ def borrar(channel, show):
     line1 = config.get_localized_string(70768).format(show.strip())
 
     if platformtools.dialog_yesno(heading, line1) == 1:
-        dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+        dict_series = get_json_renumerate(channel)
         dict_series.pop(show, None)
 
         result, json_data = jsontools.update_node(dict_series, channel, TAG_TVSHOW_RENUMERATE)
@@ -277,7 +307,7 @@ def get_data_from_tmdb(tmdb_id):
 
 def write_data(channel, show, data):
     # OBTENEMOS LOS DATOS DEL JSON
-    dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+    dict_series = get_json_renumerate(channel)
     tvshow = show.strip()
     list_season_episode = dict_series.get(tvshow, {}).get(TAG_SEASON_EPISODE, [])
     logger.debug("data %s" % list_season_episode)

@@ -11,7 +11,7 @@ from lib import AlfaChannelHelper
 if not PY3: _dict = dict; from AlfaChannelHelper import dict
 from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
-from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
+from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay, renumbertools
 
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
@@ -25,9 +25,10 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.loan/", "https://reinventorrent.org/", "https://todotorrents.org/", 
-                          "https://www20.dontorrent.link/", "https://elitedivx.net/", "https://lilatorrent.com/"], 
-             'host_black_list': ["https://www19.dontorrent.link/", "https://dontorrent.jetzt/", "https://dontorrent.institute/", 
+             'host_alt': ["https://dontorrent.graphics/", "https://reinventorrent.org/", "https://todotorrents.org/", 
+                          "https://www21.dontorrent.link/", "https://elitedivx.net/", "https://lilatorrent.com/"], 
+             'host_black_list': ["https://www20.dontorrent.link/", "https://dontorrent.loan/", 
+                                 "https://www19.dontorrent.link/", "https://dontorrent.jetzt/", "https://dontorrent.institute/", 
                                  "https://dontorrent.news/", "https://dontorrent.haus/", "https://dontorrent.homes/", 
                                  "https://dontorrent.report/", "https://dontorrent.gift/", "https://dontorrent.download/", 
                                  "https://mastorrents.net/", "https://dontorrent.group/", "https://dontorrent.website/",
@@ -79,7 +80,7 @@ canonical = {
              'pattern_proxy': r'<a[^>]*class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>', 
              'proxy_url_test': 'pelicula/25159/The-Batman', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': False
             }
 host = canonical['host'] or canonical['host_alt'][0]
 channel = canonical['channel']
@@ -188,6 +189,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                          thumbnail=get_thumb("setting_0.png")))
 
+    itemlist = renumbertools.show_option(item.channel, itemlist, status=canonical.get('renumbertools', False))
+
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
     
     autoplay.show_option(item.channel, itemlist)
@@ -230,6 +233,7 @@ def submenu(item):
 
         itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                              thumbnail=get_thumb("setting_0.png")))
+        itemlist = renumbertools.show_option(item.channel, itemlist, status=canonical.get('renumbertools', False))
         itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
         return itemlist

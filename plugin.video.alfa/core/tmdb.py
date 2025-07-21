@@ -319,7 +319,7 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
 
         if 'season' in item.infoLabels.keys():
             try:
-                numtemporada = int(item.infoLabels['season'])
+                numtemporada = int(item.contentSeasonRenum or 0) or int(item.infoLabels['season'])
             except ValueError:
                 logger.debug("El numero de temporada no es valido")
                 return -1 * len(item.infoLabels)

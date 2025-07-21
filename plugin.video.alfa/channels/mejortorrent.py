@@ -11,7 +11,7 @@ from lib import AlfaChannelHelper
 if not PY3: _dict = dict; from AlfaChannelHelper import dict
 from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
-from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
+from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay, renumbertools
 
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
@@ -33,7 +33,7 @@ canonical = {
                                  'https://mejortorrent.nz', 'https://www.mejortorrentes.org/'], 
              'pattern': '<div\s*class="header-logo[^>]*>\s*<a\s*href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': False
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_torrent = host
@@ -123,6 +123,8 @@ def mainlist(item):
                          folder=False, thumbnail=get_thumb("next.png")))
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                          thumbnail=get_thumb("setting_0.png")))
+
+    itemlist = renumbertools.show_option(item.channel, itemlist, status=canonical.get('renumbertools', False))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
