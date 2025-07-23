@@ -65,16 +65,80 @@ def context(item):
     return _context
 
 
-def show_option(channel, itemlist):
+def show_option(channel, itemlist, status=True):
+    """
+    Función que añade el item de gestión de Renumbertools a itemlist, en función del parámetro "status"
+
+    @param channel: canal llamador
+    @type channel: str
+    @param itemlist: lista de Item, normalmente desde la función de "mainlist" del canal
+    @type channel: list[Item]
+    @param status: enviado condicionalmente desde el canal (Opcional, True por defecto)
+    @type channel: bool o none
+    @return: lista de Item
+    @rtype: list[Item]
+    """
     if access():
-        itemlist.append(Item(module=__module__, title="[COLOR yellow]{}[/COLOR]".format(config.get_localized_string(70765)),
-                             action="load", channel=channel, thumbnail=get_thumb("setting_0.png")))
+        # Si el estado en None, el canal no desea añadir el item de gestión de Renumbertools
+        if status is None:
+            return itemlist
+
+        # Si el estado en True (defecto), o es False pero existe ya alguna Serie gestionada,
+        # añade el item de gestión de Renumbertools
+        if status is True or get_json_renumerate(channel):
+            itemlist.append(Item(module=__module__, title="[COLOR yellow]{}[/COLOR]".format(config.get_localized_string(70765)),
+                                 action="load", channel=channel, thumbnail=get_thumb("setting_0.png")))
 
     return itemlist
 
 
 def load(item):
     return mainlist(channel=item.channel)
+
+
+def get_json_renumerate(channel, show="", show_lower=False):
+    """
+    Función que centraliza el acceso al .json del canal para obtener el nodo de renumeración
+    y devuelve, según los parámetros:
+
+      - Si no se especifica `show` (cadena vacía), un diccionario completo
+        de todas las series en el nodo `TAG_TVSHOW_RENUMBER`.
+      - Si se especifica `show`, una lista ordenada de pares [temporada, episodio]
+        para esa serie, en orden descendente de temporada.
+
+    @param channel: canal llamador (identificador del JSON)
+    @type  channel: str
+
+    @param show: nombre de la serie a extraer (opcional, "" por defecto)
+    @type  show: str
+
+    @param show_lower: si True, convierte las claves de serie a minúsculas
+                       (opcional, False por defecto)
+    @type  show_lower: bool
+
+    @return: diccionario completo de series si `show==""`, o lista de
+             [temporada, episodio] para la serie indicada
+    @rtype: dict o list
+    """
+    show = show.strip()
+
+    # 1) Sin canal: devolvemos estructura vacía según `show`
+    if not channel:
+        return [] if show else {}
+
+    # 2) Leemos y normalizamos el nodo de JSON
+    series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMBER) or {}
+    if show_lower:
+        series = {k.lower(): v for k, v in series.items()}
+        show = show.lower()
+
+    # 3) Caso “todos” (show vacío): devolvemos copia del dict
+    if not show:
+        return series.copy()
+
+    # 4) Caso “serie concreta”: devolvemos lista ordenada de episodios
+    episodes = series.get(show, {}).get(TAG_SEASON_EPISODE, [])
+    return sorted(episodes, key=lambda e: int(e[0]), reverse=True)
 
 
 def mainlist(channel):
@@ -88,7 +152,8 @@ def mainlist(channel):
     """
     logger.info()
     itemlist = []
-    dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+    # Leemos el nodo "TAG_TVSHOW_RENUMERATE" del .json del canal
+    dict_series = get_json_renumerate(channel)
 
     idx = 0
     for tvshow in sorted(dict_series):
@@ -110,7 +175,8 @@ def mainlist(channel):
 
 
 def get_data(channel, show):
-    dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+    # Leemos el nodo "TAG_TVSHOW_RENUMERATE" del .json del canal
+    dict_series = get_json_renumerate(channel)
     data = dict_series.get(show, {})
     # logger.info(data, True)
     if data:
@@ -132,7 +198,7 @@ def config_item(item):
     ventana = RenumberWindow('RenumberDialog.xml', config.get_runtime_path(), show=item.show, channel=item.channel, data=data)
    
 
-def numbered_for_trakt(channel, show, season, episode):
+def numbered_for_trakt(channel, show, season, episode, item=""):
     """
     Devuelve la temporada y episodio convertido para que se marque correctamente en tratk.tv
 
@@ -144,6 +210,11 @@ def numbered_for_trakt(channel, show, season, episode):
     @type season: int
     @param episode: Episodio que devuelve el scrapper
     @type episode: int
+    @param item: item de la serie desde el canal. (Opcional).  
+        - Es item se utiliza como vehículo de comunicación persistente para almacenar en la variable "item.contentSeasonRenumList" 
+          el valor de la lista [[season, episode], ...[season, episode]], o [], obtenida de la lectura del .json del canal.
+          Se evita leer el .json del canal repetitivamente por cada episodio de la serie
+    @type episode: item
     @return: season, episode
     @rtype: int, int
     """
@@ -154,20 +225,22 @@ def numbered_for_trakt(channel, show, season, episode):
 
         new_season = season
         new_episode = episode
-        dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+        # Si ya existe item.contentSeasonRenumList se toma su valor en vez de leer de nuevo el .json del canal
+        if item and 'contentSeasonRenumList' in item and isinstance(item.contentSeasonRenumList, list):
+            dict_series = item.contentSeasonRenumList[:]
+        else:
+            # Si no existe item.contentSeasonRenumList, se lee el .json del canal, obteniendo la lista 
+            # [[season, episode], ...[season, episode]], o [] de la serie, convitiendo el nombre de la serie a minúsculas
+            dict_series = get_json_renumerate(channel, show=show, show_lower=True)
+            if item:
+                # Se almacena en item.contentSeasonRenumList la lista obtenida de la Serie
+                item.contentSeasonRenumList = dict_series[:]
 
-        # ponemos en minusculas el key, ya que previamente hemos hecho lo mismo con show.
-        for key in list(dict_series.keys()):
-            new_key = key.lower()
-            if new_key != key:
-                dict_series[new_key] = dict_series[key]
-                del dict_series[key]
+        if dict_series:
+            logger.debug("ha encontrado algo: %s" % dict_series)
 
-        if show in dict_series:
-            logger.debug("ha encontrado algo: %s" % dict_series[show])
-
-            if len(dict_series[show]['season_episode']) > 1:
-                for row in dict_series[show]['season_episode']:
+            if len(dict_series) > 1:
+                for row in dict_series:
 
                     if new_episode > row[1]:
                         new_episode -= row[1]
@@ -175,10 +248,10 @@ def numbered_for_trakt(channel, show, season, episode):
                         break
 
             else:
-                new_season = dict_series[show]['season_episode'][0][0]
-                new_episode += dict_series[show]['season_episode'][0][1]
+                new_season = dict_series[0][0]
+                new_episode += dict_series[0][1]
 
-        logger.debug("%s:%s" % (new_season, new_episode))
+            logger.debug("%s:%s desde %s:%s" % (new_season, new_episode, season, episode))
     else:
         # no se tiene acceso se devuelven los datos.
         new_season = season
@@ -193,7 +266,8 @@ def borrar(channel, show):
     line1 = config.get_localized_string(70768).format(show.strip())
 
     if platformtools.dialog_yesno(heading, line1) == 1:
-        dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+        # Leemos el nodo "TAG_TVSHOW_RENUMERATE" del .json del canal
+        dict_series = get_json_renumerate(channel)
         dict_series.pop(show, None)
 
         result, json_data = jsontools.update_node(dict_series, channel, TAG_TVSHOW_RENUMERATE)
@@ -276,8 +350,8 @@ def get_data_from_tmdb(tmdb_id):
 
 
 def write_data(channel, show, data):
-    # OBTENEMOS LOS DATOS DEL JSON
-    dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+    # Leemos el nodo "TAG_TVSHOW_RENUMERATE" del .json del canal
+    dict_series = get_json_renumerate(channel)
     tvshow = show.strip()
     list_season_episode = dict_series.get(tvshow, {}).get(TAG_SEASON_EPISODE, [])
     logger.debug("data %s" % list_season_episode)
