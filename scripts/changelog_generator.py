@@ -88,16 +88,6 @@ class ImageMaker:
 
         # Fuentes para el texto
         try:
-            title_font = ImageFont.truetype(
-                "NotoSans-SemiBold.ttf", round(35 * self.factor)
-            )
-        except IOError:
-            try:
-                title_font = ImageFont.truetype("arial.ttf", round(35 * self.factor))
-            except IOError:
-                title_font = ImageFont.load_default()
-
-        try:
             body_font = ImageFont.truetype("arial.ttf", round(35 * self.factor))
         except IOError:
             body_font = ImageFont.load_default()
@@ -105,7 +95,14 @@ class ImageMaker:
         try:
             body_font_bold = ImageFont.truetype("arialbd.ttf", round(35 * self.factor))
         except IOError:
-            body_font_bold = ImageFont.load_default()
+            body_font_bold = body_font
+
+        try:
+            title_font = ImageFont.truetype(
+                "NotoSans-SemiBold.ttf", round(35 * self.factor)
+            )
+        except IOError:
+            title_font = body_font
 
         # Dibuja el título en la caja superior
         bbox_title = draw.textbbox((0, 0), title, font=title_font)
