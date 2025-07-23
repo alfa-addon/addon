@@ -256,8 +256,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     # Asi lee los datos correctos de TMDB
     titleSeason = get_title_season(soup.find('script', string=re.compile('var\s*anime_info\s*=\s*\[')).string)
-    if titleSeason != item.contentSeason:
-        return matches
+    # Si se detecta incorrectamente el titulo en TMDB no sale ningun capitulo, mejor no forzar esto.
+    # if titleSeason != item.contentSeason:
+        # return matches
     
     # logger.error(item)
     for x, (episode, url, thumbnail, movie_data) in enumerate(matches_int):

@@ -10,10 +10,8 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 from lib import AlfaChannelHelper
 if not PY3: _dict = dict; from AlfaChannelHelper import dict
 from AlfaChannelHelper import DictionaryAllChannel
-from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
-from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
-
-from modules import renumbertools
+from AlfaChannelHelper import re, traceback
+from AlfaChannelHelper import Item, scrapertools, get_thumb, config, logger, filtertools, autoplay, renumbertools
 
 IDIOMAS = AlfaChannelHelper.IDIOMAS_ANIME
 list_language = list(set(IDIOMAS.values()))
@@ -29,7 +27,7 @@ canonical = {
              'host_alt': ['https://tiodonghua.com/'], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': True
              }
 host = canonical['host'] or canonical['host_alt'][0]
 
@@ -116,7 +114,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True), c_type='search'))
 
-    itemlist = renumbertools.show_option(item.channel, itemlist)
+    itemlist = renumbertools.show_option(item.channel, itemlist, status=canonical.get('renumbertools', False))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
@@ -198,8 +196,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['year'] = '-'
             elem_json['quality'] = 'HD'
             
-            elem_json['context'] = renumbertools.context(item)
-            elem_json['context'].extend(autoplay.context)
+            elem_json['context'] = autoplay.context
 
         except Exception:
             logger.error(elem)
@@ -263,8 +260,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             season, episode = elem.find("div", class_="numerando").get_text(strip=True).split(' - ')
             if titleSeason == item.contentSeason and int(season) != item.contentSeason: continue
             # logger.info("contentSeason %d, season %d, titleSeason %d" % (item.contentSeason, int(season or 1), titleSeason), True)
-            elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
-                                                        item.contentSerieName, titleSeason, int(episode or 1))
+            elem_json['season'] = titleSeason
+            elem_json['episode'] = int(episode or 1)
             info = elem.find("div", class_="episodiotitle")
             elem_json['url'] = info.a.get("href", "")
             elem_json['title'] = info.a.get_text(strip=True)
