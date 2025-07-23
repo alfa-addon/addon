@@ -22,12 +22,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     host = "https://archive.org/"
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    json = jsontools.load( scrapertools.find_single_match(data, """js-play8-playlist" type="hidden" value='([^']+)""") )
-    # sobtitles
+    json = jsontools.load( scrapertools.find_single_match(data, "playlist='([^']+)") )
+    
+    ## sobtitles
     subtitle = ""
     for subtitles in json[0]["tracks"]:
         if subtitles["kind"] == "subtitles":  subtitle = host + subtitles["file"]
-    # sources
+    ## sources
     for url in json[0]["sources"]:
         video_urls.append(['%s %s[ArchiveOrg]' %(url["label"], url["type"]), host + url["file"], 0, subtitle])
     video_urls.sort(key=lambda it: int(it[0].split("p ", 1)[0]))

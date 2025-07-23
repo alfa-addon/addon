@@ -4,12 +4,12 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://player.tnaflix.com/video/[0-9]+)",
-        "url": "\\1"
+        "pattern": "https://player.tnaflix.com/video/([0-9]+)",
+        "url": "https://player.tnaflix.com/ajax/video-player/\\1"
       },
       {
         "pattern": "tnaflix.com/[A-z-]+/[A-z0-9-.]+/video([0-9]+)",
-        "url": "https://player.tnaflix.com/video/\\1"
+        "url": "https://player.tnaflix.com/ajax/video-player/\\1"
       }
     ]
   },

@@ -4,6 +4,8 @@ from core import httptools
 from core import scrapertools
 from lib import jsunpack
 from platformcode import logger, config
+from core import urlparse
+
 
 def test_video_exists(page_url):
     logger.error("(page_url='%s')" % page_url)
@@ -19,21 +21,19 @@ def get_video_url(page_url, user="", password="", video_password=""):
     logger.error("(page_url='%s')" % page_url)
     video_urls = []
     multires = False
-
+    videos = ''
     try:
         packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
         unpacked = jsunpack.unpack(packed)
     except:
         unpacked = scrapertools.find_single_match(data,"window.hola_player.*")
     logger.error(data)
-    videos = scrapertools.find_multiple_matches(unpacked or data, r'(?:file|src|sources):\s*(?:\[)?"([^"]+)"(?:,label:\s*"([^"]+))?')
-    for video, label in videos:
-        if ".jpg" not in video:
-            if label: 
-                multires = True
-            else:
-                label = video.split('.')[-1]
-                multires = False
-            video_urls.append([label + " [clipwatching]", video])
+    
+    m3u = scrapertools.find_single_match(unpacked, '<source src="([^"]+)"')
+    host = httptools.obtain_domain(page_url, scheme=True)
+    headers = httptools.default_headers.copy()
+    headers = "|{0}&Referer={1}/&Origin={1}".format(urlparse.urlencode(headers), host)
+    
+    video_urls.append(["[clipwatching] .m3u8", m3u+headers])
     
     return video_urls

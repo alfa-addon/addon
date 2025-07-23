@@ -1,7 +1,7 @@
 {
     "id": "yohentai",
     "name": "YoHentai",
-    "active": true,
+    "active": false,
     "adult": true,
     "language": ["vos", "cast"],
     "thumbnail": "https://yohentai.net/assets/img/logo.png",
