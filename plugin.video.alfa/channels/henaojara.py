@@ -10,10 +10,8 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 from lib import AlfaChannelHelper
 if not PY3: _dict = dict; from AlfaChannelHelper import dict
 from AlfaChannelHelper import DictionaryAllChannel
-from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
-from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
-
-from modules import renumbertools
+from AlfaChannelHelper import re, traceback, base64
+from AlfaChannelHelper import Item, scrapertools, get_thumb, config, logger, filtertools, autoplay, renumbertools
 
 IDIOMAS = AlfaChannelHelper.IDIOMAS_ANIME
 list_language = list(set(IDIOMAS.values()))
@@ -29,7 +27,7 @@ canonical = {
              'host_alt': ['https://www.henaojara.com/'], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': True
              }
 host = canonical['host'] or canonical['host_alt'][0]
 
@@ -111,7 +109,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True)))
 
-    itemlist = renumbertools.show_option(item.channel, itemlist)
+    itemlist = renumbertools.show_option(item.channel, itemlist, status=canonical.get('renumbertools', False))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
@@ -217,8 +215,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if elem.find("div", class_=["Description"]): 
                 elem_json['plot'] = elem.find("div", class_=["Description"]).p.get_text(strip=True)
 
-            elem_json['context'] = renumbertools.context(item)
-            elem_json['context'].extend(autoplay.context)
+            elem_json['context'] = autoplay.context
 
         except Exception:
             logger.error(elem)
@@ -283,8 +280,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['title'] = info.a.get_text(strip=True)
             episode = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
 
-            elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
-                                                        item.contentSerieName, titleSeason, episode)
+            elem_json['season'] = titleSeason
+            elem_json['episode'] = episode
 
             nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
             if re.search(nextChapterDateRegex, elem_json['title']):
