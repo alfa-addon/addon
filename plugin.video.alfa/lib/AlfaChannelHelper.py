@@ -27,6 +27,7 @@ from platformcode import config
 from platformcode import logger
 from modules import filtertools
 from modules import autoplay
+from modules import renumbertools
 
 DEBUG = False
 BTDIGG = 'btdig'
@@ -68,6 +69,8 @@ LIST_QUALITY_MOVIES_T = LIST_QUALITY_MOVIES
 LIST_QUALITY_MOVIES_A = ['1080p', '720p', 'HD', 'Rip', '2160p', '4K', 'CAM', 'TS']
 LIST_QUALITY_TVSHOW = ['HDTV-720p', 'HDTV', 'WEB-DL 1080p', '4KWebRip']
 SIZE_MATCHES = 5000
+TAG_TVSHOW_RENUMERATE = renumbertools.TAG_TVSHOW_RENUMERATE
+TAG_SEASON_EPISODE = renumbertools.TAG_SEASON_EPISODE
 
 
 class AlfaChannelHelper:
@@ -1841,6 +1844,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 new_item.context += ['buscar_trailer']
                 if elem.get('context', []): new_item.context.extend(elem['context'])
+                if new_item.contentType == 'tvshow' and self.canonical.get('renumbertools', False) is not None \
+                                                    and 'renumbertools' not in str(new_item.context):
+                    new_item.context = renumbertools.context(new_item)
                 new_item.context = filtertools.context(new_item, self.list_language, self.list_quality_movies \
                                                        if new_item.contentType == 'movie' else self.list_quality_tvshow)
 
@@ -2160,6 +2166,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         soup = {}
         self.response = self.httptools.build_response(HTTPResponse=True)
         if not matches_post and item.matches_post: matches_post = item.matches_post
+        contentSeasonRenumList = []
 
         self.btdigg = finds_controls.get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
         self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
@@ -2374,6 +2381,22 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                              % self.response.soup or self.response.json or self.response.data or seasons_list)
                     return itemlist
 
+        if self.canonical.get('renumbertools', False) is not None:
+            season_episode = renumbertools.get_json_renumerate(item.channel, show=item.contentSerieName, show_lower=True)
+            if season_episode:
+                contentSeasonRenumList = season_episode[:]
+                if not (item.add_videolibrary or item.library_playcounts or item.downloadFilename):
+                    for match in matches:
+                        match['season_renum'] = match['season']
+                    if len(matches) > 0:
+                        for x, season in enumerate(reversed(season_episode)):
+                            if len(season_episode) <= len(matches):
+                                if season[0] == matches[x]['season']: continue
+                            else:
+                                matches.append(matches[-1].copy())
+                            matches[x]['season_renum'] = season[0]
+                    if matches: matches = sorted(matches, key=lambda elem_json: int(elem_json.get('season_renum', 0) or elem_json['season']))
+
         # Si solo hay una temporada y está configurado así, se listan los episodios directamente
         if len(matches) == 1 and no_pile_on_seasons >= 1: 
             self.season_colapse = False
@@ -2428,7 +2451,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                   url=elem['url'], 
                                   url_tvshow = matches[-1]['url'] if finds_seasons_search else item.url, 
                                   contentSeason=elem['season'], 
-                                  title=('Temporada %s' % elem['season']) if elem['season'] > 0 else 'Especiales',
+                                  title=('Temporada %s' % elem.get('season_renum', elem['season'])) if elem['season'] > 0 else 'Especiales',
                                   contentPlot=elem.get('plot', item.contentPlot), 
                                   thumbnail=elem.get('thumbnail', item.thumbnail), 
                                   contentType='season' if item.contentType != 'movie' else 'movie'
@@ -2479,6 +2502,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if 'matches_cached' in elem: new_item.matches_cached = elem['matches_cached'][:]
             if 'episode_list' in elem: new_item.episode_list = elem['episode_list'].copy()
             if elem.get('playcount', 0): new_item.infoLabels['playcount'] = elem['playcount']
+            if elem.get('season_renum'): new_item.contentSeasonRenum = elem['season_renum']
+            new_item.contentSeasonRenumList = contentSeasonRenumList
 
             new_item.url = self.do_url_replace(new_item.url, url_replace)
 
@@ -2583,7 +2608,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
     def episodes(self, item, data='', action="findvideos", matches_post=None, postprocess=None, 
                  generictools=False, episodes_list={}, finds={}, **kwargs):
-        logger.info('Serie: %s; Season: %s/%s' % (item.season_search or item.contentSerieName, item.contentSeason, 
+        logger.info('Serie: %s; Season: %s/%s' % (item.season_search or item.contentSerieName, 
+                                                  (item.contentSeason, item.contentSeasonRenum, item.contentSeasonRenumList), 
                                                   item.infoLabels['number_of_seasons']))
         from lib.generictools import AH_post_tmdb_episodios, AH_find_videolab_status
         from core import tmdb
@@ -2755,6 +2781,12 @@ class DictionaryAllChannel(AlfaChannelHelper):
                         break
                 else:
                     infolabels["episode"] = int(scrapertools.find_single_match(str(elem.get('episode', '1')), r'\d+') or '1')
+
+            if self.canonical.get('renumbertools', False) is not None and item.contentSeasonRenumList:
+                infolabels["season"], infolabels["episode"] = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, 
+                                                                            int(infolabels["season"]), int(infolabels["episode"]),
+                                                                            item=item)
+                if item.contentSeasonRenum and item.contentSeasonRenum != infolabels["season"]: continue
 
             if isinstance(do_episode_clean, list):
                 for clean_org, clean_des in do_episode_clean:

@@ -2,16 +2,27 @@
         [B]Estos son los cambios para esta versión:[/B]
         
         • +18
-        • Cine24H
+        • AnimeJL
+        • BlogHorror
+        • CineCalidad
         • Divxtotal
         • Dontorrent
-        • DoramasYT
-        • EntrePeliculasySeries
+        • Doramasflix
+        • Elite Torrent
+        • Eztv
+        • GranTorrent
+        • HDFull
         • Hacktorrent
         • HenaoJara
+        • LaMovie
+        • Latanime
         • MejorTorrent
-        • Osjonosu
-        • Pelicinehd
+        • Mitorrent
+        • MoviesDVDR
         • Pelispanda
-        • SeriesKao
+        • Pelitorrent
+        • SubTorrents
+        • TioDonghua
+        • VerAnime
+        • WolfMax4K
         
