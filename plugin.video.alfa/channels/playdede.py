@@ -698,7 +698,8 @@ def play(item):
 
     if host in item.url:
         data = get_source(item.url)
-        item.url = scrapertools.find_single_match(data, 'var url\s*=\s*"([^"]+)"')
+        #item.url = scrapertools.find_single_match(data, 'var url\s*=\s*"([^"]+)"')
+        item.url = scrapertools.find_single_match(data, 'iframe src="([^"]+)"')
     
     devuelve = servertools.findvideosbyserver(item.url, item.server)
     if devuelve:
