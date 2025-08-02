@@ -20,10 +20,13 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    patron = '\{"url":"([^"]+)","fallback":(?:"[^"]+"|),"quality":"(\d+p)",'
+    # patron = '\{"url":"([^"]+)","fallback":(?:"[^"]+"|),"quality":"(\d+p)",'
+    patron = '\{"url":"([^"]+)","fallback":(?:"[^"]+"|""),"quality":"(\d+p)",'
     matches = scrapertools.find_multiple_matches(data, patron)
     patron2 = '"(\d+p)":\{"url":"([^"]+)"'
     matches2 = scrapertools.find_multiple_matches(data, patron2)
+    pornstars = scrapertools.find_single_match(data, "&xprf=([^&]+)&").replace("+", " ").replace("%2C", " & ")
+    logger.debug(pornstars)
     if not matches:
         for quality,url in matches2:
             url =  url.replace("\/", "/")

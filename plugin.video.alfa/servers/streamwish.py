@@ -37,6 +37,9 @@ def test_video_exists(page_url):
     
     if response.code == 404 or "no longer available" in data or "Not Found" in data: 
         return False, "[streamwish] El archivo no existe o ha sido borrado"
+    if "restricted for this domain" in data:
+        return False, "[streamwish] El archivo restringido en dominio"
+
     return True, ""
 
 
