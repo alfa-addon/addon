@@ -108,22 +108,35 @@ list_servers = list(set(SERVIDORES.values()))
 
 # https://entrarplaydede.com/
 
-host = "https://www10.playdede.link/"
+host = "https://www12.playdede.link/"
 assistant = config.get_setting(
     "assistant_version", default=""
 ) and not httptools.channel_proxy_list(host)
 
 canonical = {
     "channel": "playdede",
-    "host": config.get_setting("current_host", "playdede", default=""),
+    "host": config.get_setting("current_host", channel="playdede", default=""),
     "host_alt": [host],
     "host_black_list": [
+        "https://www.playdede.link/",
+        "https://www2.playdede.link/",
+        "https://www3.playdede.link/",
+        "https://www4.playdede.link/",
+        "https://www5.playdede.link/",
+        "https://www6.playdede.link/",
+        "https://www7.playdede.link/",
+        "https://www8.playdede.link/",
         "https://www9.playdede.link/",
-        "https://www8.playdede.link/","https://www7.playdede.link/", "https://www6.playdede.link/",
-        "https://www5.playdede.link/", "https://www4.playdede.link/", "https://www3.playdede.link/",
-        "https://www2.playdede.link/", "https://playdede.in/", "https://playdede.me/",
-        "https://playdede.eu/", "https://playdede.us/", "https://playdede.to/",
-        "https://playdede.nu/", "https://playdede.org/", "https://playdede.com/",
+        "https://www10.playdede.link/",
+        "https://www11.playdede.link/",
+        "https://playdede.in/",
+        "https://playdede.me/",
+        "https://playdede.eu/",
+        "https://playdede.us/",
+        "https://playdede.to/",
+        "https://playdede.nu/",
+        "https://playdede.org/",
+        "https://playdede.com/",
     ],
     "pattern": '<link\s*rel="shortcut\s*icon"[^>]+href="([^"]+)"',
     "set_tls": True,
@@ -137,6 +150,7 @@ canonical = {
     "CF_test": False,
     "alfa_s": True,
 }
+
 host = canonical["host"] or canonical["host_alt"][0]
 __channel__ = canonical["channel"]
 
@@ -145,30 +159,144 @@ show_langs = config.get_setting("show_langs", channel=__channel__)
 account = None
 
 
-def get_source(
-    url, json=False, soup=False, multipart_post=None, timeout=30, add_host=True, **opt
-):
+# Función que obtiene la URL del host dinámico de Playdede, que es cambiada por los moderadores de la propia página.
+# Así siempre se tendrá la URL correcta del host pese a que la URL de Playdede cambie.
+def get_dynamic_host(item):
     logger.info()
-
-    opt["canonical"] = canonical
-    data = httptools.downloadpage(
-        url, soup=soup, files=multipart_post, add_host=add_host, timeout=timeout, **opt
+    global host, account, __channel__
+    
+    url = "https://entrarplaydede.com/"
+    
+    logger.info("Downloading page: {}".format(url))
+    
+    dialog = platformtools.dialog_progress(
+        "Actualizar dominio",
+        "Accediendo a {}".format(url)
     )
+    
+    try:
+        """ opt = {
+            'forced_proxy_ifnot_assistant': None,
+            'proxy_web': False,
+            'proxy': False,
+        } """
+        data = get_source(url, soup=True, forced_proxy_ifnot_assistant = None, full_response = True)
+    except Exception as e:
+        if isinstance(e, bytes):
+            e = e.decode("utf8", errors="replace")
+        logger.error("Dynamic host URL: failure: {}".format(e))
+        dialog.update(100)
+        platformtools.dialog_ok(
+            "Actualizar dominio",
+            "Hubo un problema: {}.".format(e)
+        )
+        return
+    
+    if data.code != 200:
+        logger.error("Page downloaded failure")
+        dialog.update(100)
+        platformtools.dialog_ok(
+            "Actualizar dominio",
+            "No se pudo acceder ({})".format(data.code)
+        )
+        return
+    else:
+        dialog.update(50)
+        logger.info("Page downloaded successfully")
+        try:
+            latest_host = data.soup.find("h1").a.get("href")
+            if not latest_host.endswith("/"):
+                latest_host += "/"
+            logger.info("Dynamic host URL: {}".format(latest_host))
+            current_host = config.get_setting("current_host", channel=__channel__, default=host)
+            if current_host != latest_host:
+                host = latest_host
+                config.set_setting("current_host", host, channel=__channel__)
+                logger.info("Host is now: "+host)
+                remove_cookies()
+                account = login()
+                dialog.update(100)
+                platformtools.dialog_ok(
+                    "Actualizar dominio",
+                    "Nuevo dominio: {}.".format(host)
+                )
+                return mainlist(item)
+            else:
+                logger.info("Already using the latest host")
+                dialog.update(100)
+                platformtools.dialog_ok(
+                    "Actualizar dominio", 
+                    "Ya se está usando el dominio más reciente, {}".format(host)
+                )
+                return
+        except Exception as e:
+            if isinstance(e, bytes):
+                e = e.decode("utf8", errors="replace")
+            logger.error("Dynamic host URL: failure: {}".format(e))
+            dialog.update(100)
+            platformtools.dialog_ok(
+                "Actualizar dominio",
+                "Hubo un problema: {}.".format(e)
+            )
+            return
 
+
+# Update the host based on redirections
+def update_host_from_redirect():
+    global host, __channel__
+    data = get_source(host, follow_redirects = False, full_response = True)
+    if data and data.headers.get('location'):
+        logger.info("redirecting")
+        redirect_host = httptools.obtain_domain(data.headers['location'], scheme=True)
+        if not redirect_host.endswith("/"):
+            redirect_host += "/"
+        current_host = config.get_setting("current_host", channel=__channel__, default="")
+        if current_host != redirect_host:
+            remove_cookies()
+            logger.info("Updating host to {}".format(redirect_host))
+            host = redirect_host
+            config.set_setting("current_host", host, channel=__channel__)
+            update_host_from_redirect()
+
+
+def get_source(
+        url, json=False, soup=False, multipart_post=None,timeout=30,
+        add_host=False, canonical_check=False, full_response=False, **opt
+    ):
+    logger.info()
+    global host, canonical
+
+    try:
+        opt['canonical'] = canonical
+        opt['soup'] = soup
+        opt['files'] = multipart_post
+        opt['add_host'] = add_host
+        opt['timeout'] = timeout
+        opt['canonical_check'] = canonical_check
+        data = httptools.downloadpage(url, **opt)
+    except Exception as e:
+        if isinstance(e, bytes):
+            e = e.decode("utf8", errors="replace")
+        logger.error('downloadpage exception: {}'.format(str(e)))
+        return None
+    
     # Verificamos que tenemos una sesión válida, sino, no tiene caso devolver nada
-    if "Iniciar sesión" in data.data:
+    if host in url and "Iniciar sesión" in data.data:
         # Si no tenemos sesión válida, mejor cerramos definitivamente la sesión
-        remove_cookies()
         global account
         if account:
             logout({})
         platformtools.dialog_notification(
             "No se ha inciado sesión",
             "Inicia sesión en el canal {} para poder usarlo".format(__channel__),
+            time=2000,
         )
+        remove_cookies()
         return None
 
-    if json:
+    if full_response:
+        data = data
+    elif json:
         data = data.json
     elif soup:
         data = data.soup
@@ -178,19 +306,14 @@ def get_source(
     return data
 
 
-def remove_cookies():
-    # Borramos las cookies
-    try:
-        httptools.cj.clear()
-        httptools.save_cookies()
-    except Exception:
-        pass
-
-
 def login():
     logger.info()
-    remove_cookies()
-    
+
+    update_host_from_redirect()
+
+    if httptools.get_cookie(host, "utoken"):
+        return True
+
     usuario = config.get_setting("user", channel=__channel__)
     clave = config.get_setting("pass", channel=__channel__)
     credentials = (
@@ -208,32 +331,30 @@ def login():
             "Falta la contraseña",
             "Revisa la contraseña en la configuración del canal.",
             sound=False,
+            time=2000,
         )
         logger.error("No se ingresó una contraseña")
         return False
-
-    if not httptools.get_cookie(host, "MoviesWebsite"):
-        httptools.downloadpage(host, timeout=timeout, canonical=canonical)
-
-    if httptools.get_cookie(host, "utoken"):
-        return True
+    
+    # if not httptools.get_cookie(host, "MoviesWebsite"):
+    #     data = get_source(host, forced_proxy_opt="reset", full_response = True)
+    
+    # cookie_host = host
+    # if data and data.proxy__:
+    #     proxy_data = str(data.proxy__)
+    #     proxytype, proxyweb, urldomain, estado = proxy_data.split(':')
+    #     cookie_host = urldomain
 
     logger.info("Iniciando sesión...")
-
-    httptools.downloadpage(
-        "{}ajax.php".format(host),
-        files=credentials,
-        add_referer=True,
-        add_host=True,
-        timeout=timeout,
-        canonical=canonical,
-    )
-    httptools.downloadpage(host, timeout=timeout, canonical=canonical)
+    
+    get_source("{}ajax.php".format(host), multipart_post=credentials, add_host=True)
 
     if httptools.get_cookie(host, "utoken"):
         logger.info("¡Token de sesión conseguido!")
         platformtools.dialog_notification(
-            "Sesión iniciada satisfactoriamente", "Disfruta del canal :)", sound=False
+            "Sesión iniciada satisfactoriamente", "Disfruta del canal :)",
+            sound=False,
+            time=2000,
         )
         return True
     else:
@@ -242,20 +363,24 @@ def login():
             "Error al iniciar sesión",
             "Verifica que el usuario y contraseña sean correctos y que puedas iniciar sesión en la web. Si están correctos, genera un reporte desde el menú principal",
             sound=False,
+            time=2000,
         )
         return False
+
+
+def remove_cookies():
+    # Borramos las cookies
+    try:
+        httptools.cj.clear()
+        httptools.save_cookies()
+    except Exception:
+        pass
 
 
 def logout(item):
     logger.info()
 
-    # Borramos las cookies
-    try:
-        domain = urlparse.urlparse(host).netloc
-        httptools.cj.clear(domain)
-        httptools.save_cookies()
-    except Exception:
-        pass
+    remove_cookies()
 
     # Borramos el estado de login
     config.set_setting("user", "", channel=__channel__)
@@ -380,6 +505,17 @@ def mainlist(item):
             list_quality_movies,
         )
         autoplay.show_option(item.channel, itemlist)
+    
+    itemlist.append(
+        Item(
+            action="get_dynamic_host",
+            channel=item.channel,
+            folder=False,
+            text_bold=True,
+            thumbnail=get_thumb("setting_0.png"),
+            title="Actualizar dominio",
+        )
+    )
     return itemlist
 
 
