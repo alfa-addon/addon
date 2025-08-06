@@ -25,7 +25,7 @@ def test_video_exists(page_url):
     data = response.data
     if response.code == 403:
         return False, "[vidmoly] Error"
-    if response.code == 404 or "Please wait" in data or "/notice.php" in data:
+    if response.code == 404 or "/notice.php" in data:
         return False, "[vidmoly] El archivo no existe o ha sido borrado"
     return True, ""
 
