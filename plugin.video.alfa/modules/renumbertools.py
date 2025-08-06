@@ -102,7 +102,7 @@ def get_json_renumerate(channel, show="", show_lower=False):
     y devuelve, según los parámetros:
 
       - Si no se especifica `show` (cadena vacía), un diccionario completo
-        de todas las series en el nodo `TAG_TVSHOW_RENUMBER`.
+        de todas las series en el nodo `TAG_TVSHOW_RENUMERATE`.
       - Si se especifica `show`, una lista ordenada de pares [temporada, episodio]
         para esa serie, en orden descendente de temporada.
 
@@ -127,7 +127,7 @@ def get_json_renumerate(channel, show="", show_lower=False):
         return [] if show else {}
 
     # 2) Leemos y normalizamos el nodo de JSON
-    series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMBER) or {}
+    series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE) or {}
     if show_lower:
         series = {k.lower(): v for k, v in series.items()}
         show = show.lower()
@@ -198,7 +198,7 @@ def config_item(item):
     ventana = RenumberWindow('RenumberDialog.xml', config.get_runtime_path(), show=item.show, channel=item.channel, data=data)
    
 
-def numbered_for_trakt(channel, show, season, episode, item=""):
+def numbered_for_trakt(channel, show, season, episode, contentSeasonRenumList=[]):
     """
     Devuelve la temporada y episodio convertido para que se marque correctamente en tratk.tv
 
@@ -210,11 +210,11 @@ def numbered_for_trakt(channel, show, season, episode, item=""):
     @type season: int
     @param episode: Episodio que devuelve el scrapper
     @type episode: int
-    @param item: item de la serie desde el canal. (Opcional).  
-        - Es item se utiliza como vehículo de comunicación persistente para almacenar en la variable "item.contentSeasonRenumList" 
-          el valor de la lista [[season, episode], ...[season, episode]], o [], obtenida de la lectura del .json del canal.
+    @param contentSeasonRenumList: Lista de renumeración de la Serie. (Opcional).
+        - Esta lista se utiliza como vehículo de comunicación persistente para almacenar el valor de la lista
+          [[season, episode], ...[season, episode]], o [], obtenida de la lectura del .json del canal.
           Se evita leer el .json del canal repetitivamente por cada episodio de la serie
-    @type episode: item
+    @type episode: list
     @return: season, episode
     @rtype: int, int
     """
@@ -225,16 +225,15 @@ def numbered_for_trakt(channel, show, season, episode, item=""):
 
         new_season = season
         new_episode = episode
-        # Si ya existe item.contentSeasonRenumList se toma su valor en vez de leer de nuevo el .json del canal
-        if item and 'contentSeasonRenumList' in item and isinstance(item.contentSeasonRenumList, list):
-            dict_series = item.contentSeasonRenumList[:]
+        # Si existe contentSeasonRenumList se toma su valor en vez de leer de nuevo el .json del canal
+        if contentSeasonRenumList and isinstance(contentSeasonRenumList, list):
+            dict_series = contentSeasonRenumList[:]
         else:
-            # Si no existe item.contentSeasonRenumList, se lee el .json del canal, obteniendo la lista 
+            # Si no existe contentSeasonRenumList, se lee el .json del canal, obteniendo la lista 
             # [[season, episode], ...[season, episode]], o [] de la serie, convitiendo el nombre de la serie a minúsculas
             dict_series = get_json_renumerate(channel, show=show, show_lower=True)
-            if item:
-                # Se almacena en item.contentSeasonRenumList la lista obtenida de la Serie
-                item.contentSeasonRenumList = dict_series[:]
+            # Se almacena en contentSeasonRenumList la lista obtenida de la Serie
+            contentSeasonRenumList.extend(dict_series)
 
         if dict_series:
             logger.debug("ha encontrado algo: %s" % dict_series)

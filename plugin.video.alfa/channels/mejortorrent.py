@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'mejortorrent', 
              'host': config.get_setting("current_host", 'mejortorrent', default=''), 
-             'host_alt': ["https://www34.mejortorrent.eu"], 
-             'host_black_list': ["https://www33.mejortorrent.eu/", "https://www32.mejortorrent.eu/", 
+             'host_alt': ["https://www35.mejortorrent.eu/"], 
+             'host_black_list': ["https://www34.mejortorrent.eu/", "https://www33.mejortorrent.eu/", "https://www32.mejortorrent.eu/", 
                                  "https://www31.mejortorrent.eu/", "https://www30.mejortorrent.eu/", "https://www29.mejortorrent.eu/", 
                                  "https://www28.mejortorrent.eu/", "https://www26.mejortorrent.eu/", "https://www24.mejortorrent.zip/", 
                                  "https://www23.mejortorrent.zip/", "https://www22.mejortorrent.zip/", "https://www21.mejortorrent.zip/", 
