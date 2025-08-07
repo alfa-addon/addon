@@ -552,7 +552,9 @@ def get_thumb(thumb_name, view="thumb_", auto=False):
             resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
 
         else:
-            resource_path = "https://raw.githubusercontent.com/alfa-addon/media/master/themes/"
+            resource_path = os.path.join(config.get_data_path(), "themes")
+            if not os.path.exists(os.path.join(resource_path, icon_pack_name)):
+                resource_path = "https://raw.githubusercontent.com/alfa-addon/media/master/themes/"
 
         media_path = os.path.join(resource_path, icon_pack_name)
 
