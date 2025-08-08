@@ -343,6 +343,10 @@ def episodios(item):
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     itemlist = sorted(itemlist, key=lambda it: it.title)
+    if len(info) > 3:
+        date = info[3].split('-')
+        itemlist[-1].infoLabels['next_episode_air_date'] = '{}/{}/{}'.format(date[2], date[1], date[0]) \
+                                                            if len(date) == 3 else info[3]
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and not item.action == 'add_serie_to_library' and not item.extra:
         itemlist.append(Item(channel=item.channel, title=config.get_localized_string(60352), url=item.url,
