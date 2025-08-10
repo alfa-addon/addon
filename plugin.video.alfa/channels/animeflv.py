@@ -333,9 +333,6 @@ def episodios(item):
         except ValueError:
             infoLabels['season'] = 1
             infoLabels['episode'] = 1
-
-        if next_episode_air_date:
-            infoLabels['next_episode_air_date'] = next_episode_air_date
         
         title = '{}x{} Episodio {}'.format(season, str(episodeRenumber).zfill(2), episodeRenumber)
         
