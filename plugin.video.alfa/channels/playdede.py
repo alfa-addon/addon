@@ -108,7 +108,7 @@ list_servers = list(set(SERVIDORES.values()))
 
 # https://entrarplaydede.com/
 
-host = "https://www12.playdede.link/"
+host = "https://playdede.club/"
 assistant = config.get_setting(
     "assistant_version", default=""
 ) and not httptools.channel_proxy_list(host)
@@ -116,7 +116,7 @@ assistant = config.get_setting(
 canonical = {
     "channel": "playdede",
     "host": config.get_setting("current_host", channel="playdede", default=""),
-    "host_alt": [host],
+    "host_alt": [host, "https://www12.playdede.link/"],
     "host_black_list": [
         "https://www.playdede.link/",
         "https://www2.playdede.link/",
@@ -192,25 +192,40 @@ def get_dynamic_host(item):
         )
         return
     
-    if data.code != 200:
+    if not data or data.code != 200:
         logger.error("Page downloaded failure")
         dialog.update(100)
         platformtools.dialog_ok(
             "Actualizar dominio",
-            "No se pudo acceder ({})".format(data.code)
+            "No se pudo acceder a {}".format(url)
         )
         return
     else:
         dialog.update(50)
         logger.info("Page downloaded successfully")
         try:
-            latest_host = data.soup.find("h1").a.get("href")
-            if not latest_host.endswith("/"):
-                latest_host += "/"
-            logger.info("Dynamic host URL: {}".format(latest_host))
+            latest_hosts = data.soup.find("section", class_="green-bg").find_all("a")
+            hosts = []
+            for host in latest_hosts:
+                host = host.get("href")
+                if host and host.startswith("https://"):
+                    if not host.endswith("/"):
+                        host += "/"
+                    hosts.append(host)
+            selected = platformtools.dialog_select("Selecciona un dominio", hosts, useDetails=False)
+            if selected < 0:
+                logger.info("User cancelled the host selection")
+                dialog.update(100)
+                platformtools.dialog_ok(
+                    "Actualizar dominio",
+                    "No se seleccionó ningún dominio."
+                )
+                return
+            selected_host = hosts[selected]
+            logger.info("Dynamic host URL: {}".format(selected_host))
             current_host = config.get_setting("current_host", channel=__channel__, default=host)
-            if current_host != latest_host:
-                host = latest_host
+            if current_host != selected_host:
+                host = selected_host
                 config.set_setting("current_host", host, channel=__channel__)
                 logger.info("Host is now: "+host)
                 remove_cookies()
@@ -220,7 +235,12 @@ def get_dynamic_host(item):
                     "Actualizar dominio",
                     "Nuevo dominio: {}.".format(host)
                 )
-                return mainlist(item)
+                remove_cookies()
+                account = login()
+                if config.is_xbmc():
+                    import xbmc
+                    xbmc.executebuiltin("Container.Refresh")
+                return
             else:
                 logger.info("Already using the latest host")
                 dialog.update(100)
