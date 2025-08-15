@@ -175,12 +175,7 @@ def get_dynamic_host(item):
     )
     
     try:
-        """ opt = {
-            'forced_proxy_ifnot_assistant': None,
-            'proxy_web': False,
-            'proxy': False,
-        } """
-        data = get_source(url, soup=True, forced_proxy_ifnot_assistant = None, full_response = True)
+        data = get_source(url, soup=True, retry_alt=False, full_response = True)
     except Exception as e:
         if isinstance(e, bytes):
             e = e.decode("utf8", errors="replace")
@@ -265,7 +260,9 @@ def get_dynamic_host(item):
 def update_host_from_redirect():
     global host, __channel__
     data = get_source(host, follow_redirects = False, full_response = True)
-    if data and data.headers.get('location'):
+    if not data or data.code != 200:
+        return False
+    elif data.headers.get('location'):
         logger.info("redirecting")
         redirect_host = httptools.obtain_domain(data.headers['location'], scheme=True)
         if not redirect_host.endswith("/"):
@@ -276,7 +273,8 @@ def update_host_from_redirect():
             logger.info("Updating host to {}".format(redirect_host))
             host = redirect_host
             config.set_setting("current_host", host, channel=__channel__)
-            update_host_from_redirect()
+            return update_host_from_redirect()
+    return True
 
 
 def get_source(
@@ -329,7 +327,14 @@ def get_source(
 def login():
     logger.info()
 
-    update_host_from_redirect()
+    result = update_host_from_redirect()
+    
+    if not result:
+        platformtools.dialog_ok(
+            "Error al iniciar sesión",
+            "No se pudo acceder a {}".format(host)
+        )
+        return False
 
     if httptools.get_cookie(host, "utoken"):
         return True
@@ -367,7 +372,16 @@ def login():
 
     logger.info("Iniciando sesión...")
     
-    get_source("{}ajax.php".format(host), multipart_post=credentials, add_host=True)
+    response = get_source("{}ajax.php".format(host), multipart_post=credentials, add_host=True, full_response=True)
+    
+    if not response or response.code != 200:
+        platformtools.dialog_notification(
+            "Error al iniciar sesión",
+            "La web {} no responde.".format(host),
+            sound=False,
+            time=2000,
+        )
+        return False
 
     if httptools.get_cookie(host, "utoken"):
         logger.info("¡Token de sesión conseguido!")
@@ -675,7 +689,8 @@ def list_all(item):
     if not isinstance(item.tmdb, bool) or item.tmdb is not False:
         tmdb.set_infoLabels(itemlist, True)
     
-    btnnext = soup.find("div", class_="pagPlaydede").find_all('a')
+    pagination = soup.find("div", class_="pagPlaydede")
+    btnnext = pagination.find_all('a') if pagination else None
     
     if shown_half == 0:
         itemlist.append(item.clone(title="Siguiente >", half=1))
