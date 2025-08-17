@@ -188,7 +188,7 @@ def episodios(item):
         epi_num = epi
         infoLabels['season'], infoLabels['episode'] = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, item.contentSeason, int(epi_num or 1))
         
-        title = '1x%s - Episodio %s' % (epi_num, epi_num)
+        title = '{0}x{1} - Episodio {1}'.format(infoLabels['season'], infoLabels['episode'])
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
