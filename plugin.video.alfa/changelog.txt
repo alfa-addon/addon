@@ -1,28 +1,14 @@
 
         [B]Estos son los cambios para esta versión:[/B]
         
-        • +18
+        • AnimeFLV
         • AnimeJL
-        • BlogHorror
-        • CineCalidad
-        • Divxtotal
+        • DeTodoPeliculas
         • Dontorrent
-        • Doramasflix
-        • Elite Torrent
-        • Eztv
-        • GranTorrent
         • HDFull
-        • Hacktorrent
         • HenaoJara
         • LaMovie
-        • Latanime
         • MejorTorrent
-        • Mitorrent
-        • MoviesDVDR
-        • Pelispanda
-        • Pelitorrent
-        • SubTorrents
-        • TioDonghua
-        • VerAnime
-        • WolfMax4K
+        • Playdede
+        • Tio Anime
         

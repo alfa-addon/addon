@@ -701,7 +701,21 @@ def get_icon():
 
 
 def get_fanart():
-    return translatePath(__settings__.getAddonInfo('fanart'))
+    """
+    Devuelve la ruta del fanart del tema activo si existe, 
+    sino devuelve el fanart por defecto del addon.
+    """
+    fanart_path = os.path.join(
+        get_data_path(),
+        "themes",
+        get_setting('icon_set', default="default"),
+        "fanart.jpg"
+    )
+
+    if not os.path.exists(fanart_path):
+        fanart_path = translatePath(__settings__.getAddonInfo('fanart'))
+
+    return fanart_path
 
 
 def get_cookie_data():

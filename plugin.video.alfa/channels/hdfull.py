@@ -33,11 +33,11 @@ debug = config.get_setting('debug_report', default=False)
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hdfull.sbs/", "https://hdfull.today/", "https://hdfull.help/", "https://hd-full.biz/", 
+             "host_alt": ["https://hdfull.sbs/", "https://hdfull.today/", "https://hdfull.love/", "https://hd-full.biz/", 
                           "https://hdfull.cfd/", "https://hdfull.org/"], 
              "host_alt_main": 2, 
              "host_verification": '%slogin', 
-             "host_black_list": ["https://hdfull.one/", "https://hdfull.blog/", 
+             "host_black_list": ["https://hdfull.help/", "https://hdfull.one/", "https://hdfull.blog/", 
 
                                  "https://hd-full.me/", 
                                  "https://hd-full.fit/", "https://hd-full.info/", "https://hd-full.life/", 
@@ -62,7 +62,8 @@ canonical = {
              'cf_cookies_names': {'cf_clearance': False if cf_assistant is True else True},
              'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
              'CF_stat': True if cf_assistant is True else False, 
-             'CF': False, 'CF_test': True, 'alfa_s': True, 'renumbertools': False
+             'CF': False, 'CF_test': True, 'alfa_s': True, 'renumbertools': False,
+             'data_js': ''
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_main = canonical['host_alt'][canonical.get('host_alt_main', 0)]
@@ -921,7 +922,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     except Exception:
         pass
 
-    provs = alfaresolver.jhexdecode(data_js)
+    provs = jsontools.load(base64.b64decode(canonical.get('data_js', '')).decode('utf-8') or {}) or alfaresolver.jhexdecode(data_js)
     matches_int = jsontools.load(alfaresolver.obfs(AlfaChannel.response.data, js_data))
 
     ## Carga estados: items usuario en titulo (visto, pendiente, etc).  Reset si viene de Videoteca

@@ -503,7 +503,7 @@ def check_proxy(url, **opt):
         url = proxy_data["url"]
         proxy_data["stat"] = proxy_data.get("stat", "").replace(",P", ", P")
 
-        if not "proxy_addr_forced" in proxy_data:
+        if "proxy_addr_forced" not in proxy_data:
             if proxy_data.get("dict", {}).get("https", ""):
                 proxy_data["dict"]["http"] = str("http://" + proxy_data["dict"]["https"])
                 proxy_data["dict"]["https"] = proxy_data["dict"]["http"]
@@ -804,7 +804,6 @@ def blocking_error(url, req, proxy_data, **opt):
         if code:
             data = re.sub(r"\n|\r|\t|\s{2,}", "", data)
             proxy = proxy_stat(opt.get("url_save", ""), proxy_data, **opt)
-            print_DEBUG(url, proxy_data, label="BLOCKING", **opt)
             if proxy and "ProxyWeb" in proxy:
                 url += " / %s" % opt.get("url_save", "")
             if "croxyproxy" in proxy_data.get("web_name", "") and code == "400":
@@ -1467,10 +1466,6 @@ def downloadpage(url, **opt):
                 ssl_context.verify_mode = ssl.CERT_NONE
             CS_stat = False
 
-        # Activa DEBUG extendido cuando se extrae un Informe de error (log)
-        print_DEBUG(url, opt, label="OPT", **opt)
-        print_DEBUG(url, proxy_data, label="PROXY_DATA", req=session, **opt)
-
         # Conectar la versión de SSL TLS con la sesión
         if (
             url.startswith("https:")
@@ -1842,7 +1837,6 @@ def downloadpage(url, **opt):
                 else:
                     from . import proxytools_py3 as proxytools
                 domain = obtain_domain(opt["url_save"], sub=True)
-                print_DEBUG(url, proxy_data, label="TIMEOUT", req=req, **opt)
                 opt["post"] = opt["post_save"]
                 opt["proxy_web"] = False
                 opt["proxy_retries"] = 1 if not TEST_ON_AIR else 0
@@ -2404,10 +2398,6 @@ def fill_fields_pre(url, proxy_data, file_name_, **opt):
             info_dict.append(("Peticion", "GET" + proxy_data.get("stat", "")))
         info_dict.append(("Descargar Pagina", not opt.get("only_headers", False)))
         info_dict.append(("BeautifulSoup", opt.get("soup", False)))
-        if opt.get("files", {}) and not isinstance(opt.get("files"), (tuple, dict)):
-            info_dict.append(("Objeto fichero", opt.get("files", {})))
-        elif file_name_:
-            info_dict.append(("Fichero para Upload", file_name_))
         if opt.get("params", {}):
             info_dict.append(("Params", opt.get("params", {})))
         if opt.get("set_tls_OK", False):
@@ -2530,31 +2520,6 @@ def build_response(HTTPResponse=False):
     response["time_elapsed"] = 0
 
     return type("HTTPResponse", (), response) if HTTPResponse else response
-
-
-def print_DEBUG(url, obj, label="", req={}, **opt):
-    url_stat = ""
-    if DEBUG and not CACHING_DOMAINS:
-        for exc in DEBUG_EXC:
-            if exc in url:
-                break
-            if "proxy" in label.lower():
-                url_stat = "Proxy_SESSION: %s; SSL_version: %s; " % (req, ssl_version)
-            if "blocking" in label.lower():
-                url_stat = "Blocking_WEBS: %s; " % alfa_domain_web_list
-            if "opt" in label.lower():
-                # if opt_logger.get('post'): opt_logger['post'] = '******'
-                # if opt_logger.get('post_save'): opt_logger['post_save'] = '******'
-                url_stat = "Opt_URL: %s; " % url
-            if "timeout" in label.lower():
-                url_stat = "Error_CODE: %s; PROXY: %s; " % (
-                    req.status_code,
-                    channel_proxy_list(opt["url_save"]),
-                )
-
-        else:
-            opt["alfa_s"] = opt["hide_infobox"] = False
-            logger.debug("%s%s: %s" % (url_stat, label, obj))
 
 
 def update_alfa_domain_web_list(url, code, proxy_data, **opt):

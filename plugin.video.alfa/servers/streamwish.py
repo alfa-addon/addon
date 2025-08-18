@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------
-# Conector streamwish By Alfa development Group
+# Conector streamwish By Alfa Development Group
 # --------------------------------------------------------
 
 import sys
@@ -25,6 +25,11 @@ def test_video_exists(page_url):
     global data
     logger.info("(page_url='%s')" % page_url)
     
+    if sys.version_info >= (3,):
+        from lib import alfaresolver_py3 as revolver
+    else:
+        from lib import alfaresolver as revolver
+    
     if "|Referer" in page_url or "|referer" in page_url:
         page_url, referer = page_url.split("|")
         referer = referer.replace('Referer=', '').replace('referer=', '')
@@ -32,7 +37,7 @@ def test_video_exists(page_url):
     
     # page_url = httptools.downloadpage(page_url, follow_redirects=False).headers["location"]
     
-    response = httptools.downloadpage(page_url, **kwargs)
+    response = httptools.downloadpage(revolver.wishmeluck(page_url), **kwargs)
     data = response.data
     
     if response.code == 404 or "no longer available" in data or "Not Found" in data: 

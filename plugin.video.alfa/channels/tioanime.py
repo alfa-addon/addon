@@ -7,6 +7,7 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+import re
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from core import httptools
@@ -16,6 +17,7 @@ from core.item import Item
 from platformcode import config, logger
 from modules import filtertools
 from modules import autoplay
+from modules import renumbertools
 from core import tmdb
 
 
@@ -49,10 +51,10 @@ def mainlist(item):
                          action="list_all", thumbnail=get_thumb('on air', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Ultimos", url=host+'directorio', action="list_all",
-                        thumbnail=get_thumb('last', auto=True)))
+                         thumbnail=get_thumb('last', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Peliculas", url=host + 'directorio?type%5B%5D=1',
-                         action="list_all", thumbnail=get_thumb('movies', auto=True)))
+                         c_type="movie", action="list_all", thumbnail=get_thumb('movies', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="OVAs", url=host + 'directorio?type%5B%5D=2',
                          action="list_all", thumbnail=""))
@@ -65,6 +67,8 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Buscar", url=host + 'directorio?q=', action="search",
                          thumbnail=get_thumb('search', auto=True)))
+    
+    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -113,20 +117,38 @@ def list_all(item):
 
     soup = create_soup(item.url)
     matches = soup.find_all("article", class_="anime")
+    
+    if not item.c_type:
+        item.c_type = "tvshow"
 
     for elem in matches:
         url = host + elem.a["href"]
         title = elem.h3.text
         thumb = host + elem.figure.img["src"]
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='episodios',
-                             thumbnail=thumb, contentSerieName=title))
+        
+        new_item = Item(channel=item.channel, title=title, url=url, 
+                        action='episodios', thumbnail=thumb, infoLabels={'year': '-'})
+        
+        title, item.c_type = get_type_from_title(title, item.c_type)
+        
+        if item.c_type == "tvshow":
+            title, season = get_season_from_title(title)
+            new_item.contentSerieName = title
+            new_item.contentSeason = season
+            new_item.context = renumbertools.context(item)
+            new_item.contentType = 'tvshow'
+        else:
+            new_item.contentType = "movie"
+            new_item.contentTitle = title
+        
+        itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
     try:
         url_next_page = host + soup.find("a", rel="next")["href"]
         if url_next_page and len(itemlist) > 8:
-                itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
+            itemlist.append(item.clone(title="Siguiente >>", url=url_next_page))
     except:
         pass
 
@@ -164,14 +186,17 @@ def episodios(item):
     for epi in epi_list[::-1]:
         url = "%sver/%s-%s" % (host, info[1], epi)
         epi_num = epi
-        infoLabels['season'] = '1'
-        infoLabels['episode'] = epi_num
-        title = '1x%s - Episodio %s' % (epi_num, epi_num)
+        infoLabels['season'], infoLabels['episode'] = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, item.contentSeason, int(epi_num or 1))
+        
+        title = '{0}x{1} - Episodio {1}'.format(infoLabels['season'], infoLabels['episode'])
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
-    itemlist = itemlist
+    next_episode_air_date = get_next_episode_air_date(info)
+    if next_episode_air_date:
+        for item in itemlist:
+            item.infoLabels['next_episode_air_date'] = next_episode_air_date
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
@@ -238,3 +263,50 @@ def newest(categoria):
         item.url = host
         itemlist = new_episodes(item)
     return itemlist
+
+
+def get_next_episode_air_date(info):
+    """
+    Extracts the next episode air date from the anime info.
+    :param info: The anime info dictionary.
+    :return: The next episode air date or None if not available.
+    """
+
+    if len(info) > 3:
+        date = info[3].split('-')
+        return '{}/{}/{}'.format(date[2], date[1], date[0]) if len(date) == 3 else info[3]
+    
+    return None
+
+
+def get_season_from_title(title):
+    """
+    Extracts the season number from the title.
+    :param title: The title of the anime.
+    :return: The title and the season number or 1 if not found.
+    """
+    season = scrapertools.find_single_match(title, '(?i)\s*(\d+)\s*(?:st|nd|rd|th)\s+season')
+    if not season:
+        season = scrapertools.find_single_match(title, '(?i)(?:season|temporada)\s*(\d+)')
+        if season:
+            title = re.sub('(?i)\s*(?:season|temporada)\s*\d+', '', title)
+    else:
+        title = re.sub('(?i)\s*\d+\s*(?:st|nd|rd|th)\s+season', '', title)
+    
+    return title.strip(), int(season) if season else 1
+
+
+def get_type_from_title(title, c_type):
+    """
+    Tries to deduce if it is a movie depending on the title.
+    :param title: The title of the anime.
+    :return: c_type string - movie or tvshow, and
+             title string - the title cleaned.
+    """
+    patern = r'(?i)\s*(?:the|)\s*movie\s*(?:\d+|)'
+    res = re.search(patern, title, flags=re.DOTALL)
+    if res:
+        c_type = 'movie'
+        title = title.replace(res.group(0), '').strip()
+    
+    return title.strip(), c_type
