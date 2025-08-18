@@ -269,6 +269,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     titleSeason = item.contentSeason
     if matches_int and titleSeason == 1:
         titleSeason = get_title_season(item.url, soup)
+    
+    nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
+    nextChapterDate = ''
 
     for elem in matches_int:
         elem_json = {}
@@ -283,10 +286,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['season'] = titleSeason
             elem_json['episode'] = episode
 
-            nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
             if re.search(nextChapterDateRegex, elem_json['title']):
                 nextChapterDate = scrapertools.find_single_match(elem_json['title'], nextChapterDateRegex)
-                elem_json['next_episode_air_date'] = nextChapterDate
 
             try:
                 elem_json['thumbnail'] = elem.find(["noscript", "span"]).find("img").get("src", "")
@@ -302,6 +303,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             continue
 
         matches.append(elem_json.copy())
+        
+    if nextChapterDate:
+        for item in matches:
+            item['next_episode_air_date'] = nextChapterDate
 
     return matches
 

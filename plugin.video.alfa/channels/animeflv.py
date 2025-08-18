@@ -319,6 +319,7 @@ def episodios(item):
     episodes = eval(scrapertools.find_single_match(data, "var episodes = (.*?);"))
     
     infoLabels = item.infoLabels
+    next_episode_air_date = get_next_episode_air_date(info)
 
     for episode in episodes:
         #url = '{}ver/{}/{}-{}'.format(host, episode[1], info[2], episode[0])
@@ -343,6 +344,10 @@ def episodios(item):
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     itemlist = sorted(itemlist, key=lambda it: it.title)
+    
+    if next_episode_air_date:
+        for item in itemlist:
+            item.infoLabels['next_episode_air_date'] = next_episode_air_date
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and not item.action == 'add_serie_to_library' and not item.extra:
         itemlist.append(Item(channel=item.channel, title=config.get_localized_string(60352), url=item.url,
@@ -396,3 +401,18 @@ def findvideos(item):
     autoplay.start(itemlist, item)
 
     return itemlist
+
+def get_next_episode_air_date(info):
+    """
+    Extracts the next episode air date from the anime info.
+    :param info: The anime info dictionary.
+    :return: The next episode air date or None if not available.
+    """
+
+    if len(info) > 3:
+        date = info[3].split('-')
+        return '{}/{}/{}'.format(date[2], date[1], date[0]) if len(date) == 3 else info[3]
+    else:
+        logger.error("Error extracting next episode air date. {}".format(info))
+    
+    return None

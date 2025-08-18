@@ -259,9 +259,12 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
     soup = AHkwargs.get('soup', {})
 
-    # Asi lee los datos correctos de TMDB
-    titleSeason = get_title_season(soup.find('script', string=re.compile('var\s*anime_info\s*=\s*\[')).string)
+    pattern = r'var\s*anime_info\s*=\s*(\[[^\]]+\]);'
+    info = soup.find('script', string=re.compile(pattern)).string
+    titleSeason = get_title_season(info)
+    next_episode_air_date = get_next_episode_air_date(info, pattern)
     
+    # Asi lee los datos correctos de TMDB
     # Si se detecta incorrectamente el titulo en TMDB no sale ningun capitulo, mejor no forzar esto.
     # if titleSeason != item.contentSeason:
         # return matches
@@ -288,7 +291,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['thumbnail'] = thumbnail
             elem_json['season'] = titleSeason
             elem_json['episode'] = episode
-        
+            if next_episode_air_date:
+                elem_json['next_episode_air_date'] = next_episode_air_date
         except Exception:
             logger.error(matches_int[x])
             logger.error(traceback.format_exc())
@@ -427,3 +431,24 @@ def get_title_season(url):
         season = int(scrapertools.find_single_match(url, seasonPattern))
 
     return season
+
+
+def get_next_episode_air_date(info, pattern):
+    logger.info()
+    try:
+        data = re.search(pattern, info)
+        if data:
+            l_data = eval(data.group(1))
+            if type(l_data) is list and len(l_data) > 3:
+                # La fecha del próximo episodio está en el cuarto elemento de la lista
+                # l_data[3] es una cadena de fecha en formato 'yyyy-mm-dd'
+                # Convertimos a formato 'dd/mm/yyyy'
+                date = l_data[3].split('-')
+                return '{}/{}/{}'.format(date[2], date[1], date[0]) \
+                       if len(date) == 3 else l_data[3]
+
+        logger.error("No se pudo encontrar la fecha del próximo episodio en anime_info.")
+    except Exception as e:
+        logger.error("Error al obtener la fecha del próximo episodio: %s" % str(e))
+    
+    return None

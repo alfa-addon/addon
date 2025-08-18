@@ -31,7 +31,7 @@ def read_api(type = 'movie', filter = "", _id = 0, season = 1, page = 1, terms =
     logger.info()
 
     try:
-        url_filter = urlparse.urlencode({'filter':f"{{{filter}}}"})
+        url_filter = urlparse.urlencode({'filter':"{{{0}}}".format(filter)})
     except Exception as e:
         url_filter = urlparse.urlencode({'filter':"{}"})
         logger.error(str(e))
@@ -50,7 +50,7 @@ def read_api(type = 'movie', filter = "", _id = 0, season = 1, page = 1, terms =
     elif type == 'search':
         url = "{0}wp-api/v1/search?{1}&postType=any&q={2}&postsPerPage=26".format(host, url_filter, url_terms)
     else:
-        type = f"{type}s"
+        type = "{0}s".format(type)
         url = "{0}wp-api/v1/listing/{1}?{2}&page={3}&orderBy=latest&order=desc&postType={1}&postsPerPage=12".format(host, type, url_filter, page)
 
     referer = host

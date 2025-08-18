@@ -344,7 +344,12 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
         and infoLabels["mediatype"] != "movie"
     ):
         s_part = t_part % "Estudio"
-        s_studio = "%s%s" % (s_part, infoLabels.get("studio", "-"))
+        s_studio = infoLabels.get("studio", "-")
+        l_studio = s_studio.split(",")
+        if len(l_studio) > 4:
+            l_studio = l_studio[:4] + ["..."]  # Limitamos a 4 estudios
+            s_studio = ','.join(l_studio)
+        s_studio = "%s%s" % (s_part, s_studio)
         if infoLabels["mediatype"] != "movie":
             sea_epi = ""
             if infoLabels["mediatype"] in ["season", "episode"] and infoLabels.get(
