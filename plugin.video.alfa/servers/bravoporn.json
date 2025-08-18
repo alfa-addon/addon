@@ -160,10 +160,6 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)uppornx.com/(?:video|videos)/[0-9]+/[A-z0-9-]+/)",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://(?:www.|)(?:hd-easyporn|porndrake|pornblade|porntommy|pornboxer|sexclips66|sexmovies69|porn-monkey).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film)/[A-z0-9-]+/)",
         "url": "\\1"
       },
