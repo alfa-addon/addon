@@ -2546,7 +2546,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 idioma_busqueda = idioma_busqueda_VO
 
         if itemlist:
-            itemlist = sorted(itemlist, key=lambda it: int(it.contentSeason))
+            itemlist = sorted(itemlist, key=lambda it: int(it.contentSeasonRenum or it.contentSeason))
             if (item.infoLabels.get('last_season_only', False) and item.add_videolibrary) \
                                 or (modo_ultima_temp and item.library_playcounts):
                 itemlist = [itemlist[-1]]
@@ -2554,16 +2554,25 @@ class DictionaryAllChannel(AlfaChannelHelper):
             find_add_video_to_videolibrary = finds_controls.get('add_video_to_videolibrary', True)
             videolab_status = finds_controls.get('videolab_status', True) and modo_grafico \
                                                                           and not self.TEST_ON_AIR and not self.VIDEOLIBRARY_UPDATE
+
+            if contentSeasonRenumList:
+                for new_item in itemlist:
+                    new_item.contentSeasonRenum_alt = new_item.contentSeason
+                    new_item.contentSeason = new_item.contentSeasonRenum
+
             config.set_setting('tmdb_cache_read', False)
             tmdb.set_infoLabels_itemlist(itemlist, modo_grafico, idioma_busqueda=idioma_busqueda)
             config.set_setting('tmdb_cache_read', True)
-            
+
             for new_item in itemlist:
                 if new_item.broadcast:
                     new_item.contentPlot = '%s\n\n%s' % (new_item.broadcast, new_item.contentPlot)
                     del new_item.broadcast
                 if new_item.infoLabels['next_episode_air_date_custom']:
                     new_item.infoLabels['next_episode_air_date'] = new_item.infoLabels['next_episode_air_date_custom']
+                if new_item.contentSeasonRenum_alt:
+                    new_item.contentSeason = new_item.contentSeasonRenum_alt
+                    del new_item.contentSeasonRenum_alt
 
             # Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
             if generictools and not (item.add_videolibrary or item.library_playcounts or item.downloadFilename):
@@ -2760,7 +2769,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         AHkwargs['matches'] = matches
         if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
-        
+
         for elem in matches:
             infolabels = item.infoLabels.copy()
 
@@ -2785,7 +2794,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if self.canonical.get('renumbertools', False) is not None and item.contentSeasonRenumList:
                 infolabels["season"], infolabels["episode"] = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, 
                                                                             int(infolabels["season"]), int(infolabels["episode"]),
-                                                                            item=item)
+                                                                            contentSeasonRenumList=item.contentSeasonRenumList)
                 if item.contentSeasonRenum and item.contentSeasonRenum != infolabels["season"]: continue
 
             if isinstance(do_episode_clean, list):
