@@ -106,6 +106,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
     srv_ids = {"Doodstream": "Doodstream",
                "dooood": "Doodstream",
+               "vide0": "Doodstream",
                "ds2play": "Doodstream",
                "Streamtape": "Streamtape ",
                "streamSB": "Streamsb",
