@@ -6,6 +6,8 @@ from core.item import Item
 from core import servertools
 from core import urlparse
 from bs4 import BeautifulSoup
+from core import jsontools
+
 
 canonical = {
              'channel': 'xhamster', 
@@ -110,27 +112,62 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('div', class_='thumb-list__item')
-    for elem in matches:
-        if not elem.get('data-video-id',''):
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    json = scrapertools.find_single_match(data, '(?:trendingVideoListProps|videoListProps|searchResult)":(.*?\}\]),"')+"}"
+    json = jsontools.load(json)
+    for elem in json['videoThumbProps']:
+        title = elem['title']
+        url = elem['pageURL']
+        segundos = elem['duration']
+        if not elem.get('thumbURL', ''): 
             continue
-        if "Not available in " in elem.text: #Geolocalizacion
-            continue
-        if "Solo para el dueño" in elem.a.text: #Solo para el dueño
-            continue
-        url = elem.a['href']
-        title = elem.img['alt']
-        # title = elem.find('a', class_='video-thumb-info__name role-pop').text.strip() 
-        thumbnail = elem.img['src']
-        time = elem.find('div', class_='thumb-image-container__duration')
-        if not time: # purga moment
-            continue
-        time = time.text.strip()
+        else:
+            thumbnail = elem['thumbURL']
         quality = ""
-        if elem.find('i', class_='thumb-image-container__icon--hd'):
-            quality = "HD"
-        if elem.find('i', class_='thumb-image-container__icon--uhd'):
+        if elem.get('isUHD', ''):
             quality = "4K"
+        
+        horas=int(segundos/3600)
+        segundos-=horas*3600
+        minutos=int(segundos/60)
+        segundos-=minutos*60
+        if segundos < 10:
+            segundos = "0%s" %segundos
+        if minutos < 10:
+            minutos = "0%s" %minutos
+        if horas == 00:
+            time = "%s:%s" % (minutos,segundos)
+        else:
+            time = "%s:%s:%s" % (horas,minutos,segundos)
+
+    # matches = soup.find_all('div', class_='thumb-list__item')
+    # matches = soup.find_all('div', data-video-id=re.compile(r"^\d+"))
+    # matches = soup.find(attrs={"data-video-id": re.compile(r"^\d+")})
+    # for elem in matches:
+        # if not elem.get('data-video-id',''):
+            # continue
+        # if "Not available in " in elem.text: #Geolocalizacion
+            # continue
+        # if "Solo para el dueño" in elem.a.text: #Solo para el dueño
+            # continue
+        # url = elem.a['href']
+        # if elem.a.get("title", ""):
+            # title =  elem.a['title']
+        # else:
+            # title = elem.img['alt']
+        # title = elem.find('a', class_='video-thumb-info__name role-pop').text.strip() 
+        # thumbnail = ""
+        # if elem.img and elem.img.get("src", ""):
+            # thumbnail = elem.img['src']
+        # time = elem.find('div', class_='thumb-image-container__duration')
+        # if not time: # purga moment
+            # continue
+        # time = time.text.strip()
+        # quality = ""
+        # if elem.find('i', class_='thumb-image-container__icon--hd'):
+            # quality = "HD"
+        # if elem.find('i', class_='thumb-image-container__icon--uhd'):
+            # quality = "4K"
         if quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
         else:
@@ -196,11 +233,11 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = 'class="video-tag" href=".*?/pornstars/[^"]+".*?>([^<]+)</a>'
-    pornstars = re.compile(patron,re.DOTALL).findall(data)
+    
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    pornstars = soup.find('nav', id='video-tags-list-container').find_all('a', href=re.compile("/pornstars/[A-z0-9-]+(?:/|)"))
     for x , value in enumerate(pornstars):
-        pornstars[x] = value.strip()
+        pornstars[x] = value.text.strip()
     pornstar = ' & '.join(pornstars)
     pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
     lista = item.title.split()
