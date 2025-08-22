@@ -96,7 +96,8 @@ def videos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).data
-    patron  = '<div class="wrap-box-escena">.*?'
+    logger.debug(data)
+    patron  = '<div class="wrap-box-escena.*?'
     # patron += '<div class="box-escena">.*?'
     patron += '<a\s+href="([^"]+)".*?'
     patron += '"([^"]+.jpg)".*?'
@@ -104,6 +105,7 @@ def videos(item):
     # patron += '<h4><a href="[^"]+">([^<]+)<.*?'
     patron += '<div class="duracion">([^"]+) min<'
     matches = re.compile(patron,re.DOTALL).findall(data)
+    logger.debug(matches)
     for url, thumbnail, title,duration in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (duration, title)
         url = urlparse.urljoin(item.url, url)

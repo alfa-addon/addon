@@ -179,7 +179,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://bunkr.fi/e/[A-z0-9]+(?:/|))",
+        "pattern": "(https://bunkr.\\w{2,4}/e/[A-z0-9]+(?:/|))",
         "url": "\\1"
       },
       {

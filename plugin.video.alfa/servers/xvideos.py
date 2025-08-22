@@ -9,6 +9,8 @@ from core import scrapertools
 from platformcode import logger
 
 
+# NO FUNCIONA https://www.xvideos.com/video.oiopcmhfafc/odisea_oriental_elige_tu_camino_hacia_el_deleite_-_video_interactivo_con_ia
+
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data, m3u
