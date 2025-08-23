@@ -236,9 +236,10 @@ def list_all(item):
                 contentSerieName = item.contentSerieName
             else:
                 contentSerieName = article.find('div', class_='text-2xs').string.strip()
+            episode = article.select_one('span.text-lead.font-bold')
             infoLabels = {}
             infoLabels['season'] = 1
-            infoLabels['episode'] = int(article.find('span', class_='font-bold').string or 1)
+            infoLabels['episode'] = int(episode.string) if episode else 1
             title = "{}x{} {}".format(infoLabels['season'], infoLabels['episode'], contentSerieName)
             contentType = 'episode'
             action = "findvideos"
