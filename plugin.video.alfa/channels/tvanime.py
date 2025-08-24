@@ -22,8 +22,8 @@ import bs4
 canonical = {
     "channel": "tvanime",
     "host": config.get_setting("current_host", "tvanime", default=""),
-    "host_alt": ["https://monoschinos2.com/"],
-    "host_black_list": [],
+    "host_alt": ["https://ww3.monoschinos3.com/"],
+    "host_black_list": ["https://monoschinos2.com"],
     "pattern": '<meta\s*property="og:url"\s*content="([^"]+)"',
     "set_tls": True,
     "set_tls_min": True,
@@ -33,7 +33,7 @@ canonical = {
     "alfa_s": True,
 }
 
-host = "https://monoschinos2.com"
+host = canonical['host'] or canonical['host_alt'][0]
 
 IDIOMAS = {"VOSE": "VOSE", "Latino": "LAT", "Castellano": "CAST"}
 
@@ -67,7 +67,7 @@ def mainlist(item):
             title="Ultimas",
             action="list_all",
             thumbnail=get_thumb("last", auto=True),
-            url=host + "/emision",
+            url=host + "/animes?estado[]=2&order=created",
         )
     )
 
@@ -87,7 +87,7 @@ def mainlist(item):
             title="Anime",
             action="list_all",
             thumbnail=get_thumb("anime", auto=True),
-            url=host + "/animes?categoria=anime",
+            url=host + "/animes?tipo[]=1&order=created",
         )
     )
 
@@ -96,8 +96,8 @@ def mainlist(item):
             channel=item.channel,
             title="Donghua",
             action="list_all",
-            thumbnail="",
-            url=host + "/animes?categoria=donghua",
+            thumbnail=get_thumb("anime", auto=True),
+            url=host + "/animes?tipo[]=9&order=created",
         )
     )
 
@@ -107,7 +107,7 @@ def mainlist(item):
             title="Películas",
             action="list_all",
             thumbnail=get_thumb("movies", auto=True),
-            url=host + "/animes?categoria=pelicula",
+            url=host + "/animes?tipo[]=3&order=created",
         )
     )
 
@@ -116,8 +116,8 @@ def mainlist(item):
             channel=item.channel,
             title="OVAs",
             action="list_all",
-            thumbnail="",
-            url=host + "/animes?categoria=ova",
+            thumbnail=get_thumb("anime", auto=True),
+            url=host + "/animes?tipo[]=2&order=created",
         )
     )
 
@@ -126,8 +126,8 @@ def mainlist(item):
             channel=item.channel,
             title="ONAs",
             action="list_all",
-            thumbnail="",
-            url=host + "/animes?categoria=ona",
+            thumbnail=get_thumb("anime", auto=True),
+            url=host + "/animes?tipo[]=6&order=created",
         )
     )
 
@@ -136,19 +136,28 @@ def mainlist(item):
             channel=item.channel,
             title="Especiales",
             action="list_all",
-            thumbnail="",
-            url=host + "/animes?categoria=especial",
+            thumbnail=get_thumb("anime", auto=True),
+            url=host + "/animes?tipo[]=4&order=created",
         )
     )
 
     itemlist.append(
         Item(
             channel=item.channel,
-            title="A - Z",
-            action="section",
-            thumbnail=get_thumb("alphabet", auto=True),
-            url=host + "/animes",
-            section="letra",
+            title="Latino",
+            action="list_all",
+            thumbnail=get_thumb("latino", auto=True),
+            url=host + "/animes?q=latino",
+        )
+    )
+    
+    itemlist.append(
+        Item(
+            channel=item.channel,
+            title="Castellano",
+            action="list_all",
+            thumbnail=get_thumb("cast", auto=True),
+            url=host + "/animes?genre[]=42&order=created",
         )
     )
 
@@ -159,7 +168,7 @@ def mainlist(item):
             action="section",
             thumbnail=get_thumb("year", auto=True),
             url=host + "/animes",
-            section="fecha",
+            section="yearDropdown",
         )
     )
 
@@ -170,7 +179,7 @@ def mainlist(item):
             action="section",
             thumbnail=get_thumb("genres", auto=True),
             url=host + "/animes",
-            section="genero",
+            section="genreDropdown",
         )
     )
 
@@ -179,7 +188,7 @@ def mainlist(item):
             channel=item.channel,
             title="Buscar",
             action="search",
-            url=host + "/buscar?q=",
+            url=host,
             thumbnail=get_thumb("search", auto=True),
             fanart="https://s30.postimg.cc/pei7txpa9/buscar.png",
         )
@@ -226,27 +235,21 @@ def new_episodes(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    container = soup.find(string="últimos capítulos").parent.parent.ul
+    container = soup.find("h2", string="Últimos capítulos🔥").parent.ul
 
     for elem in container.find_all("article"):
         url = elem.a["href"]
-        lang, c_title = clear_title(elem.h2.text)
+        lang, c_title = clear_title(elem.h3.text)
         c_title = re.sub("(?i)1080p|720p|movie", "", c_title).strip()
-        c_title = re.sub("(?i)\s*\d+\s*(?:st|nd|rd|th)\s+season", "", c_title)
-        try:
-            season = int(
-                scrapertools.find_single_match(
-                    c_title, "(?i)\s*(\d+)\s*(?:st|nd|rd|th)\s+season"
-                )
-            )
-        except ValueError:
-            season = 1
-        try:
-            epi = int(elem.find("span").text)
-        except (ValueError, AttributeError):
+        c_title, season = get_season_from_title(c_title)
+        epi = elem.select_one("a > div > span")
+        if epi:
+            epi = int(epi.getText(strip=True))
+        else:
             epi = 1
+        
         title = "%sx%s - %s" % (season, epi, c_title)
-        thumb = elem.find("img")["src"]
+        thumb = host.rstrip("/") + elem.find("img")["src"]
 
         itemlist.append(
             Item(
@@ -286,50 +289,63 @@ def list_all(item):
             "",
             title,
         ).strip()
-        thumb = elem.find("img")["src"]
+        thumb = host.rstrip("/") + elem.find("img")["src"]
 
-        context = renumbertools.context(item)
-
-        if "pelicula" in item.url:
+        
+        info = elem.a.span
+        c_type = "movie" if info and \
+                 ' · ' in info.string and \
+                 info.string.split(' · ')[0] == 'Pelicula' else \
+                 "tvshow"
+        
+        if c_type == "movie":
+            # https://ww3.monoschinos3.com/anime/4593/black-clover-mahou-tei-no-ken
+            # https://ww3.monoschinos3.com/ver/4593/black-clover-mahou-tei-no-ken/episodio-1
+            if "/anime/" in url:
+                url = url.replace('/anime/', '/ver/') + '/episodio-1'
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title=title,
                     url=url,
-                    action="folders",
-                    context=context,
+                    action="findvideos",
                     language=lang,
                     thumbnail=thumb,
                     contentTitle=title,
-                    contentType="movie",
+                    contentType=c_type,
                     infoLabels={"year": "-"},
                 )
             )
         else:
+            c_title, season = get_season_from_title(title)
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title=title,
                     url=url,
                     action="folders",
-                    context=context,
+                    context=renumbertools.context(item),
                     language=lang,
                     thumbnail=thumb,
-                    contentSerieName=title,
-                    contentType="tvshow",
+                    contentSerieName=c_title,
+                    contentSeaon=season,
+                    contentType=c_type,
+                    infoLabels={"season": season},
                 )
             )
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
     try:
-        url_next_page = soup.find("a", rel="next")["href"]
-        if url_next_page and len(itemlist) > 8:
+        link_next_page = soup.find("a", rel="next")
+        if link_next_page and \
+           link_next_page.get("href", "") and \
+           len(itemlist) > 8:
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="Siguiente >>",
-                    url=url_next_page,
+                    url=link_next_page["href"],
                     action="list_all",
                 )
             )
@@ -343,28 +359,20 @@ def section(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    if item.section == "genero":
-        matches1 = soup.find("div", id="genero").find_all("input")
-        matches2 = soup.find("div", id="genero").find_all("label")
-        matches = zip(matches1, matches2)
 
-        for elem in matches:
-            url = host + "/animes?genero=%s" % elem[0]["value"]
-            title = elem[1].text
+    genrediv = soup.find("div", attrs={"aria-labelledby": item.section})
+    matches1 = genrediv.find_all("input")
+    matches2 = genrediv.find_all("label")
+    matches = zip(matches1, matches2)
 
-            itemlist.append(
-                Item(channel=item.channel, title=title, url=url, action="list_all")
-            )
-    else:
-        matches = soup.find("select", {"name": item.section}).find_all("option")
+    for elem in matches:
+        url = host + "/animes?%s=%s&order=created" % (elem[0]["name"], elem[0]["value"])
+        title = elem[1].text
 
-        for elem in matches[1:]:
-            url = host + "/animes?%s=%s" % (item.section, elem["value"])
-            title = elem["value"].capitalize()
-
-            itemlist.append(
-                Item(channel=item.channel, title=title, url=url, action="list_all")
-            )
+        itemlist.append(
+            Item(channel=item.channel, title=title, url=url, action="list_all")
+        )
+    
 
     return itemlist
 
@@ -390,10 +398,10 @@ def findvideos(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find_all("li", id="play-video")
+    matches = soup.find_all("button", class_="play-video")
 
     for elem in matches:
-        url = base64.b64decode(elem.button["data-player"]).decode("utf-8")
+        url = base64.b64decode(elem["data-video"]).decode("utf-8")
 
         itemlist.append(
             Item(
@@ -424,17 +432,15 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
 
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
-
     try:
         if texto != "":
+            texto = texto.replace(" ", "+")
+            item.url = item.url + "/animes?q=" + texto
             return list_all(item)
         else:
             return []
     except Exception:
         import sys
-
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -479,11 +485,8 @@ def folders(item):
     if not epsxfolder:
         return episodesxfolder(item)
 
-    data = httptools.downloadpage(item.url).data
-    token = scrapertools.find_single_match(data, '<meta name="csrf-token" content="([\w]+)">')
-    content_id = scrapertools.find_single_match(data, "/ajax/ajax_pagination/(\d+)")
-    post = {"_token": token, "p": 1}
-    matches = httptools.downloadpage(host + "/ajax/caplist/%s" % content_id, post=post).json["caps"]
+    soup = create_soup(item.url)
+    matches = soup.find_all("a", class_="ko")
 
     l_matches = len(matches)
 
@@ -548,22 +551,18 @@ def episodesxfolder(item):
     if not item.fin:
         item.fin = None
 
-    data = httptools.downloadpage(item.url).data
-    token = scrapertools.find_single_match(data, '<meta name="csrf-token" content="([\w]+)">')
-    content_id = scrapertools.find_single_match(data, "/ajax/ajax_pagination/(\d+)")
-    post = {"_token": token, "p": 1}
-    matches = httptools.downloadpage(host + "/ajax/caplist/%s" % content_id, post=post).json["caps"]
+    soup = create_soup(item.url)
+    matches = soup.find_all("a", class_="ko")
 
     infoLabels = item.infoLabels
 
     for cap in matches[item.init : item.fin]:
-        scrapedurl = cap["url"]
-        thumb = cap["thumb"]
-        episode = cap["episodio"]
-        lang = item.language
+        scrapedurl = cap["href"]
+        thumb = host.rstrip("/") + cap.div.img["src"]
+        episode = cap.h2.getText(strip=True).split('\n')[1].strip()
         try:
             season, episode = renumbertools.numbered_for_trakt(
-                item.channel, item.contentSerieName, 1, int(episode)
+                item.channel, item.contentSerieName, item.contentSeason, int(episode)
             )
             season = int(season)
             episode = int(episode)
@@ -583,7 +582,7 @@ def episodesxfolder(item):
                 thumbnail=thumb,
                 url=url,
                 action="findvideos",
-                language=lang,
+                language=item.language,
                 infoLabels=infoLabels,
                 contentType="episode",
             )
@@ -611,3 +610,24 @@ def episodesxfolder(item):
             )
 
     return itemlist
+
+
+def get_season_from_title(title):
+    """
+    Extracts the season number from the title.
+    :param title: The title of the anime.
+    :return: The title and the season number or 1 if not found.
+    """
+    
+    patern1 = r'(?i)\s*(\d+)\s*(?:st|nd|rd|th)\s+season'
+    patern2 = r'(?i)(?:season|temporada|part|parte)\s*(\d+)'
+    
+    season = scrapertools.find_single_match(title, patern1)
+    if not season:
+        season = scrapertools.find_single_match(title, patern2)
+        if season:
+            title = re.sub(patern2, '', title)
+    else:
+        title = re.sub(patern1, '', title)
+    
+    return title.strip(), int(season) if season else 1

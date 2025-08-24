@@ -1,7 +1,7 @@
 {
   "id": "tvanime",
   "name": "TVAnime",
-  "active": false,
+  "active": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://i.postimg.cc/DmxTT1LK/logo4.jpg",
@@ -11,6 +11,7 @@
     "anime",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",
