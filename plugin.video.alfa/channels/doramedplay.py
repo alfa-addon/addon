@@ -24,7 +24,7 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'doramedplay', 
              'host': config.get_setting("current_host", 'doramedplay', default=''), 
-             'host_alt': ["https://doramedplay.net/", "https://doramedplay.com/"], 
+             'host_alt': ["https://doramedplay.net/", "https://doramed.tv/"], 
              'host_black_list': [], 
              'pattern': '<link\s*rel="stylesheet"\s*id="[^"]*"\s*href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
@@ -135,13 +135,7 @@ def list_all(item):
 def seasons(item):
     logger.info()
 
-    findS = finds.copy()
-    findS['seasons']  = dict([('find', [{'tag': ['div'], 'id': ['seasons-serie']}]),
-                             ('find_all', [{'tag': ['div'], 'class': ['se-q']}])])
-    findS['episodes'] = dict([('find', [{'tag': ['div'], 'id': ['seasons-serie']}]),
-                                                 ('find_all', [{'tag': ['li']}])])
-
-    return AlfaChannel.seasons(item, finds=findS, **kwargs)
+    return AlfaChannel.seasons(item, **kwargs)
 
 
 def episodios(item):

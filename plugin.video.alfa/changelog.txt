@@ -1,14 +1,8 @@
 
         [B]Estos son los cambios para esta versión:[/B]
         
-        • AnimeFLV
-        • AnimeJL
-        • DeTodoPeliculas
-        • Dontorrent
-        • HDFull
-        • HenaoJara
-        • LaMovie
-        • MejorTorrent
-        • Playdede
-        • Tio Anime
+        • +18
+        • DoramedPlay
+        • Estrenos Anime
+        • TVAnime
         
