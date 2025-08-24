@@ -1,7 +1,7 @@
 {
   "id": "filmoves",
   "name": "Filmoves",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://i.postimg.cc/13PtLvzG/Filmoves.png",

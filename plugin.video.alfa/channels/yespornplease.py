@@ -34,7 +34,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
     itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host ))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "xnxx-tags/" ))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "xxx-categories/" ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
@@ -61,6 +61,8 @@ def categorias(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='box')
     for elem in matches:
+        logger.debug(elem)
+        if elem.find('iframe'): continue
         url = elem.a['href']
         title = elem.figcaption.text.strip()
         thumbnail = elem.img['src']

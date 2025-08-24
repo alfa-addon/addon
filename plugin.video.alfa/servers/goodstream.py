@@ -10,11 +10,15 @@ from core import httptools
 from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
+from core import urlparse
+
 if not PY3: from lib import alfaresolver
 else: from lib import alfaresolver_py3 as alfaresolver
 
 
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'ignore_response_code': True, 'cf_assistant': False}
+
+host = "https://goodstream.one" 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
@@ -31,6 +35,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     url = scrapertools.find_single_match(data, 'file:\s*"([^"]+)"')
     # url += "|Referer=%s" % page_url
+    headers = httptools.default_headers.copy() 
+    url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
     
     video_urls.append(["[GoodStream] m3u", url])
     return video_urls

@@ -96,7 +96,7 @@ def videos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).data
-    patron  = '<div class="wrap-box-escena">.*?'
+    patron  = '<div class="wrap-box-escena.*?'
     # patron += '<div class="box-escena">.*?'
     patron += '<a\s+href="([^"]+)".*?'
     patron += '"([^"]+.jpg)".*?'

@@ -4,14 +4,18 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:luluvdo|lulustream|lulu|lulu0|luluvdoo).(?:com|\\w{2,4})/(?:e/|d/|)([A-z0-9]+)",
-        "url": "https://lulustream.com/e/\\1"
+        "pattern": "(https://asiananal.\\w{2,4}/[A-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "lulustream",
-  "name": "lulustream",
+  "id": {
+    "value": [
+      "asiananal"
+    ]
+  },
+  "name": "asiananal",
   "settings": [
     {
       "default": false,
@@ -38,6 +42,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/2yjH4qgK/lulustream.png",
-  "force_inputstream": "ffmpegdirect"
+  "thumbnail": ""
 }

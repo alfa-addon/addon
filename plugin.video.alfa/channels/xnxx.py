@@ -129,7 +129,7 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = ' id="video_(\d+)".*?'
+    patron = ' data-id="(\d+)".*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
     patron += 'title="([^"]+)".*?'
@@ -140,6 +140,8 @@ def lista(item):
         url = urlparse.urljoin(item.url,url)
         if "/search-video/" in url:
             url = "%s/embedframe/%s" %(host, id)
+        if "acute\;" in scrapedtitle:
+            scrapedtitle = scrapedtitle.replace("acute;", "").replace("&","")
         title = '[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s' % (scrapedtime,quality,scrapedtitle)
         thumbnail = scrapedthumbnail.replace("THUMBNUM" , "10")
         plot = ""
@@ -167,6 +169,9 @@ def listados(item):
         hp = Video["hp"]
         hm = Video["hm"]
         quality = ""
+        if "acute;" in title:
+            title = title.replace("acute;", "").replace("&","")
+
         if hp == 1:
             quality = "1080p"
         if hp == 0 and hm == 1:

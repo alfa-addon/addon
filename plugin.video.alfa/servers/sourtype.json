@@ -179,6 +179,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://bunkr.\\w{2,4}/e/[A-z0-9]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)bustybus.com/video\\?play=[0-9]+)",
         "url": "\\1"
       }

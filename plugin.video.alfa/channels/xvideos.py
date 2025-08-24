@@ -146,7 +146,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('div', id=re.compile(r"^video_\d+"))
+    matches = soup.find_all('div', attrs={'data-id': re.compile(r"^\d+")})
     for elem in matches:
         url = elem.a['href'].replace("THUMBNUM", "")
         id = elem['data-id']

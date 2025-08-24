@@ -80,7 +80,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=host + "search/?sort_by=duration&from_videos=1"))
     # itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "sites/?sort_by=avg_videos_popularity&from=1", extra="Canal"))
     itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "models/?sort_by=total_videos&from=1", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/1/", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/?sort_by=title&from=1", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
