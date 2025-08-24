@@ -4797,6 +4797,7 @@ class DooPlay(AlfaChannelHelper):
         matches = []
         finds = self.finds
         self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        pattern_url = r'(?i)src="([^"]+)"'
 
         for elem in matches_int:
             elem_json = {}
@@ -4814,6 +4815,8 @@ class DooPlay(AlfaChannelHelper):
             if response.json:
                 if self.DEBUG: logger.debug('MATCHES_JSON %s' % (str(response.json)))
                 elem_json['url'] = response.json.get("embed_url", "")
+                if scrapertools.find_single_match(elem_json['url'], pattern_url):
+                    elem_json['url'] = scrapertools.find_single_match(elem_json['url'], pattern_url)
                 if 'base64,' in elem_json['url']: 
                     #elem_json['url'] = base64.b64decode(scrapertools.find_single_match(elem_json['url'], 'base64,([^"]+)"')).decode('utf-8')
                     continue
@@ -4821,7 +4824,8 @@ class DooPlay(AlfaChannelHelper):
                 elem_json['title'] = '%s'
 
                 if not elem_json['url'] or "youtube" in elem_json['url'] or "waaw" in elem_json['url'] \
-                                        or "jetload" in elem_json['url']:
+                                        or "jetload" in elem_json['url'] or "rumble" in elem_json['url'] \
+                                        or not elem_json['url'].startswith('http'):
                     continue
 
                 if finds['controls']['get_lang']: 
