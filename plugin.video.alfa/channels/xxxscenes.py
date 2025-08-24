@@ -16,6 +16,9 @@ list_quality = ['default']
 list_servers = []
 
 # https://xxxscenes.net  https://www.netflixporno.net   https://mangoporn.net   https://speedporn.net
+
+####       OUT agosto 2025
+
 canonical = {
              'channel': 'xxxscenes', 
              'host': config.get_setting("current_host", 'xxxscenes', default=''), 
@@ -132,6 +135,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
+    logger.debug(soup)
     matches = soup.find_all('div', class_='video-block')
     for elem in matches:
         url = elem.a['href']
