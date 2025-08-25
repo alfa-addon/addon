@@ -21,8 +21,9 @@ def test_video_exists(page_url):
     
     global data, host, server
     data = httptools.downloadpage(page_url, **kwargs).data
-    host = "https://%s" % scrapertools.get_domain_from_url(page_url)
-    server = host.split(".")[-2]
+    domain = scrapertools.get_domain_from_url(page_url)
+    host = "https://%s" % domain
+    server = domain.split(".")[-2]
     # server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
     # server = scrapertools.find_single_match(page_url, '//(?:www.|es.|)([A-z0-9-]+).(?:com|net|nl|xxx|cz)')
     if "<h2>WE ARE SORRY</h2>" in data or "<title>404 Not Found</title>" in data:

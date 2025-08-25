@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
+import re
+
 from core import httptools
 from core import scrapertools
 from core import urlparse
@@ -8,10 +11,14 @@ from bs4 import BeautifulSoup
 kwargs = {'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 6, 'ignore_response_code': True, 
           'timeout': 45, 'cf_assistant': False, 'CF_stat': True, 'CF': True}
 
+
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    global server, data
-    server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
+    global host, server, data
+    domain = scrapertools.get_domain_from_url(page_url)
+    host = "https://%s" % domain
+    server = domain.split(".")[-2]
+    # server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
     if "send" in server:
         data = httptools.downloadpage(page_url, **kwargs).data
     response = httptools.downloadpage(page_url, **kwargs)
@@ -44,7 +51,7 @@ def get_video_url(page_url, video_password):
             url += "|Referer=%s" % page_url
             video_urls.append(["[%s] mp4" %(server), url])
         return video_urls
-    logger.debug(matches)
+    # logger.debug(matches)
     for elem in matches:
         url = elem['src']
         if server not in url:
@@ -52,7 +59,22 @@ def get_video_url(page_url, video_password):
         if not url.startswith("http"):
             url = "http:%s" % url
         url = urlparse.unquote(url)
-        url += "|Referer=%s" % page_url
-        video_urls.append(["[%s] mp4" %(server), url])
+        
+        if "multi=" in url:
+            m3u8_source = url
+            datos = httptools.downloadpage(m3u8_source, **kwargs).data
+            if sys.version_info[0] >= 3 and isinstance(datos, bytes):
+                datos = "".join(chr(x) for x in bytes(datos))
+            if datos:
+                matches_m3u8 = re.compile('#EXT-X-STREAM-INF.*?RESOLUTION=\d+x(\d*)[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+                ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
+                for quality, url in matches_m3u8:
+                    url =urlparse.urljoin(m3u8_source,url)
+                    url += "|Referer=%s" % host
+                    # url += "|Referer=%s/&Origin=%s" % (ref, ref)
+                    video_urls.append(['[%s] %s' % (server,quality), url])
+        else:
+            url += "|Referer=%s" % host
+            video_urls.append(["[%s] mp4" %(server), url])
     return video_urls
 
