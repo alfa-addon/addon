@@ -192,7 +192,7 @@ def get_dynamic_host(item):
         dialog.update(100)
         platformtools.dialog_ok(
             "Actualizar dominio",
-            "No se pudo acceder a {}".format(url)
+            "No se pudo acceder a {}. {}".format(url, data.code if data else "")
         )
         return
     else:
@@ -241,7 +241,7 @@ def get_dynamic_host(item):
                 dialog.update(100)
                 platformtools.dialog_ok(
                     "Actualizar dominio", 
-                    "Ya se está usando el dominio más reciente, {}".format(host)
+                    "Ya se está usando el dominio más reciente, {}".format(current_host)
                 )
                 return
         except Exception as e:
@@ -259,9 +259,15 @@ def get_dynamic_host(item):
 # Update the host based on redirections
 def update_host_from_redirect():
     global host, __channel__
-    data = get_source(host, follow_redirects = False, full_response = True)
-    if not data or data.code != 200:
+    data = get_source(host + "login", follow_redirects = False, full_response = True, ignore_response_code = True)
+    
+    if not data or data.code not in [200, 301, 302, 303, 307]: # ready or redirect
+        if data:
+            logger.error("{} host not ready ({} {})".format(host, data.code, data.data))
+        else:
+            logger.error("{} host not ready (no response)".format(host))
         return False
+    
     elif data.headers.get('location'):
         logger.info("redirecting")
         redirect_host = httptools.obtain_domain(data.headers['location'], scheme=True)
@@ -291,25 +297,14 @@ def get_source(
         opt['add_host'] = add_host
         opt['timeout'] = timeout
         opt['canonical_check'] = canonical_check
+        opt['headers'] = httptools.default_headers.copy()
+        opt['headers']['Referer'] = httptools.obtain_domain(url, scheme=True) + '/'
+        opt['headers']['Origin'] = httptools.obtain_domain(url, scheme=True) 
         data = httptools.downloadpage(url, **opt)
     except Exception as e:
         if isinstance(e, bytes):
             e = e.decode("utf8", errors="replace")
         logger.error('downloadpage exception: {}'.format(str(e)))
-        return None
-    
-    # Verificamos que tenemos una sesión válida, sino, no tiene caso devolver nada
-    if host in url and "Iniciar sesión" in data.data:
-        # Si no tenemos sesión válida, mejor cerramos definitivamente la sesión
-        global account
-        if account:
-            logout({})
-        platformtools.dialog_notification(
-            "No se ha inciado sesión",
-            "Inicia sesión en el canal {} para poder usarlo".format(__channel__),
-            time=2000,
-        )
-        remove_cookies()
         return None
 
     if full_response:
@@ -335,10 +330,10 @@ def login():
             "No se pudo acceder a {}".format(host)
         )
         return False
-
+    
     if httptools.get_cookie(host, "utoken"):
         return True
-
+    
     usuario = config.get_setting("user", channel=__channel__)
     clave = config.get_setting("pass", channel=__channel__)
     credentials = (
@@ -382,6 +377,20 @@ def login():
             time=2000,
         )
         return False
+    
+    # Verificamos que tenemos una sesión válida, sino, no tiene caso devolver nada
+    if "Iniciar sesión" in response.data:
+        # Si no tenemos sesión válida, mejor cerramos definitivamente la sesión
+        global account
+        if account:
+            logout({})
+        platformtools.dialog_notification(
+            "No se ha inciado sesión",
+            "Inicia sesión en el canal {} para poder usarlo".format(__channel__),
+            time=2000,
+        )
+        remove_cookies()
+        return None
 
     if httptools.get_cookie(host, "utoken"):
         logger.info("¡Token de sesión conseguido!")
@@ -440,7 +449,7 @@ def mainlist(item):
     if not account:
         platformtools.dialog_notification(
             "Registro necesario",
-            "Regístrate en playdede.com e ingresa tus credenciales para utilizar este canal",
+            "Regístrate en {} e ingresa tus credenciales para utilizar este canal".format(host),
             sound=False,
         )
         itemlist.append(
