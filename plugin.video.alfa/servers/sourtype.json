@@ -111,7 +111,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:zzztube|bestpornstars|24porn|bigfuck).(?:tv|xxx|com)/(?:video/|)[0-9]+)",
+        "pattern": "(https://(?:zzztube|bestpornstars|24porn).(?:tv|xxx|com)/(?:video/|)[0-9]+)",
         "url": "\\1"
       },
       {

@@ -51,7 +51,6 @@ def get_video_url(page_url, video_password):
             url += "|Referer=%s" % page_url
             video_urls.append(["[%s] mp4" %(server), url])
         return video_urls
-    # logger.debug(matches)
     for elem in matches:
         url = elem['src']
         if server not in url:
@@ -70,11 +69,12 @@ def get_video_url(page_url, video_password):
                 ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
-                    url += "|Referer=%s" % host
-                    # url += "|Referer=%s/&Origin=%s" % (ref, ref)
+                    # url += "|Referer=%s" % host
+                    url += "|Referer=%s/&Origin=%s" % (host, host)
                     video_urls.append(['[%s] %s' % (server,quality), url])
         else:
-            url += "|Referer=%s" % host
+            # url += "|Referer=%s" % host
+            url += "|Referer=%s/&Origin=%s" % (host, host)
             video_urls.append(["[%s] mp4" %(server), url])
     return video_urls
 

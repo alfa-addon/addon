@@ -79,7 +79,6 @@ def get_video_url(page_url, video_password):
                 url = "http:%s" % url
             
             # url += "|Referer=%s/" % host
-            host = scrapertools.get_domain_from_url(page_url)
             headers = httptools.default_headers.copy() 
             url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
             video_urls.append(["[%s] %s" % (server, quality), url])

@@ -45,19 +45,19 @@ url_replace = []
 
 
 finds = {'find': {'find_all': [{'tag': ['article'], 'class': re.compile(r"^post-\d+")}]},
-         'categories': {'find_all': [{'tag': ['a'], 'class': ['ttw-term-link']}]},
+         'categories': {'find_all': [{'tag': ['div'], 'class': ['standard-category-item','taxonomy-term']}]},
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {},
          'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
-         'last_page': dict([('find', [{'tag': ['nav'], 'class': ['pagination']}]), 
+         'last_page': dict([('find', [{'tag': ['nav', 'div'], 'class': ['pagination', 'taxonomy-pagination']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-1], 
                                            '@ARG': 'href', '@TEXT': 'page(?:/|=)(\d+)'}])]), 
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['div'], 'class': ['iframe-buttons','video_box']}]),
                              ('find_all', [{'tag': ['button'], '@ARG': 'data-src'}])]),
-         'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
+         'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', ''],['Placeholder:\s*','']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
          'profile_labels': {
@@ -77,7 +77,8 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="submenu", url=host + "actress/", extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "studios/page/1/", extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="submenu", url=host + "actresses/", extra="PornStar"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "category/", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
@@ -92,11 +93,13 @@ def submenu(item):
     
     soup = AlfaChannel.create_soup(item.url, **kwargs)
     
-    matches = soup.find_all('li', attrs={"data-letter": re.compile(r"^\w")})
+    matches = soup.find_all('li', class_='has-terms')
     for elem in matches:
+        # actresses/page/2/?letter=A
         title = elem.a.get_text(strip=True)
+        url = "%sactresses/page/1/?letter=%s" %(host, title)
         id = elem.a['href'].replace("#", "")
-        itemlist.append(Item(channel=item.channel, title=title, id=id , action="section", url=item.url, extra="Abc"))
+        itemlist.append(Item(channel=item.channel, title=title, id=id , action="section", url=url)) #, extra="Abc"
     
     return itemlist
 

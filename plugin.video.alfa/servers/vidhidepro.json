@@ -12,8 +12,12 @@
         "url": "\\1"
       },
       {
-        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|smoothpre|movearnpre|seraphinapl).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
+        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|movearnpre|seraphinapl).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(?i)https://(?:smoothpre|mivalyo).com/(?:f|v|embed|d|file)/([A-z0-9]+)",
+        "url": "https://smoothpre.com/embed/\\1"
       },
       {
         "pattern": "(https://stblion.xyz/(?:f|v|embed|d|file)/[A-z0-9]+(:?\\|Referer=[A-z0-9./:]+))",

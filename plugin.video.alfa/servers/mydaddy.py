@@ -12,10 +12,13 @@ def test_video_exists(page_url):
     global data
     response = httptools.downloadpage(page_url)
     data = response.data
+    logger.debug(data)
     if response.code == 404 or "Not Found" in data \
        or "File was deleted" in data \
        or "is no longer available" in data:
         return False, "[mydaddy] El fichero no existe o ha sido borrado"
+    if "This domain has been blocked" in data:
+        return False, "[mydaddy] This domain has been blocked"
     return True, ""
 
 
