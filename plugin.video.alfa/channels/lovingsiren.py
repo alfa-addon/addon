@@ -86,7 +86,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="MilkyPeru" , action="list_all", url=host + "category/milkyperu/page/1"))
     itemlist.append(Item(channel=item.channel, title="Onlyfans" , action="list_all", url=host + "category/onlyfans/page/1"))
     itemlist.append(Item(channel=item.channel, title="18-years-old" , action="list_all", url=host + "category/18-years-old/page/1"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "actors/page/1/", extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "a/page/1/", extra="PornStar"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     autoplay.show_option(item.channel, itemlist)

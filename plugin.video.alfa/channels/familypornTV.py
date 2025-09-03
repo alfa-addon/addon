@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -21,7 +22,8 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
-######       No muestr thumbs hay que cambiar x216 x217 
+######      No muestr fotos hay que cambiar x216 x217 
+######      Fallan fotos  https://familyporn.tv/contents/videos_screenshots/60000/60916/289x217/1.jpg
 
 canonical = {
              'channel': 'familypornTV', 
@@ -128,6 +130,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
                                      or elem.img.get('data-src', '') \
                                      or elem.img.get('src', '')
+            logger.debug(elem_json['thumbnail'])
             elem_json['thumbnail'] = elem_json['thumbnail'].replace('x216', 'x217')## ESTA LINEA OBLIGA list_all_matches
             # elem_json['thumbnail'] += "|Referer=%s" % host
             # elem_json['thumbnail'] += "|verifypeer=false"

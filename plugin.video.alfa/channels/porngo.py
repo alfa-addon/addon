@@ -21,6 +21,7 @@ list_quality_tvshow = []
 list_servers = []
 forced_proxy_opt = 'ProxySSL'
 
+
 #  https://www.porngo.com/  https://www.pornpapa.com/   https://www.titshub.com/  https://www.bigwank.tv/
 #  https://www.porntry.com/
 #  https://www.veryfreeporn.com/   https://www.porncake.com/  https://www.fapguru.com/
@@ -86,7 +87,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="fapguru" , action="submenu", url= "https://www.fapguru.com/", chanel="fapguru", thumbnail = "https://i.postimg.cc/dQgpbQ2t/fapguru.png"))
     itemlist.append(Item(channel=item.channel, title="titshub" , action="submenu", url= "https://www.titshub.com/", chanel="titshub", thumbnail = "https://i.postimg.cc/T3GqZBh4/titshub.png"))
     itemlist.append(Item(channel=item.channel, title="veryfreeporn" , action="submenu", url= "https://www.veryfreeporn.com/", chanel="veryfreeporn", thumbnail = "https://i.postimg.cc/QNmTFVM0/veryfreeporn.png"))
-    itemlist.append(Item(channel=item.channel, title="xxxfiles" , action="submenu", url= "https://www.xxxfiles.tv/", chanel="xxxfiles", thumbnail = "https://i.postimg.cc/ry0jBvN8/xxxfiles.png"))
+    itemlist.append(Item(channel=item.channel, title="[COLOR red]xxxfiles[/COLOR]" , action="submenu", url= "https://www.xxxfiles.tv/", chanel="xxxfiles", thumbnail = "https://i.postimg.cc/ry0jBvN8/xxxfiles.png"))
     return itemlist
 
 

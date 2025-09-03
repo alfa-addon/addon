@@ -21,6 +21,7 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
+
 # https://latestpornvideo.com/   https://hdporn92.com/   https://familyroleplayporn.com/
 # https://mynewpornvideo.com/   https://newpornvideo.xyz/
 # https://trashxxx.com/     https://whereismyporn.com/
@@ -83,7 +84,7 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="list_all", url=host + "archives/category/porn-movie"))
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="list_all", url=host + "category/porn-movie"))
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/?filter=latest"))
     itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=host + "page/1/?filter=most-viewed"))
     itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "page/1/?filter=popular"))

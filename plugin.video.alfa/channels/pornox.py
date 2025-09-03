@@ -22,6 +22,8 @@ list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
 
+######      Fallan fotos   https://pornox.hu/contents/videos_screenshots/101000/101150/336x189/7.jpg incluso con verifypeer
+
 canonical = {
              'channel': 'pornox', 
              'host': config.get_setting("current_host", 'pornox', default=''), 
