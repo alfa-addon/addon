@@ -10,7 +10,8 @@ def test_video_exists(page_url):
     # server = scrapertools.find_single_match(page_url, '//(?:www.|es.|)([A-z0-9-]+).(?:to|ws|net|com)')
     response = httptools.downloadpage(page_url)
     data = response.data
-    if response.code == 404 or "has been flagged" in data:
+    if response.code == 404 or "has been flagged" in data or "Disabled Video" in response.data \
+        or "Removed Video" in response.data or "Inactive Video" in response.data:
         return False, "[%s] El archivo no existe o ha sido borrado" %server
     return True, ""
 

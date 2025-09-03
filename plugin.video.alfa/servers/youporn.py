@@ -11,7 +11,9 @@ def test_video_exists(page_url):
     global data
     response = httptools.downloadpage(page_url)
     data = response.data
-    if response.code == 404 or "Not Found" in response.data:
+    if response.code == 404 or "Not Found" in response.data \
+        or "Disabled Video" in response.data or "Removed Video" in response.data \
+        or "Inactive Video" in response.data:
         return False, "[Youporn] El archivo no existe o ha sido borrado"
     return True, ""
 
