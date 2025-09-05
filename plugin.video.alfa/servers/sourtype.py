@@ -51,8 +51,10 @@ def get_video_url(page_url, video_password):
             url += "|Referer=%s" % page_url
             video_urls.append(["[%s] mp4" %(server), url])
         return video_urls
+    
     for elem in matches:
         url = elem['src']
+        if "preview" in url: continue ## Monzr (multicanal Ezporn)
         if server not in url:
             url = urlparse.urljoin(page_url,url) #justporn
         if not url.startswith("http"):
@@ -61,6 +63,24 @@ def get_video_url(page_url, video_password):
         
         if "multi=" in url:
             m3u8_source = url
+            response = httptools.downloadpage(m3u8_source, **kwargs)
+            logger.debug(response.code)
+            # if response.code == 403:
+                # post_url = "https://u3.bigfuck.tv/ah/sign"
+                # post = {"urls":{"hls": m3u8_source}}
+                # kwargs['headers'] = {
+                                     # 'Referer': '%s/' %host,
+                                     # 'Origin': host,
+                                     # 'Content-Type': 'application/json;charset=UTF-8',
+                                     # 'Accept-Encoding': 'gzip, deflate, br, zstd',
+                                     # 'Sec-Fetch-Dest': 'empty',
+                                     # 'Sec-Fetch-Mode': 'cors',
+                                     # 'Sec-Fetch-Site': 'same-site',
+                                     # 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0'
+                                    # }
+                # logger.debug(kwargs['headers'])
+                # datos = httptools.downloadpage(post_url, post=post, **kwargs).json
+                # logger.debug(datos)
             datos = httptools.downloadpage(m3u8_source, **kwargs).data
             if sys.version_info[0] >= 3 and isinstance(datos, bytes):
                 datos = "".join(chr(x) for x in bytes(datos))
