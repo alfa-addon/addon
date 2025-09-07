@@ -8,7 +8,9 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
+    
     global data
+    
     response = httptools.downloadpage(page_url)
     data = response.data
     if response.code == 404 or "Not Found" in response.data \
@@ -24,7 +26,9 @@ def get_video_url(page_url, video_password):
     # url = urlparse.unquote(url)
     # id = scrapertools.find_single_match(page_url, '/(\d+)/')
     # url = "https://www.youporn.com/api/video/media_definitions/%s" % id
-    data = httptools.downloadpage(page_url).data
+    
+    global data
+    
     url = scrapertools.find_single_match(data, '"videoUrl":"([^"]+)"').replace("\/", "/").replace("%5C/", "/")
     data= httptools.downloadpage(url).json
     for elem in data:

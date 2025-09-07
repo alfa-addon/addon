@@ -20,7 +20,7 @@ host = "https://zhornyhub.com/"
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     
-    global data, txt
+    global data
     
     data = httptools.downloadpage(page_url, **kwargs).data
     

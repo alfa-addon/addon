@@ -34,7 +34,9 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    data = httptools.downloadpage(page_url, **kwargs).data
+    
+    global data, host, server
+    
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
     if soup.find("div", id="player-wrap"):  ####  anyporn
         data = soup.find("div", class_="player-wrap")
@@ -82,6 +84,6 @@ def get_video_url(page_url, video_password):
             headers = httptools.default_headers.copy() 
             url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
             video_urls.append(["[%s] %s" % (server, quality), url])
-
+    
     video_urls.sort(key=lambda item: int(re.sub("\D", "", item[0])))
     return video_urls

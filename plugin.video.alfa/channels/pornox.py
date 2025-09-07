@@ -23,7 +23,7 @@ forced_proxy_opt = 'ProxySSL'
 
 
 ######      Fallan fotos   https://pornox.hu/contents/videos_screenshots/101000/101150/336x189/7.jpg incluso con verifypeer
-
+                         # https://pornox.hu/contents/videos_screenshots/101000/101150/320x180/7.jpg
 canonical = {
              'channel': 'pornox', 
              'host': config.get_setting("current_host", 'pornox', default=''), 
@@ -100,7 +100,48 @@ def list_all(item):
     logger.info()
     
     
-    return AlfaChannel.list_all(item, **kwargs)
+    # return AlfaChannel.list_all(item, **kwargs)
+    return AlfaChannel.list_all(item, matches_post=list_all_matches, **kwargs)
+
+
+def list_all_matches(item, matches_int, **AHkwargs):
+    logger.info()
+    matches = []
+    
+    findS = AHkwargs.get('finds', finds)
+    
+    for elem in matches_int:
+        elem_json = {}
+        
+        try:
+            elem_json['url'] = elem.a.get('href', '')
+            elem_json['title'] = elem.a.get('title', '')
+            elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
+                                     or elem.img.get('data-src', '') \
+                                     or elem.img.get('src', '')
+            
+            elem_json['thumbnail'] = elem_json['thumbnail'].replace("336x189", "320x180")
+            
+            elem_json['stime'] = elem.find(class_='is-hd').get_text(strip=True) if elem.find(class_='is-hd') else ''
+            if elem.find(class_=['is-hd']):
+                elem_json['quality'] = 'HD'
+            elem_json['premium'] = elem.find('i', class_='premiumIcon') \
+                                     or elem.find('span', class_=['ico-private', 'premium-video-icon']) or ''
+            if elem.find('span', class_='views'):
+                elem_json['views'] = elem.find('span', class_='views').get_text(strip=True)
+            
+            
+            
+            
+        except:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
+        
+        if not elem_json['url']: continue
+        matches.append(elem_json.copy())
+    
+    return matches
 
 
 def findvideos(item):
@@ -138,7 +179,7 @@ def play(item):
         url = url.replace("embed", "videos").replace('lol', 'tv')
         name = item.url.split("/")[-2]
         url += "/%s/" %name
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
     return itemlist

@@ -128,7 +128,7 @@
         "url": "https://www.justporn.com/video/\\1/a"
       },
       {
-        "pattern": "(https://pornox.hu/(?:porno|video)/[0-9]+/[A-z0-9-.]+(?:/|))",
+        "pattern": "(https://pornox.hu(?:/\\w{2}|)/(?:porno|video)/[0-9]+/[A-z0-9-.]+(?:/|))",
         "url": "\\1"
       },
       {

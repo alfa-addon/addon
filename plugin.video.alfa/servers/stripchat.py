@@ -40,13 +40,8 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     
-    vd = page_url.split("|")
-    url = vd[0]
-    vid = vd[1]
-    logger.debug(page_url)
-    logger.debug(vid)
-
-    data = httptools.downloadpage(url, **kwargs).json
+    global url,vid,data
+    
     data = data["item"]
     
     # isBlocked = data['isBlocked']
