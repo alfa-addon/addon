@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+
+import base64
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -22,10 +24,12 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     patron = "DownloadButtonAd-startDownload gbtnSecondary.*?href='([^']+)'"
     matches = scrapertools.find_multiple_matches(data, patron)
     if len(matches) == 0:
-        patron = 'Download file.*?href="([^"]+)"'
+        patron = 'Download file.*?data-scrambled-url="([^"]+)"'
         matches = scrapertools.find_multiple_matches(data, patron)
     if len(matches) > 0:
-        video_urls.append([matches[0][-4:] + " [mediafire]", matches[0]])
+        url = base64.b64decode(matches[0]).decode('utf-8')
+        video_urls.append([url[-4:] + " [mediafire]", url])
+        # video_urls.append([matches[0][-4:] + " [mediafire]", matches[0]])
     for video_url in video_urls:
         logger.info("%s - %s" % (video_url[0], video_url[1]))
     return video_urls
