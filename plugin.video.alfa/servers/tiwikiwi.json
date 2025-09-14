@@ -38,6 +38,10 @@
       {
         "pattern": "(https://doodporn.xyz/(?:e|d)/[a-z0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://dropload.\\w{2,4}/embed-[a-z0-9]+.html)",
+        "url": "\\1"
       }
     ]
   },
