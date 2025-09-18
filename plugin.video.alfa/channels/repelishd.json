@@ -1,0 +1,41 @@
+{
+  "id": "repelishd",
+  "name": "repelishd",
+  "active": true,
+  "adult": false,
+  "language": ["lat", "cast", "vose"],
+  "thumbnail": "https://repelishd.cam/templates/RePelisHD/images/favicon.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "movie",
+    "tvshow",
+    "anime",
+    "vos"
+  ],
+  "force_unify": false,
+  "settings": [
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "LAT",
+        "CAST",
+        "VOSE"
+      ]
+    },
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}

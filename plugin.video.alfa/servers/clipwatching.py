@@ -25,15 +25,25 @@ def get_video_url(page_url, user="", password="", video_password=""):
     try:
         packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
         unpacked = jsunpack.unpack(packed)
+        
     except:
         unpacked = scrapertools.find_single_match(data,"window.hola_player.*")
-    logger.error(data)
     
-    m3u = scrapertools.find_single_match(unpacked, '<source src="([^"]+)"')
+    logger.error(unpacked)
+    
     host = httptools.obtain_domain(page_url, scheme=True)
     headers = httptools.default_headers.copy()
     headers = "|{0}&Referer={1}/&Origin={1}".format(urlparse.urlencode(headers), host)
     
-    video_urls.append(["[clipwatching] .m3u8", m3u+headers])
+    if scrapertools.find_single_match(unpacked, 'subtitle:"([^"]+)"'):
+        sub = scrapertools.find_single_match(unpacked, 'subtitle:"([^"]+)"')
+        # subtitle = scrapertools.find_single_match(sub, '(http.*?.vtt)')
+        subtitle = scrapertools.find_multiple_matches(sub, '(http.*?.vtt)')
+    
+    if scrapertools.find_single_match(unpacked, 'file:".*?(http[^"]+)"'): 
+        m3u = scrapertools.find_single_match(unpacked, 'file:".*?(http[^"]+)"')
+        m3u=m3u+headers
+        video_urls.append(["[clipwatching] .m3u8", m3u])
+        # video_urls.append(["[clipwatching] .m3u8", m3u, 0, subtitle])
     
     return video_urls

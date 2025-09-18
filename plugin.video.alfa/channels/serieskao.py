@@ -44,11 +44,11 @@ host = canonical['host'] or canonical['host_alt'][0]
 
 def mainlist(item):
     logger.info()
-
+    
     autoplay.init(item.channel, list_servers, list_quality)
-
+    
     itemlist = list()
-
+    
     itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=host + "peliculas",
                          thumbnail=get_thumb('movies', auto=True), type="peliculas"))
     itemlist.append(Item(channel=item.channel, title='Por Género', action='genres', url=host,
@@ -62,20 +62,20 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Año', action='genres', url=host,
                          thumbnail=get_thumb('tvshows', auto=True), type="series"))
     itemlist.append(Item(channel=item.channel, title='Anime', url=host + 'animes', action='list_all',
-                         thumbnail=get_thumb('channels_anime.png', auto=True), type="animes"))
+                         thumbnail=get_thumb('anime', auto=True), type="animes"))
     itemlist.append(Item(channel=item.channel, title='Por Género', action='genres', url=host,
-                         thumbnail=get_thumb('channels_anime.png', auto=True), type="animes"))
+                         thumbnail=get_thumb('anime', auto=True), type="animes"))
     itemlist.append(Item(channel=item.channel, title='Año', action='genres', url=host,
-                         thumbnail=get_thumb('channels_anime.png', auto=True), type="animes"))
+                         thumbnail=get_thumb('anime', auto=True), type="animes"))
     itemlist.append(Item(channel=item.channel, title='Dorama', url=host + 'generos/dorama', action='list_all',
-                         thumbnail=get_thumb('channels_anime.png', auto=True), type="animes"))
+                         thumbnail=get_thumb('anime', auto=True), type="animes"))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
                          thumbnail=get_thumb("search", auto=True)))
-
+    
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
-
+    
     autoplay.show_option(item.channel, itemlist)
-
+    
     return itemlist
 
 
@@ -115,11 +115,11 @@ def list_all(item):
     itemlist = list()
     year = ""
     soup = create_soup(item.url)
-    matches = soup.find_all("a", class_="Posters-link")
+    matches = soup.find_all("a", class_="poster-card")
     for elem in matches:
         url = elem['href']
-        title = elem['data-title']
-        title = elem.p.text
+        # title = elem['title']
+        title = elem.h3.text
         thumbnail = elem.img['src']
         year = scrapertools.find_single_match(title, ' \((\d+)\)')
         title = scrapertools.find_single_match(title, '(.*?) \(\d+\)')
@@ -149,7 +149,7 @@ def seasons(item):
     logger.info()
     itemlist = list()
     soup = create_soup(item.url)
-    matches = soup.find('ul', role='tablist').find_all('li')
+    matches = soup.find('ul', id='season-tabs').find_all('li')
     infoLabels = item.infoLabels
     for elem in matches:
         season = scrapertools.find_single_match(elem.text, '\d+')
@@ -181,11 +181,14 @@ def episodios(item):
 def episodesxseasons(item):
     logger.info()
     itemlist = list()
+    
+    infoLabels = item.infoLabels
     season = item.infoLabels["season"]
-    id = "pills-vertical-%s" %season
+    
+    id = "season-%s" %season
+    
     soup = create_soup(item.url)
     matches = soup.find('div', id=id).find_all('a')
-    infoLabels = item.infoLabels
     for elem in matches:
         url = elem['href']
         epi_num = scrapertools.find_single_match(url, "/capitulo/(\d+)")
@@ -203,7 +206,8 @@ def findvideos(item):
     logger.info()
     itemlist = list()
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, "video\[1\] = '([^']+)")
+    
+    url = scrapertools.find_single_match(data, "videoSources\s*=\s*\[\s*'([^']+)")
     
     if "embed69.org" in url:
         # entrepeliculasyseries ya tenía esto solucionado así que gran parte de esto lo he copiado de allí
@@ -225,12 +229,14 @@ def findvideos(item):
                         video_url = crylink(elem['link'], clave)
                         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=video_url,
                                                language=language, infoLabels=item.infoLabels))
+    
     else:
         soup = create_soup(url)
         matches = soup.find('div', class_='OptionsLangDisp').find_all('li')
         for elem in matches:
             url = elem['onclick']
             lang = elem['data-lang']
+            server = elem.span.text.strip()
             url = scrapertools.find_single_match(url, "go_to_player(?:Vast|)\('([^']+)")
             # url = "https://api.mycdn.moe/player/?id=%s" %url
             # soup = create_soup(url)
@@ -267,8 +273,8 @@ def findvideos(item):
             if "uptobox=" in video_url:
                 url = scrapertools.find_single_match(video_url, 'uptobox=([A-z0-9]+)')
                 video_url = "https://uptobox.com/%s" %url
-            if "1fichier=" in video_url:
-                url = scrapertools.find_single_match(video_url, '1fichier=\?([A-z0-9]+)')
+            if "1fichier=" in video_url or "1fichier" in server:
+                url = scrapertools.find_single_match(video_url, '=\?([A-z0-9]+)')
                 video_url = "https://1fichier.com/?%s" %url
             if "/embedsito.net/" in video_url:
                 data = httptools.downloadpage(video_url).data
@@ -278,7 +284,11 @@ def findvideos(item):
             if "plusvip" not in video_url:
                 itemlist.append(Item(channel=item.channel, title='%s', action='play', url=video_url,
                                            language=language, infoLabels=item.infoLabels))
+    
+    itemlist.sort(key=lambda x: x.language)
+    
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+    
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
     # Requerido para AutoPlay
