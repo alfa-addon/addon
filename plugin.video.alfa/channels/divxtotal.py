@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'divxtotal', 
              'host': config.get_setting("current_host", 'divxtotal', default=''), 
-             'host_alt': ["https://www1.divxtotal.lol"], 
-             'host_black_list': ["https://divxtotal.io/", "https://www5.divxtotal.mov/",
+             'host_alt': ["https://www2.divxtotal.lol/"], 
+             'host_black_list': ["https://www1.divxtotal.lol/", "https://divxtotal.io/", "https://www5.divxtotal.mov/",
                                  "https://www4.divxtotal.mov/", "https://www3.divxtotal.mov/", "https://www2.divxtotal.mov/", 
                                  "https://www2.divxtotal.zip/", "https://www1.divxtotal.zip/", "https://www.divxtotal.win/", 
                                  "https://www.divxtotal.wf/", "https://www.divxtotal.pl/", "https://www.divxtotal.cat/", 
@@ -227,7 +227,8 @@ def list_all(item):
         findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['col-lg-8 title']}]}
     
     elif item.c_type == "series":
-        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['col-lg-3 col-md-3 col-md-4 col-xs-6']}]}
+        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['col-lg-3 col-md-3 col-md-4 col-xs-6',
+                                                                 'col-lg-3 col-md-3 col-sm-4 col-xs-6 serie-card']}]}
                        
     return AlfaChannel.list_all(item, matches_post=list_all_matches, generictools=True, finds=findS, **kwargs)
 

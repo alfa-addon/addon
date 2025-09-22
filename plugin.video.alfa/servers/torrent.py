@@ -1606,7 +1606,8 @@ def set_assistant_remote_status():
         if monitor:
             while not monitor.abortRequested():
                 assistant_remote_status_paths = config.get_setting('assistant_remote_status', default='')
-                if assistant_remote_status_paths and not 'Ruta_a_Kodi_cliente_remoto' in assistant_remote_status_paths:
+                if assistant_remote_status_paths and not 'Ruta_a_Kodi_cliente_remoto' in assistant_remote_status_paths \
+                                                 and '|' in assistant_remote_status_paths:
 
                     info = assistant_remote_status_paths.split('|')
                     assistant_remote_status_file = info[0]
