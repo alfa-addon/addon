@@ -8,7 +8,7 @@
         "url": "https://doodstream.com/e/\\1"
       },
       {
-        "pattern": "http(?:s|)://(?:dooood|ds2play|d0o0d|do0od|d0000d|d000d|ds2video|do7go|dooodster|vidply|all3do|doply|vide0|d-s|vvide0).(?:watch|to|so|com|\\w{2,4})/(?:e|d)/([a-z0-9#]+)",
+        "pattern": "http(?:s|)://(?:dooood|ds2play|d0o0d|do0od|d0000d|d000d|ds2video|do7go|dooodster|vidply|all3do|doply|vide0|d-s|vvide0|dsvplay).(?:watch|to|so|com|\\w{2,4})/(?:e|d)/([a-z0-9#]+)",
         "url": "https://doodstream.com/e/\\1"
       }
     ]

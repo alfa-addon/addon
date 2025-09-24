@@ -37,8 +37,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'repelishd', 
              'host': config.get_setting("current_host", 'repelishd', default=''), 
-             'host_alt': ["https://cinehdplus.cam/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://cinehdplus.gratis/"], 
+             'host_black_list': ["https://cinehdplus.cam/"], 
              'pattern': ['href="?([^"|\s*]+)["|\s*]\s*title='], 
              # 'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              # 'cf_assistant': False, 'CF_stat': True, 
@@ -284,10 +284,10 @@ def findvideos(item):
             lang = elem['class'][1]
             lang = CUSTOM_FILTER.get(lang, 'unknown')
             if lang != item.extra:
-                logger.error("{} ({}) != {}".format(lang, IDIOMAS.get(lang, 'sub'), item.extra))
+                logger.error("{} ({}) != {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
                 continue
             else:
-                logger.error("{} ({}) == {}".format(lang, IDIOMAS.get(lang, 'sub'), item.extra))
+                logger.error("{} ({}) == {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
             matches = elem.find_all('li')
             for url in matches:
                 server = url.text.strip()
@@ -300,7 +300,7 @@ def findvideos(item):
                                         contentTitle=item.contentTitle,
                                         contentThumbnail=item.thumbnail,
                                         infoLabels=item.infoLabels,
-                                        language=IDIOMAS.get(lang, 'sub'),
+                                        language=IDIOMAS.get(lang, ''),
                                         title='%s', action="play",
                                         url=url
                                        ))

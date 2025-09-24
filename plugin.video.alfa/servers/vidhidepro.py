@@ -41,14 +41,16 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
+    
+    global data
+    
     try:
         enc_data = scrapertools.find_single_match(data, "text/javascript(?:'|\")>(eval.*?)</script>")
         dec_data = jsunpack.unpack(enc_data)
-        m3u8_source = scrapertools.find_single_match(dec_data, '\{(?:file|src|"hls2"):"([^"]+)"')
+        m3u8_source = scrapertools.find_single_match(dec_data, '"hls2":"([^"]+)"')
         
         if "master.m3u8" in m3u8_source:
             datos = httptools.downloadpage(m3u8_source).data
-            logger.debug(datos)
             if sys.version_info[0] >= 3 and isinstance(datos, bytes):
                 datos = "".join(chr(x) for x in bytes(datos))
             

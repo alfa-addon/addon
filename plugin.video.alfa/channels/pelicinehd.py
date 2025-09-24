@@ -39,7 +39,7 @@ SERVER = {
           "hlswish": "streamwish", "playerwish": "streamwish", "ghbrisk": "streamwish", "iplayerhls": "streamwish",
            "listeamed": "vidguard", "1fichier":"onefichier", "luluvdo": "lulustream", "lulu": "lulustream",
            "dhtpre": "vidhidepro", "peytonepre": "vidhidepro", "smoothpre": "vidhidepro", 
-           "movearnpre": "vidhidepro", "seraphinapl": "vidhidepro"
+           "movearnpre": "vidhidepro", "seraphinapl": "vidhidepro", "bingezove": "vidhidepro"
           }
 
 
@@ -176,7 +176,6 @@ def section(item):
     if item.title == "Generos":
         matches = soup.find_all("li", class_="menu-item-object-category")
         for elem in matches:
-            logger.debug(elem)
             url = elem.a["href"]
             title = elem.a.text
             itemlist.append(Item(channel=item.channel, title=title, action="list_all",
@@ -260,7 +259,6 @@ def findvideos(item):
     infoLabels = item.infoLabels
     
     soup = create_soup(item.url)
-    
     match0 = soup.find('aside', class_='video-player').find_all('iframe')
     match1 = soup.find('aside', class_='video-options').find_all(class_='server')
     
@@ -269,8 +267,11 @@ def findvideos(item):
         url = re.sub("amp;|#038;", "", url)
         serv = serv.text.strip().split("-")
         server = serv[0].strip().lower()
-        server = SERVER.get(server,server)
-        lang = serv[-1].strip().lower()
+        if not SERVER.get(server,''):
+            server = ""
+        else:
+            server = SERVER.get(server,server)
+        lang = serv[-1].strip().lower().replace(" hd", "")
         language = IDIOMAS.get(lang, lang)
         
         quality = ""

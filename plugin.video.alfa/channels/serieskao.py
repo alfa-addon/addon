@@ -44,10 +44,12 @@ host = canonical['host'] or canonical['host_alt'][0]
 
 def mainlist(item):
     logger.info()
+    itemlist = list()
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist = list()
+    # itemlist.append(Item(channel=item.channel, title='embed69', action='findvideos', url="https://serieskao.top/pelicula/la-promesa-de-irene-bxKhP7"))
+    # itemlist.append(Item(channel=item.channel, title='xupalace', action='findvideos', url="https://serieskao.top/pelicula/no-way-out-2023"))
     
     itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=host + "peliculas",
                          thumbnail=get_thumb('movies', auto=True), type="peliculas"))
@@ -134,9 +136,9 @@ def list_all(item):
             new_item.contentTitle = title
             new_item.action = "findvideos"
         itemlist.append(new_item)
-
+    
     tmdb.set_infoLabels_itemlist(itemlist, True)
-
+    
     next_page = soup.find('a', rel='next')
     if next_page:
         next_page = next_page['href']
@@ -154,17 +156,17 @@ def seasons(item):
     for elem in matches:
         season = scrapertools.find_single_match(elem.text, '\d+')
         infoLabels["season"] = season
-
+        
         itemlist.append(Item(channel=item.channel, title="Temporada %s" %season, url=item.url, action='episodesxseasons',
                              infoLabels=infoLabels))
-
+    
     tmdb.set_infoLabels_itemlist(itemlist, True)
-
+    
     if config.get_videolibrary_support() and len(itemlist) > 0 and not item.add_videolibrary:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
-
+    
     return itemlist
 
 
@@ -174,7 +176,7 @@ def episodios(item):
     templist = seasons(item)
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
-
+    
     return itemlist
 
 
@@ -196,27 +198,29 @@ def episodesxseasons(item):
         title = "%sx%s" % (season, epi_num)
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                              infoLabels=infoLabels))
-
+    
     tmdb.set_infoLabels_itemlist(itemlist, True)
-
+    
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = list()
-    data = httptools.downloadpage(item.url).data
     
+    data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, "videoSources\s*=\s*\[\s*'([^']+)")
     
-    if "embed69.org" in url:
+    data = httptools.downloadpage(url).data
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    
+    if "embed69" in url:
         # entrepeliculasyseries ya tenía esto solucionado así que gran parte de esto lo he copiado de allí
         import ast
         
-        data = httptools.downloadpage(url).data
         clave = scrapertools.find_single_match(data, r"decryptLink\(server.link, '(.+?)'\),")
         dataLinkString = scrapertools.find_single_match(data, r"dataLink\s*=\s*([^;]+)")
-
+        
         if clave and dataLinkString:
             dataLinkString = dataLinkString.replace(r"\/", "/")
             dataLink = ast.literal_eval(dataLinkString)
@@ -231,16 +235,12 @@ def findvideos(item):
                                                language=language, infoLabels=item.infoLabels))
     
     else:
-        soup = create_soup(url)
         matches = soup.find('div', class_='OptionsLangDisp').find_all('li')
         for elem in matches:
             url = elem['onclick']
             lang = elem['data-lang']
             server = elem.span.text.strip()
             url = scrapertools.find_single_match(url, "go_to_player(?:Vast|)\('([^']+)")
-            # url = "https://api.mycdn.moe/player/?id=%s" %url
-            # soup = create_soup(url)
-            # video_url = soup.iframe['src']
             if url.startswith("http"):
                 video_url = url
             elif url:
@@ -273,9 +273,11 @@ def findvideos(item):
             if "uptobox=" in video_url:
                 url = scrapertools.find_single_match(video_url, 'uptobox=([A-z0-9]+)')
                 video_url = "https://uptobox.com/%s" %url
+            
             if "1fichier=" in video_url or "1fichier" in server:
                 url = scrapertools.find_single_match(video_url, '=\?([A-z0-9]+)')
                 video_url = "https://1fichier.com/?%s" %url
+            
             if "/embedsito.net/" in video_url:
                 data = httptools.downloadpage(video_url).data
                 url = scrapertools.find_single_match(data, 'var shareId = "([^"]+)"')

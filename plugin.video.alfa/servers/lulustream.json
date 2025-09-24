@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:luluvdo|lulustream|lulu|lulu0|luluvdoo).(?:com|\\w{2,4})/(?:e/|d/|)([A-z0-9]+)",
+        "pattern": "https://(?:luluvdo|lulustream|lulu|lulu0|luluvdoo|luluvid).(?:com|\\w{2,4})/(?:e/|d/|)([A-z0-9]+)",
         "url": "https://lulustream.com/e/\\1"
       }
     ]

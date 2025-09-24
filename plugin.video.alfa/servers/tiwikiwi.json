@@ -24,20 +24,12 @@
         "url": "https://pbflux.com/\\1"
       },
       {
-        "pattern": "(https://tubexplayer.com/embed-[a-z0-9]+)",
-        "url": "\\1.html"
-      },
-      {
-        "pattern": "(https://iplayerhls.com/(?:e/|d/|)[a-z0-9]+)",
-        "url": "\\1"
+        "pattern": "https://tubexplayer.com/(?:embed-|e/)([a-z0-9]+)",
+        "url": "https://all4tube.com/embed-\\1.html"
       },
       {
         "pattern": "https://xtapes.porn/(?:e/|d/|embed-|)([a-z0-9]+)",
         "url": "https://xtapes.porn/embed-\\1.html"
-      },
-      {
-        "pattern": "(https://doodporn.xyz/(?:e|d)/[a-z0-9]+)",
-        "url": "\\1"
       },
       {
         "pattern": "(https://dropload.\\w{2,4}/embed-[a-z0-9]+.html)",

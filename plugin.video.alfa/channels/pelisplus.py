@@ -212,6 +212,9 @@ def section(item):
     return itemlist
 
 
+SERVER = {'earnvids' : 'vidhidepro', 'moon': 'filemoon', 'netu': 'netutv', 'vidg': 'vidguard',
+          'lulu': 'lulustream'
+         }
 def findvideos(item):
     import base64
     logger.info()
@@ -221,15 +224,20 @@ def findvideos(item):
     for elem in matches:
         url = elem['data-server']
         url = base64.b64encode(url.encode("utf-8")).decode('utf-8')
-        data = httptools.downloadpage(host + "player/" + url, canonical=canonical).data
-        url = scrapertools.find_single_match(data,"(?i)Location.href = '([^']+)'")
-        if "up.asdasd" in url:
-            url = "https://netu.to/"
-        # if "pelisplus" in url: continue
-        idioma = soup.img['alt']
-        itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language=idioma,
+        url = "%splayer/%s" % (host, url)
+        server = elem.span.text.strip().split("-")
+        server = server[0].strip()
+        server = server.lower()
+        # if not SERVER.get(server,''):  ### 'Directo' servers desconocidos
+            # server = ""
+        # else:
+        server = SERVER.get(server,server)
+        
+        lang = soup.img['alt']
+        if "Latino" in lang: lang= "LAT"
+        itemlist.append(Item(channel=item.channel, title=server, url=url, action='play', language=lang,
+                            server = server,
                             infoLabels=item.infoLabels))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % (i.server.capitalize(), i.language))
     
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
@@ -244,6 +252,21 @@ def findvideos(item):
                                  action="add_pelicula_to_library",
                                  extra="findvideos",
                                  contentTitle=item.contentTitle))
+    return itemlist
+
+
+def play(item):
+    logger.info()
+    itemlist = list()
+    
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    url = scrapertools.find_single_match(data,"(?i)Location.href = '([^']+)'")
+    
+    devuelve = servertools.findvideosbyserver(url, item.server)
+    if devuelve:
+        item.url =  devuelve[0][1]
+    itemlist = servertools.get_servers_itemlist([item.clone(url=url, server="")])
+    
     return itemlist
 
 

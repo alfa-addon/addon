@@ -14,6 +14,7 @@ from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 from datetime import datetime
 
+
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
@@ -45,7 +46,7 @@ year = datetime.now().strftime('%Y')
 
 finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['post-lst']}]), 
                        ('find_all', [{'tag': ['article'], 'class': ['post']}])]),
-         'categories': {'find_all': [{'tag': ['li'], 'class': ['cat-item']}]}, 
+         'categories': {'find_all': [{'tag': ['li'], 'class': ['menu-item-object-category']}]}, 
          'search': {}, 
          'get_language': dict([('find', [{'tag': ['span'], 'class': ["Lang"]}]), 
                                ('find_all', [{'tag': ['img']}])]),
@@ -87,92 +88,95 @@ AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path,
 
 def mainlist(item):
     logger.info()
-
     itemlist = list()
     
     autoplay.init(item.channel, list_servers, list_quality)
+    
+    # itemlist.append(Item(channel=item.channel, title='uqlink - embed69', action='findvideos', url="https://entrepeliculasyseries.nz/movies/la-torre-oscura-2017/"))
+    # itemlist.append(Item(channel=item.channel, title='embed69', action='findvideos', url="https://entrepeliculasyseries.nz/movies/la-promesa-de-irene-2023/"))
+    # itemlist.append(Item(channel=item.channel, title='xupalace', action='findvideos', url="https://entrepeliculasyseries.nz/movies/monica-y-sus-amigos-lecciones-2019/"))
     
     itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=host + movie_path, 
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
     
     itemlist.append(Item(channel=item.channel, title='Series',  action='list_all', url=host +  tv_path, 
                          thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
-
+    
     itemlist.append(Item(channel=item.channel, title='Anime',  action='list_all', url=host + 'genero/animacion/', 
                          thumbnail=get_thumb('anime', auto=True), c_type='series', extra='anime'))
-                         
+    
     itemlist.append(Item(channel=item.channel, title='Dorama',  action='list_all', url=host + 'genero/dorama/', 
                          thumbnail=get_thumb('anime', auto=True), c_type='series', extra='dorama'))
-
+    
     itemlist.append(Item(channel=item.channel, title="Por Año", action="sub_menu",
                          thumbnail=get_thumb('years.png') ))
-
+    
     itemlist.append(Item(channel=item.channel, title="Géneros", action="section", url=host, 
                          thumbnail=get_thumb('channels_anime.png'), extra='generos'))
-
+    
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True), c_type='search'))
-
+    
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
-
+    
     autoplay.show_option(item.channel, itemlist)
-
+    
     return itemlist
 
 
 def sub_menu(item):
     logger.info()
     itemlist = list()
-
+    
     n = int(year) - 1928
     
     while n > 0:
         itemlist.append(Item(channel=item.channel, title=str(1928+n), action='list_all', url=host + "release/%s/" %str(1928+n), 
                          thumbnail=get_thumb('years.png') ))
         n -= 1
-
+    
     return itemlist
 
 
 def section(item):
     logger.info()
-
+    
     findS = finds.copy()
-
+    
     return AlfaChannel.section(item, matches_post=section_matches, finds=findS, **kwargs)
 
 
 def section_matches(item, matches_int, **AHkwargs):
     logger.info()
-
     matches = []
+    
     findS = AHkwargs.get('finds', finds)
     
     if 'Géneros' in item.title:
         for elem in matches_int:
             elem_json = {}
             #logger.error(elem)
-
+            
             elem_json['url'] = elem.a.get('href', '')
             elem_json['title'] = elem.get_text(strip=True).replace("(", " (")
-
+            
             matches.append(elem_json.copy())
-
+    
     return matches or matches_int
 
 
 def list_all(item):
     logger.info()
-
+    
     return AlfaChannel.list_all(item, matches_post=list_all_matches, **kwargs)
 
 
 def list_all_matches(item, matches_int, **AHkwargs):
     logger.info()
-
     matches = []
+    
     findS = AHkwargs.get('finds', finds)
-
+    
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
@@ -208,22 +212,21 @@ def seasons(item):
 
 def episodios(item):
     logger.info()
-
     itemlist = []
-
+    
     templist = seasons(item)
-
+    
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
-
+    
     return itemlist
 
 
 def episodesxseason(item):
     logger.info()
-
+    
     kwargs['matches_post_get_video_options'] = findvideos_matches
-
+    
     return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, **kwargs)
 
 
@@ -262,9 +265,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
-
+    
     kwargs['matches_post_episodes'] = episodesxseason_matches
-
+    
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
 
@@ -273,66 +276,81 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
     import ast
     from lib.pyberishaes import GibberishAES
-
+    
     matches = []
     findS = AHkwargs.get('finds', finds)
+    
     servers = {'streamwish': 'streamwish', 'filelions': 'tiwikiwi', "stape": "streamtape", 
-               "netu": "netu ", "filemoon": "tiwikiwi", "streamwish": "streamwish",
-               "voex": "voe", "1fichier": "onefichier"}
+               "netu": "netu ", "filemoon": "filemoon", "streamwish": "streamwish",
+               "voex": "voe", "vox": "voe", "1fichier": "onefichier", "waaw": "netutv"}
+    
     IDIOMAS = {'0': 'LAT', '1': 'CAST', '2': 'VOSE'}
-    logger.debug(matches_int)
+    
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-
+        
         try:
             headers = {'Referer': item.url}
-            url = elem.iframe.get('src', '')
-            soup = AlfaChannel.create_soup(url, headers=headers)
-            url = soup.find("div", class_="Video").iframe.get("src", '')
-            if "/uqlink." in url:
-                url = scrapertools.find_single_match(url, "id=([A-z0-9]+)")
-                elem_json['url'] = "https://uqload.io/embed-%s.html" % url
-                elem_json['language'] = ''
-                elem_json['server'] = 'uqload'
-                matches.append(elem_json.copy())
-            else:
-                headers = {'Referer': host}
+            
+            matches = elem.find(class_='tt-opt').find_all('li')
+            
+            for elem in matches:
+                url = elem['data-src']
+                url = base64.b64decode(url).decode("utf-8")
                 soup = AlfaChannel.create_soup(url, headers=headers)
-                matches_servers = soup.find('div', class_='OptionsLangDisp')
+                url = soup.find("div", class_="Video").iframe.get("src", '')
                 
-                if not matches_servers:
-                    clave = scrapertools.find_single_match(str(soup), r"decryptLink\(server.link, '(.+?)'\),")
-                    
-                    if clave:
-                        matches_servers = scrapertools.find_single_match(str(soup), r'const\s*dataLink\s*=\s*([^;]+);') or []
-                        if matches_servers:
-                            matches_servers = ast.literal_eval(matches_servers)
-                        for langs_in in matches_servers:
-                            lang = langs_in.get('video_language', 'LAT')
-                            for elem in langs_in.get('sortedEmbeds', []):
-                                if not elem.get('link', '') or not elem.get('type', '') == 'video': continue
-                                from lib.crylink import crylink
-                                elem_json['url'] = crylink(elem['link'], clave)
-                                if not elem_json['url']: continue
-                                elem_json['server'] = servers.get(elem.get('servername', ''), '')
-                                elem_json['language'] = IDIOMAS.get(lang, 'LAT')
-                                matches.append(elem_json.copy())
+                if "/uqlink." in url:
+                    url = scrapertools.find_single_match(url, "id=([A-z0-9]+)")
+                    elem_json['url'] = "https://uqload.io/embed-%s.html" % url
+                    elem_json['language'] = ''
+                    elem_json['server'] = 'uqload'
+                    matches.append(elem_json.copy())
                 
                 else:
-                    for elem in matches_servers.find_all('li'):
-                        lang = elem['data-lang']
-                        url = elem['onclick']
-                        server = elem.span.text.strip()
-                        elem_json['url'] = scrapertools.find_single_match(url, "\('([^']+)'")
-                        elem_json['server'] = servers.get(server, server)
-                        elem_json['language'] = IDIOMAS.get(lang, lang)
-                        matches.append(elem_json.copy())
+                    headers = {'Referer': host}
+                    data = AlfaChannel.httptools.downloadpage(url).data
+                    soup = AlfaChannel.do_soup(data, encoding='utf-8')
+                    matches_servers = soup.find('div', class_='OptionsLangDisp')
+                    
+                    if "embed69" in url or not matches_servers:
+                        clave = scrapertools.find_single_match(data, r"decryptLink\(server.link, '(.+?)'\),")
+                        dataLinkString = scrapertools.find_single_match(data, r"dataLink\s*=\s*([^;]+)")
+                        
+                        if clave and dataLinkString:
+                            dataLinkString = dataLinkString.replace(r"\/", "/")
+                            dataLink = ast.literal_eval(dataLinkString)
+                            for langSection in dataLink:
+                                language = langSection.get('video_language', '')
+                                for elem in langSection['sortedEmbeds']:
+                                    if elem['servername'] != "download":
+                                        from lib.crylink import crylink
+                                        elem_json['url'] = crylink(elem['link'], clave)
+                                        elem_json['server'] = elem.get('servername', '')
+                                        elem_json['language'] = language
+                                        matches.append(elem_json.copy())
+                    
+                    else:
+                        for elem in matches_servers.find_all('li'):
+                            lang = elem['data-lang']
+                            url = elem['onclick']
+                            url = scrapertools.find_single_match(url, "\('([^']+)'")
+                            
+                            if "1fichier=" in url or "1fichier" in server:
+                                id = scrapertools.find_single_match(url, '=\?([A-z0-9]+)')
+                                url = "https://1fichier.com/?%s" %id
+                            
+                            server = elem.span.text.strip()
+                            elem_json['url'] = url
+                            elem_json['server'] = servers.get(server, server)
+                            elem_json['language'] = IDIOMAS.get(lang, lang)
+                            matches.append(elem_json.copy())
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
-
+    
     return matches, langs
 
 
@@ -347,17 +365,17 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     kwargs['forced_proxy_opt'] = canonical.get('search_active', 'ProxyCF')
-
+    
     if not canonical.get('search_active'):
         itemlist = []
         itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Búsquedas bloqueadas por la Web:[/COLOR]", 
                         folder=False, thumbnail=get_thumb("next.png")))
         return itemlist
-
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = host + '?s=' + texto
-
+        
         if texto:
             item.c_type = 'search'
             item.texto = texto

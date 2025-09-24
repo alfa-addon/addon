@@ -10,10 +10,13 @@ from lib import jsunpack
 from platformcode import logger
 from core import urlparse
 
+forced_proxy_opt = ''  #'ProxySSL'
 
 # kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
-kwargs = {'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 6, 'ignore_response_code': True, 
-          'timeout': 45, 'cf_assistant': False, 'CF_stat': True, 'CF': True}
+
+kwargs = {'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 1, #'forced_proxy_ifnot_assistant': forced_proxy_opt,
+          'ignore_response_code': True, 'cf_assistant': False, 'CF_stat': True, 'CF': True,
+          'timeout': 15}
 
 
 def test_video_exists(page_url):
@@ -24,22 +27,20 @@ def test_video_exists(page_url):
     host = "https://%s" % domain
     server = domain.split(".")[-2]
     
-    kwargs['headers'] = {
-                         'Referer': '%s/' %host,
-                         'Origin': host,
+    # kwargs['headers'] = {
+                         # 'Referer': '%s/' %host,
+                         # 'Origin': host,
                          # 'Content-Type': 'application/json;charset=UTF-8',
                          # 'Accept-Encoding': 'gzip, deflate, br, zstd',
                          # 'Sec-Fetch-Dest': 'empty',
                          # 'Sec-Fetch-Mode': 'cors',
                          # 'Sec-Fetch-Site': 'same-site',
                          # 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0'
-                        }
-    # server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
-    
-    # page_url = httptools.downloadpage(page_url, follow_redirects=False).headers["location"]
+                        # }
     
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
+    
     if response.code == 404 or "not found" in response.data:
         return False,  "[%s] El fichero no existe o ha sido borrado" %server
     return True, ""
@@ -48,8 +49,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = []
     try:
-        pack = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
-        unpacked = jsunpack.unpack(pack)
+        # packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
+        packed = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
+        unpacked = jsunpack.unpack(packed)
         
         # m3u8_source = scrapertools.find_single_match(unpacked, '\{(?:file|"hls\d+"):"([^"]+)"\}')
         m3u8_source = scrapertools.find_single_match(unpacked, '\{(?:file|"hls\d+"|src):"([^"]+)"')

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
@@ -29,21 +30,21 @@ def get_video_url(page_url, user="", password="", video_password=""):
     except:
         unpacked = scrapertools.find_single_match(data,"window.hola_player.*")
     
-    logger.error(unpacked)
-    
     host = httptools.obtain_domain(page_url, scheme=True)
     headers = httptools.default_headers.copy()
     headers = "|{0}&Referer={1}/&Origin={1}".format(urlparse.urlencode(headers), host)
     
-    if scrapertools.find_single_match(unpacked, 'subtitle:"([^"]+)"'):
-        sub = scrapertools.find_single_match(unpacked, 'subtitle:"([^"]+)"')
-        # subtitle = scrapertools.find_single_match(sub, '(http.*?.vtt)')
-        subtitle = scrapertools.find_multiple_matches(sub, '(http.*?.vtt)')
-    
     if scrapertools.find_single_match(unpacked, 'file:".*?(http[^"]+)"'): 
         m3u = scrapertools.find_single_match(unpacked, 'file:".*?(http[^"]+)"')
         m3u=m3u+headers
-        video_urls.append(["[clipwatching] .m3u8", m3u])
-        # video_urls.append(["[clipwatching] .m3u8", m3u, 0, subtitle])
+        
+        subtitles = ''
+        vttreg = re.compile('(\[[^\]]+\])(https.*?\.vtt)')
+        subs = vttreg.findall(unpacked)
+        if subs:
+            for sub in subs:
+                subtitles += sub[1] + "\n"
+        
+        video_urls.append(["[clipwatching] .m3u8", m3u, 0, subtitles])
     
     return video_urls
