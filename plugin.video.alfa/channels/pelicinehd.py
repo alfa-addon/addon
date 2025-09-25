@@ -39,7 +39,9 @@ SERVER = {
           "hlswish": "streamwish", "playerwish": "streamwish", "ghbrisk": "streamwish", "iplayerhls": "streamwish",
            "listeamed": "vidguard", "1fichier":"onefichier", "luluvdo": "lulustream", "lulu": "lulustream",
            "dhtpre": "vidhidepro", "peytonepre": "vidhidepro", "smoothpre": "vidhidepro", 
-           "movearnpre": "vidhidepro", "seraphinapl": "vidhidepro", "bingezove": "vidhidepro"
+           "movearnpre": "vidhidepro", "seraphinapl": "vidhidepro", "bingezove": "vidhidepro", 
+           "dingtezuni": "vidhidepro", "dinisglows": "vidhidepro", "mivalyo": "vidhidepro",
+           "filemoon": "filemoon", "voe":"voe"
           }
 
 
