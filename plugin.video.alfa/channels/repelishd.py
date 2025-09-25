@@ -31,7 +31,9 @@ thumbus = 'http://flags.fmcdn.net/data/flags/normal/us.png'
 
 forced_proxy_opt = 'ProxySSL'
 
-#  "https://cinehdplus.cam/"  "https://repelishd.cam/"
+#  "https://repelishd.cam/"
+#  "https://cinehdplus.gratis/"  "https://cinehdplus.cam/" 
+
 #  "https://cinehdplus.org/"  "https://cinehdplus.net/"(OUT)
 
 canonical = {

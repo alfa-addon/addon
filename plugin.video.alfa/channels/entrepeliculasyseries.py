@@ -92,10 +92,6 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    # itemlist.append(Item(channel=item.channel, title='uqlink - embed69', action='findvideos', url="https://entrepeliculasyseries.nz/movies/la-torre-oscura-2017/"))
-    # itemlist.append(Item(channel=item.channel, title='embed69', action='findvideos', url="https://entrepeliculasyseries.nz/movies/la-promesa-de-irene-2023/"))
-    # itemlist.append(Item(channel=item.channel, title='xupalace', action='findvideos', url="https://entrepeliculasyseries.nz/movies/monica-y-sus-amigos-lecciones-2019/"))
-    
     itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=host + movie_path, 
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
     
