@@ -48,9 +48,6 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    # itemlist.append(Item(channel=item.channel, title='embed69', action='findvideos', url="https://serieskao.top/pelicula/la-promesa-de-irene-bxKhP7"))
-    # itemlist.append(Item(channel=item.channel, title='xupalace', action='findvideos', url="https://serieskao.top/pelicula/no-way-out-2023"))
-    
     itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=host + "peliculas",
                          thumbnail=get_thumb('movies', auto=True), type="peliculas"))
     itemlist.append(Item(channel=item.channel, title='Por Género', action='genres', url=host,
