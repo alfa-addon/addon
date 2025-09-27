@@ -48,6 +48,9 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
+    # itemlist.append(Item(channel=item.channel, title='embed69', action='findvideos', url="https://serieskao.top/pelicula/la-promesa-de-irene-bxKhP7"))
+    # itemlist.append(Item(channel=item.channel, title='xupalace', action='findvideos', url="https://serieskao.top/pelicula/no-way-out-2023"))
+    
     itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=host + "peliculas",
                          thumbnail=get_thumb('movies', auto=True), type="peliculas"))
     itemlist.append(Item(channel=item.channel, title='Por Género', action='genres', url=host,
@@ -211,77 +214,56 @@ def findvideos(item):
     data = httptools.downloadpage(url).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
     
-    if "embed69" in url:
-        # entrepeliculasyseries ya tenía esto solucionado así que gran parte de esto lo he copiado de allí
+    if "embed69" in url and "No folders found" not in data:
         import ast
         
         clave = scrapertools.find_single_match(data, r"decryptLink\(server.link, '(.+?)'\),")
         dataLinkString = scrapertools.find_single_match(data, r"dataLink\s*=\s*([^;]+)")
         
-        if clave and dataLinkString:
-            dataLinkString = dataLinkString.replace(r"\/", "/")
-            dataLink = ast.literal_eval(dataLinkString)
-            for langSection in dataLink:
-                language = langSection.get('video_language', 'LAT')
-                language = IDIOMAS.get(language, language)
-                for elem in langSection['sortedEmbeds']:
-                    if elem['servername'] != "download":
+        dataLinkString = dataLinkString.replace(r"\/", "/")
+        dataLink = ast.literal_eval(dataLinkString)
+        
+        for langSection in dataLink:
+            language = langSection.get('video_language', 'LAT')
+            language = IDIOMAS.get(language, language)
+            for elem in langSection['sortedEmbeds']:
+                if elem['servername'] != "download":
+                    vid = elem['link']
+                    if clave:
                         from lib.crylink import crylink
-                        video_url = crylink(elem['link'], clave)
-                        itemlist.append(Item(channel=item.channel, title='%s', action='play', url=video_url,
-                                               language=language, infoLabels=item.infoLabels))
+                        vid = crylink(vid, clave)
+                    else:
+                        vid = scrapertools.find_single_match(vid, '\.(eyJs.*?)\.')
+                        vid += "="
+                        vid = base64.b64decode(vid).decode()
+                        vid = scrapertools.find_single_match(vid, '"link":"([^"]+)"')
+                    itemlist.append(Item(channel=item.channel, title='%s', action='play', url=vid,
+                                           language=language, infoLabels=item.infoLabels))
     
     else:
         matches = soup.find('div', class_='OptionsLangDisp').find_all('li')
         for elem in matches:
-            url = elem['onclick']
+            vid = elem['onclick']
             lang = elem['data-lang']
             server = elem.span.text.strip()
-            url = scrapertools.find_single_match(url, "go_to_player(?:Vast|)\('([^']+)")
-            if url.startswith("http"):
-                video_url = url
-            elif url:
+            vid = scrapertools.find_single_match(vid, "go_to_player(?:Vast|)\('([^']+)")
+            if vid.startswith("http"):
+                vid = vid
+            elif vid:
                 try:
-                    video_url = base64.b64decode(url).decode()
+                    vid = base64.b64decode(vid).decode()
                 except (ValueError, TypeError):
-                    video_url = url
+                    vid = url
             else:
                 continue
-
-            if "embedsito" in video_url:
-                continue
-            if "plusvip.net" in video_url:
-                continue
-                # # Con un continue aquí el siguiente código nunca se va a ejecutar, lo comento.
-                # try:
-                #     url_pattern = "(?:[\w\d]+://)?[\d\w]+\.[\d\w]+/moe\?data=(.+)$"
-                #     source_pattern = "this\[_0x5507eb\(0x1bd\)\]='(.+?)'"
-
-                #     data = httptools.downloadpage(video_url).data
-                #     url = scrapertools.find_single_match(video_url, url_pattern)
-                #     source = scrapertools.find_single_match(data, source_pattern)
-
-                #     source_url = "https://plusvip.net{}".format(source)
-                #     data = httptools.downloadpage(source_url, post={'link': url},
-                #                                 referer=video_url)
-                #     video_url = data.json["link"]
-                # except Exception as e:
-                #     logger.error(e)
-            if "uptobox=" in video_url:
-                url = scrapertools.find_single_match(video_url, 'uptobox=([A-z0-9]+)')
-                video_url = "https://uptobox.com/%s" %url
             
-            if "1fichier=" in video_url or "1fichier" in server:
-                url = scrapertools.find_single_match(video_url, '=\?([A-z0-9]+)')
-                video_url = "https://1fichier.com/?%s" %url
+            if "1fichier=" in vid or "1fichier" in server:
+                vid = scrapertools.find_single_match(vid, '=\?([A-z0-9]+)')
+                vid = "https://1fichier.com/?%s" %url
             
-            if "/embedsito.net/" in video_url:
-                data = httptools.downloadpage(video_url).data
-                url = scrapertools.find_single_match(data, 'var shareId = "([^"]+)"')
-                video_url = "https://www.amazon.com/clouddrive/share/%s" %url
             language = IDIOMAS.get(lang, lang)
-            if "plusvip" not in video_url:
-                itemlist.append(Item(channel=item.channel, title='%s', action='play', url=video_url,
+            if "plusvip" not in vid:
+                itemlist.append(Item(channel=item.channel, title='%s', action='play', url=vid,
                                            language=language, infoLabels=item.infoLabels))
     
     itemlist.sort(key=lambda x: x.language)

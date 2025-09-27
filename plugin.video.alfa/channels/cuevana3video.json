@@ -1,7 +1,7 @@
 {
   "id": "cuevana3video",
   "name": "Cuevana 3.video",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://i.postimg.cc/62gvm3z2/cuevana3.png",

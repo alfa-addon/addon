@@ -310,22 +310,31 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                     soup = AlfaChannel.do_soup(data, encoding='utf-8')
                     matches_servers = soup.find('div', class_='OptionsLangDisp')
                     
-                    if "embed69" in url or not matches_servers:
+                    if "embed69" in url and "No folders found" not in data:
+                        import ast
+                        
                         clave = scrapertools.find_single_match(data, r"decryptLink\(server.link, '(.+?)'\),")
                         dataLinkString = scrapertools.find_single_match(data, r"dataLink\s*=\s*([^;]+)")
                         
-                        if clave and dataLinkString:
-                            dataLinkString = dataLinkString.replace(r"\/", "/")
-                            dataLink = ast.literal_eval(dataLinkString)
-                            for langSection in dataLink:
-                                language = langSection.get('video_language', '')
-                                for elem in langSection['sortedEmbeds']:
-                                    if elem['servername'] != "download":
+                        dataLinkString = dataLinkString.replace(r"\/", "/")
+                        dataLink = ast.literal_eval(dataLinkString)
+                        for langSection in dataLink:
+                            language = langSection.get('video_language', 'LAT')
+                            language = IDIOMAS.get(language, language)
+                            for elem in langSection['sortedEmbeds']:
+                                if elem['servername'] != "download":
+                                    vid = elem['link']
+                                    if clave:
                                         from lib.crylink import crylink
-                                        elem_json['url'] = crylink(elem['link'], clave)
-                                        elem_json['server'] = elem.get('servername', '')
-                                        elem_json['language'] = language
-                                        matches.append(elem_json.copy())
+                                        elem_json['url'] = crylink(vid, clave)
+                                    else:
+                                        vid = scrapertools.find_single_match(vid, '\.(eyJs.*?)\.')
+                                        vid += "="
+                                        vid = base64.b64decode(vid).decode()
+                                        elem_json['url'] = scrapertools.find_single_match(vid, '"link":"([^"]+)"')
+                                    elem_json['server'] = elem.get('servername', '')
+                                    elem_json['language'] = language
+                                    matches.append(elem_json.copy())
                     
                     else:
                         for elem in matches_servers.find_all('li'):
