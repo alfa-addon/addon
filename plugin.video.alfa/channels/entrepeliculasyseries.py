@@ -276,10 +276,6 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
     
-    servers = {'streamwish': 'streamwish', 'filelions': 'tiwikiwi', "stape": "streamtape", 
-               "netu": "netu ", "filemoon": "filemoon", "streamwish": "streamwish",
-               "voex": "voe", "vox": "voe", "1fichier": "onefichier", "waaw": "netutv"}
-    
     IDIOMAS = {'0': 'LAT', '1': 'CAST', '2': 'VOSE'}
     
     for elem in matches_int:
@@ -332,7 +328,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                                         vid += "="
                                         vid = base64.b64decode(vid).decode()
                                         elem_json['url'] = scrapertools.find_single_match(vid, '"link":"([^"]+)"')
-                                    elem_json['server'] = elem.get('servername', '')
+                                    elem_json['server'] = ''
                                     elem_json['language'] = language
                                     matches.append(elem_json.copy())
                     
