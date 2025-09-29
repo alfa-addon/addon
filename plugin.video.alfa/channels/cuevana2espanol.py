@@ -267,9 +267,7 @@ def findvideos(item):
 
 def play(item):
     logger.info()
-    logger.debug(item.url)
     data = httptools.downloadpage(item.url, encoding=encoding).data
-    logger.debug(data)
     patron = "var url = '([^']+)"
     match = scrapertools.find_single_match(data, patron)
     item.url = match
