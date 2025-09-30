@@ -102,7 +102,7 @@ def section(item):
     logger.info()
     itemlist = []
     
-    data = httptools.downloadpage(host + "_next/static/chunks/170-ffbd7aad7b82d5af.js", encoding="unicode_escape").data
+    data = httptools.downloadpage(host + "_next/static/chunks/170-415b9c38dc5af95d.js", encoding="unicode_escape").data
     
     data = data.decode('unicode_escape')
     patron = 'href:"(/genres/.+?)".+?children:"(.+?)"'
