@@ -285,7 +285,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     info = pattern.search(str(soup))
     info = info.group(1) if info else ''
     titleSeason = get_title_season(info)
-    next_episode_air_date = get_next_episode_air_date(info, pattern)
+    next_episode_air_date = get_next_episode_air_date(info)
     
     # Asi lee los datos correctos de TMDB
     # Si se detecta incorrectamente el titulo en TMDB no sale ningun capitulo, mejor no forzar esto.
@@ -444,12 +444,11 @@ def get_title_season(url):
     return season
 
 
-def get_next_episode_air_date(info, pattern):
+def get_next_episode_air_date(info):
     logger.info()
     try:
-        data = re.search(pattern, info)
-        if data:
-            l_data = eval(data.group(1))
+        if info:
+            l_data = eval(info)
             if type(l_data) is list and len(l_data) > 3:
                 # La fecha del próximo episodio está en el cuarto elemento de la lista
                 # l_data[3] es una cadena de fecha en formato 'yyyy-mm-dd'
