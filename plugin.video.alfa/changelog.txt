@@ -2,7 +2,24 @@
         [B]Estos son los cambios para esta versión:[/B]
         
         • +18
-        • DoramedPlay
-        • Estrenos Anime
+        • AnimeJL
+        • Cine24H
+        • CineCalidad
+        • Cuevana2español
+        • Divxtotal
+        • Dontorrent
+        • EntrePeliculasySeries
+        • Eztv
+        • GranTorrent
+        • HDFull
+        • MejorTorrent
+        • Pelicinehd
+        • PelisPlus
+        • Playdede
+        • SeriesKao
         • TVAnime
+        • VerAnime
+        • VerAnime Assistant
+        • Yandispoiler
+        • repelishd
         

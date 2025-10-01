@@ -24,8 +24,9 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'grantorrent', 
              'host': config.get_setting("current_host", 'grantorrent', default=''), 
-             'host_alt': ["https://www1.grantorrent.lol/"], 
-             'host_black_list': ["https://grantorrent.mov/", "https://www4.grantorrent.wf/", "https://www3.grantorrent.wf/"
+             'host_alt': ["https://www2.grantorrent.lol/"], 
+             'host_black_list': ["https://www1.grantorrent.lol/", 
+                                 "https://grantorrent.mov/", "https://www4.grantorrent.wf/", "https://www3.grantorrent.wf/"
                                  "https://www1.grantorrent.wf/", "https://www1.grantorrent.pm/", "https://grantorrent.zip/", 
                                  'https://grantorrent.bz/', 'https://grantorrent.fi/', 'https://grantorrent.si/', 
                                  'https://grantorrent.re/', 'https://grantorrent.ac/', 'https://grantorrent.ch/'], 

@@ -34,6 +34,7 @@ canonical = {
 }
 
 host = canonical['host'] or canonical['host_alt'][0]
+host = host.rstrip("/")
 
 IDIOMAS = {"VOSE": "VOSE", "Latino": "LAT", "Castellano": "CAST"}
 
@@ -249,7 +250,7 @@ def new_episodes(item):
             epi = 1
         
         title = "%sx%s - %s" % (season, epi, c_title)
-        thumb = host.rstrip("/") + elem.find("img")["src"]
+        thumb = host + elem.find("img")["src"]
 
         itemlist.append(
             Item(
@@ -289,7 +290,7 @@ def list_all(item):
             "",
             title,
         ).strip()
-        thumb = host.rstrip("/") + elem.find("img")["src"]
+        thumb = host + elem.find("img")["src"]
 
         
         info = elem.a.span
@@ -558,7 +559,7 @@ def episodesxfolder(item):
 
     for cap in matches[item.init : item.fin]:
         scrapedurl = cap["href"]
-        thumb = host.rstrip("/") + cap.div.img["src"]
+        thumb = host + cap.div.img["src"]
         episode = cap.h2.getText(strip=True).split('\n')[1].strip()
         try:
             season, episode = renumbertools.numbered_for_trakt(

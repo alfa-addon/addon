@@ -33,9 +33,9 @@ debug = config.get_setting('debug_report', default=False)
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hdfull.sbs/", "https://hdfull.today/", "https://hdfull.love/", "https://hd-full.biz/", 
-                          "https://hdfull.cfd/", "https://hdfull.org/"], 
-             "host_alt_main": 2, 
+             "host_alt": ["https://hdfull.today/", "https://www2.hdfull.one/", 
+                          "https://hd-full.biz/", "https://hdfull.cfd/", "https://hdfull.org/", "https://hdfull.sbs/"], 
+             "host_alt_main": 1, 
              "host_verification": '%slogin', 
              "host_black_list": ["https://hdfull.help/", "https://hdfull.one/", "https://hdfull.blog/", 
 
@@ -43,7 +43,7 @@ canonical = {
                                  "https://hd-full.fit/", "https://hd-full.info/", "https://hd-full.life/", 
 
                                  "https://hdfull.cv/", "https://hdfull.monster/", "https://hdfull.buzz/", 
-                                 "https://hdfull.tel/", "https://hd-full.sbs/", 
+                                 "https://hdfull.tel/", "https://hd-full.sbs/", "https://hdfull.love/", 
 
                                  "https://hd-full.lol/", "https://hd-full.co/", "https://hdfull.quest/", 
                                  "https://hd-full.in/", "https://hd-full.im/", "https://hd-full.one/", 

@@ -1,0 +1,47 @@
+{
+  "id": "yandispoiler",
+  "name": "Yandispoiler",
+  "active": true,
+  "adult": false,
+  "language": ["lat", "cast", "vose"],
+  "thumbnail": "https://yandispoiler.net/wp-content/uploads/Logo-Yandispoiler-Web-mx-scaled.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "tvshow",
+    "movie"
+  ],
+  "force_unify": true,
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "LAT",
+        "CAST",
+        "VOSE"
+      ]
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}

@@ -2505,9 +2505,9 @@ def AH_find_btdigg_ENTRY_from_BTDIGG(self, title='', contentType='episode', lang
         for c_type in contentType:
             title_search = title
             if "en espa" in title_search: title_search = title_search[:-11]
-            title_search = alias_in or scrapertools.slugify(title_search.replace('%20', ' '), strict=False, convert=convert)\
+            title_search = alias_in or scrapertools.slugify(title_search.replace('%20', ' ').replace('+', ' '), strict=False, convert=convert)\
                                                             .strip().lower().replace(' ', '_').replace('(V)-', '')
-            title_alt = alias_out or scrapertools.slugify((item.infoLabels['title_alt'] or item.title).replace('%20', ' '), 
+            title_alt = alias_out or scrapertools.slugify((item.infoLabels['title_alt'] or item.title).replace('%20', ' ').replace('+', ' '), 
                                                           strict=False, convert=convert).strip().lower()\
                                      .replace(' ', '_').replace('(V)-', '').replace('class_act', '').replace('buscar', '')
             if title_search == title_alt: title_alt = ''
@@ -2732,6 +2732,8 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
         format_tmdb_id(item)
 
         if item.c_type == 'search' and not item.btdigg:
+            item.texto = item.texto.replace('+', ' ')
+            item.contentTitle = item.contentTitle.replace('+', ' ')
             found = (AH_find_btdigg_ENTRY_from_BTDIGG(self, title=item.texto or item.contentTitle, contentType=item.c_type, 
                                                       matches=matches_btdigg, item=item.clone(), reset=False, **AHkwargs))
             for found_item in found:
@@ -2755,7 +2757,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
 
                     matches_index.update({key: {'title': found_item['title'], 'mediatype': found_item['mediatype'], 
                                                 'tmdb_id': found_item.get('tmdb_id', item.infoLabels['tmdb_id']), 
-                                                'season_search': elem_json.get('season_search', item.season_search), 
+                                                'season_search': found_item.get('season_search', item.season_search), 
                                                 'quality': found_item['quality'], 'matches_cached': [], 'episode_list': {}}})
                     matches_btdigg.append(found_item)
 
