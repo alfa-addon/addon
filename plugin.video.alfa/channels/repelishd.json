@@ -1,27 +1,20 @@
 {
-  "id": "entrepeliculasyseries",
-  "name": "EntrePeliculasySeries",
+  "id": "repelishd",
+  "name": "repelishd",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
-  "thumbnail": "https://i.postimg.cc/BjkjNy2D/Entrepeliculasyseries-logo.png",
+  "language": ["lat", "cast", "vose"],
+  "thumbnail": "https://repelishd.cam/templates/RePelisHD/images/favicon.png",
   "banner": "",
   "fanart": "",
   "categories": [
     "movie",
     "tvshow",
+    "anime",
     "vos"
   ],
-  "force_unify": true,
+  "force_unify": false,
   "settings": [
-    {
-      "id": "include_in_global_search",
-      "type": "bool",
-      "label": "Incluir en busqueda global",
-      "default": false,
-      "enabled": true,
-      "visible": true
-    },
     {
       "id": "filter_languages",
       "type": "list",
@@ -35,6 +28,14 @@
         "CAST",
         "VOSE"
       ]
+    },
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
     }
   ]
 }

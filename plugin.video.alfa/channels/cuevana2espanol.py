@@ -20,8 +20,8 @@ from platformcode import config, logger
 
 list_quality = []
 list_servers_black = {"netu"}
-list_serversx = {'filemoon' : 'tiwikiwi', 'vidhide' : 'vidhidepro'}
-list_servers = ['streamwish', 'tiwikiwi', 'voes', 'doodstream', 'streamtape', 'plushstream', 'vidhide']
+list_serversx = {'filemoon' : 'filemoon', 'vidhide' : 'vidhidepro'}
+list_servers = ['streamwish', 'filemoon', 'voes', 'doodstream', 'streamtape', 'plushstream', 'vidhide']
 forced_proxy_opt = 'ProxySSL'
 
 canonical = {
@@ -60,7 +60,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host+'archives/movies/', 
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu', url=host+'archives/series', 
+    itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu', url=host+'archives/series/', 
                          thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -102,7 +102,8 @@ def section(item):
     logger.info()
     itemlist = []
     
-    data = httptools.downloadpage(host + "_next/static/chunks/170-ffbd7aad7b82d5af.js", encoding="unicode_escape").data
+    data = httptools.downloadpage(host + "_next/static/chunks/170-415b9c38dc5af95d.js", encoding="unicode_escape").data
+    
     data = data.decode('unicode_escape')
     patron = 'href:"(/genres/.+?)".+?children:"(.+?)"'
     logger.info("patron: %s" %(type(patron)))
@@ -135,7 +136,7 @@ def list_all(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url + "%s" %item.pagina, canonical=canonical).data
-    patron  = '(?ims)bdOz3.*?'
+    patron  = '(?ims)(?:bdOz3|_LFJR).*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<h3>([^<]+).*?'
     patron += '<span>([^<]+).*?'
@@ -144,18 +145,20 @@ def list_all(item):
     for url, title, annio in matches:
         idioma = "Latino"
         item.infoLabels['year'] = annio
-        #para los titulos que vienen como este: The killer&#x27;s game   | moll&#x27;s game
         title = scrapertools.unescape(title)
-        itemlist.append(item.clone(channel = item.channel,
-                                   action = "findvideos",
-                                   title = title,
-                                   contentTitle = title,
-                                   thumbnail = "",
-                                   url = url,
-                                   contentType="movie",
-                                   language = idioma
-                                   ))
-    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+        url = "%s%s" %(host, url)
+        new_item = Item(channel=item.channel, url=url, title=title, thumbnail="", c_type =item.c_type,
+                        language=idioma, infoLabels={"year": annio})
+        if "series" in url:
+            new_item.action = "seasons"
+            new_item.contentSerieName = title
+        else:
+            new_item.action = "findvideos"
+            new_item.contentTitle = title
+        itemlist.append(new_item)
+    
+    tmdb.set_infoLabels(itemlist, True)
+    
     url_pagina = scrapertools.find_single_match(data, 'class="page-link" href="([^"]+)')
     if url_pagina != "":
         paginax = "Pagina: %s" %(item.pagina + 1)
@@ -165,68 +168,77 @@ def list_all(item):
 
 def seasons(item):
     logger.info()
-
-    return AlfaChannel.seasons(item, **kwargs)
+    itemlist = list()
+    
+    infoLabels = item.infoLabels
+    seasons = ""
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    patron  = '(?ims)type="application/json">(.*?)</script><script'
+    match = scrapertools.find_single_match(data, patron)
+    json_data = jsontools.load(match)["props"]["pageProps"]["post"]["seasons"]
+    for elem in json_data:
+        if elem.get('number', '') > 0:
+            season = elem['number']
+            title = "Temporada %s" % season
+            infoLabels["season"] = int(season)
+            itemlist.append(Item(channel=item.channel, title=title, url=item.url, action="episodesxseason",
+                                 language=item.language, infoLabels=infoLabels))
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+    
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url,
+                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
+    return itemlist
 
 
 def episodios(item):
     logger.info()
-    
     itemlist = []
-    
     templist = seasons(item)
-    
-    for tempitem in templist:
+    for tempitem in templist[:-1]:
         itemlist += episodesxseason(tempitem)
-
     return itemlist
 
 
 def episodesxseason(item):
     logger.info()
-
-    kwargs['matches_post_get_video_options'] = findvideos_matches
-
-    return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, **kwargs)
-
-
-def episodesxseason_matches(item, matches_int, **AHkwargs):
-    logger.info()
+    itemlist = list()
+    infoLabels = item.infoLabels
+    season = infoLabels["season"]
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    patron  = '(?ims)type="application/json">(.*?)</script><script'
+    match = scrapertools.find_single_match(data, patron)
+    json_data = jsontools.load(match)
+    temporadas = json_data["props"]["pageProps"]["post"]["seasons"]
+    for temporada in temporadas:
+        if temporada['number'] == season:
+            episodios = temporada["episodes"]
+            break
+    for elem in episodios:
+        cap = elem['number']
+        url = "%s/seasons/%s/episodes/%s" %(item.url, season, cap)
+        title = "%sx%s" % (season, cap)
+        infoLabels["episode"] = cap
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
+                               language=item.language, infoLabels=infoLabels))
+    tmdb.set_infoLabels_itemlist(itemlist, True)
     
-    matches = []
-    findS = AHkwargs.get('finds', finds)
-
-    for x, elem_season in enumerate(matches_int):
-        #logger.error(elem_season)
-
-        if item.contentSeason != elem_season.get('number', 1): continue
-        for elem in elem_season.get('episodes', []):
-            elem_json = {}
-            #logger.error(elem)
-
-            elem_json['url'] = findS.get('episode_url', '') % (host, elem.get('slug', {}).get('name', ''), 
-                                                               item.contentSeason, elem.get('slug', {}).get('episode', 1))
-            elem_json['title'] = elem.get('title', '')
-            elem_json['season'] = item.contentSeason
-            elem_json['episode'] = int(elem.get('number', '1') or '1')
-            elem_json['thumbnail'] = elem.get('image', '')
-
-            if not elem_json.get('url', ''): 
-                continue
-
-            matches.append(elem_json.copy())
-
-    return matches
+    return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = [];
-
-    data = httptools.downloadpage(host + item.url, canonical=canonical).data
+    
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    
     patron  = '(?ims)type="application/json">(.*?)</script><script'
     match = scrapertools.find_single_match(data, patron)
-    json_data = jsontools.load(match)["props"]["pageProps"]["post"]["players"]
+    
+    if "/series/" in item.url:
+        json_data = jsontools.load(match)["props"]["pageProps"]["episode"]["players"]
+    else:
+        json_data = jsontools.load(match)["props"]["pageProps"]["post"]["players"]
     for lang in json_data:
         for info_url in json_data[lang]:
             server = info_url["cyberlocker"]
@@ -234,7 +246,7 @@ def findvideos(item):
             if server in list_serversx.keys(): server = list_serversx[server]
             qlty = info_url["quality"]
             url = info_url["result"]
-            #logger.info("%s %s %s %s" %(lang, server, qlty, url))
+            # logger.info("%s %s %s %s" %(lang, server, qlty, url))
             itemlist.append(Item(
                             channel=item.channel,
                             contentTitle=item.contentTitle,
@@ -245,45 +257,16 @@ def findvideos(item):
                             action="play",
                             url=url,
                            ))
-    #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos' and not item.contentSerieName:
+        itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             url=item.url, action="add_pelicula_to_library", extra="findvideos",
+                             contentTitle=item.contentTitle))
     return itemlist
-
-
-def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
-    logger.info()
-
-    matches = []
-    findS = AHkwargs.get('finds', finds)
-    servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem", "embed": "mystream"}
-
-    for lang, elem in list(matches_int.items()):
-        #logger.error(elem)
-
-        for link in elem:
-            elem_json = {}
-            #logger.error(link)
-
-            elem_json['server'] = link.get('cyberlocker', '')
-            elem_json['url'] = link.get('result', '')
-            elem_json['language'] = '*%s' % lang
-            elem_json['quality'] = '*%s' % link.get('quality', '')
-            elem_json['title'] = '%s'
-
-            if not elem_json['url']: continue
-
-            if elem_json['server'].lower() in ["waaw", "jetload"]: continue
-            if elem_json['server'].lower() in servers:
-               elem_json['server'] = servers[elem_json['server'].lower()]
-
-            matches.append(elem_json.copy())
-
-    return matches, langs
 
 
 def play(item):
     logger.info()
-    #item.thumbnail = item.contentThumbnail
     data = httptools.downloadpage(item.url, encoding=encoding).data
     patron = "var url = '([^']+)"
     match = scrapertools.find_single_match(data, patron)
@@ -293,18 +276,18 @@ def play(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + 'search?q=' + texto
-
+        
         if texto:
             item.c_type = 'search'
             item.texto = texto
             return list_all(item)
         else:
             return []
-
+    
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
         for line in sys.exc_info():

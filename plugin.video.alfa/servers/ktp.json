@@ -16,7 +16,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy|pornvase|sortporn|4wank|porncaper|camstreams|celebsroulette|pornve|xhand|baddies247|baddiesonly).(?:com|xxx|tube|to|tv)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy|pornvase|sortporn|4wank|porncaper|camstreams|celebsroulette|pornve|xhand|baddies247|baddiesonly|vidzx).(?:com|\\w{2,4})/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -128,7 +128,7 @@
         "url": "https://www.justporn.com/video/\\1/a"
       },
       {
-        "pattern": "(https://pornox.hu/(?:porno|video)/[0-9]+/[A-z0-9-.]+(?:/|))",
+        "pattern": "(https://pornox.hu(?:/\\w{2}|)/(?:porno|video)/[0-9]+/[A-z0-9-.]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -228,7 +228,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.(?:tabootube|nubilefilm).xxx/[A-z0-9-]+)(?:/|)",
+        "pattern": "(https://www.(?:tabootube|nubilefilm).xxx/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

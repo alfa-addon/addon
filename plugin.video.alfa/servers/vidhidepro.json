@@ -8,12 +8,16 @@
         "url": "https://vidhidevip.com/v/\\1"
       },
       {
-        "pattern": "(https://(?:filelions|fviplions|azipcdn).(?:sx|to|in|live|online|com|live|top|site)/(?:e|d|v|f|embed)/[a-z0-9]+)",
+        "pattern": "(https://(?:filelions|fviplions|azipcdn).(?:com|\\w{2,4})/(?:e|d|v|f|embed)/[a-z0-9]+)",
         "url": "\\1"
       },
       {
-        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|smoothpre|movearnpre|seraphinapl).com/(?:f|v|embed|d|file)/[A-z0-9]+)",
+        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|movearnpre|seraphinapl|bingezove|cdnvids).(?:com|\\w{2,4})/(?:f|v|embed|d|file)/[A-z0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(?i)https://(?:smoothpre|mivalyo).com/(?:f|v|embed|d|file)/([A-z0-9]+)",
+        "url": "https://smoothpre.com/embed/\\1"
       },
       {
         "pattern": "(https://stblion.xyz/(?:f|v|embed|d|file)/[A-z0-9]+(:?\\|Referer=[A-z0-9./:]+))",

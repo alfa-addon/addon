@@ -23,12 +23,12 @@ def test_video_exists(page_url):
     global data, server
     
     kwargs['headers'] = {
-        'Referer': page_url,
-        'Sec-Fetch-Dest': 'iframe',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'cross-site',
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0'
-    }
+                         'Referer': page_url,
+                         'Sec-Fetch-Dest': 'iframe',
+                         'Sec-Fetch-Mode': 'navigate',
+                         'Sec-Fetch-Site': 'cross-site',
+                         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0'
+                        }
     # kwargs['random_headers'] = True
     
     # page_url = httptools.downloadpage(page_url, follow_redirects=False, **kwargs).headers["location"]
@@ -40,8 +40,11 @@ def test_video_exists(page_url):
         page_url = scrapertools.find_single_match(datos, '<iframe src="([^"]+)')
     response = httptools.downloadpage(page_url, referer=page_url, **kwargs)
     data = response.data
+    logger.debug(data)
     if response.code == 404 or "not found" in data or "server maintenance" in data:
         return False,  "[filemoon] El fichero no existe o ha sido borrado"
+    if not response.data:
+        return False,  "[filemoon] Error al cargar"
     return True, ""
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):

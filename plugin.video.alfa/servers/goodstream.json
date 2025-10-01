@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://goodstream.one/embed-[a-z0-9]+.html)",
+        "pattern": "(https://goodstream.(?:one|\\w{2,4})/(?:embed-|/)[a-z0-9]+(?:\\.html|))",
         "url": "\\1"
       }
     ]
@@ -38,5 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": ""
+  "thumbnail": "",
+  "force_inputstream": "adaptive"
 }

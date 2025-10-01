@@ -11,7 +11,7 @@ def test_video_exists(page_url):
     vid = scrapertools.find_single_match(page_url, '([0-9]+)')
 
     data = httptools.downloadpage(page_url).data
-    if "File was deleted" in data\
+    if "was deleted" in data\
        or "not Found" in data:
        # or "small" in data:
         return False, "[%s] El video ha sido borrado o no existe" % server

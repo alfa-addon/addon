@@ -4,46 +4,17 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "/netu/tv/(embed_)(.*?$)",
-        "url": "http://netu.tv/watch_video.php?v=\\2"
+        "pattern": "((?:hqq|waaw|netu|waaw1)(?:\\.watch\\/|\\.\\w{2,4}\\/)(?:e/|f/|player/|)(?:embed_player\\.php\\?(?:v=|vid=)|)[A-z0-9]+)",
+        "url": "https://\\1"
       },
       {
-        "pattern": "https://waaws.tk/player/embed_player.php?vid=([A-z0-9]+)&autoplay=yes",
-        "url": "http://netu.tv/watch_video.php?v=\\2"
+        "pattern": "(veev.to/(?:e|f)/[A-z0-9]+)",
+        "url": "https://\\1"
       },
       {
-        "pattern": "(?:hqq|waaw|netu|waaw1)(?:\\.tv\\/|\\.watch\\/|\\.php\\?).*?(?:v=|vid=)([A-z0-9]+)",
-        "url": "http://netu.tv/watch_video.php?v=\\1"
-      },
-      {
-        "pattern": "(?:hqq|waaw|netu|waaw1)(?:\\.tv\\/|\\.watch\\/|\\.php\\?).*hash=([A-z0-9]+)",
-        "url": "http://hqq.tv/player/hash.php?hash=\\1"
-      },
-      {
-        "pattern": "(?:hqq|waaw|netu|waaw1|xz6|pbtube|69x|goo).(?:to|tv|top|co|online|gl)",
-        "url": "http://hqq.tv/player/hash.php?hash=bGtBd0FlU081aExMb"
-      },
-      {
-        "pattern": "https://vidxhot.(?:com|net)/e/([A-z0-9]+)",
-        "url": "http://hqq.tv/player/hash.php?hash=\\1"
-      },
-      {
-        "pattern": "(?:hqq|waaw|netu|waaw1)(?:\\.tv\\/|\\.watch\\/|.ac\\/|\\.cc\\/|\\.php\\?)(e/|f/)([A-z0-9]+)",
-        "url": "http://hqq.tv/player/hash.php?hash=\\1"
-      },
-      {
-        "pattern": "(?:hqq|megaplay|netu|netuplayer).(?:tv|cc|wiztube.xyz)/player/embed_player.php\\?vid=([A-z0-9]+)",
-        "url": "http://hqq.tv/player/hash.php?hash=\\1"
-      },
-      {
-        "pattern": "https://player.moovies.in/f/([A-z0-9]+)",
-        "url": "http://hqq.tv/player/hash.php?hash=\\1"
-      },
-      {
-        "pattern": "https://(?:richhioon|woffxxx|pornjustx).(?:eu|com)/e/([A-z0-9]+)",
-        "url": "http://hqq.tv/player/hash.php?hash=\\1"
+        "pattern": "player.xxxbestsites.com/(?:e|f)/([A-z0-9]+)",
+        "url": "https://hqq.to/e/\\1"
       }
-
     ]
   },
   "free": true,

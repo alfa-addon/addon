@@ -10,6 +10,7 @@ from core import httptools
 from core import urlparse
 from bs4 import BeautifulSoup
 
+
 canonical = {
              'channel': 'pornmz', 
              'host': config.get_setting("current_host", 'pornmz', default=''), 
@@ -52,7 +53,7 @@ def canal(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('nav', id='site-navigation')
-    matches = soup.find_all('a', href=re.compile(r"^%spmvideo/(?:s|c)/\w+" %host))
+    matches = soup.find_all('a', href=re.compile(r"pmzvideo/(?:s|c)/\w+"))
     for elem in matches:
         url = elem['href']
         title = elem.text
@@ -101,7 +102,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article',id=re.compile(r"^post-\d+"))
+    matches = soup.find_all('article', class_=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']

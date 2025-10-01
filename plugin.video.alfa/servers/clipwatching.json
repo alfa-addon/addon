@@ -42,5 +42,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/L6t6gMWr/clipwatching.png"
+  "thumbnail": "https://i.postimg.cc/L6t6gMWr/clipwatching.png",
+  "force_inputstream": "adaptive"
 }

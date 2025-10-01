@@ -15,6 +15,7 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from core import tmdb
+from modules import filtertools
 from modules import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
@@ -113,6 +114,7 @@ def list_all(item):
     logger.info()
     itemlist = list()
     
+    
     soup = create_soup(item.url)
     matches = soup.find_all("article")
     
@@ -121,10 +123,10 @@ def list_all(item):
     matches = matches[items_half:] if shown_half == 1 else matches[:items_half]
     
     for elem in matches:
+        langs = list()
         try:
             quality = ""
             year = ""
-            lang = ""
             url = elem.get("href", '') or elem.a.get("href", '')
             thumb = elem.img['src']
             if not thumb.startswith("https"):
@@ -136,17 +138,15 @@ def list_all(item):
                 title = title.get_text(strip=True)
             if year:
                 year = year.text.strip()
-            if elem.find('div', class_='lang-item'):
-                lang = elem.find('div', class_='lang-item').get_text(strip=True)
-            elif elem.find('div', class_='sprite'):
-                lang = elem.find('div', class_='sprite')['class'][-1]
-                lang = lang.replace("sprite-", "")
-            if lang:
-                language = IDIOMAS.get(lang, lang)
-            elif "esp." in url: language = "CAST"
-            elif "sub." in url: language ="VOSE"
+            if elem.find('div', class_='language-box'):
+                lang_items = elem.find_all('div', class_='lang-item')
+                for lang in lang_items:
+                    lang = lang.span.get_text(strip=True)
+                    language = IDIOMAS.get(lang, lang)
+                    langs.append(language)
+            
             new_item = Item(channel=item.channel, url=url, title=title, thumbnail=thumb, quality = quality,
-                            language=language, infoLabels={"year": year})
+                            language=langs, infoLabels={"year": year})
             
             if "series" in url or "serie" in url:
                 seasons = ""
@@ -284,26 +284,25 @@ def findvideos(item):
     infoLabels = item.infoLabels
     
     soup = create_soup(item.url)
+    match = soup.find_all("div", class_="drpdn")
+    for leng in match:
+        lang = leng.span.text.strip()
+        if "LAT" in lang: lang = "LAT"
+        if "ESP" in lang: lang = "CAST"
+        if "SUB" in lang: lang = "SUB"
+        matches = leng.find_all('li')
+        for elem in matches:
+            url = get_url(elem['data-src'])
+            itemlist.append(Item(channel=item.channel, url=url, action='play', title= "%s",
+                        infoLabels=infoLabels, language=lang))
     
-    if soup.find("div", class_="optns-bx"):
-        matches = []
-        match = soup.find("div", class_="optns-bx").find_all("li")
-        for elem in match:
-            matches.append(base64.b64decode(elem['data-src']).decode("utf8"))
-    elif soup.find("div", class_="TPlayer"):
-        matches = soup.find("div", class_="TPlayer")
-        matches = re.compile("https://.*?trtype=\d+",re.DOTALL).findall(str(matches))
-    
-    for elem in matches:
-        # url = get_url(elem)
-        url = elem.replace("&amp;", "&").replace("#038;", "")
-        soup = create_soup(url)
-        url = soup.iframe['src']
-        quality = ""
-        itemlist.append(Item(channel=item.channel, url=url, action='play', title= "%s",
-                            infoLabels=infoLabels, language=item.language, quality=quality))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
+    itemlist.sort(key=lambda x: x.server)
+    itemlist.sort(key=lambda x: x.language)
+    
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     
@@ -335,8 +334,9 @@ def fix_title(title):
     return title
 
 def get_url(url):
+    url = base64.b64decode(url).decode("utf8")
     url = re.sub("amp;|#038;", "", url)
-    url = re.sub("trembed=", "trdownload=", url)
-    url = httptools.downloadpage(url, only_headers=True).url
+    soup = create_soup(url)
+    url = soup.iframe['src']
     return url
 

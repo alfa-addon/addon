@@ -9,17 +9,16 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
+
 # https://sextubefun.com/  https://iporntoo.com/  https://wanktv.com/  https://www.sunporno.com/   https://freehdporn.xxx/
 
-
-##############   Response code: 404    a la segunda entra
 
 canonical = {
              'channel': 'sunporno', 
              'host': config.get_setting("current_host", 'sunporno', default=''), 
              'host_alt': ["https://www.sunporno.com/"], 
              'host_black_list': [], 
-             'pattern': ['toplogo" href="?([^"|\s*]+)["|\s*]'], 
+             # 'pattern': ['toplogo" href="?([^"|\s*]+)["|\s*]'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 4, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -27,15 +26,17 @@ host = canonical['host'] or canonical['host_alt'][0]
 
 timeout = 5
 
+api = "%ss/?mode=async&function=get_block&block_id=list_videos_videos_list_search_result&category_ids=&q=" %host
+
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host +"s/?q=&sort_by=post_date&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "s/?q=&sort_by=video_viewed&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "s/?q=&sort_by=rating&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas favoritas" , action="lista", url=host + "s/?q=&sort_by=most_favourited&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas comentada" , action="lista", url=host + "s/?q=&sort_by=most_commented&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas largas" , action="lista", url=host + "s/?q=&sort_by=duration&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=api + "&sort_by=post_date&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=api +"&sort_by=video_viewed&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=api +"&sort_by=rating&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas favoritas" , action="lista", url=api +"&sort_by=most_favourited&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas comentada" , action="lista", url=api +"&sort_by=most_commented&from_videos=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas largas" , action="lista", url=api +"&sort_by=duration&from_videos=1"))
     itemlist.append(Item(channel=item.channel, title="PornStars" , action="categorias", url=host + "pornstars/?sort_by=model_viewed&from=1"))
     # itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
@@ -45,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%ss/?q=%s&sort_by=post_date&from_videos=1" % (host, texto)
+    item.url = "%s%s&sort_by=post_date&from_videos=1" % (api, texto)
     try:
         return lista(item)
     except Exception:

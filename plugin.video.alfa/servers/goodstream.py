@@ -34,7 +34,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     
     url = scrapertools.find_single_match(data, 'file:\s*"([^"]+)"')
-    # url += "|Referer=%s" % page_url
+    
     headers = httptools.default_headers.copy() 
     url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
     

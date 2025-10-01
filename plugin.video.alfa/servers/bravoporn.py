@@ -21,8 +21,9 @@ def test_video_exists(page_url):
     
     global data, host, server
     data = httptools.downloadpage(page_url, **kwargs).data
-    host = "https://%s" % scrapertools.get_domain_from_url(page_url)
-    server = host.split(".")[-2]
+    domain = scrapertools.get_domain_from_url(page_url)
+    host = "https://%s" % domain
+    server = domain.split(".")[-2]
     # server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
     # server = scrapertools.find_single_match(page_url, '//(?:www.|es.|)([A-z0-9-]+).(?:com|net|nl|xxx|cz)')
     if "<h2>WE ARE SORRY</h2>" in data or "<title>404 Not Found</title>" in data:
@@ -33,7 +34,9 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    data = httptools.downloadpage(page_url, **kwargs).data
+    
+    global data, host, server
+    
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
     if soup.find("div", id="player-wrap"):  ####  anyporn
         data = soup.find("div", class_="player-wrap")
@@ -78,10 +81,9 @@ def get_video_url(page_url, video_password):
                 url = "http:%s" % url
             
             # url += "|Referer=%s/" % host
-            host = scrapertools.get_domain_from_url(page_url)
             headers = httptools.default_headers.copy() 
             url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
             video_urls.append(["[%s] %s" % (server, quality), url])
-
+    
     video_urls.sort(key=lambda item: int(re.sub("\D", "", item[0])))
     return video_urls

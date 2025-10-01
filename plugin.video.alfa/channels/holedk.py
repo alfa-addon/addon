@@ -144,7 +144,8 @@ def findvideos(item):
             url = "https://lulustream.com/e/%s" % id
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "ntu" in ser:
-            continue
+            url = "https://hqq.to/e/%s" % id
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         else:
             platformtools.dialog_ok("Server Nuevo", "Server nuevo en este canal [%s]" %ser)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

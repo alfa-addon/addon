@@ -1,17 +1,17 @@
 {
-  "active": false,
+  "active": true,
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(megaup.net/[A-z0-9]+/[A-z0-9.]+)",
-        "url": "https://\\1"
+        "pattern": "(https://zhornyhub.com/vk_videos/\\?v=[0-9-_]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "megaup",
-  "name": "megaup",
+  "id": "hornyhub",
+  "name": "hornyhub",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://megaup.net/themes/flow/images/main_logo_inverted.png"
+  "thumbnail": "https://zhornyhub.com/wp-content/uploads/fbrfg/apple-touch-icon.png",
+  "force_inputstream": "ffmpegdirect"
 }

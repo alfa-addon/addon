@@ -19,15 +19,19 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES_A
 list_quality_tvshow = []
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
-forced_proxy_opt = 'ProxySSL'
+
+forced_proxy_opt = '' #'ProxySSL'
 
 canonical = {
              'channel': 'xmoviesforyou', 
              'host': config.get_setting("current_host", 'xmoviesforyou', default=''), 
              'host_alt': ["https://xmoviesforyou.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             # 'CF': False, 'CF_test': False, 'alfa_s': True
+             'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'cf_assistant': False, 'CF_stat': True, 
+             'CF': True, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
@@ -71,7 +75,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host + "page/1"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Buscar is OUT", action="search"))
     
     autoplay.show_option(item.channel, itemlist)
     
@@ -122,8 +126,9 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             if AlfaChannel.obtain_domain(elem_json['url']):
                 elem_json['server'] = AlfaChannel.obtain_domain(elem_json['url']).split('.')[-2]
             if elem_json['server'] in ["Netu", "trailer"]: continue
-            if elem_json['server'] in srv_ids:
-                elem_json['server'] = srv_ids[elem_json['server']]
+            elem_json['server'] = ''
+            # if elem_json['server'] in srv_ids:
+                # elem_json['server'] = srv_ids[elem_json['server']]
             elem_json['language'] = ''
         
         except:
