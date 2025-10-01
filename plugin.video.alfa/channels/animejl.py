@@ -8,10 +8,11 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 from lib import AlfaChannelHelper
-if not PY3: _dict = dict; from AlfaChannelHelper import dict
-from AlfaChannelHelper import DictionaryAllChannel
-from AlfaChannelHelper import re, traceback
-from AlfaChannelHelper import Item, scrapertools, get_thumb, config, logger, filtertools, autoplay, renumbertools
+if not PY3: _dict = dict; from lib.AlfaChannelHelper import dict
+from lib.AlfaChannelHelper import DictionaryAllChannel
+from lib.AlfaChannelHelper import re, traceback
+from lib.AlfaChannelHelper import Item, scrapertools, get_thumb, config, logger, filtertools, autoplay, renumbertools
+from lib.alfa_assistant import is_alfa_installed
 
 IDIOMAS = AlfaChannelHelper.IDIOMAS_ANIME
 list_language = list(set(IDIOMAS.values()))
@@ -22,13 +23,23 @@ list_servers = ['uqload', 'voe', 'streamtape', 'doodstream', 'okru', 'streamlare
 
 forced_proxy_opt = 'ProxySSL'
 
+cf_assistant = "force" if is_alfa_installed() else False
+forced_proxy_opt = None if cf_assistant else 'ProxyCF'
+debug = config.get_setting('debug_report', default=False)
+
 canonical = {
              'channel': 'animejl', 
              'host': config.get_setting("current_host", 'animejl', default=''), 
              'host_alt': ["https://www.anime-jl.net/"], 
              'host_black_list': [],
              'pattern': '<ul\s*class="Menu">\s*<li\s*class="Current">\s*<a\s*href="([^"]+)"',
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'set_tls': True, 'set_tls_min': True, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': cf_assistant, 
+             'cf_assistant_ua': True, 'cf_assistant_get_source': True if cf_assistant == 'force' else False, 
+             'cf_no_blacklist': True, 'cf_removeAllCookies': False if cf_assistant == 'force' else True,
+             'cf_challenge': True, 'cf_returnkey': 'url', 'cf_partial': True, 'cf_debug': debug, 
+             'cf_cookies_names': {'cf_clearance': False},
+             'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
+             'CF_stat': True if cf_assistant is True else False, 'session_verify': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -63,12 +74,11 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['ListAnimes']}]),
          'seasons_search_qty_rgx': '', 
          'season_url': host, 
          'episode_url': '', 
-         'episodes': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*episodes\s*=\s*\[')}]),
-                           ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': 'var\s*episodes\s*=\s*([^;]+);', '@EVAL': True}])]),
+         'episodes': dict([('find_all', [{'tag': ['script']}])]),
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
-         'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*video \s*=\s*\[')}]),
+         'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile(r'var\s*video\s*=\s*\[')}]),
                              ('get_text', [{'tag': '', '@STRIP': True, '@TEXT_M': "video\[\d+\]\s*=\s*'([^']+)'", '@DO_SOUP': True}])]),
          'title_clean': [['(?i)Español|Latino|Castellano|Audio', ''],
                          ['(?i)\s*(?:temporada|season)\s*\d+', '']],
@@ -244,82 +254,82 @@ def episodios(item):
 
 def episodesxseason(item, **AHkwargs):
     logger.info()
-
-    """ Aquí le decimos a qué función tienen que saltar para las películas de un solo vídeo """
-    kwargs['matches_post_get_video_options'] = findvideos
     soup = AHkwargs.get('soup', '')
-
-    return AlfaChannel.episodes(item, data=soup, matches_post=episodesxseason_matches, **kwargs)
+    itemlist = AlfaChannel.episodes(item, data=soup, matches_post=episodesxseason_matches, **kwargs)
+    if item.contentType == 'movie':
+        temp_list = [i for i in itemlist if i.action == 'findvideos']
+        if len(temp_list) == 0:
+            return itemlist
+        
+        infoLabels = {'tmdb_id': temp_list[0].infoLabels['tmdb_id']}
+        temp_list = [i.clone(infoLabels = infoLabels, contentType = 'movie') for i in temp_list]
+        
+        from core import tmdb
+        tmdb.set_infoLabels_itemlist(temp_list, True)
+        
+        if len(temp_list) == 1:
+            from platformcode.launcher import run
+            run(temp_list[0])
+        else:
+            itemlist[0:len(temp_list)] = [i.clone(contentSerieName = i.contentTitle) for i in temp_list]
+    return itemlist
 
 
 def episodesxseason_matches(item, matches_int, **AHkwargs):
     logger.info()
 
     matches = []
-    findS = AHkwargs.get('finds', finds)
     soup = AHkwargs.get('soup', {})
 
-    pattern = r'var\s*anime_info\s*=\s*(\[[^\]]+\]);'
-    info = soup.find('script', string=re.compile(pattern)).string
+    pattern = re.compile(r'var\s*anime_info\s*=\s*(\[[^\]]+\]);')
+    info = pattern.search(str(soup))
+    info = info.group(1) if info else ''
     titleSeason = get_title_season(info)
-    next_episode_air_date = get_next_episode_air_date(info, pattern)
+    next_episode_air_date = get_next_episode_air_date(info)
     
     # Asi lee los datos correctos de TMDB
     # Si se detecta incorrectamente el titulo en TMDB no sale ningun capitulo, mejor no forzar esto.
     # if titleSeason != item.contentSeason:
         # return matches
-    
-    # logger.error(item)
-    for x, (episode, url, thumbnail, movie_data) in enumerate(matches_int):
-        elem_json = {}
-        # logger.error(matches_int[x])
-        
-        try:
-            if item.contentType == 'movie':
-                if re.search(r"\|| / ", movie_data):
-                    index, language = re.split(r"\|| / ", movie_data, maxsplit=1)
-                else:
-                    index, language = movie_data, item.language
-                episode = scrapertools.find_single_match(index, 'Película\s*(\d+)') or '1'
-                elem_json['title'] = 'Película %s' % episode
-                elem_json['language'] = language.strip()
-            else:
+
+    pattern = re.compile(r'var\s*episodes\s*=\s*([^;]+)')
+    match = pattern.search(str(soup))
+    if match:
+        for x, (episode, url, thumbnail, movie_data) in enumerate(eval(match.group(1))):
+            elem_json = {}
+            #logger.error(matches_int[x])
+            try:
+                elem_json['language'] = item.language
                 elem_json['title'] = 'Episodio %s' % episode
-                
-                
-            elem_json['url'] = "%s/%s" % (item.url, url)
-            elem_json['thumbnail'] = thumbnail
-            elem_json['season'] = titleSeason
-            elem_json['episode'] = episode
-            if next_episode_air_date:
-                elem_json['next_episode_air_date'] = next_episode_air_date
-        except Exception:
-            logger.error(matches_int[x])
-            logger.error(traceback.format_exc())
-            continue
+                elem_json['season'] = titleSeason
+                elem_json['episode'] = episode
+                elem_json['url'] = "%s/%s" % (item.url, url)
+                elem_json['thumbnail'] = '%sstorage/%s' % (host, thumbnail)
+                if next_episode_air_date:
+                    elem_json['next_episode_air_date'] = next_episode_air_date
+            except Exception:
+                logger.error(matches_int[x])
+                logger.error(traceback.format_exc())
+                continue
 
-        if not elem_json.get('url', ''): 
-            continue
+            if not elem_json.get('url', ''):
+                continue
 
-        matches.append(elem_json.copy())
+            matches.append(elem_json.copy())
 
     return matches
 
 
-def findvideos(item, **AHkwargs):
+def findvideos(item):
     logger.info()
-
-    kwargs['matches_post_episodes'] = episodesxseason_matches
-
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
-                                         verify_links=False, findvideos_proc=True, **kwargs)
+                                            verify_links=False, findvideos_proc=True, **kwargs)
 
 
 def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
 
     matches = []
-    findS = AHkwargs.get('finds', finds)
 
     for elem in matches_int:
         elem_json = {}
@@ -408,8 +418,9 @@ def newest(categoria, **AHkwargs):
 
 
 def get_lang_from_str(string):
-
-    if 'latino' in string.lower():
+    if 'sub' in string.lower():
+        lang = 'VOSE'
+    elif 'latino' in string.lower():
         lang = 'Latino'
     elif 'español' in string.lower() or 'castellano' in string.lower():
         lang = 'Castellano'
@@ -433,12 +444,11 @@ def get_title_season(url):
     return season
 
 
-def get_next_episode_air_date(info, pattern):
+def get_next_episode_air_date(info):
     logger.info()
     try:
-        data = re.search(pattern, info)
-        if data:
-            l_data = eval(data.group(1))
+        if info:
+            l_data = eval(info)
             if type(l_data) is list and len(l_data) > 3:
                 # La fecha del próximo episodio está en el cuarto elemento de la lista
                 # l_data[3] es una cadena de fecha en formato 'yyyy-mm-dd'

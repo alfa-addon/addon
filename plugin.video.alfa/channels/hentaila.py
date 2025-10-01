@@ -18,6 +18,7 @@ canonical = {
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
+host = host.rstrip("/")
 
 IDIOMAS = {'VOSE': 'VOSE'}
 list_language = list(IDIOMAS.values())

@@ -51,7 +51,7 @@ def test_video_exists(page_url):
             return False, "[Doodstream] El acceso al video está restringido. Reinténtalo más tarde"
     elif response.code == 404:
         return False, "[Doodstream] El archivo no existe o ha sido borrado"
-    elif response.code == 301:
+    elif response.code in [301, 302]:
         redir = response.headers.get("location", '')
         if redir:
             if not redir.startswith("http"):
