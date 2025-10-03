@@ -65,7 +65,10 @@ def categorias(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.img['src']
+        if elem.img.get('src', ''):
+            thumbnail = elem.img['src']
+        else:
+            thumbnail = elem.img['data-src']
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
@@ -96,7 +99,10 @@ def lista(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.img['data-src']
+        if elem.img.get('src', ''):
+            thumbnail = elem.img['src']
+        else:
+            thumbnail = elem.img['data-src']
         plot = ""
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )

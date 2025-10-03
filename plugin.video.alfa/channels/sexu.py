@@ -53,7 +53,7 @@ def categorias(item):
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a class="item" href="([^"]+)" title="([^"]+)".*?'
-    patron += 'data-src="([^"]+)".*?'
+    patron += '(?:data-src|src)="([^"]+)".*?'
     patron += '<div class="item__counter">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
@@ -76,7 +76,7 @@ def lista(item):
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a class="item__main" href="/([^"]+)/" title="([^"]+)".*?'
-    patron += 'data-src="([^"]+)".*?'
+    patron += '(?:data-src|src)="([^"]+)".*?'
     patron += '<div class="item__counter">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,time in matches:
