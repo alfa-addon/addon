@@ -94,7 +94,9 @@ def get_video_url(page_url, video_password):
                     video_urls.append(['[%s] %s' % (server,quality), url])
         else:
             # url += "|Referer=%s" % host
-            url += "|Referer=%s/&Origin=%s" % (host, host)
+            headers = httptools.default_headers.copy() 
+            url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+            # url += "|Referer=%s/&Origin=%s" % (host, host)
             video_urls.append(["[%s] mp4" %(server), url])
     return video_urls
 
