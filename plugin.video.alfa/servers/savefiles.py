@@ -9,7 +9,6 @@ from platformcode import logger
 
 video_urls = []
 
-
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     response = httptools.downloadpage(page_url)

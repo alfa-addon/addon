@@ -179,6 +179,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://www.peekvids.com/v/[A-z0-9-]+/[A-z0-9-_]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)bustybus.com/video\\?play=[0-9]+)",
         "url": "\\1"
       }

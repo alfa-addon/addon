@@ -70,7 +70,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             if "?br=" in url:
                 url += "&rnd=" + str(int(datetime.now().timestamp() * 1000))
             # url += "|verifypeer=false"
-            # url += "|Referer=%s" % host
+            url += "|Referer=%s" % host
             video_urls.append(['[ktplayer] %s' % quality, url])
         
         if "lq" in quality.lower() or "high" in quality.lower() or "low" in quality.lower():
@@ -87,6 +87,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     if not url:
         url = scrapertools.find_single_match(data, '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?')
+        url += "|Referer=%s" % host
         video_urls.append(['[ktplayer]', url])
     return video_urls
 

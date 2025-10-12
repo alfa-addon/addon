@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://savefiles.com/(?:e|d)/([A-z0-9]+)",
+        "pattern": "https://(?:savefiles|streamhls).\\w{2,4}/(?:e|d)/([A-z0-9]+)",
         "url": "https://savefiles.com/dl?op=embed&file_code=\\1&auto=0&referer="
       }
     ]

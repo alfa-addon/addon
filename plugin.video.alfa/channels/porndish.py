@@ -20,8 +20,11 @@ canonical = {
              'host': config.get_setting("current_host", 'porndish', default=''), 
              'host_alt': ["https://www.porndish.com"], 
              'host_black_list': [], 
-             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'cf_assistant': False, 'CF_stat': True, 
+             'CF': True, 'CF_test': False, 'alfa_s': True
+             # 'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             # 'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
@@ -124,6 +127,7 @@ def lista(item):
         thumbnail = elem.img['src']
         if "svg" in thumbnail:
             thumbnail = elem.img['data-src']
+        thumbnail += "|Referer=%s" %host
         plot = ""
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
@@ -142,7 +146,10 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
+    
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    
     if not soup:
         return itemlist
     # soup = soup.find('div', class_='entry-content')
@@ -155,8 +162,15 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
     if soup.button:
         data = soup.find_all('script')[1]
-        url =  scrapertools.find_single_match(str(data), '(?:src|SRC)="([^"]+)"')
-        itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
+        # data = scrapertools.find_multiple_match(data, '<script type="text/javascript">([^<]+)')
+        # data = data.string
+        data = str(data).replace('\\"', '"').replace("\/", "/")
+        # data = data
+        # logger.debug(isinstance(data, bytes))
+        # logger.debug(data)
+        matches =  scrapertools.find_multiple_matches(data, '(?:src|SRC)="([^"]+)"')
+        for url in matches:
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
