@@ -183,6 +183,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://youperv.com/[A-z0-9-]+/[A-z0-9-]+.html)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)bustybus.com/video\\?play=[0-9]+)",
         "url": "\\1"
       }

@@ -10,8 +10,11 @@
       {
         "pattern": "https://(p.easyvidplayer.com)/#([A-z0-9]+)",
         "url": "https://\\1/api/v1/video?id=\\2"
+      },
+      {
+        "pattern": "https://(av.ezplayer.me)/#([A-z0-9]+)",
+        "url": "https://\\1/api/v1/video?id=\\2"
       }
-      
     ]
   },
   "free": true,

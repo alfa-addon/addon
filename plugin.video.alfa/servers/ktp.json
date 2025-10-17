@@ -248,6 +248,9 @@
         "url": "\\1/a/"
       },
       {
+        "pattern": "(https://saintporn.com/video/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },      {
         "pattern": "(https://(?:www.|)(?:fapnfuck|fuqster|sexpester|w1mp|w4nkr).com/(?:video|embed)/[0-9]+)",
         "url": "\\1/a/"
       },
