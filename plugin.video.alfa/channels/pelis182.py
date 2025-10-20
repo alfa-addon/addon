@@ -123,7 +123,6 @@ def list_all(item):
             new_item.contentTitle = title
             new_item.action = "findvideos"
             new_item.contentType = "movie"
-            new_item.url = findframe(url)
         elif c_type == "tvshow":
             title = re.sub(season_pattern, '', title)
             new_item.title = title
@@ -216,6 +215,9 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
+    
+    if item.contentType == "movie":
+        item.url = findframe(item.url)
     
     itemlist.append(Item(channel=item.channel, server="lauchacohete", title='%s', 
                          action='play', url=item.url,

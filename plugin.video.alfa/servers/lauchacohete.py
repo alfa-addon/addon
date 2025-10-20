@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------
-# Conector osjonosu By Alfa development Group
+# Conector lauchacohete By Alfa development Group
 # --------------------------------------------------------
 from core import httptools
 from core import scrapertools
