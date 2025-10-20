@@ -179,7 +179,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['title'] = elem.img.get("alt", '').replace('VOSE', '')
                 elem_json['thumbnail'] = elem.img.get('data-src', '') or elem.img.get('src', '')
                 if elem.find("span", class_="year"): elem_json['year'] = elem.find("span", class_="year").get_text(strip=True)
-                elem_json['mediatype'] = 'tvshow' if "online" in elem_json['url'] and not "pelicula" in elem_json['url'] else 'movie'
+                elem_json['mediatype'] = 'tvshow' if "serie" in elem_json['url'] and not "pelicula" in elem_json['url'] else 'movie'
 
             else:
                 if item.c_type == 'episodios':
