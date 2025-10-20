@@ -119,7 +119,7 @@ def mainlist(item):
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
     
     itemlist.append(Item(channel=item.channel, title='Series', url=host + tv_path, action='list_all',
-                         thumbnail=get_thumb('anime', auto=True), c_type='series'))
+                         thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
     
     itemlist.append(Item(channel=item.channel, title='Peliculas', url=host + movie_path, action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
