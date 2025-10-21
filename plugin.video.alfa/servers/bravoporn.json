@@ -44,6 +44,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)fullmovies.xxx/videos/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://es.anyporn.com/[0-9]+/)",
         "url": "\\1"
       },
