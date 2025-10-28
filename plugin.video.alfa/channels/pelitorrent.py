@@ -515,7 +515,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
         if not '.torrent' in elem_json['url']:
             TORRENT_HOSTS = ['https://www.filekas.com', 'https://www.bajatorrent.org']
-            KWARGS = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 'forced_proxy_opt': None, 
+            KWARGS = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 'forced_proxy_opt': None, 'hide_infobox': True, 
                       'cf_assistant': False, 'canonical': {'preferred_proxy_ip': canonical.get('preferred_proxy_ip', '')}}
             torrent = AlfaChannel.create_soup(elem_json['url'], **KWARGS)
 
