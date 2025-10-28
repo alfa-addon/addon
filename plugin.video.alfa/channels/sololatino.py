@@ -21,6 +21,7 @@ from channelselector import get_thumb
 from platformcode import config, logger
 from modules import filtertools
 from modules import autoplay
+from lib.alfa_assistant import is_alfa_installed
 
 
 IDIOMAS = {'2': 'VOSE', "0": "LAT", "1": "CAST", "LAT": "LAT"}
@@ -35,18 +36,28 @@ list_servers = [
     'directo'
     ]
 
+cf_assistant = "force" if is_alfa_installed() else False
+forced_proxy_opt = None if cf_assistant else 'ProxyCF'
+cf_debug = True
+
 canonical = {
              'channel': 'sololatino', 
              'host': config.get_setting("current_host", 'sololatino', default=''), 
              'host_alt': ["https://sololatino.net/"], 
              'host_black_list': [], 
              'pattern': ['<meta\s*property="og:url"\s*content="([^"]+)"'], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
-             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_stat': True, 'cf_assistant_if_proxy': True, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'set_tls': True, 'set_tls_min': True, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': cf_assistant, 
+             'cf_assistant_ua': True, 'cf_assistant_get_source': True if cf_assistant == 'force' else False, 
+             'cf_no_blacklist': True, 'cf_removeAllCookies': False if cf_assistant == 'force' else True,
+             'cf_challenge': True, 'cf_returnkey': 'url', 'cf_partial': True, 'cf_debug': cf_debug, 
+             'cf_cookies_names': {'cf_clearance': False},
+             'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
+             'CF_stat': True if cf_assistant is True else False, 'session_verify': True, 
+             'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': False
             }
+
 host = canonical['host'] or canonical['host_alt'][0]
-patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
+
 TIMEOUT = 30
 
 
