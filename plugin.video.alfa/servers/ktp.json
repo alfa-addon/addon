@@ -76,7 +76,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)porngrey.(?:com|net)/video/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:porngrey|saintporn).(?:com|net)/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -248,10 +248,6 @@
         "url": "\\1/a/"
       },
       {
-        "pattern": "(https://saintporn.com/video/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://(?:www.|)(?:fapnfuck|fuqster|sexpester|w1mp|w4nkr).com/(?:video|embed)/[0-9]+)",
         "url": "\\1/a/"
       },
@@ -261,10 +257,6 @@
       },
       {
         "pattern": "(https://(?:www.|\\w{2,4}.|)(?:sslkn|sosalkino).(?:com|\\w{2,4})/(?:video|videos|embed)/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://www.porndupe.art/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
