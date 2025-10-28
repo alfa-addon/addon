@@ -98,7 +98,8 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'id': ['archive-content']}]),
          'controls': {'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 15, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
                       'host_torrent': host_torrent, 'duplicates': [], 'join_dup_episodes': False, 'torrent_kwargs': {'follow_redirects': False},
-                      'torrent_url_replace': [[r'\/s\/', '/index.php/s/'], [r'([^^]+/index.php/s/[^$]+$)', r'\1/download']]},
+                      #'torrent_url_replace': [[r'\/s\/', '/index.php/s/'], [r'([^^]+/index.php/s/[^$]+$)', r'\1/download']],
+                     },
          'timeout': timeout * 2}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -487,7 +488,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     for elem in matches_int:
         elem_json = {}
-        #logger.error(elem)
+        logger.error(elem)
 
         for x, td in enumerate(elem.find_all('td')):
             try:
@@ -511,6 +512,37 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
         if not elem_json.get('url', ''): 
             continue
+
+        if not '.torrent' in elem_json['url']:
+            TORRENT_HOSTS = ['https://www.filekas.com', 'https://www.bajatorrent.org']
+            KWARGS = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 'forced_proxy_opt': None, 
+                      'cf_assistant': False, 'canonical': {'preferred_proxy_ip': canonical.get('preferred_proxy_ip', '')}}
+            torrent = AlfaChannel.create_soup(elem_json['url'], **KWARGS)
+
+            if AlfaChannel.response.sucess:
+                if torrent.a:
+                    elem_json['url'] = torrent.a.get('href', '')
+                    if AlfaChannel.obtain_domain(elem_json['url'], scheme=True) in TORRENT_HOSTS:
+                        if not '.torrent' in elem_json['url']:
+                            torrent = AlfaChannel.create_soup(elem_json['url'], soup=False, json=False, **KWARGS)
+
+                            if torrent.sucess:
+                                torrent_url = '%s/%s/download/%s?shareable_link=%s&password=null'
+                                elem_json['host_torrent'] = AlfaChannel.obtain_domain(elem_json['url'], scheme=True)
+                                elem_json['host_torrent_referer'] = elem_json['url']
+                                torrent_json = jsontools.load(scrapertools.find_single_match(torrent.data, r'window\.bootstrapData\s*=\s*([^;]+);'))
+                                url_base = torrent_json.get('loaders', {}).get('shareableLinkPage', {}).get('link', {})
+
+                                if url_base.get('entry', {}):
+                                    elem_json['url'] = torrent_url % (elem_json['host_torrent'], re.sub(r'\/\d+$', '', 
+                                                                      url_base['entry'].get('url', '')), 
+                                                                      url_base['entry'].get('hash', ''), 
+                                                                      url_base.get('id', ''))
+                            elif torrent.code in [404]:
+                                soup = AlfaChannel.do_soup(torrent.content)
+                                if soup.find('span', id='header-primary-action') \
+                                              and soup.find('span', id='header-primary-action').a.get('href', ''):
+                                    elem_json['url'] = soup.find('span', id='header-primary-action').a.get('href', '')
 
         matches.append(elem_json.copy())
 
