@@ -272,9 +272,10 @@ def submenu(item):
                                  c_type=item.c_type, quality=quality, category=categoria))
 
             if item.c_type != 'peliculas':                                      # Para todo, menos películas
-                itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
-                                     url=url + "/letra-%s/page/1", thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, 
-                                     extra='Alfabético', quality=quality, category=categoria))
+                url = url
+                #itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
+                #                     url=url + "/letra-%s/page/1", thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, 
+                #                     extra='Alfabético', quality=quality, category=categoria))
 
             elif title == '[B]Películas[/B]':                                   # Categorías sólo de películas
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
@@ -355,7 +356,7 @@ def list_all(item):
     kwargs['headers'] = {'Referer': item.url}
     
     if item.extra in ['novedades']:
-        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-2']}]}
+        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm']}]}
         
         findS['last_page'] = {}
         if findS['controls'].get('force_find_last_page'): del findS['controls']['force_find_last_page']
@@ -372,7 +373,7 @@ def list_all(item):
         findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-4 mt-3']}]}
 
     elif item.c_type == 'search':
-        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-4']}]}
+        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm']}]}
 
         findS['last_page'] = {}
         if findS['controls'].get('force_find_last_page'): del findS['controls']['force_find_last_page']
