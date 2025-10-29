@@ -20,10 +20,6 @@
   "free": true,
   "id": "youtube",
   "name": "youtube",
-  "premium": [
-    "realdebrid",
-    "alldebrid"
-  ],
   "settings": [
     {
       "default": false,
