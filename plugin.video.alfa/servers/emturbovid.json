@@ -38,5 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://turboviplay.com/frontend/images/logo1.png"
+  "thumbnail": "https://turboviplay.com/frontend/images/logo1.png",
+  "force_inputstream": "adaptive"
 }

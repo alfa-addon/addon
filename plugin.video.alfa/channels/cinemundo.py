@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Channel Stream Gratis -*-
 # -*- Created for Alfa Addon -*-
-# -*- By DieFeM -*-
+# -*- By the Alfa Develop Group -*-
 
 import sys
 PY3 = False
