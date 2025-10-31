@@ -213,7 +213,7 @@ def listados(item):
         thumbnail = thumbnail.replace("\/", "/")
         # id = scrapertools.find_single_match(url, '/(\d+/[A-z0-9_-]+)')
         id = url.split("/")
-        url = "/video.%s/a" %id[-2].replace('video.','')
+        url = "/video.%sa" %id[-2].replace('video.','')
         url = urlparse.urljoin(host,url)
         plot = ""
         quality = ""
