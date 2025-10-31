@@ -148,7 +148,7 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', attrs={'data-id': re.compile(r"^\d+")})
     for elem in matches:
-        url = elem.a['href'].replace("THUMBNUM", "")
+        url = elem.a['href'].replace("THUMBNUM", "").replace("//", "/")
         id = elem['data-id']
         if "/search-video/" in url:
             # url = "%svideo%s/a" %(host,id)
