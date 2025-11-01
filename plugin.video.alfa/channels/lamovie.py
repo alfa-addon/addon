@@ -174,17 +174,16 @@ def list_all(item):
         if item.page:
             page = item.page
         data_json = read_api(type = item.c_type, filter = filter, page = page)
-        content_list = data_json['data']['posts']
-        pagination = data_json['data']['pagination']
-        
-    if item.c_type in ['search']:
+          
+    elif item.c_type in ['search']:
         data_json = read_api(type = item.c_type, terms = item.terms)
-        content_list = data_json['data']['posts']
-        pagination = data_json['data']['pagination']
-
+    
     if not data_json:
         return itemlist
-
+    
+    content_list = data_json.get('data', {}).get('posts',{})
+    pagination = data_json.get('data', {}).get('pagination',{})
+    
     for content in content_list:
 
         infoLabels = {}
