@@ -54,5 +54,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/MGwqD87f/vidhidepro.png"
+  "thumbnail": "https://i.postimg.cc/MGwqD87f/vidhidepro.png",
+  "force_inputstream": "adaptive"
 }
