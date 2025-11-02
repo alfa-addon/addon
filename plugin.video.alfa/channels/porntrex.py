@@ -138,7 +138,8 @@ def lista(item):
         itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, 
                                    fanart=scrapedthumbnail, contentTitle = scrapedtitle))
     # Extrae la marca de siguiente página
-    next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
+    next_page = scrapertools.find_single_match(data, '<li class="next">.*?href="([^"]+)"')
+    logger.debug(next_page)
     if "#" in next_page:
         next_page = scrapertools.find_single_match(data, '<li class="next">.*?data-parameters="([^"]+)">')
         next_page = next_page.replace(":", "=").replace(";", "&").replace("+from_albums", "")
