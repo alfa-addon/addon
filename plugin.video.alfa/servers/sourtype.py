@@ -51,11 +51,12 @@ def get_video_url(page_url, video_password):
             url += "|Referer=%s" % page_url
             video_urls.append(["[%s] mp4" %(server), url])
         return video_urls
-    
+
     for elem in matches:
         url = elem['src']
-        if "preview" in url: continue ## Monzr (multicanal Ezporn)
-        if server not in url:
+        if "preview" in url and "momzr" in server:
+            continue ## Monzr (multicanal Ezporn)
+        if not server in url:
             url = urlparse.urljoin(page_url,url) #justporn
         if not url.startswith("http"):
             url = "http:%s" % url
