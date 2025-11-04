@@ -96,9 +96,9 @@ fi
 if [ "$GENERATE_CHANGELOG" -eq 1 ]; then
     LAST_TAG=$(git describe --tags --abbrev=0)
     CHANGED_FILES=$(git diff --name-only "$LAST_TAG" HEAD -- "$ADDON/channels/" |
-        xargs -n1 basename |
+        xargs -r -n1 basename 2>/dev/null |
         sed 's/\.[^.]*$//' |
-        sort -u)
+        sort -u || true)
     ADULT_CHANGED=0
     SHOWN_FILES=()
 
