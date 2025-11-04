@@ -79,6 +79,7 @@ fi
 if [ "$BUMP_MAJOR" -eq 1 ]; then
     IFS='.' read -r X Y Z <<<"$VERSION"
     Y=$((Y + 1))
+    Z=0
     VERSION="$X.$Y.$Z"
     xmlstarlet ed -L -u "//addon/@version" -v "$VERSION" "$ADDON/addon.xml"
 fi
@@ -86,6 +87,8 @@ fi
 if [ "$BUMP_FEATURE" -eq 1 ]; then
     IFS='.' read -r X Y Z <<<"$VERSION"
     X=$((X + 1))
+    Y=0
+    Z=0
     VERSION="$X.$Y.$Z"
     xmlstarlet ed -L -u "//addon/@version" -v "$VERSION" "$ADDON/addon.xml"
 fi
