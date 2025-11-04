@@ -25,9 +25,11 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.istanbul/", "https://reinventorrent.org/", "https://todotorrents.org/", 
-                          "https://www21.dontorrent.link/", "https://elitedivx.net/", "https://lilatorrent.com/"], 
-             'host_black_list': ["https://dontorrent.lighting/", "https://dontorrent.irish/", "https://dontorrent.international/", 
+             'host_alt': ["https://dontorrent.phd/", "https://reinventorrent.org/", "https://lilatorrent.com/", 
+                          "https://todotorrents.org/", "https://www21.dontorrent.link/", "https://elitedivx.net/"], 
+             'host_black_list': ["https://dontorrent.live/", "https://dontorrent.kiwi/", 
+                                 "https://dontorrent.kids/", "https://dontorrent.onl/", "https://dontorrent.istanbul/", 
+                                 "https://dontorrent.lighting/", "https://dontorrent.irish/", "https://dontorrent.international/", 
                                  "https://dontorrent.graphics/", "https://www20.dontorrent.link/", "https://dontorrent.loan/", 
                                  "https://www19.dontorrent.link/", "https://dontorrent.jetzt/", "https://dontorrent.institute/", 
                                  "https://dontorrent.news/", "https://dontorrent.haus/", "https://dontorrent.homes/", 
@@ -270,9 +272,10 @@ def submenu(item):
                                  c_type=item.c_type, quality=quality, category=categoria))
 
             if item.c_type != 'peliculas':                                      # Para todo, menos películas
-                itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
-                                     url=url + "/letra-%s/page/1", thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, 
-                                     extra='Alfabético', quality=quality, category=categoria))
+                url = url
+                #itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
+                #                     url=url + "/letra-%s/page/1", thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, 
+                #                     extra='Alfabético', quality=quality, category=categoria))
 
             elif title == '[B]Películas[/B]':                                   # Categorías sólo de películas
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
@@ -353,7 +356,7 @@ def list_all(item):
     kwargs['headers'] = {'Referer': item.url}
     
     if item.extra in ['novedades']:
-        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-2']}]}
+        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm']}]}
         
         findS['last_page'] = {}
         if findS['controls'].get('force_find_last_page'): del findS['controls']['force_find_last_page']
@@ -370,7 +373,7 @@ def list_all(item):
         findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-4 mt-3']}]}
 
     elif item.c_type == 'search':
-        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-4']}]}
+        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm']}]}
 
         findS['last_page'] = {}
         if findS['controls'].get('force_find_last_page'): del findS['controls']['force_find_last_page']

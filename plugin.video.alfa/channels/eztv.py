@@ -150,7 +150,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
     matches = []
     search_list = []
-    patron_sxe = '(?i)S(\d+)E(\d+)'
+    patron_sxe = '(?i)(?:S\d+E\d+|\d{4}\s+\d{2}\s+\d{2})'
     findS = AHkwargs.get('finds', finds)
 
     for y, elem_tr in enumerate(matches_int):
@@ -259,6 +259,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     matches = []
     elem_json_list = {}
     findS = finds.copy()
+    patron_sxe = '(?i)S\d+E\d+'
+    patron_date_in = '(?i)(\w+)\s+(\d{1,2})\,\s+(\d{4})'
+    months_dict = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+                   'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
 
     soup = AHkwargs.get('soup', {})
     findS['episodes'] = {'find_all': [{'tag': ['tr'], 'name': ['hover']}]}
@@ -286,6 +290,11 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = elem_json['url_episode'] = '%ssearch/%s-%s' % (host, item.contentSerieName.replace(' ', '-').lower(), sxe)
             elem_json['title'] = '%sx%s %s' % (str(elem_json['season']), str(elem_json['episode']).zfill(2), (info[2] if len(info) > 2 else ''))
 
+            if scrapertools.find_single_match(info[1], patron_date_in):
+                elem_json['date'] = scrapertools.find_single_match(info[1], patron_date_in)
+                elem_json['date'] = '%s %s %s' % (elem_json['date'][2], months_dict.get(elem_json['date'][0], '00'), elem_json['date'][1])
+                elem_json['title'] += ' - %s' % elem_json['date'].replace(' ', '-')
+
             elem_json['language'] = item.language
             elem_json['quality'] = ''
             elem_json['matches'] = []
@@ -296,6 +305,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             continue
 
         elem_json_list[sxe] = elem_json.copy()
+        if elem_json.get('date'): elem_json_list[elem_json['date']] = elem_json.copy()
 
     for elem_links in matches_links:
         elem_json = {}
@@ -305,12 +315,17 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         if not elem_json.get('url'): continue
 
         sxe = 's%se%s' % (str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
+        if elem_json.get('date') and elem_json_list.get(elem_json['date']):
+            elem_json['season'] = elem_json_list[elem_json['date']]['season']
+            elem_json['episode'] = elem_json_list[elem_json['date']]['episode']
+            sxe = 's%se%s' % (str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
         if elem_json_list.get(sxe):
             elem_json_list[sxe]['matches'] += [elem_json.copy()]
             if elem_json['quality'] not in elem_json_list[sxe]['quality']:
                 elem_json_list[sxe]['quality'] += '%s, ' % elem_json['quality']
 
     for key, elem_json in elem_json_list.items():
+        if not key.startswith('s'): continue
         if item.infoLabels['number_of_seasons'] and item.infoLabels['number_of_seasons'] == elem_json['season']:
             if not elem_json['matches']: continue
         elem_json['quality'] = elem_json['quality'].rstrip(', ')
@@ -354,6 +369,7 @@ def findvideos_links(item, elem_in, elem_json):
     patron_title_epi = '(?i)(.*?)\s*(\d{4}(?:\s*\d+\s*\d+)?)'
     patron_quality = '(?i)((?:\d{3,4}p|xvid|web)[^-]*)'
     patron_sxe = '(?i)S(\d+)E(\d+)'
+    patron_date = '(?i)\d{4}.\d{2}.\d{2}'
 
     for x, elem in enumerate(elem_in.find_all('td')):
         #logger.error(elem)
@@ -378,13 +394,16 @@ def findvideos_links(item, elem_in, elem_json):
                     if not scrapertools.find_single_match(info, patron_sxe):
                         elem_json['season'] = item.contentSeason
                         elem_json['episode'] = 1
+                        if scrapertools.find_single_match(info, patron_date):
+                            elem_json['date'] = scrapertools.find_single_match(info, patron_date)
+                            elem_json['url_episode'] = item.url
                     else:
                         season, elem_json['episode'] = scrapertools.find_single_match(info, patron_sxe)
                         if item.contentSeason != int(season): break
                         elem_json['season'] = item.contentSeason
                         elem_json['episode'] = int(elem_json['episode'])
-                    elem_json['url_episode'] = '%ssearch/%s-s%se%s' % (host, item.contentSerieName.replace(' ', '-').lower(), 
-                                                                       str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
+                        elem_json['url_episode'] = '%ssearch/%s-s%se%s' % (host, item.contentSerieName.replace(' ', '-').lower(), 
+                                                                           str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
                     elem_json['title'] = '%sx%s - ' % (str(elem_json['season']), str(elem_json['episode']).zfill(2))
                     
                 elem_json['language'] = item.language
@@ -394,6 +413,7 @@ def findvideos_links(item, elem_in, elem_json):
                     elem_json['url'] = url.get('href', '')
                     if elem_json['url'].endswith('.torrent'): break
                 if elem_json.get('url'): elem_json['url'] = AlfaChannel.urljoin(host, elem_json['url'])
+                if not elem_json.get('url_episode'): elem_json['url_episode'] = elem_json['url']
                 elem_json['quality'] = '*%s' % scrapertools.find_single_match(info, patron_quality)
                 elem_json['quality'] = AlfaChannel.find_quality(elem_json, item)
 
@@ -403,6 +423,7 @@ def findvideos_links(item, elem_in, elem_json):
                         elem_json['url'] = url.get('href', '')
                         if elem_json['url'].endswith('.torrent'): break
                     if elem_json.get('url'): elem_json['url'] = AlfaChannel.urljoin(host, elem_json['url'])
+                    if not elem_json.get('url_episode'): elem_json['url_episode'] = elem_json['url']
                 elif not elem_json.get('torrent_info') and not 'POST' in str(elem):
                     elem_json['torrent_info'] = elem_json['size'] = elem.get_text(strip=True)
 
@@ -421,9 +442,9 @@ def findvideos_links(item, elem_in, elem_json):
             logger.error(traceback.format_exc())
             break
 
-    if not elem_json.get('url') \
-        or (item.contentSerieName.lower().replace(' ', '.') not in elem_json.get('url', '').lower() + elem_json.get('url_episode', '').lower()\
-            and item.contentSerieName.lower().replace(' ', '-') not in elem_json.get('url', '').lower() + elem_json.get('url_episode', '').lower()): 
+    if not elem_json.get('url') or scrapertools.slugify(item.contentSerieName, strict=False).lower() \
+                                   not in elem_json.get('url', '').lower().replace('.', ' ').replace('-', ' ') \
+                                          + elem_json.get('url_episode', '').lower().replace('.', ' ').replace('-', ' '): 
         elem_json = {}
 
     return elem_json
