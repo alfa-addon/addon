@@ -76,7 +76,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)porngrey.(?:com|net)/video/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:porngrey|saintporn).(?:com|net)/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -260,6 +260,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://www.porndupe.art/video/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://pornwild.(?:to|com)(?:/es|)/videos/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       }
@@ -294,5 +298,6 @@
       "visible": false
     }
   ],
-  "thumbnail": ""
+  "thumbnail": "",
+  "force_inputstream": "adaptive"
 }

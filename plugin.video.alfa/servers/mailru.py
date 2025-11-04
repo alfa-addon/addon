@@ -12,19 +12,20 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     
     global vurl
-    
+        
     response = httptools.downloadpage(page_url)
-    data = response.data
-    
-    if response.code == 404 or '"error":"video_not_found"' in data or '"error":"Can\'t find VideoInstance"' in data \
-        or not '"metadataUrl":' in data:
-        return False, "[Mail.ru] El archivo no existe o ha sido borrado"
-    
-    elif scrapertools.find_single_match(data, '"metadataUrl"\s*:\s*"([^"]+)"'):
-        video = scrapertools.find_single_match(data, '"metadataUrl"\s*:\s*"([^"]+)"')
-        vurl = urlparse.urljoin(page_url,video)
-    elif "/+/" in page_url:
+    if "/+/" in page_url and response.code == 200:
         vurl = page_url
+    else:
+        data = response.data
+        if response.code == 404 or '"error":"video_not_found"' in data or '"error":"Can\'t find VideoInstance"' in data \
+            or not '"metadataUrl":' in data:
+            return False, "[Mail.ru] El archivo no existe o ha sido borrado"
+        
+        elif scrapertools.find_single_match(data, '"metadataUrl"\s*:\s*"([^"]+)"'):
+            video = scrapertools.find_single_match(data, '"metadataUrl"\s*:\s*"([^"]+)"')
+            vurl = urlparse.urljoin(page_url,video)
+    
     return True, ""
 
 

@@ -33,9 +33,13 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    # itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/peliculas/1"))
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/peliculas/1"))
+    itemlist.append(Item(channel=item.channel, title="Peliculas Categorias" , action="categorias", url=host+ "/peliculas/1"))
+    
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "escenas-ultimos-videos/"))
     itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "escenas-mas-visitados/"))
+    # itemlist.append(Item(channel=item.channel, title="Mas Antiguos" , action="lista", url=host + "escenas-videos-antiguos/"))
+    itemlist.append(Item(channel=item.channel, title="Mas descargados" , action="lista", url=host + "escenas-mas-descargados/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
@@ -44,21 +48,22 @@ def mainlist(item):
     return itemlist
 
 
-def submenu(item):
-    logger.info()
-    itemlist = []
-    itemlist.append(Item(channel=item.channel, title="All" , action="lista", url=host + "peliculas/1"))
-    soup = create_soup(item.url)
-    matches = soup.find('div', id='movies').find_all('a')
-    for elem in matches:
-        url = elem['href']
-        title = elem.text.strip()
-        url = urlparse.urljoin(item.url,url)
-        thumbnail =  ""
-        plot = ""
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
-                              thumbnail=thumbnail , plot=plot) )
-    return itemlist
+# def submenu(item):
+    # logger.info()
+    # itemlist = []
+    # itemlist.append(Item(channel=item.channel, title="All" , action="lista", url=host + "peliculas/1"))
+    
+    # soup = create_soup(item.url)
+    # matches = soup.find('div', id='movies').find_all('a')
+    # for elem in matches:
+        # url = elem['href']
+        # title = elem.text.strip()
+        # url = urlparse.urljoin(item.url,url)
+        # thumbnail =  ""
+        # plot = ""
+        # itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                              # thumbnail=thumbnail , plot=plot) )
+    # return itemlist
 
 
 def search(item, texto):
@@ -78,7 +83,10 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find('div', id='categories').find_all('a')
+    if "pelicula" in item.url:
+        matches = soup.find('div', id='movies').find_all('a')
+    else:
+        matches = soup.find('div', id='categories').find_all('a')
     for elem in matches:
         url = elem['href']
         title = elem.text.strip()
