@@ -30,7 +30,7 @@ fi
 SCREENSHOT_PATH="$ADDON/resources/Screenshot.png"
 CHANGELOG_PATH="$ADDON/changelog.txt"
 
-while getopts "vbczqhg" opt; do
+while getopts "vbBRczqhg" opt; do
     case $opt in
     v) SHOW_VERSION=1 ;;
     b) BUMP_MINOR=1 ;;
