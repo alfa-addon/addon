@@ -14,7 +14,9 @@ for cmd in xmlstarlet zip; do
 done
 
 SHOW_VERSION=0
-BUMP_VERSION=0
+BUMP_MINOR=0
+BUMP_MAJOR=0
+BUMP_FEATURE=0
 GENERATE_CHANGELOG=0
 COMMIT_TO_GIT=0
 CREATE_ZIP=0
@@ -31,7 +33,9 @@ CHANGELOG_PATH="$ADDON/changelog.txt"
 while getopts "vbczqhg" opt; do
     case $opt in
     v) SHOW_VERSION=1 ;;
-    b) BUMP_VERSION=1 ;;
+    b) BUMP_MINOR=1 ;;
+    B) BUMP_MAJOR=1 ;;
+    R) BUMP_FEATURE=1 ;;
     c) GENERATE_CHANGELOG=1 ;;
     g) COMMIT_TO_GIT=1 ;;
     z) CREATE_ZIP=1 ;;
@@ -45,6 +49,8 @@ if [ "$SHOW_HELP" -eq 1 ]; then
 $(basename "$0") help:
     -h Shows this help
     -b Bumps the minor add-on version by one
+    -B Bumps the major add-on version by one
+    -R Bumps the feature add-on version by one
     -c Update the add-on changelog and generate 'Screenshot.png'
     -g Commits any modifications to Git
     -z Creates a ZIP release of the add-on (not committed to Git)
@@ -63,9 +69,23 @@ trap 'popd &>/dev/null' EXIT
 # Get current version
 VERSION=$(xmlstarlet sel -t -m "//addon" -v "@version" "$ADDON/addon.xml")
 
-if [ "$BUMP_VERSION" -eq 1 ]; then
+if [ "$BUMP_MINOR" -eq 1 ]; then
     IFS='.' read -r X Y Z <<<"$VERSION"
     Z=$((Z + 1))
+    VERSION="$X.$Y.$Z"
+    xmlstarlet ed -L -u "//addon/@version" -v "$VERSION" "$ADDON/addon.xml"
+fi
+
+if [ "$BUMP_MAJOR" -eq 1 ]; then
+    IFS='.' read -r X Y Z <<<"$VERSION"
+    Y=$((Y + 1))
+    VERSION="$X.$Y.$Z"
+    xmlstarlet ed -L -u "//addon/@version" -v "$VERSION" "$ADDON/addon.xml"
+fi
+
+if [ "$BUMP_FEATURE" -eq 1 ]; then
+    IFS='.' read -r X Y Z <<<"$VERSION"
+    X=$((X + 1))
     VERSION="$X.$Y.$Z"
     xmlstarlet ed -L -u "//addon/@version" -v "$VERSION" "$ADDON/addon.xml"
 fi
