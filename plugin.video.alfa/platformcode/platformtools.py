@@ -2010,7 +2010,7 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info('Kodi version {}'.format(str(ver)))
     if (
         (ver >= 18) and (mpd or ".m3u8" in mediaurl) and \
-        (config.get_setting('inputstream_mode', default=0) == 1 or force_inputstream == "adaptive") and \
+        (config.get_setting('inputstream_mode', default=0) == 1 or force_inputstream == "adaptive" or mpd) and \
         force_inputstream != "none" and force_inputstream != "ffmpegdirect"
     ):
         addon_name = 'inputstream.adaptive'

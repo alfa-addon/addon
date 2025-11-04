@@ -332,9 +332,17 @@ def run(item=None):
                 # logger.debug("item_toPlay: " + "\n" + item.tostring('\n'))
 
                 # First checks if channel has a "play" function
-                if module and hasattr(module, 'play'):
+                # And is not vitamina (to avoid playing vitamina items with channel's play function)
+                if module and hasattr(module, 'play') or item.is_vitamina:
                     logger.info("Executing channel 'play' method")
-                    playlist = module.play(item)
+                    if item.is_vitamina:
+                        if not PY3:
+                            from lib.planb import play
+                        else:
+                            from lib.planb_py3 import play
+                        playlist = play(item)
+                    else:
+                        playlist = module.play(item)
                     b_favourite = item.isFavourite
                     # Play should return a list of playable URLS
                     if playlist and len(playlist) > 0 and isinstance(playlist[0], Item):
@@ -371,6 +379,12 @@ def run(item=None):
                                 "executing core method")
                     itemlist = servertools.find_video_items(item)
 
+                if not PY3:
+                    from lib.planb import add_vitamina_to_list
+                else:
+                    from lib.planb_py3 import add_vitamina_to_list
+                itemlist = add_vitamina_to_list(item, itemlist)
+                
                 if config.get_setting("videolibrary_max_links") != 0:
                     itemlist = limit_itemlist(itemlist)
 
@@ -424,6 +438,13 @@ def run(item=None):
                         channeltools.set_channel_setting('Last_searched', tecleado, 'search')
                     itemlist = module.search(item, tecleado)
 
+            # Special action for findvideos, where the plugin looks for known urls
+            elif item.action == "vitaminar":
+                if not PY3:
+                    from lib.planb import vitaminar
+                else:
+                    from lib.planb_py3 import vitaminar
+                itemlist = vitaminar(item)
 
             # For all other actions
             elif not itemlist:

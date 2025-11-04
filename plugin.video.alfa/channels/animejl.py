@@ -25,7 +25,7 @@ forced_proxy_opt = 'ProxySSL'
 
 cf_assistant = "force" if is_alfa_installed() else False
 forced_proxy_opt = None if cf_assistant else 'ProxyCF'
-debug = config.get_setting('debug_report', default=False)
+cf_debug = True
 
 canonical = {
              'channel': 'animejl', 
@@ -36,7 +36,7 @@ canonical = {
              'set_tls': True, 'set_tls_min': True, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': cf_assistant, 
              'cf_assistant_ua': True, 'cf_assistant_get_source': True if cf_assistant == 'force' else False, 
              'cf_no_blacklist': True, 'cf_removeAllCookies': False if cf_assistant == 'force' else True,
-             'cf_challenge': True, 'cf_returnkey': 'url', 'cf_partial': True, 'cf_debug': debug, 
+             'cf_challenge': True, 'cf_returnkey': 'url', 'cf_partial': True, 'cf_debug': cf_debug, 
              'cf_cookies_names': {'cf_clearance': False},
              'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
              'CF_stat': True if cf_assistant is True else False, 'session_verify': True, 
@@ -74,7 +74,8 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['ListAnimes']}]),
          'seasons_search_qty_rgx': '', 
          'season_url': host, 
          'episode_url': '', 
-         'episodes': dict([('find_all', [{'tag': ['script']}])]),
+         'episodes': dict([('find', [{'tag': ['script'], 'string': re.compile(r'var\s*episodes\s*=\s*\[')}]),
+                           ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': 'var\s*episodes\s*=\s*([^;]+);', '@EVAL': True}])]),
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
@@ -254,7 +255,12 @@ def episodios(item):
 
 def episodesxseason(item, **AHkwargs):
     logger.info()
-    soup = AHkwargs.get('soup', '')
+    kwargs['soup'] = False
+    response = AlfaChannel.create_soup(item.url, item=item, **kwargs)
+    data = response.data
+    data = data.replace('<!--<script', '<script')\
+               .replace('script>-->', 'script>')
+    soup = AlfaChannel.do_soup(data)
     itemlist = AlfaChannel.episodes(item, data=soup, matches_post=episodesxseason_matches, **kwargs)
     if item.contentType == 'movie':
         temp_list = [i for i in itemlist if i.action == 'findvideos']
@@ -292,37 +298,40 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     # if titleSeason != item.contentSeason:
         # return matches
 
-    pattern = re.compile(r'var\s*episodes\s*=\s*([^;]+)')
-    match = pattern.search(str(soup))
-    if match:
-        for x, (episode, url, thumbnail, movie_data) in enumerate(eval(match.group(1))):
-            elem_json = {}
-            #logger.error(matches_int[x])
-            try:
-                elem_json['language'] = item.language
-                elem_json['title'] = 'Episodio %s' % episode
-                elem_json['season'] = titleSeason
-                elem_json['episode'] = episode
-                elem_json['url'] = "%s/%s" % (item.url, url)
-                elem_json['thumbnail'] = '%sstorage/%s' % (host, thumbnail)
-                if next_episode_air_date:
-                    elem_json['next_episode_air_date'] = next_episode_air_date
-            except Exception:
-                logger.error(matches_int[x])
-                logger.error(traceback.format_exc())
-                continue
+    for x, (episode, url, thumbnail, movie_data) in enumerate(matches_int):
+        elem_json = {}
+        #logger.error(matches_int[x])
+        try:
+            elem_json['language'] = item.language
+            elem_json['title'] = 'Episodio %s' % episode
+            elem_json['season'] = titleSeason
+            elem_json['episode'] = episode
+            elem_json['url'] = "%s/%s" % (item.url, url)
+            elem_json['thumbnail'] = '%sstorage/%s' % (host, thumbnail)
+            if next_episode_air_date:
+                elem_json['next_episode_air_date'] = next_episode_air_date
+        except Exception:
+            logger.error(matches_int[x])
+            logger.error(traceback.format_exc())
+            continue
 
-            if not elem_json.get('url', ''):
-                continue
+        if not elem_json.get('url', ''):
+            continue
 
-            matches.append(elem_json.copy())
+        matches.append(elem_json.copy())
 
     return matches
 
 
 def findvideos(item):
     logger.info()
-    return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
+    kwargs['soup'] = False
+    response = AlfaChannel.create_soup(item.url, item=item, **kwargs)
+    data = response.data
+    data = data.replace('<!--<script', '<script')\
+               .replace('script>-->', 'script>')
+    soup = AlfaChannel.do_soup(data)
+    return AlfaChannel.get_video_options(item, item.url, data=soup, matches_post=findvideos_matches, 
                                             verify_links=False, findvideos_proc=True, **kwargs)
 
 

@@ -282,7 +282,7 @@ def marshal_check():
             python_ver = "_%s_%s" % (str(python_ver[0]), str(python_ver[1]).zfill(2))
         else:
             python_ver = "_0_00"
-        marshal_modules = ["lib/alfaresolver_py3", "core/proxytools_py3"]
+        marshal_modules = ["lib/alfaresolver_py3", "core/proxytools_py3", "lib/planb_py3"]
         for module in marshal_modules:
             path = filetools.join(ADDON_PATH, filetools.dirname(module))
             path_list = sorted(filetools.listdir(path))

@@ -1,0 +1,47 @@
+{
+  "id": "tubeonline",
+  "name": "TubeOnLine",
+  "active": true,
+  "adult": false,
+  "language": ["lat", "cast", "vose"],
+  "thumbnail": "https://www.tubeonline.net/wp-content/uploads/2017/08/tubeonline-1.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "tvshow",
+    "movie"
+  ],
+  "force_unify": true,
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "LAT",
+        "CAST",
+        "VOSE"
+      ]
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Series",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
