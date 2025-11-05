@@ -1995,10 +1995,13 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
     download = addonid + ".apk"
     package = addonid + ".apk"
     version = addonid + ".version"
+    version_path = filetools.join(DATA_PATH, version)
     forced_menu = False
     respuesta = False
     alfa_s = True
     addons_path = RUNTIME_PATH
+    version_app = ''
+    version_act = ''
     if filetools.exists(filetools.join(addons_path, "channels", "custom.py")):
         alfa_s = False
 
@@ -2019,6 +2022,12 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
         "data",
         app_name,
     )
+    android_15 = True if PLATFORM in ["android", "atv2"] and ASSISTANT_MODE == "este" \
+                                                         and filetools.exists(filetools.dirname(apk_files)) \
+                                                         and len(filetools.listdir(filetools.dirname(apk_files))) == 0 \
+                                                         else False
+    apk_files_exists = filetools.exists(apk_files) or android_15
+    
     if ASSISTANT_MODE == "este" and not filetools.exists(filetools.dirname(apk_files)):
         apk_files_alt = scrapertools.find_single_match(
             os.getenv("HOME"), "(.*?)\/\w*.\w*.\w*\/files"
@@ -2026,14 +2035,32 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
         logger.info("HOME: " + apk_files_alt)
         if apk_files_alt and filetools.exists(apk_files_alt):
             apk_files = "%s/%s" % (apk_files_alt, app_name)
+    elif android_15:
+        logger.info("Android 15+")
+        version_dict = get_generic_call(
+            "getWebViewInfo", timeout=1, alfa_s=True, retry=False
+        )
+        if not version_dict:
+            execute_in_alfa_assistant_with_cmd(
+                "open"
+            )  # activamos la app por si no se ha inicializado
+            time.sleep(2)
+            version_dict = get_generic_call(
+                "getWebViewInfo", timeout=1, alfa_s=True, retry=False
+            )
+            if version_dict and isinstance(version_dict, dict):
+                version_app = version_act = version_dict.get("assistantVersion", "")
+                filetools.write(version_path, version_act, mode="wb", silent=True)
+            else:
+                apk_files_exists = False
 
-    version_path = filetools.join(DATA_PATH, version)
-    version_act = filetools.read(version_path, silent=True)
+    if not version_act: 
+        version_act = filetools.read(version_path, silent=True)
     if not version_act:
         version_act = "0.0.0"
 
     # Averiguamos si es instalacción, update, o forzado desde el Menú de Ajustes
-    if not update and ASSISTANT_MODE == "este" and filetools.exists(apk_files):
+    if not update and ASSISTANT_MODE == "este" and apk_files_exists:
         return version_act, app_name
     if ASSISTANT_MODE == "este" and not update:
         check_permissions_alfa_assistant()  # activamos la app por si no se ha inicializado
@@ -2043,12 +2070,13 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
         else:
             filetools.remove(version_path, silent=True)
     # Mirarmos si la app está activa y obtenemos el nº de versión
-    version_dict = get_generic_call(
-        "getWebViewInfo",
-        timeout=2 - EXTRA_TIMEOUT,
-        alfa_s=True,
-        retry=False if ASSISTANT_MODE == "este" else True,
-    )
+    if not version_app:
+        version_dict = get_generic_call(
+            "getWebViewInfo",
+            timeout=2 - EXTRA_TIMEOUT,
+            alfa_s=True,
+            retry=False if ASSISTANT_MODE == "este" else True,
+        )
     if isinstance(version_dict, dict):
         version_app = version_dict.get("assistantVersion", "")
         try:
@@ -2120,14 +2148,14 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
             config.set_setting("assistant_flag_install", True)
             if not update:
                 return version_app, app_name
-    elif not update and not filetools.exists(apk_files):
+    elif not update and not apk_files_exists:
         logger.info("NO está instalada. No es Update: %s" % app_name)
         return False, app_name
-    elif update and isinstance(update, bool) and not filetools.exists(apk_files):
+    elif update and isinstance(update, bool) and not apk_files_exists:
         logger.info("NO está instalada. No se va a actualizar: %s" % app_name)
         filetools.remove(version_path, silent=True)
         return False, app_name
-    elif update and not isinstance(update, bool) and not filetools.exists(apk_files):
+    elif update and not isinstance(update, bool) and not apk_files_exists:
         logger.info(
             "NO está instalada. Viene del Menú y se va a instalar: %s" % app_name
         )

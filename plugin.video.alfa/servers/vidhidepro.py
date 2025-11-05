@@ -43,11 +43,14 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     
     global data
-    
+    domain = scrapertools.get_domain_from_url(page_url)
+    host = "https://%s" % domain
     try:
         enc_data = scrapertools.find_single_match(data, "text/javascript(?:'|\")>(eval.*?)</script>")
         dec_data = jsunpack.unpack(enc_data)
-        m3u8_source = scrapertools.find_single_match(dec_data, '"hls2":"([^"]+)"')
+        # m3u8_source = scrapertools.find_single_match(dec_data, '"hls2":"([^"]+)"')
+        m3u8_source = scrapertools.find_single_match(dec_data, '"hls4":"([^"]+)"')
+        m3u8_source =urlparse.urljoin(host, m3u8_source)
         
         if "master.m3u8" in m3u8_source:
             datos = httptools.downloadpage(m3u8_source).data
@@ -59,6 +62,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 ## matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
+                    url += "|Referer=%s/&Origin=%s" % (host, host)
                     video_urls.append(["[vidhide] %sp" % quality, url])
         else:
             video_urls.append(['[vidhide] m3u', m3u8_source])

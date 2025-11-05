@@ -4,7 +4,11 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:video|)((?:txxx|hclips|pornhits|abxxx).com/(?:video|videos|embed)/[0-9]+)",
+        "pattern": "(?:video|)((?:txxx|hclips|pornhits).com/(?:video|videos|embed)/[0-9]+)",
+        "url": "https://\\1/a/"
+      },
+      {
+        "pattern": "((?:abxxx|abbdsm|abebony|abjav|abmilf|abtranny|abgay).(?:com|tube)/(?:video|videos|embed)/[0-9]+)",
         "url": "https://\\1/a/"
       },
       {

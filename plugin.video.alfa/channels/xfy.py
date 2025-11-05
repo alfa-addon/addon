@@ -23,6 +23,8 @@ forced_proxy_opt = 'ProxySSL'
 
 # https://viralxvideos.net  https://xmoviesforyou.net/ XFY
 
+##############        OUT oct2025
+
 canonical = {
              'channel': 'xfy', 
              'host': config.get_setting("current_host", 'xfy', default=''), 

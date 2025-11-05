@@ -265,6 +265,7 @@ class AlfaChannelHelper:
                 response = js2py_conversion(response.data, url, resp=response, size=size_js, **kwargs)
 
         if response.code in self.httptools.NOT_FOUND_CODES:
+            response.content = response.data
             response.data = ''
             if kwargs.get("soup", True):
                 response.soup = self.do_soup(response.data, encoding='utf-8')
@@ -927,11 +928,11 @@ class AlfaChannelHelper:
 
         finds_controls = finds.get('controls', {})
 
-        self.host_torrent = finds_controls.get('host_torrent', self.host_torrent) or self.host
-        host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
-        torrent_url_replace = finds_controls.get('torrent_url_replace', [])
-        torrent_headers = finds_controls.get('torrent_headers', {})
-        torrent_kwargs = finds_controls.get('torrent_kwargs', {})
+        self.host_torrent = elem.get('host_torrent', finds_controls.get('host_torrent', self.host_torrent)) or self.host
+        host_torrent_referer = elem.get('host_torrent_referer', finds_controls.get('host_torrent_referer', self.host_torrent))
+        torrent_url_replace = elem.get('torrent_url_replace', finds_controls.get('torrent_url_replace', []))
+        torrent_headers = elem.get('torrent_headers', finds_controls.get('torrent_headers', {}))
+        torrent_kwargs = elem.get('torrent_kwargs', finds_controls.get('torrent_kwargs', {}))
         FOLDER = config.get_setting("folder_movies") if item.contentType == 'movie' else config.get_setting("folder_tvshows")
         size = ''
         blacklist_links = ['enlacito.com']

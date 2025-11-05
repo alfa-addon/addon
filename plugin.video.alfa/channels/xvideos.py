@@ -148,7 +148,7 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', attrs={'data-id': re.compile(r"^\d+")})
     for elem in matches:
-        url = elem.a['href'].replace("THUMBNUM", "")
+        url = elem.a['href'].replace("THUMBNUM", "").replace("//", "/")
         id = elem['data-id']
         if "/search-video/" in url:
             # url = "%svideo%s/a" %(host,id)
@@ -213,7 +213,7 @@ def listados(item):
         thumbnail = thumbnail.replace("\/", "/")
         # id = scrapertools.find_single_match(url, '/(\d+/[A-z0-9_-]+)')
         id = url.split("/")
-        url = "/video.%s/a" %id[-2].replace('video.','')
+        url = "/video.%sa" %id[-2].replace('video.','')
         url = urlparse.urljoin(host,url)
         plot = ""
         quality = ""

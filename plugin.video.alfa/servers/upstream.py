@@ -20,7 +20,8 @@ def test_video_exists(page_url):
     page = httptools.downloadpage(page_url, **kwargs)
 
     if page.code == 404 or '"title">File Not Found</div>' in page.data \
-    or 'player_blank.jpg' in page.data or 'assets/images/image-404.png' in page.data:
+      or "File was deleted" in page.data or 'player_blank.jpg' in page.data \
+      or 'assets/images/image-404.png' in page.data:
         return False, "[upstream] El archivo no existe o  ha sido borrado"
 
     elif '_msg">File was locked by administrator</div>' in page.data:

@@ -4,6 +4,15 @@ name: Bump add-on version & release
 
 on:
   workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Tipo de versión a publicar'
+        required: true
+        type: choice
+        options:
+          - feature
+          - major
+          - minor
 
 permissions: write-all
 
@@ -38,7 +47,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION=$(scripts/release.sh -qbcgv)
+          case "${{ github.event.inputs.version_type }}" in
+            feature) VERSION=$(scripts/release.sh -qRcgv) ;;
+            major) VERSION=$(scripts/release.sh -qBcgv) ;;
+            minor) VERSION=$(scripts/release.sh -qbcgv) ;;
+          esac
           ZIP_FILE=$(scripts/release.sh -qz)
           gh release create "Alfa-v$VERSION" "$ZIP_FILE"
           url=$(gh api repos/$GITHUB_REPOSITORY/releases/latest --jq '.assets[0].browser_download_url')

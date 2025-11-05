@@ -57,7 +57,10 @@ def categorias(item):
         if elem.find('script'): continue
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.img['data-src']
+        if elem.img.get('src', ''):
+            thumbnail = elem.img['src']
+        else:
+            thumbnail = elem.img['data-src']
         cantidad = elem.find('div', class_='item__counter').text
         if cantidad:
             title = "%s (%s)" % (title,cantidad)
@@ -94,7 +97,10 @@ def lista(item):
     for elem in matches:
         url = elem.a['href']
         stitle = elem.a['title']
-        thumbnail = elem.img['data-src']
+        if elem.img.get('src', ''):
+            thumbnail = elem.img['src']
+        else:
+            thumbnail = elem.img['data-src']
         stime = elem.find('div', class_='item__counter').text.strip()
         if stime:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
