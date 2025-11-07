@@ -423,7 +423,7 @@ def search(item, texto, **AHkwargs):
 
     try:
         texto = AlfaChannel.do_quote(texto, '', plus=True)
-        item.url = item.url + "?s=" + texto
+        item.url = "{}search/?s={}".format(host, texto)
 
         if texto:
             item.c_type = 'search'
