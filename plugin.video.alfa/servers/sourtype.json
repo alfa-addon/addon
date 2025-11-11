@@ -176,6 +176,14 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://youperv.\\w{2,4}/[A-z0-9-]+/[A-z0-9-’]+.html)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://slutload.com/porn/video/[A-z0-9_]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://www.(?:playvids|pornoeggs).com/(?:es/|)[A-z0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },      {
