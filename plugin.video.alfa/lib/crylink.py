@@ -7,7 +7,10 @@ try:
     from Cryptodome.Cipher import AES
     patch.fix_path()
 except Exception:
-    from Crypto.Cipher import AES
+    try:
+        from Crypto.Cipher import AES
+    except ModuleNotFoundError:
+        AES = object()
 
 
 def crylink(b64decode, encode):
