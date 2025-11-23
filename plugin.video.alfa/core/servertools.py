@@ -233,10 +233,20 @@ def parse_hls(video_urls, server):
         if 'm3u8' not in url:
             return video_urls
         
-        data = httptools.downloadpage(url, headers=headers).data
-        patron = r'#EXT-X-STREAM-INF.*?RESOLUTION=(\d+x\d+).*?\s(http.*?)\s'
+        try:
+            data = httptools.downloadpage(url, headers=headers).data
+        except Exception as e:
+            logger.error(e)
+            return video_urls
+        
         if not isinstance(data, str):
             data = codecs.decode(data, "utf-8")
+        
+        if '#EXT-X-MEDIA:TYPE=AUDIO' in data \
+        or '#EXT-X-MEDIA:TYPE=SUBTITLES' in data:
+            return video_urls
+        
+        patron = r'#EXT-X-STREAM-INF.*?RESOLUTION=(\d+x\d+).*?\s(http.*?)\s'
         matches = scrapertools.find_multiple_matches(data, patron)
 
         if len(matches) > 1:
