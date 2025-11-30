@@ -65,6 +65,7 @@ def test_video_exists(page_url):
     except Exception as e:
         logger.error(e)
         return False,  "[filemoon] El video no existe o ha sido borrado"
+    return True, ""
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):

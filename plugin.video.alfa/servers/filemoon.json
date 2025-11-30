@@ -47,5 +47,5 @@
     }
   ],
   "thumbnail": "https://i.postimg.cc/NMx8YQ1W/filemoon.png",
-  "force_inputstream": "ffmpegdirect"
+  "force_inputstream": "adaptive"
 }
