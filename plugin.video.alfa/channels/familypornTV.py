@@ -23,7 +23,8 @@ list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
 ######      No muestr fotos hay que cambiar x216 x217 
-######      Fallan fotos  https://familyporn.tv/contents/videos_screenshots/60000/60916/289x217/1.jpg
+######      RES fotos  https://familyporn.tv/contents/videos_screenshots/60000/60916/289x217/1.jpg
+                    # elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
 
 canonical = {
              'channel': 'familypornTV', 
@@ -106,8 +107,8 @@ def list_all(item):
     findS['next_page'] = {}
     item.last_page = 9999
     
-    return AlfaChannel.list_all(item, finds=findS, **kwargs)
-    # return AlfaChannel.list_all(item, finds=findS, matches_post=list_all_matches, **kwargs)
+    # return AlfaChannel.list_all(item, finds=findS, **kwargs)
+    return AlfaChannel.list_all(item, finds=findS, matches_post=list_all_matches, **kwargs)
 
 
 def list_all_matches(item, matches_int, **AHkwargs):
@@ -115,8 +116,6 @@ def list_all_matches(item, matches_int, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
        
-
-    logger.debug(matches_int[0])
 
     for elem in matches_int:
         elem_json = {}
@@ -127,13 +126,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if not elem_json['title']:
                 elem_json['title'] = elem.img.get('alt', '')
             
-            elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
+            thumbnail = elem.img.get('data-webp', '') or elem.img.get('data-original', '') \
                                      or elem.img.get('data-src', '') \
                                      or elem.img.get('src', '')
-            logger.debug(elem_json['thumbnail'])
-            elem_json['thumbnail'] = elem_json['thumbnail'].replace('x216', 'x217')## ESTA LINEA OBLIGA list_all_matches
-            # elem_json['thumbnail'] += "|Referer=%s" % host
-            # elem_json['thumbnail'] += "|verifypeer=false"
+            elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
             elem_json['stime'] = elem.find(class_='duration').get_text(strip=True) if elem.find(class_='duration') else ''
             if elem.find('span', class_=['hd-thumbnail', 'is-hd']):
                 elem_json['quality'] = elem.find('span', class_=['hd-thumbnail', 'is-hd']).get_text(strip=True)

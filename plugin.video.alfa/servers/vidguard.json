@@ -4,11 +4,11 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:vidguard|vembed|bembed|listeamed|embedv).\\w{2,4}/(?:e|d|v)/([A-z0-9]+)",
+        "pattern": "(?:vidguard|vembed|bembed|listeamed|embedv|v6embed).\\w{2,4}/(?:e|d|v)/([A-z0-9]+)",
         "url": "https://bembed.net/e/\\1"
       },
       {
-        "pattern": "((?:bigbuttshub2|bigbuttshub).\\w{2,4}/(?:e|d|v)/[A-z0-9]+)",
+        "pattern": "(bigbuttshub2.\\w{2,4}/(?:e|d|v)/[A-z0-9]+)",
         "url": "https://\\1"
       }
     ]
