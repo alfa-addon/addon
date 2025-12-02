@@ -3,8 +3,8 @@
 import json
 import base64
 import hashlib
+import re
 from core import httptools
-from core import scrapertools
 from platformcode import logger
 from core import urlparse
 import patch
@@ -50,9 +50,9 @@ def test_video_exists(page_url):
         logger.error("Neither cryptography nor pycryptodome libraries are available")
         return False,  "Neither cryptography nor pycryptodome libraries are available"
 
-    match = scrapertools.find_single_match(page_url, r'([a-z0-9]+)$')
+    match = re.search(r'/(?:e|d)/([a-z0-9]{12})(?:$|/)', page_url)
     if match:
-        playback_url = 'https://filemooon.link/api/videos/%s/embed/playback' % match
+        playback_url = 'https://filemooon.link/api/videos/%s/embed/playback' % match.group(1)
     else:
         return False,  "[filemoon] El enlace no es correcto"
         
