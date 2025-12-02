@@ -2,16 +2,15 @@
 import base64
 import patch
 
+patch.unfix_path()
 try:
-    patch.unfix_path()
     from Cryptodome.Cipher import AES
-    patch.fix_path()
 except Exception:
     try:
         from Crypto.Cipher import AES
-    except ModuleNotFoundError:
+    except ImportError:
         AES = object()
-
+patch.fix_path()
 
 def crylink(b64decode, encode):
     """

@@ -16,7 +16,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(?i)https://(?:smoothpre|mivalyo|dingtezuni|dinisglows)\\.com/(?:f|v|embed|d|file)/([A-z0-9]+)",
+        "pattern": "(?i)https://(?:smoothpre|mivalyo|dingtezuni|dintezuvio|dinisglows)\\.com/(?:f|v|embed|d|file)/([A-z0-9]+)",
         "url": "https://smoothpre.com/embed/\\1"
       },
       {

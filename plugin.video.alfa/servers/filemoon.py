@@ -14,19 +14,16 @@ _have_pycrypto = False
 AESGCM = None
 PyCryptoAES = None
 
+patch.unfix_path()
 try:
-    patch.unfix_path()
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    patch.fix_path()
     _have_cryptography = True
 except Exception:
     _have_cryptography = False
     AESGCM = None 
 try:
-    patch.unfix_path()
     from Cryptodome.Cipher import AES as PyCryptoAES
     _have_pycrypto = True
-    patch.fix_path()
 except Exception:
     try:
         from Crypto.Cipher import AES as PyCryptoAES
@@ -34,6 +31,7 @@ except Exception:
     except Exception:
         _have_pycrypto = False
         PyCryptoAES = None
+patch.fix_path()
 
 kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
 
