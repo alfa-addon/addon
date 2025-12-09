@@ -389,6 +389,8 @@ def findvideos(item):
             srv = info[0].strip()
             if "Vidhidepre" in srv:
                 srv = "Vidhidepro"
+            if "Player" in srv:
+                srv = "Netu"
             lang = info[1].strip()
             infoLabels = item.infoLabels
             lang = IDIOMAS.get(lang, lang)
