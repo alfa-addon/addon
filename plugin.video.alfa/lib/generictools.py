@@ -2187,6 +2187,10 @@ def AH_find_btdigg_matches(item, matches, **AHkwargs):
 
         for x, it in enumerate(itemlist):
             if not it.matches: continue
+            from core.videolibrarytools import redirect_url                     # Redirigimos urls de item.matches
+            for mat in it.matches:
+                if mat.get('url'): mat['url'] = redirect_url(mat['url'], channel=item.channel)
+                if mat.get('referer'): mat['referer'] = redirect_url(mat['referer'], channel=item.channel)
             if not isinstance(it.matches[0], dict):
                 if not matches_post: continue
                 AHkwargs['videolibrary'] = True

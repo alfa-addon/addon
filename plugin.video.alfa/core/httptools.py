@@ -1333,6 +1333,8 @@ def downloadpage(url, **opt):
         opt["cf_jscode"] = opt["canonical"]["cf_jscode"]
     if "cf_cookie_send" not in opt and "cf_cookie_send" in opt.get("canonical", {}):
         opt["cf_cookie_send"] = opt["canonical"]["cf_cookie_send"]
+    if "canonical_check" not in opt and "canonical_check" in opt.get("canonical", {}):
+        opt["canonical_check"] = opt["canonical"]["canonical_check"]
 
     # Preparando la url
     if not PY3:
@@ -1569,56 +1571,8 @@ def downloadpage(url, **opt):
                                 opt.get("file_name", "Default") + ", Buffer de memoria"
                             )
 
-                    info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
-                    if opt.get("only_headers", False):
-                        ### Makes the request with HEAD method
-                        req = session.head(
-                            url,
-                            allow_redirects=opt.get("follow_redirects", True),
-                            timeout=opt.get("timeout", None),
-                            params=opt.get("params", {}),
-                        )
-                    elif str(opt.get("cf_assistant", '')) == 'force':
-                        ### Makes the request thru Assistant
-                        from lib.cloudscraper import cf_assistant
-
-                        if opt.get("post", None) is not None and payload:
-                            opt["post"] = payload
-                        if opt.get("files", {}) and files:
-                            opt["files"] = files
-                        req = requests.Response()
-                        req.status_code = 403
-                        req = cf_assistant.get_cl(opt, req, cache=True)
-                        # If no Assistant
-                        if req.status_code in [503, 429, 400]:
-                            opt['cf_assistant'] = True
-                            return downloadpage(url, **opt)
-                    else:
-                        ### Makes the request with POST method
-                        req = session.post(
-                            url,
-                            data=payload,
-                            allow_redirects=opt.get("follow_redirects", True),
-                            files=files,
-                            timeout=opt.get("timeout", None),
-                            params=opt.get("params", {}),
-                        )
-
-                elif str(opt.get("cf_assistant", '')) == 'force':
-                    info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
-                    ### Makes the request thru Assistant
-                    from lib.cloudscraper import cf_assistant
-
-                    req = requests.Response()
-                    req.status_code = 403
-                    req = cf_assistant.get_cl(opt, req, cache=True)
-                    # If no Assistant
-                    if req.status_code in [503, 429, 400]:
-                        opt['cf_assistant'] = True
-                        return downloadpage(url, **opt)
-
-                elif opt.get("only_headers", False):
-                    info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
+                info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
+                if opt.get("only_headers", False):
                     ### Makes the request with HEAD method
                     req = session.head(
                         url,
@@ -1627,8 +1581,23 @@ def downloadpage(url, **opt):
                         params=opt.get("params", {}),
                     )
 
+                elif str(opt.get("cf_assistant", '')) == 'force':
+                    ### Makes the request thru Assistant
+                    from lib.cloudscraper import cf_assistant
+
+                    if opt.get("post", None) is not None and payload:
+                        opt["post"] = payload
+                    if opt.get("files", {}) and files:
+                        opt["files"] = files
+                    req = requests.Response()
+                    req.status_code = 403
+                    req = cf_assistant.get_cl(opt, req, cache=True)
+                    # If no Assistant
+                    if req.status_code in [503, 429, 400]:
+                        opt['cf_assistant'] = True
+                        return downloadpage(url, **opt)
+
                 elif opt.get("method", False):
-                    info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
                     ### Makes the request with SEND method
                     req_send = requests.Request(
                         opt["method"],
@@ -1644,8 +1613,18 @@ def downloadpage(url, **opt):
                         allow_redirects=opt.get("follow_redirects", True),
                     )
 
+                elif opt.get("post", None) or files:
+                    ### Makes the request with POST method
+                    req = session.post(
+                        url,
+                        data=payload,
+                        allow_redirects=opt.get("follow_redirects", True),
+                        files=files,
+                        timeout=opt.get("timeout", None),
+                        params=opt.get("params", {}),
+                    )
+
                 else:
-                    info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
                     ### Makes the request with GET method
                     req = session.get(
                         url,
@@ -2390,7 +2369,9 @@ def fill_fields_pre(url, proxy_data, file_name_, **opt):
             info_dict.append(("Keep Alive", opt.get("keep_alive", True)))
         if opt.get("cf_v2", False):
             info_dict.append(("CF v2 Assistant", opt.get("cf_v2", False)))
-        if opt.get("post", None) is not None or opt.get("files", None):
+        if opt.get("method", None):
+            info_dict.append(("Peticion", str(opt["method"]).upper() + proxy_data.get("stat", "")))
+        elif opt.get("post", None) is not None or opt.get("files", None) or file_name_:
             info_dict.append(("Peticion", "POST" + proxy_data.get("stat", "")))
         elif opt.get("only_headers", False):
             info_dict.append(("Peticion", "HEAD" + proxy_data.get("stat", "")))
@@ -2398,6 +2379,10 @@ def fill_fields_pre(url, proxy_data, file_name_, **opt):
             info_dict.append(("Peticion", "GET" + proxy_data.get("stat", "")))
         info_dict.append(("Descargar Pagina", not opt.get("only_headers", False)))
         info_dict.append(("BeautifulSoup", opt.get("soup", False)))
+        if opt.get("files", {}) and not file_name_:
+            info_dict.append(("Objeto fichero", True))
+        elif file_name_:
+            info_dict.append(("Fichero para Upload", file_name_))
         if opt.get("params", {}):
             info_dict.append(("Params", opt.get("params", {})))
         if opt.get("set_tls_OK", False):

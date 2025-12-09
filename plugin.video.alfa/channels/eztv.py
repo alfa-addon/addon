@@ -248,6 +248,7 @@ def episodesxseason(item, data=[]):
     logger.info()
 
     kwargs['headers'] = {'Referer': item.url}
+    kwargs['post'] = 'layout=def_wlinks'
     #kwargs['matches_post_get_video_options'] = findvideos_matches
 
     return AlfaChannel.episodes(item, data=data, matches_post=episodesxseason_matches, generictools=True, **kwargs)
@@ -411,6 +412,7 @@ def findvideos_links(item, elem_in, elem_json):
                 elem_json['url'] = ''
                 for url in elem.find_all('a'):
                     elem_json['url'] = url.get('href', '')
+                    if elem_json['url'].startswith('magnet'): break
                     if elem_json['url'].endswith('.torrent'): break
                 if elem_json.get('url'): elem_json['url'] = AlfaChannel.urljoin(host, elem_json['url'])
                 if not elem_json.get('url_episode'): elem_json['url_episode'] = elem_json['url']
@@ -421,6 +423,7 @@ def findvideos_links(item, elem_in, elem_json):
                 if elem.find('a'):
                     for url in elem.find_all('a'):
                         elem_json['url'] = url.get('href', '')
+                        if elem_json['url'].startswith('magnet'): break
                         if elem_json['url'].endswith('.torrent'): break
                     if elem_json.get('url'): elem_json['url'] = AlfaChannel.urljoin(host, elem_json['url'])
                     if not elem_json.get('url_episode'): elem_json['url_episode'] = elem_json['url']
@@ -442,9 +445,10 @@ def findvideos_links(item, elem_in, elem_json):
             logger.error(traceback.format_exc())
             break
 
-    if not elem_json.get('url') or scrapertools.slugify(item.contentSerieName, strict=False).lower() \
-                                   not in elem_json.get('url', '').lower().replace('.', ' ').replace('-', ' ') \
-                                          + elem_json.get('url_episode', '').lower().replace('.', ' ').replace('-', ' '): 
+    if not elem_json.get('url') or scrapertools.slugify(item.contentSerieName.replace('\'', '') \
+                                                        or elem_json.get('title', '').replace('\'', ''), strict=False).lower() \
+                                not in elem_json.get('url', '').lower().replace('.', ' ').replace('-', ' ').replace('\'', '')  \
+                                     + elem_json.get('url_episode', '').lower().replace('.', ' ').replace('-', ' ').replace('\'', ''): 
         elem_json = {}
 
     return elem_json
