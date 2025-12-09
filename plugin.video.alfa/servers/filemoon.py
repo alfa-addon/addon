@@ -50,7 +50,7 @@ def test_video_exists(page_url):
         logger.error("Neither cryptography nor pycryptodome libraries are available")
         return False,  "Neither cryptography nor pycryptodome libraries are available"
 
-    match = re.search(r'/(?:e|d)/([a-z0-9]{12})(?:$|/)', page_url)
+    match = re.search(r'/(?:e|d)/([a-z0-9]{12})(?:$|/|\?)', page_url)
     if match:
         playback_url = 'https://filemooon.link/api/videos/%s/embed/playback' % match.group(1)
     else:
