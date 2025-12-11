@@ -693,6 +693,8 @@ def get_source(
     if not domain.startswith("."):
         domain = "." + domain
     domain_host = "https://%s" % domain.lstrip(".")
+    url_domain_name = httptools.obtain_domain(url, sub=True, point=True).rstrip("/") + "/"
+    url_domain = url.replace(host_name, url_domain_name)
     try:
         pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
     except Exception:
@@ -985,7 +987,12 @@ def get_source(
                 and "url" in data_assistant["htmlSources"][0]
             ):
                 for html_source in data_assistant["htmlSources"]:
-                    if html_source.get("url", "") != url:
+                    url_domain_source = html_source.get("url", "")
+                    if url_domain_name in url_domain_source:
+                        host_name_source = httptools.obtain_domain(url_domain_source, scheme=True).rstrip("/") + "/"
+                        domain_source = httptools.obtain_domain(url_domain_source, sub=True, point=True).rstrip("/") + "/"
+                        url_domain_source = url_domain_source.replace(host_name_source, domain_source)
+                    if url_domain_source != url_domain:
                         urls_ignored += [html_source.get("url", "")]
                         for gov_block in gov_blocks:
                             if gov_block in html_source.get("url", ""):
