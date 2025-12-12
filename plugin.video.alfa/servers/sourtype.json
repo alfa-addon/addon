@@ -8,11 +8,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|en.|)(?:fuqer|luxuretv|sextubefun|freehdporn|wanktv|iporntoo|hdporn-movies).(?:com|xxx)/video(?:s|)/[A-z0-9-]+.html)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://(?:embed.|)fuqer.com/vid/[0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|en.|)(?:luxuretv|sextubefun|freehdporn|wanktv|iporntoo|hdporn-movies).(?:com|xxx)/video(?:s|)/[A-z0-9-]+.html)",
         "url": "\\1"
       },
       {
@@ -73,7 +69,7 @@
       },
       {
         "pattern": "(vagina.nl/sexfilms/view/[A-z0-9-]+(?:/|))",
-        "url": "https://en.\\1"
+        "url": "https://\\1"
       },
      {
         "pattern": "(https://(?:www.|)errrotica.com/[a-z]/[A-z0-9-]+/[0-9]+(?:/|))",
@@ -115,8 +111,8 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://bigfuck.tv/video/[0-9]+/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
+        "pattern": "https://bigfuck.tv/(?:video|embed)/([0-9]+)",
+        "url": "https://bigfuck.tv/embed/\\1"
       },
       {
         "pattern": "(https://eboblack.com/video/[0-9]+/[A-z0-9-]+(?:/|))",
@@ -155,10 +151,6 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)dump.xxx/video/[0-9-]+/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://(?:www.|)veporn.net/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
@@ -173,6 +165,14 @@
       },
       {
         "pattern": "(https://bunkr.\\w{2,4}/e/[A-z0-9]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://youperv.\\w{2,4}/[A-z0-9-]+/[A-z0-9-’]+.html)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://slutload.com/porn/video/[A-z0-9_]+)",
         "url": "\\1"
       },
       {

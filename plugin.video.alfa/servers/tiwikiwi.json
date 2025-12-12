@@ -32,6 +32,10 @@
         "url": "https://xtapes.porn/embed-\\1.html"
       },
       {
+        "pattern": "(bigbuttshub.\\w{2,4}/(?:e|d|v)/[A-z0-9]+)",
+        "url": "https://\\1"
+      },
+      {
         "pattern": "(https://dropload.\\w{2,4}/embed-[a-z0-9]+.html)",
         "url": "\\1"
       }

@@ -138,6 +138,9 @@ def play(item):
         item.plot = '[/COLOR]'.join(lista)
     
     url = soup.find('meta', property='og:video:url')['content']
+    if "?video_embed=" in url:
+        vid = AlfaChannel.create_soup(url, **kwargs)
+        url = vid.find('source', type='application/x-mpegURL')['src']
     itemlist.append(["[eroticmv]", url])
     
     return itemlist

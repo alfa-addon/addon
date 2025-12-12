@@ -22,8 +22,10 @@ list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
 
-######      Fallan fotos   https://pornox.hu/contents/videos_screenshots/101000/101150/336x189/7.jpg incluso con verifypeer
+######      RES 50% fotos   https://pornox.hu/contents/videos_screenshots/101000/101150/336x189/7.jpg incluso con verifypeer
                          # https://pornox.hu/contents/videos_screenshots/101000/101150/320x180/7.jpg
+                    # elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
+                         
 canonical = {
              'channel': 'pornox', 
              'host': config.get_setting("current_host", 'pornox', default=''), 
@@ -43,8 +45,8 @@ language = []
 url_replace = []
 
 
-finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['list-videos', 'main-container']}]),
-                       ('find_all', [{'tag': ['div'], 'class': ['item', 'video-item', 'th']}])]),
+finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['list-videos']}]),
+                       ('find_all', [{'tag': ['div'], 'class': ['item']}])]),
          'categories': dict([('find', [{'tag': ['div'], 'class': ['models_list', 'list-models', 'category_list', 'list-categories', 'video-list', 'list-videos', 'list-channels', 'list-sponsors', 'thumbs', 'thumbs_list', 'categories_list']}]),
                              ('find_all', [{'tag': ['div', 'a'], 'class': ['item', 'video-item', 'thumb', 'holder-item', 'th']}])]),
          'search': {}, 
@@ -79,8 +81,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas Favoritas" , action="list_all", url=host + "en/kereses/?sort_by=most_favourited&from_videos=1"))
     itemlist.append(Item(channel=item.channel, title="Mas Comentadas" , action="list_all", url=host + "en/kereses/?sort_by=most_commented&from_videos=1"))
     itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=host + "en/kereses/?sort_by=duration&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "en/szexcsatorna/?sort_by=total_videos&from=01", extra="Canal"))
     itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "en/pornosztarok/?sort_by=total_videos&from=01", extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "en/szexcsatorna/?sort_by=total_videos&from=01", extra="Canal"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "en/szex-kategoriak/?sort_by=title", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -90,7 +92,7 @@ def section(item):
     logger.info()
     
     findS = finds.copy()
-    findS['url_replace'] = [['(\/(?:categories|category-name|category|channels|sites|models|model|pornstars)\/[^$]+$)', r'\1?sort_by=post_date&from=1']]
+    findS['url_replace'] = [['(\/(?:szexcsatorna|szex-kategoriak|pornosztarok)\/[^$]+$)', r'\1?sort_by=post_date&from=1']]
     # if item.extra == 'Categorias':
         # findS['controls']['cnt_tot'] = 99999
     return AlfaChannel.section(item, finds=findS, **kwargs)
@@ -116,11 +118,11 @@ def list_all_matches(item, matches_int, **AHkwargs):
         try:
             elem_json['url'] = elem.a.get('href', '')
             elem_json['title'] = elem.a.get('title', '')
-            elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
+            thumbnail = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
                                      or elem.img.get('data-src', '') \
                                      or elem.img.get('src', '')
-            
-            elem_json['thumbnail'] = elem_json['thumbnail'].replace("336x189", "320x180")
+            # elem_json['thumbnail'] = thumbnail.replace("336x189", "320x180")
+            elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
             
             elem_json['stime'] = elem.find(class_='is-hd').get_text(strip=True) if elem.find(class_='is-hd') else ''
             if elem.find(class_=['is-hd']):

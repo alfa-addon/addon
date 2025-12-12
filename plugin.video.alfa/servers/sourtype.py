@@ -37,6 +37,7 @@ def get_video_url(page_url, video_password):
         if soup.video.source:
             tipo = soup.video.source['type']    # application/x-mpegURL & video/mp4
         matches  = soup.video.find_all('source', type=tipo)
+    
     except Exception:
         matches = scrapertools.find_multiple_matches(data, '<source src="([^"]+)" type="video/mp4"')
         for url in matches:
@@ -62,10 +63,13 @@ def get_video_url(page_url, video_password):
             url = "http:%s" % url
         url = urlparse.unquote(url)
         
+        # if "bigfuck" in url:
+        
         if "multi=" in url:
             m3u8_source = url
             response = httptools.downloadpage(m3u8_source, **kwargs)
-            logger.debug(response.code)
+            if response.code == 403:
+                m3u8_source = httptools.downloadpage(url, follow_redirects=False).headers["location"]
             # if response.code == 403:
                 # post_url = "https://u3.bigfuck.tv/ah/sign"
                 # post = {"urls":{"hls": m3u8_source}}
@@ -94,10 +98,12 @@ def get_video_url(page_url, video_password):
                     url += "|Referer=%s/&Origin=%s" % (host, host)
                     video_urls.append(['[%s] %s' % (server,quality), url])
         else:
-            # url += "|Referer=%s" % host
-            headers = httptools.default_headers.copy() 
-            url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
-            # url += "|Referer=%s/&Origin=%s" % (host, host)
+            # response = httptools.downloadpage(url, referer=host, **kwargs)
+            # if response.code == 403:
+                # url = httptools.downloadpage(url, follow_redirects=False).headers["location"]
+            # headers = httptools.default_headers.copy() 
+            # url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+            url += "|Referer=%s/&Origin=%s" % (host, host)
             video_urls.append(["[%s] mp4" %(server), url])
     return video_urls
 

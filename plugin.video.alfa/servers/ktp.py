@@ -68,8 +68,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             if "HD" in quality and not "Full" in quality:
                 quality = "720p"
             if "?br=" in url:
-                url += "&rnd=" + str(int(datetime.now().timestamp() * 1000))
-            # url += "|verifypeer=false"
+                # url += "&rnd=" + str(int(datetime.now().timestamp() * 1000))
+                url += "&rnd=" + str(int(time.time() * 1000))
             url += "|Referer=%s" % host
             video_urls.append(['[ktplayer] %s' % quality, url])
         

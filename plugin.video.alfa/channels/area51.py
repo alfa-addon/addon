@@ -21,6 +21,10 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
+##   RES fotos  https://area51.porn/contents/videos_screenshots/91000/91493/366x206/16.jpg 
+                    # elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
+
+
 canonical = {
              'channel': 'area51', 
              'host': config.get_setting("current_host", 'area51', default=''), 
@@ -97,7 +101,45 @@ def section(item):
 def list_all(item):
     logger.info()
     
-    return AlfaChannel.list_all(item, **kwargs)
+    # return AlfaChannel.list_all(item, **kwargs)
+    return AlfaChannel.list_all(item, matches_post=list_all_matches, **kwargs)
+
+
+def list_all_matches(item, matches_int, **AHkwargs):
+    logger.info()
+    matches = []
+    
+    findS = AHkwargs.get('finds', finds)
+    
+    for elem in matches_int:
+        elem_json = {}
+        
+        try:
+            elem_json['url'] = elem.a.get('href', '')
+            elem_json['title'] = elem.a.get('title', '')
+            thumbnail = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
+                                     or elem.img.get('data-src', '') \
+                                     or elem.img.get('src', '')
+            
+            elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
+            texto = elem.find('span', class_='is-hd').get_text(strip=True)
+            elem_json['stime'] = texto.replace("HD", "")
+            if "HD" in texto:
+                elem_json['quality'] = 'HD'
+            elem_json['premium'] = elem.find('i', class_='premiumIcon') \
+                                     or elem.find('span', class_=['ico-private', 'premium-video-icon']) or ''
+            if elem.find('span', class_='views'):
+                elem_json['views'] = elem.find('span', class_='views').get_text(strip=True)
+        
+        except:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
+        
+        if not elem_json['url']: continue
+        matches.append(elem_json.copy())
+    
+    return matches
 
 
 def findvideos(item):
