@@ -703,7 +703,9 @@ def get_source(
         host_name_ = httptools.obtain_domain(host_alt, scheme=True).rstrip("/") + "/"
         url_ = url.replace(host_name, host_name_)
         url_domain_name_ = httptools.obtain_domain(host_alt, sub=True, point=True).rstrip("/") + "/"
-        url_domain_list += [url_.replace(host_name_, url_domain_name_)]
+        url_domain_ = url_.replace(host_name_, url_domain_name_)
+        if url_domain_ not in url_domain_list:
+            url_domain_list += [url_domain_]
 
     try:
         pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
@@ -1001,10 +1003,7 @@ def get_source(
                     host_name_source = httptools.obtain_domain(url_domain_source, scheme=True).rstrip("/") + "/"
                     domain_source = httptools.obtain_domain(url_domain_source, sub=True, point=True).rstrip("/") + "/"
                     url_domain_source = url_domain_source.replace(host_name_source, domain_source)
-                    for host_alt in url_domain_list:
-                        if host_alt == url_domain_source:
-                            break
-                    else:
+                    if url_domain_source not in url_domain_list:
                         urls_ignored += [html_source.get("url", "")]
                         for gov_block in gov_blocks:
                             if gov_block in html_source.get("url", ""):
