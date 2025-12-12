@@ -22,7 +22,10 @@ list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
 
-######      Fallan fotos   https://okporn.xxx/contents/videos_screenshots/14000/14644/526x298/11.jpg tambien con verifypeer
+########     NO TIENE VIDEOS la web
+######      RES fotos   https://okporn.xxx/contents/videos_screenshots/14000/14644/526x298/11.jpg tambien con verifypeer
+                    # elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
+
 
 canonical = {
              'channel': 'okporn', 
@@ -101,8 +104,48 @@ def list_all(item):
     findS['next_page'] = {}
     item.last_page = 9999
     
-    return AlfaChannel.list_all(item, finds=findS, **kwargs)
+    # return AlfaChannel.list_all(item, finds=findS, **kwargs)
+    return AlfaChannel.list_all(item, finds=findS, matches_post=list_all_matches, **kwargs)
 
+
+def list_all_matches(item, matches_int, **AHkwargs):
+    logger.info()
+    matches = []
+    
+    findS = AHkwargs.get('finds', finds)
+    
+    for elem in matches_int:
+        elem_json = {}
+        
+        try:
+            elem_json['url'] = elem.a.get('href', '')
+            elem_json['title'] = elem.a.get('title', '')
+            thumbnail = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
+                                     or elem.img.get('data-src', '') \
+                                     or elem.img.get('src', '')
+            
+            elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
+            
+            elem_json['stime'] = elem.find(class_='time').get_text(strip=True) if elem.find(class_='time') else ''
+            if elem.find('div', class_=['qualtiy']):
+                elem_json['quality'] = 'HD'
+            elem_json['premium'] = elem.find('i', class_='premiumIcon') \
+                                     or elem.find('span', class_=['ico-private', 'premium-video-icon']) or ''
+            if elem.find('span', class_='views'):
+                elem_json['views'] = elem.find('span', class_='views').get_text(strip=True)
+            
+            
+            
+            
+        except:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
+        
+        if not elem_json['url']: continue
+        matches.append(elem_json.copy())
+    
+    return matches
 
 def findvideos(item):
     logger.info()

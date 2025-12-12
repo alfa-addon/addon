@@ -27,21 +27,21 @@ def test_video_exists(page_url):
     host = "https://%s" % domain
     server = domain.split(".")[-2]
     
-    # kwargs['headers'] = {
-                         # 'Referer': '%s/' %host,
-                         # 'Origin': host,
+    kwargs['headers'] = {
+                         'Referer': '%s/' %host,
+                         'Origin': host,
                          # 'Content-Type': 'application/json;charset=UTF-8',
                          # 'Accept-Encoding': 'gzip, deflate, br, zstd',
                          # 'Sec-Fetch-Dest': 'empty',
                          # 'Sec-Fetch-Mode': 'cors',
                          # 'Sec-Fetch-Site': 'same-site',
                          # 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0'
-                        # }
+                        }
     
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
     
-    if response.code == 404 or "not found" in response.data:
+    if response.code == 404 or "not found" in response.data or "no longer available" in response.data:
         return False,  "[%s] El fichero no existe o ha sido borrado" %server
     return True, ""
 
@@ -52,12 +52,15 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         # packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
         packed = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
         unpacked = jsunpack.unpack(packed)
-        
         # m3u8_source = scrapertools.find_single_match(unpacked, '\{(?:file|"hls\d+"):"([^"]+)"\}')
-        m3u8_source = scrapertools.find_single_match(unpacked, '\{(?:file|"hls\d+"|src):"([^"]+)"')
+        m3u8_source = scrapertools.find_single_match(unpacked, '(?:file|"hls2"|src):"([^"]+)"')
         
-        if "master.m3u8" in m3u8_source:
+        if "bigbuttshub" in host:
+            video_urls.append(['[%s] m3u' %server, m3u8_source])
+        
+        elif "master.m3u8" in m3u8_source:
             datos = httptools.downloadpage(m3u8_source, **kwargs).data
+            
             if sys.version_info[0] >= 3 and isinstance(datos, bytes):
                 datos = "".join(chr(x) for x in bytes(datos))
             

@@ -10,6 +10,8 @@ from core import servertools
 from core import httptools
 from core import urlparse
 
+###   mydaddy solo funciona el de 360
+
 canonical = {
              'channel': 'hqporner', 
              'host': config.get_setting("current_host", 'hqporner', default=''), 

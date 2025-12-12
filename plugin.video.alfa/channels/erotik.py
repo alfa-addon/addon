@@ -124,7 +124,10 @@ def play(item):
         lista = item.contentTitle.split('[/COLOR]')
         pornstar = pornstar.replace('[/COLOR]', '')
         pornstar = ' %s' %pornstar
-        lista.insert (1, pornstar)
+        if "HD" in item.contentTitle:
+            lista.insert (2, pornstar)
+        else:
+            lista.insert (1, pornstar)
         item.contentTitle = '[/COLOR]'.join(lista)
     
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))

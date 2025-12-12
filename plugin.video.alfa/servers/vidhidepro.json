@@ -12,11 +12,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|movearnpre|seraphinapl|bingezove|cdnvids).(?:com|\\w{2,4})/(?:f|v|embed|d|file)/[A-z0-9]+)",
+        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|movearnpre|seraphinapl|bingezove|dinisglows|dingtezunicdnvids).(?:com|\\w{2,4})/(?:f|v|embed|d|file)/[A-z0-9]+)",
         "url": "\\1"
       },
       {
-        "pattern": "(?i)https://(?:smoothpre|mivalyo|dingtezuni|dintezuvio|dinisglows)\\.com/(?:f|v|embed|d|file)/([A-z0-9]+)",
+        "pattern": "(?i)https://(?:smoothpre|mivalyo|dingtezuni|dintezuvio)\\.com/(?:f|v|embed|d|file)/([A-z0-9]+)",
         "url": "https://smoothpre.com/embed/\\1"
       },
       {
