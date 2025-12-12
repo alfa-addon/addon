@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:bestwish|bestb|streamup|strmup).(?:stream|\\w{2,4}))/([A-z0-9-]+)",
+        "pattern": "(https://(?:bestwish|bestb|streamup|strmup|bbcanal).(?:stream|\\w{2,4}))/([A-z0-9-]+)",
         "url": "https://bestb.stream/ajax/stream?filecode=\\2|\\1"
       }
     ]
