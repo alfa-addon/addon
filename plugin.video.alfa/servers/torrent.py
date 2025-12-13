@@ -726,6 +726,7 @@ def magnet2torrent(magnet, headers={}, downloadStatus=4):
     torrent_file = ''
     info = ''
     post = None
+    headers.update({'Content-Type': 'application/x-bittorrent'})
     PK = 'PK'
     if PY3: PK = bytes(PK, 'utf-8')
     RAR = 'Rar!'
@@ -749,7 +750,7 @@ def magnet2torrent(magnet, headers={}, downloadStatus=4):
 
         # Tratamos de convertir el magnet on-line (opción más rápida, pero no se puede convertir más de un magnet a la vez)
         url_list = [
-                    ('https://itorrents.org/torrent/', 5, '', '.torrent')
+                    ('https://itorrents.net/torrent/', 5, '', '.torrent')
                    ]                                                            # Lista de servicios on-line testeados
         for x, (url, timeout, id, sufix) in enumerate(url_list):
             if progreso: progreso.update(old_div((x * 100), len(url_list)), header_progreso, magnet_title)
@@ -770,6 +771,20 @@ def magnet2torrent(magnet, headers={}, downloadStatus=4):
                                                   or response.data.startswith(RAR):
                 logger.debug('ERROR Data: %s' % response.data[:150])
                 continue
+
+            try:
+                import bencode, hashlib
+
+                decodedDict = bencode.bdecode(response.data)
+                if not PY3:
+                    t_hash = hashlib.sha1(bencode.bencode(decodedDict[b"info"])).hexdigest()
+                else:
+                    t_hash = hashlib.sha1(bencode.bencode(decodedDict["info"])).hexdigest()
+            except Exception as e:
+                logger.error(('ERROR bencode: %s' % str(e), len(response.data), str(response.data)[:200]))
+                #logger.error(traceback.format_exc(1))
+                continue
+
             torrent_file = response.data
             break
 

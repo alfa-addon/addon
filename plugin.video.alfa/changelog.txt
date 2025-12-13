@@ -2,19 +2,15 @@
         [B]Estos son los cambios para esta versión:[/B]
         
         • +18
-        • AnimeJL
         • Asialiveaction
-        • Cine Mundo
-        • Divxtotal
         • Dontorrent
+        • Doramasflix
         • Eztv
-        • Flizz Movies
-        • GranTorrent
-        • LaMovie
-        • MejorTorrent
-        • Pelis182
-        • Pelitorrent
-        • SoloLatino
-        • TubeOnLine
+        • FullSerieHD
+        • HDFull
+        • JKanime
+        • Osjonosu
         • VerAnime
+        • Veronline
+        • WolfMax4K
         

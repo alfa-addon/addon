@@ -2854,6 +2854,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if elem.get('next_episode_air_date', ''): new_item.infoLabels['next_episode_air_date_custom']  = elem['next_episode_air_date']
             if elem.get('password', ''): new_item.password = elem['password']
             if 'matches_cached' in elem: new_item.matches_cached = elem['matches_cached'][:]
+            if 'matches_verify' in elem: new_item.matches_verify = elem['matches_verify']
             if BTDIGG_URL_SEARCH in item.url: new_item.btdigg = item.btdigg
             if not new_item.season_search and item.season_search: new_item.season_search = item.season_search
             
@@ -3072,10 +3073,21 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     del item.btdig_in_use
                 if item.url.startswith('magnet') or item.url.endswith('.torrent'):
                     url = item.url = item.url_tvshow
- 
+
+            from core.videolibrarytools import redirect_url                     # Redirigimos urls de item.matches y item.emergency_urls
+            for match in item.matches:
+                if isinstance(match, _dict) and match.get('url'): match['url'] = redirect_url(match['url'], channel=item.channel)
+            if item.emergency_urls and len(item.emergency_urls) > 1 and isinstance(item.emergency_urls[1], list) \
+                                   and len(item.emergency_urls[1]) > 0 and isinstance(item.emergency_urls[1][0], _dict):
+                for match in item.emergency_urls[1]:
+                    if match.get('url'): match['url'] = redirect_url(match['url'], channel=item.channel)
+            if item.emergency_urls and len(item.emergency_urls) > 2 and isinstance(item.emergency_urls[2], list):
+                for x, match in enumerate(item.emergency_urls[2]):
+                    item.emergency_urls[2][x] = redirect_url(match, channel=item.channel)
+
         if data or item.url.startswith('magnet') or item.url.endswith('.torrent') \
                 or (item.matches and item.channel != 'videolibrary' and item.contentChannel != 'videolibrary' \
-                                 and item.from_channel != 'videolibrary') \
+                                 and item.from_channel != 'videolibrary' and not item.matches_verify) \
                 or item.btdig_in_use:
             soup = data
             response = self.response
@@ -3097,13 +3109,16 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 if matches_episodes:
                     matches_epi = matches_post_episodes(item, matches_episodes, **AHkwargs)
                     for epi in matches_epi:
-                        if not epi.get('episode', 0) == item.contentEpisodeNumber: continue
+                        if epi.get('episode', 0) != item.contentEpisodeNumber: continue
+                        if epi.get('url', 'xyz') in str(matches) or epi.get('url', 'xyz') in str(item.matches): continue
+                        if epi.get('matches_verify', False): item.matches_verify = epi['matches_verify']
+                        if epi.get('info', ''): item.info = epi['info']
                         matches.append(epi.copy())
                     if matches:
                         item.matches = matches[:]
                     elif isinstance(item.matches[0], _dict):
                         matches = item.matches[:]
-        
+
         langs = langs or self.parse_finds_dict(soup, finds_langs) or self.language
         if not isinstance(langs, list):
             langs = []
@@ -3130,9 +3145,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
             matches.append(elem_json.copy())
         
-        if not item.matches or (item.matches and not matches and (item.channel == 'videolibrary' \
-                                                                  or item.contentChannel == 'videolibrary' \
-                                                                  or item.from_channel == 'videolibrary')):
+        if not item.matches or item.matches_verify or (item.matches and not matches and (item.channel == 'videolibrary' \
+                                                                                    or item.contentChannel == 'videolibrary' \
+                                                                                    or item.from_channel == 'videolibrary')):
             matches_findvideos = self.parse_finds_dict(soup, finds_out) if finds_out \
                                  else (self.response.soup or self.response.json or self.response.data)
             if not isinstance(matches_findvideos, (list, _dict)):
@@ -3144,6 +3159,14 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 matches, langs = matches_post(item, matches_findvideos, langs, response, **AHkwargs)
             if not matches_post and not matches and matches_findvideos:
                 matches = matches_findvideos[:]
+            if matches and item.matches:
+                for match in item.matches:
+                    if match.get('url', 'xyz') in str(matches): continue
+                    if match.get('url', '').startswith('magnet') \
+                             and scrapertools.find_single_match(match['url'], r'urn:btih:([\w\d]+)\&') in str(matches):
+                        continue
+                    matches.append(match)
+                item.matches = matches[:]
             if matches and AHkwargs.get('matches'):
                 item.matches = matches[:]
                 del AHkwargs['matches']

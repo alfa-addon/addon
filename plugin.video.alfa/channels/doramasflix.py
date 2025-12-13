@@ -199,7 +199,7 @@ def list_all_query(item, query, page):
 
         item_args['channel'] = item.channel
         item_args['url'] = dorama['_id']
-        item_args['extra'] = dorama['slug']
+        item_args['slug'] = dorama['slug']
         
         item_args['context'] = autoplay.context
         if dorama.get('languages',''):
@@ -274,7 +274,7 @@ def seasons(item):
     season = 1 if not item.contentSeason else item.contentSeason
 
     query = {"operationName":"detailSeasonExtra",
-             "variables":{"slug":item.extra,"season_number":season},
+             "variables":{"slug":item.slug,"season_number":season},
              "query":"query detailSeasonExtra($slug: String!, $season_number: Int!) {\n"
                     +"  listSeasons(sort: NUMBER_ASC, filter: {serie_slug: $slug}) {\n"
                     +"    slug\n"
@@ -350,7 +350,7 @@ def seasons(item):
                 channel = item.channel,
                 title = title,
                 url = episode['_id'],
-                extra = episode['slug'],
+                slug = episode['slug'],
                 action = 'findvideos',
                 infoLabels = infoLabels,
                 contentType = 'episode'

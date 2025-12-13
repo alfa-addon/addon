@@ -21,7 +21,6 @@ else:
     import urllib 
 
 from builtins import range
-from past.utils import old_div
 
 import re
 import os
@@ -2187,6 +2186,10 @@ def AH_find_btdigg_matches(item, matches, **AHkwargs):
 
         for x, it in enumerate(itemlist):
             if not it.matches: continue
+            from core.videolibrarytools import redirect_url                     # Redirigimos urls de item.matches
+            for mat in it.matches:
+                if mat.get('url'): mat['url'] = redirect_url(mat['url'], channel=item.channel)
+                if mat.get('referer'): mat['referer'] = redirect_url(mat['referer'], channel=item.channel)
             if not isinstance(it.matches[0], dict):
                 if not matches_post: continue
                 AHkwargs['videolibrary'] = True
@@ -4872,7 +4875,7 @@ def get_torrent_size(url, **kwargs):
         i = int(math.floor(math.log(size, 1024)))
         p = math.pow(1024, i)
         #s = round(size / p, 2)
-        s = round(old_div(size, p), 2)
+        s = round((size // p), 2)
         return '%s %s' % (s, size_name[i])
     
     def decode(text):

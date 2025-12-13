@@ -5,7 +5,6 @@
 
 from __future__ import division
 from builtins import range
-from past.utils import old_div
 
 from channelselector import get_thumb
 from core import filetools
@@ -448,7 +447,7 @@ def cb_servers_blacklist(item, dict_values):
                 config.set_setting("favorites_servers_list", 100, server=k)
                 f = True
                 progreso.update(
-                    old_div((i * 100), n), config.get_localized_string(60559) % k
+                    ((i * 100) // n), config.get_localized_string(60559) % k
                 )
         i += 1
 
@@ -535,7 +534,7 @@ def cb_servers_favorites(server_names, dict_values):
         else:
             config.set_setting("favorites_servers_list", 0, server=server)
         progreso.update(
-            old_div((i * 100), n),
+            ((i * 100) // n),
             config.get_localized_string(60559) % server_parameters["name"],
         )
         i += 1

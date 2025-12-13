@@ -161,24 +161,38 @@ def episodios(item):
             infoLabels['episode'] = episode
             itemlist.append(item.clone(action='findvideos',
                                        url=url, 
-                                       title="%s - %s" % (item.contentSerieName, episode),
+                                       title="%sx%s - %s" % (infoLabels['season'], infoLabels['episode'], item.contentSerieName),
                                        infoLabels=infoLabels,
                                        contentType='episode'))
         else:
             itemlist.append(item.clone(action='findvideos',
                                        url=url))
     
+    for elem in soup.find_all("div", class_="episodio-group"):
+        episode = elem.button.b.find(string=True, recursive=False).strip()
+        if "Episodio" in episode:
+            episode = episode.replace("Episodio ", "")
+            infoLabels['season'] = 1
+            infoLabels['episode'] = episode
+            new_item = item.clone(action='findvideos',
+                                  title="%sx%s - %s" % (infoLabels['season'], infoLabels['episode'], item.contentSerieName),
+                                  infoLabels=infoLabels,
+                                  contentType='episode')
+        else:
+            new_item = item.clone(action='findvideos')
+        
+        for version in elem.find_all("li"):
+            autor = version.a.b.find(string=True, recursive=False).strip()
+            itemlist.append(new_item.clone(plot="Versión de: %s" % autor, url=version.a['href']))
+    
     if item.contentType == 'tvshow':
-        if item.infoLabels.get('tmdb_id', ''):
-            tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
         if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != "episodios":
             itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]",
                                 url=item.url, action="add_serie_to_library", extra="episodios",
                                 contentSerieName=item.contentSerieName))
         return itemlist
     else:
-        if len(itemlist) > 0:
+        if len(itemlist) == 1:
             return findvideos(itemlist[0])
         else:
             return itemlist

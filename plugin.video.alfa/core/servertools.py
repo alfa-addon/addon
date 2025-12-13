@@ -7,7 +7,6 @@ from __future__ import division
 from __future__ import absolute_import
 import sys
 from builtins import range
-from past.utils import old_div
 
 import re
 import codecs
@@ -233,10 +232,20 @@ def parse_hls(video_urls, server):
         if 'm3u8' not in url:
             return video_urls
         
-        data = httptools.downloadpage(url, headers=headers).data
-        patron = r'#EXT-X-STREAM-INF.*?RESOLUTION=(\d+x\d+).*?\s(http.*?)\s'
+        try:
+            data = httptools.downloadpage(url, headers=headers).data
+        except Exception as e:
+            logger.error(e)
+            return video_urls
+        
         if not isinstance(data, str):
             data = codecs.decode(data, "utf-8")
+        
+        if '#EXT-X-MEDIA:TYPE=AUDIO' in data \
+        or '#EXT-X-MEDIA:TYPE=SUBTITLES' in data:
+            return video_urls
+        
+        patron = r'#EXT-X-STREAM-INF.*?RESOLUTION=(\d+x\d+).*?\s(http.*?)\s'
         matches = scrapertools.find_multiple_matches(data, patron)
 
         if len(matches) > 1:
@@ -366,7 +375,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
 
             # Muestra el progreso
             if muestra_dialogo:
-                progreso.update((old_div(100, len(opciones))) * opciones.index(opcion), config.get_localized_string(70180) % server_name)
+                progreso.update(((100 // len(opciones))) * opciones.index(opcion), config.get_localized_string(70180) % server_name)
             
             
             # Modo free

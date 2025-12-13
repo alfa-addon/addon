@@ -7,7 +7,6 @@
 from __future__ import division
 #from builtins import str
 from builtins import range
-from past.utils import old_div
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; basestring = str
@@ -749,7 +748,7 @@ def copy(path, dest, silent=False, vfs=True, ch_mod='', su=False):
             copiado = 0
             while True:
                 if not silent:
-                    dialogo.update(old_div(copiado * 100, size), basename(path))
+                    dialogo.update((copiado * 100 // size), basename(path))
                 buf = fo.read(1024 * 1024)
                 if not buf:
                     break

@@ -23,8 +23,8 @@ forced_proxy_opt = 'ProxyCF'
 canonical = {
              'channel': 'osjonosu', 
              'host': config.get_setting("current_host", 'osjonosu', default=''), 
-             'host_alt': ["https://osjonosu.es/"], 
-             'host_black_list': ["https://oscar220374.com/"], 
+             'host_alt': ["https://osjonosu.xyz/"], 
+             'host_black_list': ["https://osjonosu.es/", "https://oscar220374.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

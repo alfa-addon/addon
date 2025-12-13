@@ -2,7 +2,6 @@
 
 from __future__ import division
 from builtins import range
-from past.utils import old_div
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -169,7 +168,7 @@ def episodios(item):
         caps_x = item.extra
         caps_x = caps_x.replace(" Eps", "")
         capitulos = int(caps_x)
-        paginas = old_div(capitulos, 10) + (capitulos % 10 > 0)
+        paginas = (capitulos // 10) + (capitulos % 10 > 0)
     else:
         paginas, capitulos = get_pages_and_episodes(data)
     for num_pag in range(1, paginas + 1):

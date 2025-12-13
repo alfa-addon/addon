@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'veronline', 
              'host': config.get_setting("current_host", 'veronline', default=''), 
-             'host_alt': ['https://www.veronline.sh/'], 
-             'host_black_list': ['https://www.veronline.cc/'],
+             'host_alt': ['https://www.veronline.tax/'], 
+             'host_black_list': ['https://www.veronline.sh/', 'https://www.veronline.cc/'],
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
              }

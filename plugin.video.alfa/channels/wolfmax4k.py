@@ -158,10 +158,12 @@ def submenu(item):
     itemlist = []
 
     if item.c_type == 'peliculas':
-        itemlist.append(Item(channel=item.channel, title="Todas las Películas", 
-                             action="list_all", url=item.url, 
+        #itemlist.append(Item(channel=item.channel, title="Todas las Películas", 
+        #                     action="list_all", url=item.url, 
+        #                     thumbnail=get_thumb('movies', auto=True), c_type=item.c_type, contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title="Películas:", 
                              thumbnail=get_thumb('movies', auto=True), c_type=item.c_type, contentPlot=item.plot))
-        
+
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: Bluray[/COLOR]", 
                              action="list_all", url=item.url + 'bluray/', 
                              thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, contentPlot=item.plot))
