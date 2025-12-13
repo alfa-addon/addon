@@ -8,7 +8,7 @@
         "url": "https://\\1"
       },
       {
-        "pattern": "(player.megaxserie(?:\\.watch\\/|\\.\\w{2,4}\\/)(?:e/|f/|player/)[A-z0-9]+)",
+        "pattern": "(player.(?:euroxxx|megaxserie).(?:watch|\\w{2,4})/(?:e/|f/|player/)[A-z0-9]+)",
         "url": "https://\\1"
       },
       {
