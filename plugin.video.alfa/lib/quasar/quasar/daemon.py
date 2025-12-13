@@ -1,7 +1,4 @@
-#from future import standard_library
-#standard_library.install_aliases()
 from future.builtins import map
-#from future.builtins import str
 from future.builtins import range
 
 import sys

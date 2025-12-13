@@ -842,6 +842,7 @@ def update_external_addon(addon_name):
                 addon_path = ""
 
             # Hay modificaciones en Alfa? Las copiamos al addon, incuidas las carpetas de migración a PY3
+            # TODO: Borrar esto, pero revisar qué add-ons lo requieren y entonces borrarlo
             if filetools.exists(alfa_addon_updates) and filetools.exists(addon_path):
                 for root, folders, files in filetools.walk(alfa_addon_updates_mig):
                     if (

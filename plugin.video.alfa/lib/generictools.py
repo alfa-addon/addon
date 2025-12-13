@@ -21,7 +21,6 @@ else:
     import urllib 
 
 from builtins import range
-from past.utils import old_div
 
 import re
 import os
@@ -4876,7 +4875,7 @@ def get_torrent_size(url, **kwargs):
         i = int(math.floor(math.log(size, 1024)))
         p = math.pow(1024, i)
         #s = round(size / p, 2)
-        s = round(old_div(size, p), 2)
+        s = round((size // p), 2)
         return '%s %s' % (s, size_name[i])
     
     def decode(text):

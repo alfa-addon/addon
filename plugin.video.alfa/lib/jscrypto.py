@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import absolute_import
 from builtins import range
 from builtins import object
-from past.utils import old_div
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -47,7 +46,7 @@ def evpKDF(passwd, salt, key_size=8, iv_size=4, iterations=1, hash_algorithm="md
         else:
             derived_bytes += block[0: min(len(block), (target_key_size - number_of_derived_words) * 4)]
 
-        number_of_derived_words += old_div(len(block), 4)
+        number_of_derived_words += (len(block) // 4)
 
     return {
         "key": derived_bytes[0: key_size * 4],

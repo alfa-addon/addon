@@ -5,8 +5,6 @@
 
 from __future__ import division
 from builtins import range
-from past.utils import old_div
-#from builtins import str
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -285,7 +283,7 @@ def channel_search(item):
         ch_name = channel_names[channel_ids.index(key)]
         grouped = list()
         completed_cnt += 1
-        progress.update(old_div((completed_cnt * 100), len(preliminary_results)), config.get_localized_string(60295) \
+        progress.update(((completed_cnt * 100) // len(preliminary_results)), config.get_localized_string(60295) \
                         + '\n' + config.get_localized_string(60293))
         if len(value) <= max_results and item.mode != 'all':
             if len(value) == 1:

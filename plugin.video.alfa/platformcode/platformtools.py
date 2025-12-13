@@ -10,7 +10,6 @@
 
 from __future__ import division
 from __future__ import absolute_import
-from past.utils import old_div
 
 import os
 import time
@@ -2291,7 +2290,7 @@ def handle_wait(time_to_wait, title, text):
     espera = dialog_progress(" " + title, "")
 
     secs = 0
-    increment = int(old_div(100, time_to_wait))
+    increment = int((100 // time_to_wait))
 
     cancelled = False
     while secs < time_to_wait:

@@ -7,7 +7,6 @@ from __future__ import division
 from __future__ import absolute_import
 import sys
 from builtins import range
-from past.utils import old_div
 
 import re
 import codecs
@@ -376,7 +375,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
 
             # Muestra el progreso
             if muestra_dialogo:
-                progreso.update((old_div(100, len(opciones))) * opciones.index(opcion), config.get_localized_string(70180) % server_name)
+                progreso.update(((100 // len(opciones))) * opciones.index(opcion), config.get_localized_string(70180) % server_name)
             
             
             # Modo free

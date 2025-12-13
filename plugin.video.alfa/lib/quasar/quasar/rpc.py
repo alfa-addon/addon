@@ -1,7 +1,4 @@
-#from future import standard_library
-#standard_library.install_aliases()
 from future.builtins import map
-#from future.builtins import str
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int

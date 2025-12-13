@@ -9,7 +9,6 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 from builtins import range
-from past.utils import old_div
 
 import inspect
 import os
@@ -588,7 +587,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         self.check_ok(self.values)
 
     def dispose_controls(self, index, focus=False, force=False):
-        show_controls = old_div(self.controls_height, self.height_control) - 1
+        show_controls = (self.controls_height // self.height_control) - 1
 
         visible_count = 0
 
@@ -942,11 +941,11 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         elif action == 504:
 
             if self.xx > raw_action.getAmount2():
-                if old_div((self.xx - int(raw_action.getAmount2())), self.height_control):
+                if ((self.xx - int(raw_action.getAmount2())) // self.height_control):
                     self.xx -= self.height_control
                     self.dispose_controls(self.index + 1)
             else:
-                if old_div((int(raw_action.getAmount2()) - self.xx), self.height_control):
+                if ((int(raw_action.getAmount2()) - self.xx) // self.height_control):
                     self.xx += self.height_control
                 self.dispose_controls(self.index - 1)
             return
@@ -987,7 +986,7 @@ class ControlEdit(xbmcgui.ControlButton):
 
     def setWidth(self, w):
         xbmcgui.ControlButton.setWidth(self, w)
-        self.textControl.setWidth(old_div(w, 2))
+        self.textControl.setWidth((w // 2))
 
     def setHeight(self, w):
         xbmcgui.ControlButton.setHeight(self, w)
@@ -998,7 +997,7 @@ class ControlEdit(xbmcgui.ControlButton):
         if xbmcgui.__version__ == "1.2":
             self.textControl.setPosition(x + self.getWidth(), y)
         else:
-            self.textControl.setPosition(x + old_div(self.getWidth(), 2), y)
+            self.textControl.setPosition(x + (self.getWidth() // 2), y)
 
     def setText(self, text):
         self.text = text
