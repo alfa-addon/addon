@@ -3,8 +3,6 @@
 # infoplus ventana con información del Item
 # ------------------------------------------------------------
 
-from future import standard_library
-standard_library.install_aliases()
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int

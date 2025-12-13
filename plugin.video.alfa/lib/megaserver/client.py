@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import print_function
 from builtins import range
 from builtins import object
-from past.utils import old_div
 
 import patch
 import base64
@@ -181,7 +180,7 @@ class Client(object):
     def str_to_a32(self,b):
       if len(b) % 4: # Add padding, we need a string with a length multiple of 4
         b += '\0' * (4 - len(b) % 4)
-      return struct.unpack('>%dI' % (old_div(len(b), 4)), b)
+      return struct.unpack('>%dI' % ((len(b) // 4)), b)
 
     def base64_to_a32(self,s):
       return self.str_to_a32(self.base64urldecode(s))

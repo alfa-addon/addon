@@ -6,7 +6,6 @@
 from __future__ import division
 from __future__ import absolute_import
 from builtins import range
-from .past.utils import old_div
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -58,7 +57,7 @@ def e(license_code, _size):
             s += str(1)
     s = s.replace('0', '1')
 
-    p = int(old_div(len(s),2))
+    p = int((len(s) // 2))
     n = int(s[:p + 1])
     m = int(s[p:])
 
@@ -74,7 +73,7 @@ def e(license_code, _size):
     s *= 2;
     s = str(s);
 
-    rate = old_div(_size, 2) + 2
+    rate = (_size // 2) + 2
 
     res = ""
     for i in range(p+1):

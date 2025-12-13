@@ -4,7 +4,6 @@
 # ------------------------------------------------------------
 
 from __future__ import division
-from past.utils import old_div
 
 import re
 import os
@@ -206,8 +205,8 @@ def mainlist(item):
                         or x.contentSerieName.lower() == i.contentSerieName.lower()
                     ][0]
                     s.downloadProgress.append(i.downloadProgress)
-                    downloadProgress = old_div(
-                        sum(s.downloadProgress), len(s.downloadProgress)
+                    downloadProgress = (
+                        sum(s.downloadProgress) // len(s.downloadProgress)
                     )
 
                     if s.downloadStatus not in [
@@ -2162,8 +2161,8 @@ def get_server_position(server):
             for s in sorted(
                 servers,
                 key=lambda x: (
-                    old_div(
-                        sum(servers[x]["speeds"]), (len(servers[x]["speeds"]) or 1)
+                    (
+                        sum(servers[x]["speeds"]) // (len(servers[x]["speeds"]) or 1)
                     ),
                     float(sum(servers[x]["success"]))
                     / (len(servers[x]["success"]) or 1)
@@ -4400,7 +4399,7 @@ def save_download_tvshow(item, silent=False):
     for x, i in enumerate(episodes):
         if not silent:
             progreso.update(
-                old_div(x * 100, len(episodes)),
+                (x * 100 // len(episodes)),
                 "%dx%0.2d: %s"
                 % (i.contentSeason, i.contentEpisodeNumber, i.contentTitle)
             )

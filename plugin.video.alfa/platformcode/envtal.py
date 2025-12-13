@@ -4,8 +4,6 @@
 # ------------------------------------------------------------
 
 from __future__ import division
-#from builtins import str
-from past.utils import old_div
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -170,14 +168,14 @@ def get_environment():
                     memoryStatus = MEMORYSTATUS()
                     memoryStatus.dwLength = ctypes.sizeof(MEMORYSTATUS)
                     kernel32.GlobalMemoryStatus(ctypes.byref(memoryStatus))
-                    environment['mem_total'] = str(old_div(int(memoryStatus.dwTotalPhys), (1024**2)))
-                    environment['mem_free'] = str(old_div(int(memoryStatus.dwAvailPhys), (1024**2)))
+                    environment['mem_total'] = str((int(memoryStatus.dwTotalPhys) // (1024**2)))
+                    environment['mem_free'] = str((int(memoryStatus.dwAvailPhys) // (1024**2)))
 
                 else:
                     with open('/proc/meminfo') as f:
                         meminfo = f.read()
-                    environment['mem_total'] = str(old_div(int(re.search(r'MemTotal:\s+(\d+)', meminfo).groups()[0]), 1024))
-                    environment['mem_free'] = str(old_div(int(re.search(r'MemAvailable:\s+(\d+)', meminfo).groups()[0]), 1024))
+                    environment['mem_total'] = str((int(re.search(r'MemTotal:\s+(\d+)', meminfo).groups()[0]) // 1024))
+                    environment['mem_free'] = str((int(re.search(r'MemAvailable:\s+(\d+)', meminfo).groups()[0]) // 1024))
             except:
                 environment['mem_total'] = ''
                 environment['mem_free'] = ''
@@ -192,8 +190,8 @@ def get_environment():
                                     "advancedsettings.xml")).split('\n')
                     for label_a in advancedsettings:
                         if 'memorysize' in label_a:
-                            environment['kodi_buffer'] = str(old_div(int(scrapertools.find_single_match
-                                    (label_a, '>(\d+)<\/')), 1024**2))
+                            environment['kodi_buffer'] = str((int(scrapertools.find_single_match
+                                    (label_a, '>(\d+)<\/')) // 1024**2))
                         if 'buffermode' in label_a:
                             environment['kodi_bmode'] = str(scrapertools.find_single_match
                                     (label_a, '>(\d+)<\/'))

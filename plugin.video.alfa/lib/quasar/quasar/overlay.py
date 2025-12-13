@@ -1,6 +1,5 @@
 from __future__ import division
 from future.builtins import object
-from past.utils import old_div
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -24,10 +23,10 @@ class OverlayText(object):
         self.window = xbmcgui.Window(WINDOW_FULLSCREEN_VIDEO)
         viewport_w, viewport_h = self._get_skin_resolution()
         # Adjust size based on viewport, we are using 1080p coordinates
-        w = int(old_div(w * viewport_w, VIEWPORT_WIDTH))
-        h = int(old_div(h * viewport_h, VIEWPORT_HEIGHT))
-        x = old_div((viewport_w - w), 2)
-        y = old_div((viewport_h - h), 2) + int(ADDON.getSetting(id="overlay_status_offset"))
+        w = int((w * viewport_w // VIEWPORT_WIDTH))
+        h = int((h * viewport_h // VIEWPORT_HEIGHT))
+        x = ((viewport_w - w) // 2)
+        y = ((viewport_h - h) // 2) + int(ADDON.getSetting(id="overlay_status_offset"))
         self._shown = False
         self._text = ""
         self._label = xbmcgui.ControlLabel(x, y, w, h, self._text,
