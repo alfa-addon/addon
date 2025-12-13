@@ -25,9 +25,11 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.phd/", "https://reinventorrent.org/", "https://lilatorrent.com/", 
-                          "https://todotorrents.org/", "https://www21.dontorrent.link/", "https://elitedivx.net/"], 
-             'host_black_list': ["https://dontorrent.live/", "https://dontorrent.kiwi/", 
+             'host_alt': ["https://dontorrent.prof/", "https://lilatorrent.com/", "https://todotorrents.org/", "https://elitedivx.net/"], 
+             'host_alt_new': ["https://dontorrent.prof/"], 
+             'host_black_list': ["https://dontorrent.club/", "https://www21.dontorrent.link/", 
+                                 "https://dontorrent.sarl/", "https://dontorrent.gripe/", "https://reinventorrent.org/", 
+                                 "https://dontorrent.phd/", "https://dontorrent.live/", "https://dontorrent.kiwi/", 
                                  "https://dontorrent.kids/", "https://dontorrent.onl/", "https://dontorrent.istanbul/", 
                                  "https://dontorrent.lighting/", "https://dontorrent.irish/", "https://dontorrent.international/", 
                                  "https://dontorrent.graphics/", "https://www20.dontorrent.link/", "https://dontorrent.loan/", 
@@ -88,6 +90,7 @@ canonical = {
 host = canonical['host'] or canonical['host_alt'][0]
 channel = canonical['channel']
 categoria = channel.capitalize()
+host_new = True if canonical['host'] in canonical.get('host_alt_new', []) else False
 domain_torrent = 'dontorrent.foo'
 host_torrent = host if 'dontorrent' in host and not '.in/' in host else ''
 host_torrent_referer = host
@@ -101,6 +104,7 @@ movie_path = "/pelicula"
 tv_path = '/serie'
 docu_path = '/documental'
 tienda_path = '/tienda'
+torrent_path = 'api_validate_pow.php'
 language = ['CAST']
 url_replace = []
 
@@ -210,6 +214,7 @@ def configuracion(item):
 
 
 def submenu(item):
+    global host_new
     logger.info()
 
     itemlist = []
@@ -243,6 +248,7 @@ def submenu(item):
 
     soup = AlfaChannel.create_soup(host, **kwargs)
     matches_int = AlfaChannel.parse_finds_dict(soup, findS['sub_menu'])
+    host_new = True if canonical['host'] in canonical.get('host_alt_new', []) else False
 
     # En películas las categorías se llaman con Post
     post_alfabeto = 'campo=letra&valor3=%s&valor=&valor2=&pagina=1'
@@ -271,11 +277,10 @@ def submenu(item):
                                  url=url+'/page/1', thumbnail=get_thumb("channels_%s%s.png" % (contentType, '_hd' if quality else '')), 
                                  c_type=item.c_type, quality=quality, category=categoria))
 
-            if item.c_type != 'peliculas':                                      # Para todo, menos películas
-                url = url
-                #itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
-                #                     url=url + "/letra-%s/page/1", thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, 
-                #                     extra='Alfabético', quality=quality, category=categoria))
+            if item.c_type != 'peliculas' and not host_new:                     # Para todo, menos películas
+                itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
+                                     url=url + "/letra-%s/page/1", thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, 
+                                     extra='Alfabético', quality=quality, category=categoria))
 
             elif title == '[B]Películas[/B]':                                   # Categorías sólo de películas
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
@@ -356,7 +361,7 @@ def list_all(item):
     kwargs['headers'] = {'Referer': item.url}
     
     if item.extra in ['novedades']:
-        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm']}]}
+        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-2', 'card shadow-sm']}]}
         
         findS['last_page'] = {}
         if findS['controls'].get('force_find_last_page'): del findS['controls']['force_find_last_page']
@@ -373,7 +378,7 @@ def list_all(item):
         findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-4 mt-3']}]}
 
     elif item.c_type == 'search':
-        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm']}]}
+        findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-4', 'card shadow-sm']}]}
 
         findS['last_page'] = {}
         if findS['controls'].get('force_find_last_page'): del findS['controls']['force_find_last_page']
@@ -669,6 +674,12 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
             if x == 1:
                 elem_json['url'] = td.a.get('href', '')
+                if not elem_json['url'] and td.find('a', class_='bg-primary') and td.find('a', class_='bg-primary').get('data-content-id'):
+                    elem_json['matches_verify'] = True
+                    elem_json['url'] = item.url
+                    elem_json['info'] = '{"action":"generate","content_id":%s,"tabla":"%s"}' \
+                                          % (int(elem.find('a', class_='bg-primary').get('data-content-id', 0)), 
+                                             elem.find('a', class_='bg-primary').get('data-tabla', 'peliculas'))
                 if error and docu_path not in elem_json['url']: break
                 if elem_json['url'].startswith('//'):
                     elem_json['url'] = 'https:%s' % elem_json['url']
@@ -680,7 +691,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                     info = AlfaChannel.do_soup(td.a.get('title', ''))
                     if info and info.a: elem_json['password'] = info.a.get('data-clave', '')
 
-        if not elem_json.get('url', ''): 
+        if not elem_json.get('url', ''):
             continue
         if docu_path not in elem_json['url'] and elem_json.get('season', 0) != item.contentSeason:
             continue
@@ -743,14 +754,25 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             #logger.error(elem)
 
             try:
-                elem_json['url'] = elem.find('a', class_='bg-primary').get('href', '')
+                elem_json['url'] = ''
+                if elem.find('a', class_='bg-primary') and elem.find('a', class_='bg-primary').get('href'):
+                    elem_json['url'] = elem.find('a', class_='bg-primary').get('href', '')
 
-                elem_json['quality'] = elem.find('b', class_='bold', string=re.compile('Formato:'))\
-                                           .find_previous('p').get_text('|', strip=True).split('|')[1]
+                elif elem.find('a', class_='bg-primary') and elem.find('a', class_='bg-primary').get('data-content-id'):
+                    elem_json['url'] = host + torrent_path
+                    elem_json['info'] = item.info or '{"action":"generate","content_id":%s,"tabla":"%s"}' \
+                                                      % (int(elem.find('a', class_='bg-primary').get('data-content-id', 0)), 
+                                                         elem.find('a', class_='bg-primary').get('data-tabla', 'peliculas'))
+                    elem_json['url'] = find_torrent(item, elem_json)
+                else:
+                    continue
+
+                elem_json['quality'] = '*%s' % elem.find('b', class_='bold', string=re.compile('Formato:'))\
+                                                   .find_previous('p').get_text('|', strip=True).split('|')[1]
                 if '3d' in elem_json['url'].lower() and '3d' not in elem_json['quality'].lower():
                         elem_json['quality'] = '%s,3d' % elem_json['quality']
 
-                if  elem.find('b', class_='bold', string=re.compile('Clave:\s*')):
+                if elem.find('b', class_='bold', string=re.compile('Clave:\s*')):
                     elem_json['password'] = elem.find('b', class_='bold', string=re.compile('Clave:\s*'))\
                                                 .find_next('a').get('data-content', '')
                     elem_json['password'] = item.password = scrapertools.find_single_match(elem_json['password'], "value='([^']+)'")
@@ -777,6 +799,54 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
+def find_torrent(item, elem_json):
+    import hashlib
+
+    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
+              'timeout': 5, 'cf_assistant': False, 'hide_infobox': True, 'canonical': {}, 'json': True, 'soup': False}
+    kwargs['headers'] = {'Referer': item.url, 'Content-Type': 'application/json'}
+    kwargs['post'] = elem_json['info']
+    elem_json['url'] = host + torrent_path
+
+    def nonce_gen(challenge, difficulty=3):
+        nonce = 0
+        target = '0' * difficulty
+
+        while True:
+            text = challenge + str(nonce)
+            hash_hex = hashlib.sha256(text.encode()).hexdigest()
+
+            if hash_hex.startswith(target):
+                return nonce
+
+            nonce += 1
+
+            # Yield to event loop to avoid blocking
+            if nonce % 1000 == 0:
+                time.sleep(0.1)
+
+    json = AlfaChannel.create_soup(elem_json['url'], **kwargs)
+    if isinstance(json, _dict) and json.get('success') and json.get('challenge'):
+        kwargs['post'] = '{"action":"validate","challenge":"%s","nonce":%s}' % (json['challenge'], nonce_gen(json['challenge']))
+
+        json = AlfaChannel.create_soup(elem_json['url'], **kwargs)
+        if isinstance(json, _dict) and json.get('success') and json.get('download_url'):
+            elem_json['url'] = json['download_url']
+            if not elem_json['url'].startswith('http'):
+                elem_json['url'] = 'https:%s' % elem_json['url']
+
+            try:
+                matches = (item.matches or [])[:]
+                item.matches = []
+                for match in matches:
+                    if match.get('info', '') == elem_json['info']: continue
+                    item.matches.append(match.copy())
+            except Exception:
+                logger.error(traceback.format_exc())
+
+    return elem_json['url']
+
+
 def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
@@ -786,7 +856,11 @@ def search(item, texto, **AHkwargs):
     try:
         if texto:
             if item.btdigg: item.btdigg = texto
-            item.url = item.referer = host + 'buscar/' + texto
+            if not host_new:
+                item.url = item.referer = host + 'buscar/' + texto
+            else:
+                item.url = item.referer = host + 'buscar'
+                item.post = 'valor=%s&Buscar=Buscar' % texto
             item.c_type = "search"
             item.texto = texto
             return list_all(item)

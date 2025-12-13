@@ -277,6 +277,20 @@ def marshal_check():
     import platform
 
     try:
+        if not filetools.exists(ADDON_CUSTOMCODE_JSON):
+            if not filetools.exists(CUSTOM_CODE_DIR):
+                create_folder_structure(CUSTOM_CODE_DIR)
+            for root, folders, files in filetools.walk(CUSTOM_CODE_DIR):
+                for file in files:
+                    input_file = filetools.join(root, file)
+                    output_file = input_file.replace(
+                        CUSTOM_CODE_DIR, ADDON_PATH
+                    )
+                    filetools.copy(input_file, output_file, silent=True)
+    except Exception:
+        logger.error(traceback.format_exc(1))
+
+    try:
         python_ver = platform.python_version().split(".")
         if len(python_ver) == 3:
             python_ver = "_%s_%s" % (str(python_ver[0]), str(python_ver[1]).zfill(2))

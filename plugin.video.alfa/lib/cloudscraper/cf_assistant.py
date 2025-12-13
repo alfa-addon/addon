@@ -693,6 +693,20 @@ def get_source(
     if not domain.startswith("."):
         domain = "." + domain
     domain_host = "https://%s" % domain.lstrip(".")
+    url_domain_name = httptools.obtain_domain(url, sub=True, point=True).rstrip("/") + "/"
+    url_domain = url.replace(host_name, url_domain_name)
+    url_domain_list = [url_domain]
+    for host_alt in [opt.get('canonical', {}).get('host', '')] \
+                   + opt.get('canonical', {}).get('host_alt', []) \
+                   + opt.get('canonical', {}).get('host_black_list', []):
+        if not host_alt: continue
+        host_name_ = httptools.obtain_domain(host_alt, scheme=True).rstrip("/") + "/"
+        url_ = url.replace(host_name, host_name_)
+        url_domain_name_ = httptools.obtain_domain(host_alt, sub=True, point=True).rstrip("/") + "/"
+        url_domain_ = url_.replace(host_name_, url_domain_name_)
+        if url_domain_ not in url_domain_list:
+            url_domain_list += [url_domain_]
+
     try:
         pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
     except Exception:
@@ -985,7 +999,11 @@ def get_source(
                 and "url" in data_assistant["htmlSources"][0]
             ):
                 for html_source in data_assistant["htmlSources"]:
-                    if html_source.get("url", "") != url:
+                    url_domain_source = html_source.get("url", "")
+                    host_name_source = httptools.obtain_domain(url_domain_source, scheme=True).rstrip("/") + "/"
+                    domain_source = httptools.obtain_domain(url_domain_source, sub=True, point=True).rstrip("/") + "/"
+                    url_domain_source = url_domain_source.replace(host_name_source, domain_source)
+                    if url_domain_source not in url_domain_list:
                         urls_ignored += [html_source.get("url", "")]
                         for gov_block in gov_blocks:
                             if gov_block in html_source.get("url", ""):
