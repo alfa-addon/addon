@@ -1,7 +1,7 @@
 {
   "id": "okporn",
   "name": "okporn",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "https://i.postimg.cc/wxRJxNGL/okporn.png",
