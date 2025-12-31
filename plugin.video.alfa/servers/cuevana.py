@@ -22,6 +22,7 @@ def test_video_exists(page_url):
     global data
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
+    
     if response.code == 404 or "<h2>WE ARE SORRY</h2>" in data or '<title>404 Not Found</title>' in data:
         return False, "[Cuevana] El fichero no existe o ha sido borrado"
 
@@ -33,10 +34,13 @@ def get_video_url(page_url, video_password):
     
     global data
     
-    devuelve = servertools.findvideos(page_url, True)
+    url = scrapertools.find_single_match(data, "var url\s*=\s*'([^']+)'")
+    
+    devuelve = servertools.findvideos(url, True)
     if devuelve:
         url = devuelve[0][1]
         server = devuelve[0][2]
+    
     video_url = servertools.resolve_video_urls_for_playing(server, url)
     if not video_url:
         platformtools.dialog_ok("Cuevana: Error", "Error en el servidor: %s" %server)

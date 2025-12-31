@@ -24,6 +24,7 @@ forced_proxy_opt = 'ProxySSL'
 # https://tubxporn.xxx  https://pornky.com  https://pornktube.tv  https://wwv.joysporn.sex/
 # https://www.pornky.club/ https://www.pornktube.club/  https://tubxporn.club/ https://joysporn.club/
 
+########    Checking your browser
 
 canonical = {
              'channel': 'pornky', 

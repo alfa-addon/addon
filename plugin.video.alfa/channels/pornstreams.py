@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel ViralXvideos -*-
+# -*- Channel PornStreams -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -21,7 +21,7 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
-####  CF
+####  Faltan videos en la web en categorias  
 
 canonical = {
              'channel': 'pornstreams', 
@@ -84,7 +84,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "page/1/?filter=longest"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "tags/", extra="Canal"))
     itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "actors/page/1", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/page/1", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
@@ -131,7 +131,8 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         
         try:
             elem_json['url'] = elem.get("href", "") or elem.get("src", "")
-            if "imagetwist.com" in elem_json['url'] or 'realsrv.com' in elem_json['url']: continue
+            if "imagetwist.com" in elem_json['url'] or 'realsrv.com' in elem_json['url'] \
+                or 'send.' in elem_json['url']: continue
             if not AlfaChannel.obtain_domain(elem_json['url']): continue
             elem_json['language'] = ''
         

@@ -25,6 +25,9 @@ forced_proxy_opt = 'ProxySSL'
 # https://www.pornky.club/ https://www.pornktube.club/  https://tubxporn.club/ https://joysporn.club/
 
 
+########    Checking your browser
+
+
 canonical = {
              'channel': 'pornktube', 
              'host': config.get_setting("current_host", 'pornktube', default=''), 

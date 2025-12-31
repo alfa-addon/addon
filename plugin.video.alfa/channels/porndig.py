@@ -202,28 +202,30 @@ def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find('div', class_='video_download_wrapper').find_all('a', class_='post_download_link clearfix')
-    for elem in matches:
-        url = elem['href']
-        quality = url[-4:]
-        url = httptools.downloadpage(url, headers={"referer": item.url}, follow_redirects=False).headers["location"]
+    url = create_soup(item.url).find('div', class_='video_wrapper').iframe['src']
+    
+    data = httptools.downloadpage(url).data
+    data = data.replace("\/", "/")
+    datos = scrapertools.find_single_match(data, '"codec":"av1","srcSet":\[([^\]]+)')
+    patron = '\{"src":"([^"]+)",.*?,"label":"([0-9]+p)"'
+    matches = scrapertools.find_multiple_matches(datos, patron)
+    for url,quality in matches:
         itemlist.append(Item(channel=item.channel, action="play", title=quality, contentTitle = item.title, url=url))
-    return itemlist
+    return itemlist[::-1]
 
 
 def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    url = create_soup(item.url).find('div', class_='video_wrapper').iframe['src'] #server
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    url = create_soup(item.url).find('div', class_='video_wrapper').iframe['src']
     
-    # matches = soup.find('div', class_='video_download_wrapper').find_all('a', class_='post_download_link clearfix')
-    # for elem in matches:
-        # url = elem['href']
-        # quality = url[-5:].replace("_", "")
-        # url = httptools.downloadpage(url, headers={"referer": item.url}, follow_redirects=False).headers["location"]
-        # itemlist.append([quality, url])
-    return itemlist
+    data = httptools.downloadpage(url).data
+    data = data.replace("\/", "/")
+    datos = scrapertools.find_single_match(data, '"codec":"av1","srcSet":\[([^\]]+)')
+    patron = '\{"src":"([^"]+)",.*?,"label":"([0-9]+p)"'
+    matches = scrapertools.find_multiple_matches(datos, patron)
+    for url,quality in matches:
+        itemlist.append(["[porndig] %s" % quality, url])
+    return itemlist[::-1]
 

@@ -23,6 +23,8 @@ forced_proxy_opt = 'ProxySSL'
 
 #  ERROR en la web solo sexmex a partir de page2
 
+##############   OUT Dic 2025
+
 canonical = {
              'channel': 'pornohdmega', 
              'host': config.get_setting("current_host", 'pornohdmega', default=''), 

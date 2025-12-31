@@ -106,16 +106,18 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('article', class_='pinbox')
     for elem in matches:
+        logger.debug(elem)
         url = elem.a['href']
         stitle = elem.img['alt']
         thumbnail = elem.img['src']
+        id = elem.img['id']
         stime = elem.find_all("div")[-2].text.split("\n")[3]
         title = "[COLOR yellow]%s[/COLOR] %s" % (stime.strip(),stitle)
         plot = ""
         action = "play"
         if logger.info() is False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url, id=id,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     try:
         next_page = soup.find('a', class_='next')['href']
@@ -129,10 +131,11 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    url = scrapertools.find_single_match(data, 'source: "([^"]+)"')
-    url += "|ignore_response_code=True"
+    
+    post = {'action': 'get_video_url', 'idpost': item.id}
+    post_url = "%swp-admin/admin-ajax.php" % host
+    url = httptools.downloadpage(post_url, post=post).data
+    
     itemlist.append(Item(channel=item.channel, action="play", title = "Direto", url=url))
     return itemlist
 
@@ -140,18 +143,20 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
+    
     data = httptools.downloadpage(item.url, canonical=canonical).data
+    
     pornstars = scrapertools.find_single_match(data, '>Pornstars:</h2>(.*?)<h2')
     pornstars = scrapertools.find_multiple_matches(pornstars, '>([^<]+)</a>')
     pornstar = ' & '.join(pornstars)
     pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
     lista = item.contentTitle.split()
     lista.insert (2, pornstar)
-    item.contentTitle = ' '.join(lista)    
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    url = scrapertools.find_single_match(data, 'source: "([^"]+)"')
-    if not url:
-        url = scrapertools.find_single_match(data, '<source src="([^"]+)" type="video/mp4"')
-    url += "|ignore_response_code=True"
+    item.contentTitle = ' '.join(lista) 
+    
+    
+    post = {'action': 'get_video_url', 'idpost': item.id}
+    post_url = "%swp-admin/admin-ajax.php" % host
+    url = httptools.downloadpage(post_url, post=post).data
     itemlist.append(Item(channel=item.channel, action="play", timeout=30, url=url, contentTitle=item.contentTitle))
     return itemlist

@@ -67,4 +67,5 @@ def get_video_url(page_url, video_password):
                 video_urls.append(['[bestb] %s' % quality, url])
     else:
         video_urls.append(["[bestb]", m3u8_source])
-    return video_urls[::-1]
+    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
+    return video_urls#[::-1]
