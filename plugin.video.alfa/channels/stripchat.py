@@ -77,10 +77,11 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).json
     for elem in data['models']:
+        logger.debug(elem)
         ref = elem['hlsPlaylist']
         id = elem['id']
         thumbnail = elem['popularSnapshotTimestamp']
-        server = elem['snapshotServer']
+        # server = elem['snapshotServer']
         quality = ""
         if elem['presets']:
             presets = elem['presets']
@@ -99,6 +100,7 @@ def lista(item):
             ref = ref.replace("_240p", "")
             # url = "https://edge-hls.doppiocdn.com/hls/%s/master/%s.m3u8" %(id, id)
         url = "https://stripchat.com/api/front/v1/broadcasts/%s" %name
+        # url = "https://edge-hls.doppiocdn.net/hls/%s/master/%s_auto.m3u8?playlistType=lowLatency" %(id, id)
         url += "|%s" %ref
         plot = ""
         action = "play"

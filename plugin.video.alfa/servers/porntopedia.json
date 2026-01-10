@@ -1,0 +1,50 @@
+{
+  "active": true,
+  "find_videos": {
+    "ignore_urls": [],
+    "patterns": [
+      {
+        "pattern": "(https://www.porntopedia.com/video/[0-9]+/)",
+        "url": "\\1/a/"
+      },
+      {
+        "pattern": "https://click.porntopedia.com/tracker-tubetraffic2.php\\?key=tomato&v=([0-9]+)",
+        "url": "https://www.porntopedia.com/video/\\1/a/"
+      },
+      {
+        "pattern": "click.porntopedia.com/tracker-tubetraffic.php\\?key=tomato&campaign_id=1&lander=https.*?%2f(\d+)%2f",
+        "url": "https://www.porntopedia.com/video/\\1/a/"
+      }
+      ]
+  },
+  "free": true,
+  "id": "porntopedia",
+  "name": "porntopedia",
+  "settings": [
+    {
+      "default": false,
+      "enabled": true,
+      "id": "black_list",
+      "label": "@60654",
+      "type": "bool",
+      "visible": true
+    },
+    {
+      "default": 0,
+      "enabled": true,
+      "id": "favorites_servers_list",
+      "label": "@60655",
+      "lvalues": [
+        "No",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "type": "list",
+      "visible": false
+    }
+  ],
+  "thumbnail": "https://www.porntopedia.com/contents/zzmddlegahek/theme/logo.png"
+}

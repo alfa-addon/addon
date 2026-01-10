@@ -12,6 +12,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)(?:vptvid|nvdvid).com/v/[A-z0-9-]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)pornlib.com/video/[A-z0-9-]+)",
         "url": "\\1"
       }

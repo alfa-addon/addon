@@ -6,6 +6,10 @@
       {
         "pattern": "(https://highstream.tv/[A-z0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://vidnest.io/embed-[A-z0-9]+.html)",
+        "url": "\\1"
       }
     ]
   },
@@ -42,5 +46,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://highstream.tv/img/highstream.tv3.png"
+  "thumbnail": "https://vidnest.io/images/logo.png"
 }
