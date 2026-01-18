@@ -76,7 +76,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:porngrey|saintporn).(?:com|net)/video/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)porngrey.(?:com|net)/(?:embed|video)/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)saintporn.(?:com|net)/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

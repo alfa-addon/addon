@@ -21,6 +21,7 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
+
 ''' CANAL ANTIGUA OUT pages
     gameofporn  veporns  https://www.veporno.net  https://www.fxporn.net      http://www.veporns.com    '''
 
