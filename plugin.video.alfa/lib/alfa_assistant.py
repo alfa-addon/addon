@@ -1526,7 +1526,7 @@ def execute_binary_from_alfa_assistant(
             USER_APP_URL = "%s:%s" % (ASSISTANT_SERVER, "48886")
             USER_APP_URL_ALT = "%s:%s" % (ASSISTANT_SERVER, "48885")
             separator = "|"
-            separator_escaped = "\|"
+            separator_escaped = r"\|"
             separator_kwargs = "|||"
             command = []
             status_code = 0
@@ -2030,7 +2030,7 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
     
     if ASSISTANT_MODE == "este" and not filetools.exists(filetools.dirname(apk_files)):
         apk_files_alt = scrapertools.find_single_match(
-            os.getenv("HOME"), "(.*?)\/\w*.\w*.\w*\/files"
+            os.getenv("HOME"), r"(.*?)\/\w*.\w*.\w*\/files"
         )
         logger.info("HOME: " + apk_files_alt)
         if apk_files_alt and filetools.exists(apk_files_alt):

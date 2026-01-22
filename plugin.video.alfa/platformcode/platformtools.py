@@ -2677,7 +2677,7 @@ def play_torrent(item, xlistitem, mediaurl):
 
     if len(torrent_options) > 0 and torrent_client - 1 <= len(torrent_options):
         if torrent_client == 0 and not scrapertools.find_single_match(
-            item.downloadFilename, "^\:(\w+)\:"
+            item.downloadFilename, r"^\:(\w+)\:"
         ):
             seleccion = dialog_select(
                 config.get_localized_string(70193),
@@ -2686,10 +2686,10 @@ def play_torrent(item, xlistitem, mediaurl):
             if seleccion < 0:
                 return
         elif torrent_client == 0 and scrapertools.find_single_match(
-            item.downloadFilename, "^\:(\w+)\:"
+            item.downloadFilename, r"^\:(\w+)\:"
         ):
             t_client_dnl = scrapertools.find_single_match(
-                item.downloadFilename, "^\:(\w+)\:"
+                item.downloadFilename, r"^\:(\w+)\:"
             ).upper()
             for x, t_client in enumerate(torrent_options):
                 if t_client_dnl in t_client[0].upper():
@@ -2701,7 +2701,7 @@ def play_torrent(item, xlistitem, mediaurl):
             seleccion = torrent_client - 1
     else:
         if len(torrent_options) > 0 and not scrapertools.find_single_match(
-            item.downloadFilename, "^\:(\w+)\:"
+            item.downloadFilename, r"^\:(\w+)\:"
         ):
             seleccion = dialog_select(
                 config.get_localized_string(70193),
@@ -2715,9 +2715,9 @@ def play_torrent(item, xlistitem, mediaurl):
                 "[COLOR hotpink]Alfa le recomienda el uso de [B]TORREST[/B][/COLOR]",
             )
             return
-        elif scrapertools.find_single_match(item.downloadFilename, "^\:(\w+)\:"):
+        elif scrapertools.find_single_match(item.downloadFilename, r"^\:(\w+)\:"):
             t_client_dnl = scrapertools.find_single_match(
-                item.downloadFilename, "^\:(\w+)\:"
+                item.downloadFilename, r"^\:(\w+)\:"
             ).upper()
             for x, t_client in enumerate(torrent_options):
                 if t_client_dnl in t_client[0].upper():
@@ -2773,7 +2773,7 @@ def play_torrent(item, xlistitem, mediaurl):
 
     torrent_paths = torrent_dirs()
     torr_client = scrapertools.find_single_match(
-        torrent_options[seleccion][0], ":\s*(\w+)"
+        torrent_options[seleccion][0], r":\s*(\w+)"
     ).lower()
     torrent_port = torrent_paths.get(torr_client.upper() + "_port", 0)
     torrent_web = torrent_paths.get(torr_client.upper() + "_web", "")
@@ -2781,14 +2781,14 @@ def play_torrent(item, xlistitem, mediaurl):
         item.url_control = item.url.replace(PATH_videos, "")
     torr_client_alt = []
     for i, alt_client in enumerate(torrent_options):
-        if scrapertools.find_single_match(str(alt_client), ":\s*(\w+)").lower() in [
+        if scrapertools.find_single_match(str(alt_client), r":\s*(\w+)").lower() in [
             "torrest",
             "quasar",
         ]:
             torr_client_alt += [
                 (
                     scrapertools.find_single_match(
-                        str(alt_client), ":\s*(\w+)"
+                        str(alt_client), r":\s*(\w+)"
                     ).lower(),
                     i,
                 )
@@ -2927,7 +2927,7 @@ def play_torrent(item, xlistitem, mediaurl):
             password = item.password
 
         if scrapertools.find_single_match(
-            videolibrary_path, "(^\w+:\/\/)"
+            videolibrary_path, r"(^\w+:\/\/)"
         ):  # Si es una conexión REMOTA, usamos userdata local
             videolibrary_path = (
                 config.get_data_path()
@@ -3151,15 +3151,15 @@ def play_torrent(item, xlistitem, mediaurl):
             # Si es un Magnet, componemos el path de descarga
             if item.url.startswith("magnet:"):
                 t_hash = scrapertools.find_single_match(
-                    item.url, "xt=urn:btih:([^\&]+)\&"
+                    item.url, r"xt=urn:btih:([^\&]+)\&"
                 )
                 video_name = torr_folder = scrapertools.find_single_match(
-                    item.downloadFilename, "(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$"
+                    item.downloadFilename, r"(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$"
                 )
                 if not video_name:
                     video_name = urlparse.unquote_plus(
                         scrapertools.find_single_match(
-                            item.url, "(?:\&|&amp;)dn=([^\&]+)\&"
+                            item.url, r"(?:\&|&amp;)dn=([^\&]+)\&"
                         )
                     )
                 if t_hash:
@@ -3345,7 +3345,7 @@ def play_torrent(item, xlistitem, mediaurl):
             ):
                 if item.downloadProgress == -1:  # Si estaba pausado se resume
                     torr_folder = scrapertools.find_single_match(
-                        item.downloadFilename, "(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$"
+                        item.downloadFilename, r"(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$"
                     )
                     if torr_folder.startswith("\\") or torr_folder.startswith("/"):
                         torr_folder = torr_folder[1:]

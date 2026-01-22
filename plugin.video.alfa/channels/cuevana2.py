@@ -49,13 +49,13 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['row row-cols-xl-5 r
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {}, 
-         'next_page_rgx': [['\/page\/\d+', '/page/%s']], 
+         'next_page_rgx': [[r'\/page\/\d+', '/page/%s']], 
          'last_page': dict([('find', [{'tag': ['ul'], 'class': ['pagination']}, 
                                       {'tag': ['span'], 'class': ['visually-hidden'], 'string': re.compile('(?i)Last')}]), 
-                            ('find_previous', [{'tag': ['a'], 'class': ['page-link'], '@ARG': 'href', '@TEXT': '(\d+)'}])]), 
+                            ('find_previous', [{'tag': ['a'], 'class': ['page-link'], '@ARG': 'href', '@TEXT': r'(\d+)'}])]), 
          'year': dict([('find', [{'tag': ['div'], 'class': ['MovieItem_data__BdOz3', 'SerieItem_data__LFJR_']}, 
                                  {'tag': ['span']}]), 
-                       ('get_text', [{'strip': True, '@TEXT': '(\d{4})'}])]), 
+                       ('get_text', [{'strip': True, '@TEXT': r'(\d{4})'}])]), 
          'season_episode': dict([('find', [{'tag': ['div'], 'class': ['EpisodeItem_data__jsvqZ']}, 
                                            {'tag': ['span']}]), 
                                  ('get_text', [{'tag': '', '@STRIP': True}])]), 
@@ -72,8 +72,8 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['row row-cols-xl-5 r
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['script'], 'id': ['__NEXT_DATA__']}]), 
                              ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'props,pageProps,episode/post,players|DEFAULT'}])]), 
-         'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
-                         ['[\(|\[]\s*[\)|\]]', '']],
+         'title_clean': [[r'(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
+                         [r'[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'language_clean': [], 
          'url_replace': [], 
@@ -312,7 +312,7 @@ def play(item):
         return []
     soup = soup.find("script", string=re.compile('start.onclick')).string
 
-    item.url = scrapertools.find_single_match(str(soup), "url\s*=\s*'([^']+)'")
+    item.url = scrapertools.find_single_match(str(soup), r"url\s*=\s*'([^']+)'")
     if item.url:
         itemlist = servertools.get_servers_itemlist([item])
     else:
