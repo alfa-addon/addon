@@ -34,10 +34,10 @@ canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
              "host_alt": ["https://hdfull.today/", "https://hdfull.sbs/", 
-                          "https://hdfull.one/", "https://hdfull.org/"], 
+                          "https://www2.hdfull.one/", "https://hdfull.one/", "https://hdfull.org/"], 
              "host_alt_main": 2, 
              "host_verification": '%slogin', 
-             "host_black_list": ["https://www2.hdfull.one/", "https://hd-full.biz/", "https://hdfull.cfd/",
+             "host_black_list": ["https://hd-full.biz/", "https://hdfull.cfd/",
                                  "https://hdfull.help/", "https://hdfull.cv/", "https://hdfull.blog/",
 
                                  "https://hd-full.me/", 
