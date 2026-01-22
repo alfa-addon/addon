@@ -386,7 +386,7 @@ class Item(object):
         """
         Crea un JSON a partir del item, para guardar archivos de favoritos, lista de descargas, etc...
         Si se especifica un path, te lo guarda en la ruta especificada, si no, devuelve la cadena json
-        Usos: item.tojson(path="ruta/archivo/json.json")
+        Usos: item.tojson(path="ruta\archivo\json.json")
               file.write(item.tojson())
 
         @param path: ruta
@@ -403,7 +403,7 @@ class Item(object):
         """
         Genera un item a partir de un archivo JSON
         Si se especifica un path, lee directamente el archivo, si no, lee la cadena de texto pasada.
-        Usos: item = Item().fromjson(path="ruta/archivo/json.json")
+        Usos: item = Item().fromjson(path="ruta\archivo\json.json")
               item = Item().fromjson("Cadena de texto json")
 
         @param json_item: item

@@ -28,7 +28,7 @@ canonical = {
              'host': config.get_setting("current_host", 'wolfmax4k', default=''), 
              'host_alt': ["https://wolfmax4k.com/"], 
              'host_black_list': [], 
-             'pattern': r'<a\s*href="([^"]+)"\s*class="navbar-brand\s*me-xl-4\s*me-lg-3\s*text-gray-900">', 
+             'pattern': '<a\s*href="([^"]+)"\s*class="navbar-brand\s*me-xl-4\s*me-lg-3\s*text-gray-900">', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt,  
              'cf_assistant': cf_assistant, 'CF_stat': True, 'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': False
             }
@@ -58,13 +58,13 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['col-lg-2']}]},
          'categories': {}, 
          'search': {'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
          'get_language': {}, 
-         'get_language_rgx': r'(?:flags\/|\/images\/)(\w+)(?:-[^\.]+)?\.(?:png|jpg|jpeg|webp)', 
+         'get_language_rgx': '(?:flags\/|\/images\/)(\w+)(?:-[^\.]+)?\.(?:png|jpg|jpeg|webp)', 
          'get_quality': {}, 
          'get_quality_rgx': [], 
          'next_page': {}, 
-         'next_page_rgx': [[r'\&pg=\d+', '&pg=%s'], [r'\/\d+$', '/%s']], 
+         'next_page_rgx': [['\&pg=\d+', '&pg=%s'], ['\/\d+$', '/%s']], 
          'last_page': dict([('find', [{'tag': ['div'], 'class': ['mod-pagination']}]), 
-                            ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href', '@TEXT': r'\/(\d+)'}])]), 
+                            ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href', '@TEXT': '\/(\d+)'}])]), 
          'year': {}, 
          'season_episode': {}, 
          'seasons': dict([('find', [{'tag': ['div'], 'class': ['tabs']}]), 
@@ -79,17 +79,17 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['col-lg-2']}]},
          'episode_clean': [], 
          'plot': {}, 
          'findvideos': {'find_all': [{'tag': ['div'], 'class': ['layout-section pb-3']}]}, 
-         'title_clean': [[r'(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*imax', ''],
-                         [r'(?i)[\[|\(]?\d{3,4}p[\]|\)]?|[\[|\(]?(?:4k|3d|uhd|hdr)[\]|\)]?', ''], 
-                         [r'(?i)[-|\(]?\s*HDRip\)?|microHD|\(?BR-LINE\)?|\(?HDTS-SCREENER\)?', ''], 
-                         [r'(?i)\(?BDRip\)?|\(?BR-Screener\)?|\(?DVDScreener\)?|\(?TS-Screener\)?|[\(|\[]\S*\.*$', ''],
-                         [r'(?i)Castellano-*|Ingl.s|Trailer|Audio|\(*SBS\)*|\[*\(*dvd\s*r\d*\w*\]*\)*|[\[|\(]*dv\S*[\)|\]]*', ''], 
-                         [r'(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
-                         [r'(?i)(?:\s*&#8211;)?\s*-?\s*temp.*?\d+.*', ''], [r'\d?\d?&#.*', ''], [r'\d+[x|×]\d+.*', ''], 
-                         [r'[\(|\[]\s*[\)|\]]', ''], [r'(?i)(?:libro|volumen)?\s+\d{1,2}$', ''], [r'(?i)\s+ts|\s+sub\w*|\s+\(*vos.*\)*', ''], 
-                         [r'(?i)s\d{1,2}e\d{1,3}', '']],
-         'quality_clean': [[r'(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', ''], 
-                           [r'(?i)\d+\.\d+', '']],
+         'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*imax', ''],
+                         ['(?i)[\[|\(]?\d{3,4}p[\]|\)]?|[\[|\(]?(?:4k|3d|uhd|hdr)[\]|\)]?', ''], 
+                         ['(?i)[-|\(]?\s*HDRip\)?|microHD|\(?BR-LINE\)?|\(?HDTS-SCREENER\)?', ''], 
+                         ['(?i)\(?BDRip\)?|\(?BR-Screener\)?|\(?DVDScreener\)?|\(?TS-Screener\)?|[\(|\[]\S*\.*$', ''],
+                         ['(?i)Castellano-*|Ingl.s|Trailer|Audio|\(*SBS\)*|\[*\(*dvd\s*r\d*\w*\]*\)*|[\[|\(]*dv\S*[\)|\]]*', ''], 
+                         ['(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
+                         ['(?i)(?:\s*&#8211;)?\s*-?\s*temp.*?\d+.*', ''], ['\d?\d?&#.*', ''], ['\d+[x|×]\d+.*', ''], 
+                         ['[\(|\[]\s*[\)|\]]', ''], ['(?i)(?:libro|volumen)?\s+\d{1,2}$', ''], ['(?i)\s+ts|\s+sub\w*|\s+\(*vos.*\)*', ''], 
+                         ['(?i)s\d{1,2}e\d{1,3}', '']],
+         'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', ''], 
+                           ['(?i)\d+\.\d+', '']],
          'language_clean': [], 
          'url_replace': [], 
          'controls': {'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 20, 
@@ -308,14 +308,14 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if item.c_type == 'series' and elem_json['mediatype'] != 'tvshow': continue
 
             elem_json['title'] = elem.find('div', class_='card-body').find('h3', class_='title').get_text(strip=True)
-            if scrapertools.find_single_match(elem_json['title'], r'\s*\[([^\]]+)\]'):
+            if scrapertools.find_single_match(elem_json['title'], '\s*\[([^\]]+)\]'):
                 elem_json['quality'] = '*%s' % scrapertools.find_single_match(elem_json['title'], r'\[([^\]]+)\]')
                 elem_json['title'] = re.sub(r'\s*\[[^\]]+\](?:\s*\[*[^\]]+\])?', '', elem_json['title']).strip()
             else:
                 elem_json['quality'] = '*%s' % elem.find('div', class_='quality').get_text(strip=True).replace('Otros', '').replace('Series', '')
             elem_json['thumbnail'] = elem.find('img').get("src", "")
             elem_json['language'] = language
-            elem_json['year'] = scrapertools.find_single_match(elem_json['title'], r'\((\d{4})\)') or '-'
+            elem_json['year'] = scrapertools.find_single_match(elem_json['title'], '\((\d{4})\)') or '-'
             if elem_json['mediatype'] != 'tvshow' and elem_json['year'] == '-' and elem.find('span', class_='fdi-type'):
                 elem_json['year'] = elem.find('span', class_='fdi-type').get_text(strip=True)
             elem_json['broadcast'] = plot

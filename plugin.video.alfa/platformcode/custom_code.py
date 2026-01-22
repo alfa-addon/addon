@@ -172,7 +172,7 @@ def init():
         # Borrar contenido de carpeta de Torents y de Subtitles
         videolibrary_path = config.get_videolibrary_path()
         if scrapertools.find_single_match(
-            videolibrary_path, r"(^\w+:\/\/)"
+            videolibrary_path, "(^\w+:\/\/)"
         ):  # Si es una conexión REMOTA, usamos userdata local
             videolibrary_path = config.get_data_path()
         filetools.rmdirtree(
@@ -473,9 +473,9 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=""
     if updated:
         ADDON_VERSION_NUM = ADDON_VERSION.split(".")
         ADDON_VERSION_NUM = (
-            int(scrapertools.find_single_match(ADDON_VERSION_NUM[0], r"(\d+)")),
-            int(scrapertools.find_single_match(ADDON_VERSION_NUM[1], r"(\d+)")),
-            int(scrapertools.find_single_match(ADDON_VERSION_NUM[2], r"(\d+)")),
+            int(scrapertools.find_single_match(ADDON_VERSION_NUM[0], "(\d+)")),
+            int(scrapertools.find_single_match(ADDON_VERSION_NUM[1], "(\d+)")),
+            int(scrapertools.find_single_match(ADDON_VERSION_NUM[2], "(\d+)")),
         )
         new_version_num = new_version.split(".")
         new_version_num = (
@@ -1028,7 +1028,7 @@ def update_unrar():
                             device = "%s - v.%s" % (
                                 device,
                                 scrapertools.find_single_match(
-                                    output_cmd, r"(?i)unrar\s*(.*?)\s*Copyright"
+                                    output_cmd, "(?i)unrar\s*(.*?)\s*Copyright"
                                 )
                                 or "Unknown",
                             )
@@ -1042,7 +1042,7 @@ def update_unrar():
                             device = "%s - v.%s" % (
                                 device,
                                 scrapertools.find_single_match(
-                                    output_cmd, r"(?i)unrar\s*(.*?)\s*Copyright"
+                                    output_cmd, "(?i)unrar\s*(.*?)\s*Copyright"
                                 )
                                 or "Assistant",
                             )
@@ -1476,7 +1476,7 @@ def clean_videolibrary_unused_channels():
                             if ".json" in ff or ".torrent" in ff.lower():
                                 if (
                                     scrapertools.find_single_match(
-                                        ff, r"\[([^\]]+)\]"
+                                        ff, "\[([^\]]+)\]"
                                     ) not in show_list
                                 ):
                                     logger.info("Borrando archivo: %s" % ff, force=True)
@@ -1797,7 +1797,7 @@ def set_season_holidays():
         country = base64.b64decode(config.get_setting("proxy_zip", default="")).decode(
             "utf-8"
         )
-        country = scrapertools.find_single_match(country, r"Country:\s*(\w+)")
+        country = scrapertools.find_single_match(country, "Country:\s*(\w+)")
         if not country:
             country = "*"
 

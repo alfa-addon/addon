@@ -772,8 +772,8 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 if '3d' in elem_json['url'].lower() and '3d' not in elem_json['quality'].lower():
                         elem_json['quality'] = '%s,3d' % elem_json['quality']
 
-                if elem.find('b', class_='bold', string=re.compile(r'Clave:\s*')):
-                    elem_json['password'] = elem.find('b', class_='bold', string=re.compile(r'Clave:\s*'))\
+                if elem.find('b', class_='bold', string=re.compile('Clave:\s*')):
+                    elem_json['password'] = elem.find('b', class_='bold', string=re.compile('Clave:\s*'))\
                                                 .find_next('a').get('data-content', '')
                     elem_json['password'] = item.password = scrapertools.find_single_match(elem_json['password'], "value='([^']+)'")
             except Exception:

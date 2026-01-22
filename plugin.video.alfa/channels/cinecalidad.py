@@ -70,10 +70,10 @@ finds = {'find': {'find_all': [{'tag': ['article']}]},
          'get_quality': {}, 
          'get_quality_rgx': [], 
          'next_page': {}, 
-         'next_page_rgx': [[r'\/page\/\d+', '/page/%s/']], 
+         'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
          'last_page': dict([('find', [{'tag': ['nav'], 'class': ['pagination']}]), 
                             ('find_all',[{'tag': ['a'], '@POS': [-2]}]), 
-                            ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': r'(\d+)'}])]), 
+                            ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]), 
          'year': {}, 
          'season_episode': {}, 
          'seasons': {},
@@ -86,14 +86,14 @@ finds = {'find': {'find_all': [{'tag': ['article']}]},
          'episode_clean': [], 
          'plot': {}, 
          'findvideos': {'find_all': [{'tag': ['a'], 'class': ['inline-block']}]}, 
-         'title_clean': [[r'(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*imax', ''],
-                         [r'(?i)[\[|\(]?\d{3,4}p[\]|\)]?|[\[|\(]?(?:4k|3d|uhd|hdr)[\]|\)]?', ''], 
-                         [r'(?i)[-|\(]?\s*HDRip\)?|microHD|\(?BR-LINE\)?|\(?HDTS-SCREENER\)?', ''], 
-                         [r'(?i)\(?BDRip\)?|\(?BR-Screener\)?|\(?DVDScreener\)?|\(?TS-Screener\)?|[\(|\[]\S*\.*$', ''],
-                         [r'(?i)Castellano-*|Ingl.s|Trailer|Audio|\(*SBS\)*|\[*\(*dvd\s*r\d*\w*\]*\)*|[\[|\(]*dv\S*[\)|\]]*', ''], 
-                         [r'(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
-                         [r'(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], [r'\d?\d?&#.*', ''], [r'\d+[x|×]\d+.*', ''], 
-                         [r'[\(|\[]\s*[\)|\]]', ''], [r'(?i)(?:libro|volumen)?\s+\d{1,2}$', '']],
+         'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*imax', ''],
+                         ['(?i)[\[|\(]?\d{3,4}p[\]|\)]?|[\[|\(]?(?:4k|3d|uhd|hdr)[\]|\)]?', ''], 
+                         ['(?i)[-|\(]?\s*HDRip\)?|microHD|\(?BR-LINE\)?|\(?HDTS-SCREENER\)?', ''], 
+                         ['(?i)\(?BDRip\)?|\(?BR-Screener\)?|\(?DVDScreener\)?|\(?TS-Screener\)?|[\(|\[]\S*\.*$', ''],
+                         ['(?i)Castellano-*|Ingl.s|Trailer|Audio|\(*SBS\)*|\[*\(*dvd\s*r\d*\w*\]*\)*|[\[|\(]*dv\S*[\)|\]]*', ''], 
+                         ['(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
+                         ['(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], ['\d?\d?&#.*', ''], ['\d+[x|×]\d+.*', ''], 
+                         ['[\(|\[]\s*[\)|\]]', ''], ['(?i)(?:libro|volumen)?\s+\d{1,2}$', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'language_clean': [], 
          'url_replace': [], 
@@ -310,7 +310,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
         try:
             elem_json['url'] = elem.a.get("href", "")
             if '/serie' in elem_json['url']: continue
-            if scrapertools.find_single_match(elem_json['url'], r"\d+x\d+") or "episode" in elem_json['url']: continue
+            if scrapertools.find_single_match(elem_json['url'], "\d+x\d+") or "episode" in elem_json['url']: continue
             if sufix[item.site or 0] and sufix[item.site or 0] not in elem_json['url']:
                 elem_json['url'] += sufix[item.site or 0]
 
@@ -322,7 +322,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
             if not elem_json.get('year'):
                 elem_json['year'] = '-'
-                if elem.find('div'): elem_json['year'] = scrapertools.find_single_match(elem.find('div').get_text(strip=True), r'\d{4}') or '-'
+                if elem.find('div'): elem_json['year'] = scrapertools.find_single_match(elem.find('div').get_text(strip=True), '\d{4}') or '-'
 
             elem_json['thumbnail'] = re.sub(r'(-\d+x\d+.jpg)', '.jpg', elem.find('img', class_="w-full").get("data-src", "") \
                                                                        or elem.find('img', class_="w-full").get("src", ""))

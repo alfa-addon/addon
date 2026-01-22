@@ -29,7 +29,7 @@ canonical = {
              'host_alt': ["https://www.zonapelis.org/"], 
              'host_black_list': ["https://www.torrenflix.com/", "https://www.pelitorrent.com/", 
                                  "https://pelitorrent.com/", "https://pelitorrent.xyz/", "https://www.pelitorrent.com/"], 
-             'pattern': r"<link\s*rel='stylesheet'\s*id='wp-block-library-css'\s*href='([^']+)'", 
+             'pattern': "<link\s*rel='stylesheet'\s*id='wp-block-library-css'\s*href='([^']+)'", 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': False
             }
@@ -62,10 +62,10 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'id': ['archive-content']}]),
          'get_quality': {}, 
          'get_quality_rgx': [], 
          'next_page': {}, 
-         'next_page_rgx': [[r'\/page\/\d+', '/page/%s/']],  
+         'next_page_rgx': [['\/page\/\d+', '/page/%s/']],  
          'last_page': dict([('find', [{'tag': ['div'], 'class': ['pagination']}]), 
                             ('find_all', [{'tag': ['span'], '@POS': [0]}]), 
-                            ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': r'(?i)(?:\d+\s*de\s*)?(\d+)'}])]), 
+                            ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(?i)(?:\d+\s*de\s*)?(\d+)'}])]), 
          'year': {}, 
          'season_episode': {}, 
          'seasons': dict([('find', [{'tag': ['div'], 'id': ['seasons']}]), 
@@ -83,16 +83,16 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'id': ['archive-content']}]),
          'findvideos': dict([('find', [{'tag': ['div'], 'class': ['links_table']}, 
                                        {'tag': ['tbody']}]), 
                              ('find_all', [{'tag': ['tr']}])]), 
-         'title_clean': [[r'(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*imax', ''],
-                         [r'(?i)[\[|\(]?\d{3,4}p[\]|\)]?|[\[|\(]?(?:4k|3d|uhd|hdr)[\]|\)]?', ''], 
-                         [r'(?i)[-|\(]?\s*HDRip\)?|microHD|\(?BR-LINE\)?|\(?HDTS-SCREENER\)?', ''], 
-                         [r'(?i)\(?BDRip\)?|\(?BR-Screener\)?|\(?DVDScreener\)?|\(?TS-Screener\)?|[\(|\[]\S*\.*$', ''],
-                         [r'(?i)Castellano-*|Ingl.s|Trailer|Audio|\(*SBS\)*|\[*\(*dvd\s*r\d*\w*\]*\)*|[\[|\(]*dv\S*[\)|\]]*', ''], 
-                         [r'(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
-                         [r'(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], [r'\d?\d?&#.*', ''], [r'\d+[x|×]\d+.*', ''], 
-                         [r'[\(|\[]\s*[\)|\]]', ''], [r'(?i)(?:libro|volumen)?\s+\d{1,2}$', ''], 
-                         [r'(?i)\s*-?\s*\d{1,2}.?\s*-?\s*Temp\w*[^$]*$', '']],
-         'quality_clean': [[r'(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
+         'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*imax', ''],
+                         ['(?i)[\[|\(]?\d{3,4}p[\]|\)]?|[\[|\(]?(?:4k|3d|uhd|hdr)[\]|\)]?', ''], 
+                         ['(?i)[-|\(]?\s*HDRip\)?|microHD|\(?BR-LINE\)?|\(?HDTS-SCREENER\)?', ''], 
+                         ['(?i)\(?BDRip\)?|\(?BR-Screener\)?|\(?DVDScreener\)?|\(?TS-Screener\)?|[\(|\[]\S*\.*$', ''],
+                         ['(?i)Castellano-*|Ingl.s|Trailer|Audio|\(*SBS\)*|\[*\(*dvd\s*r\d*\w*\]*\)*|[\[|\(]*dv\S*[\)|\]]*', ''], 
+                         ['(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
+                         ['(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], ['\d?\d?&#.*', ''], ['\d+[x|×]\d+.*', ''], 
+                         ['[\(|\[]\s*[\)|\]]', ''], ['(?i)(?:libro|volumen)?\s+\d{1,2}$', ''], 
+                         ['(?i)\s*-?\s*\d{1,2}.?\s*-?\s*Temp\w*[^$]*$', '']],
+         'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'language_clean': [], 
          'url_replace': [], 
          'controls': {'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 15, 
@@ -354,7 +354,7 @@ def seasons_matches(item, matches_int, **AHkwargs):
                 info = elem.get_text(strip=True)
                 if not info: continue
                 episode, quality, season = scrapertools.find_single_match(info, 
-                                           r'(?i)epi\w*\s*(\d{1,3})[^<]*(HDTV(?:-\d{3,4}p)?)[^<]*(\d{1,2})[^<]*temp\w*')
+                                           '(?i)epi\w*\s*(\d{1,3})[^<]*(HDTV(?:-\d{3,4}p)?)[^<]*(\d{1,2})[^<]*temp\w*')
             else:
                 if not info or not episode or not quality or not season: continue
                 info = ''

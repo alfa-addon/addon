@@ -174,7 +174,6 @@ def episodios(item):
     logger.info()
     itemlist = []
     templist = seasons(item)
-    templist = [x for x in templist if x.action == 'episodesxseasons']
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
     

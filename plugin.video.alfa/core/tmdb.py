@@ -484,7 +484,7 @@ def find_and_set_infoLabels(item):
         title = item.contentSerieName
 
     # Si el titulo incluye el (año) se lo quitamos
-    year = scrapertools.find_single_match(title, r"^.+?\s*(\(\d{4}\))$")
+    year = scrapertools.find_single_match(title, "^.+?\s*(\(\d{4}\))$")
     if year:
         title = title.replace(year, "").strip()
         item.infoLabels['year'] = year[1:-1]
@@ -810,7 +810,7 @@ class Tmdb(object):
         self.texto_buscado = kwargs.get('texto_buscado', '')
 
         self.busqueda_id = kwargs.get('id_Tmdb', '')
-        self.busqueda_texto = re.sub(r'\[\\\?(B|I|COLOR)\s?[^\]]*\]', '', self.texto_buscado).strip()
+        self.busqueda_texto = re.sub('\[\\\?(B|I|COLOR)\s?[^\]]*\]', '', self.texto_buscado).strip()
         self.busqueda_tipo = kwargs.get('tipo', '')
         self.busqueda_idioma = kwargs.get('idioma_busqueda', tmdb_lang)
         self.busqueda_include_adult = 'false'
@@ -1612,7 +1612,7 @@ class Tmdb(object):
                             if word in ret_infoLabels['tvshowtitle'].lower():
                                 break
                         else:
-                            if not scrapertools.find_single_match(v_alt, r'\-\d+\.\d+'):
+                            if not scrapertools.find_single_match(v_alt, '\-\d+\.\d+'):
                                 ret_infoLabels['title_alt'] = v_alt
                     ret_infoLabels['title'] = v
                 elif not ret_infoLabels.get('title'):

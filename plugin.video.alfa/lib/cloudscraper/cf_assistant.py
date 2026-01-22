@@ -20,7 +20,7 @@ from lib import alfa_assistant
 PY3 = sys.version_info[0] >= 3
 
 PATH_BL = filetools.join(config.get_runtime_path(), "resources", "cf_assistant_bl.json")
-patron_domain = r"(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)"
+patron_domain = "(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)"
 httptools = None
 cf_challenges_list = ["https://challenges.cloudflare.com", "https://www.google.com/recaptcha/api2/anchor?"]
 gov_blocks = ["fbi.gov"]
@@ -311,7 +311,7 @@ def get_cl(
 
             url_cf = (
                 scrapertools.find_single_match(
-                    url, r"(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?"
+                    url, "(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?"
                 )
                 + "|cf_clearance"
             )
@@ -876,7 +876,7 @@ def get_source(
 
             url_cf = (
                 scrapertools.find_single_match(
-                    url, r"(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?"
+                    url, "(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?"
                 )
                 + "|cf_clearance"
             )
@@ -1020,7 +1020,7 @@ def get_source(
                             data_str = "".join(chr(x) for x in bytes(data))
                         if not from_get_cl: 
                             data = data_str
-                        data_str = re.sub(r'<html>|<\/html>|<head>|<\/head>|<body>|<\/body>', '', data_str)
+                        data_str = re.sub('<html>|<\/html>|<head>|<\/head>|<body>|<\/body>', '', data_str)
                         if not data_str:
                             continue
                         source = True
@@ -1406,7 +1406,7 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
         del cf_cookies_names["missing"]
     url_cf = (
         scrapertools.find_single_match(
-            host, r"(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?"
+            host, "(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?"
         )
         + "|cf_clearance"
     )

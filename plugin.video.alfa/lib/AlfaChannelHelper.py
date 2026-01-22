@@ -127,7 +127,7 @@ class AlfaChannelHelper:
         self.color_setting = unify.colors_file[UNIFY_PRESET]
         self.window = window
         self.Comment = None
-        self.SEARCH_CLEAN = r'\¿|\?|\/|\$|\@|\<|\>'
+        self.SEARCH_CLEAN = '\¿|\?|\/|\$|\@|\<|\>'
 
         self.httptools = httptools
         self.response = self.httptools.build_response(HTTPResponse=True)        # crea estructura vacía de response

@@ -222,7 +222,7 @@ def get_channel_setting(name, channel, default=None):
 
     Devuelve el valor del parametro 'name' en la configuracion propia del canal 'channel'.
 
-    Busca en la ruta /addon_data/plugin.video.alfa/settings_channels el archivo channel_data.json y lee
+    Busca en la ruta \addon_data\plugin.video.alfa\settings_channels el archivo channel_data.json y lee
     el valor del parametro 'name'. Si el archivo channel_data.json no existe busca en la carpeta channels el archivo
     channel.json y crea un archivo channel_data.json antes de retornar el valor solicitado. Si el parametro 'name'
     tampoco existe en el el archivo channel.json se devuelve el parametro default.
@@ -282,7 +282,7 @@ def set_channel_setting(name, value, channel):
     Establece 'value' como el valor del parametro 'name' en la configuracion propia del canal 'channel'.
     Devuelve el valor cambiado o None si la asignacion no se ha podido completar.
 
-    Si se especifica el nombre del canal busca en la ruta /addon_data/plugin.video.alfa/settings_channels el
+    Si se especifica el nombre del canal busca en la ruta \addon_data\plugin.video.alfa\settings_channels el
     archivo channel_data.json y establece el parametro 'name' al valor indicado por 'value'.
     Si el parametro 'name' no existe lo añade, con su valor, al archivo correspondiente.
 

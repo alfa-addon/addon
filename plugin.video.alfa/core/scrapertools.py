@@ -11,7 +11,7 @@ from core import urlparse
 from platformcode import logger
 
 PY3 = sys.version_info > (3,)
-PATTERN_EPISODE_TITLE = r"(?i)(\d+x\d+\s*(?:-\s*)?)?(?:episod(?:e|io)|cap.tulo)\s*\d*\s*(?:\[\d{4}\]\s*)?(?:\[\d{1,2}.\d{1,2}\]\s*)?"
+PATTERN_EPISODE_TITLE = "(?i)(\d+x\d+\s*(?:-\s*)?)?(?:episod(?:e|io)|cap.tulo)\s*\d*\s*(?:\[\d{4}\]\s*)?(?:\[\d{1,2}.\d{1,2}\]\s*)?"
 
 
 def printMatches(matches):
@@ -98,14 +98,14 @@ def unescape(text):
         except Exception:
             pass
 
-    return re.sub(r"&#?\w+;", fixup, str(text))
+    return re.sub("&#?\w+;", fixup, str(text))
 
     # Convierte los codigos html "&ntilde;" y lo reemplaza por "ñ" caracter unicode utf-8
 
 
 def decodeHtmlentities(string):
     string = entitiesfix(string)
-    entity_re = re.compile(r"&(#?)(\d{1,5}|\w{1,8});")
+    entity_re = re.compile("&(#?)(\d{1,5}|\w{1,8});")
 
     def substitute_entity(match):
         if PY3:
@@ -312,13 +312,13 @@ def slugify(title, strict=True, convert=[]):
 
     if strict:
         # Sustituye espacios en blanco duplicados y saltos de línea
-        title = re.compile(r"\s+", re.DOTALL).sub(" ", title)
+        title = re.compile("\s+", re.DOTALL).sub(" ", title)
 
         # Sustituye espacios en blanco por guiones
-        title = re.compile(r"\s", re.DOTALL).sub("-", title.strip())
+        title = re.compile("\s", re.DOTALL).sub("-", title.strip())
 
         # Sustituye espacios en blanco duplicados y saltos de línea
-        title = re.compile(r"\-+", re.DOTALL).sub("-", title)
+        title = re.compile("\-+", re.DOTALL).sub("-", title)
 
     # Arregla casos especiales
     if title.startswith("-"):
@@ -434,10 +434,10 @@ def get_season_and_episode(title):
     filename = ""
 
     patrons = [
-        r"(\d+)\s*[x-]\s*(\d+)",
-        r"(\d+)\s*×\s*(\d+)",
-        r"(?:s|t)(\d+) ?e(\d+)",
-        r"(?:season|temp\w*)\s*(\d+)\s*(?:capitulo|epi|episode\w*)\s*(\d+)",
+        "(\d+)\s*[x-]\s*(\d+)",
+        "(\d+)\s*×\s*(\d+)",
+        "(?:s|t)(\d+) ?e(\d+)",
+        "(?:season|temp\w*)\s*(\d+)\s*(?:capitulo|epi|episode\w*)\s*(\d+)",
     ]
 
     for patron in patrons:
@@ -634,10 +634,10 @@ def htmlparser(data):
 def episode_title(title, infoLabels):
     if title and infoLabels:
         title = re.sub(PATTERN_EPISODE_TITLE, "", title)
-        title = re.sub(r"\[COLOR\s*\w+\][^\[]+\[\/COLOR\].?\s*", "", title)
+        title = re.sub("\[COLOR\s*\w+\][^\[]+\[\/COLOR\].?\s*", "", title)
         title = re.sub(infoLabels.get("tvshowtitle", ""), "", title)
         title = re.sub(
-            r"%sx0*%s(?:\s*-*\s*)?" % (infoLabels["season"], infoLabels["episode"]),
+            "%sx0*%s(?:\s*-*\s*)?" % (infoLabels["season"], infoLabels["episode"]),
             "",
             title,
         )

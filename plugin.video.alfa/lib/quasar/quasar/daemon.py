@@ -509,7 +509,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                         if PY3 and isinstance(label_a, bytes):
                             label_a = label_a.decode()
                         if 'build.version.release' in label_a:
-                            os_release = int(re.findall(r':\s*\[(.*?)\]$', label_a, flags=re.DOTALL)[0])
+                            os_release = int(re.findall(':\s*\[(.*?)\]$', label_a, flags=re.DOTALL)[0])
                             break
                 except:
                     try:
@@ -586,7 +586,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
             
             # Lets start the Assistant app
             separator = '|'
-            separator_escaped = r'\|'
+            separator_escaped = '\|'
             separator_kwargs = '|||'
             command = []
             status_code = 0

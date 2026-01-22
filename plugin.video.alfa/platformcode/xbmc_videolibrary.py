@@ -101,7 +101,7 @@ def sync_trakt_addon(path_folder):
         shows = list(shows.items())
 
         # obtenemos el id de la serie para comparar
-        _id = re.findall(r"\[(.*?)\]", path_folder, flags=re.DOTALL)[0]
+        _id = re.findall("\[(.*?)\]", path_folder, flags=re.DOTALL)[0]
         logger.debug("el id es %s" % _id)
 
         if "tt" in _id:
@@ -146,7 +146,7 @@ def sync_trakt_addon(path_folder):
                         logger.debug("dict_trakt_show %s " % dict_trakt_show)
 
                         # obtenemos las keys que son episodios
-                        regex_epi = re.compile(r'\d+x\d+')
+                        regex_epi = re.compile('\d+x\d+')
                         keys_episodes = [key for key in serie.library_playcounts if regex_epi.match(key)]
                         # obtenemos las keys que son temporadas
                         keys_seasons = [key for key in serie.library_playcounts if 'season ' in key]
@@ -435,7 +435,7 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
     if item_path1[:-1] != "\\":
         item_path1 += "\\"
     item_path2 = item_path1.replace("\\", "/")
-    item_path3 = scrapertools.find_single_match(item_path1, r'\s+(\[.*?\])')
+    item_path3 = scrapertools.find_single_match(item_path1, '\s+(\[.*?\])')
     if not item_path3:
         item_path3 = scrapertools.slugify(item_path1, strict=False, convert=['.=', '-= ', ':=', '&= ', '  = '])
     item_path3 = '%' + item_path3 + '%'
@@ -524,7 +524,7 @@ def mark_content_as_watched_on_alfa(path):
         path1 = path.replace("\\\\", "\\")                              #Formato Windows
         if not path2:
             path2 = path1.replace("\\", "/")                            #Formato no Windows
-        nfo_name = scrapertools.find_single_match(path2, r'\]\/(.*?)$') #Construyo el nombre del .nfo
+        nfo_name = scrapertools.find_single_match(path2, '\]\/(.*?)$')  #Construyo el nombre del .nfo
         path1 = path1.replace(nfo_name, '')                             #para la SQL solo necesito la carpeta
         path2 = path2.replace(nfo_name, '')                             #para la SQL solo necesito la carpeta
     path2 = filetools.remove_smb_credential(path2)                      #Si el archivo está en un servidor SMB, quitamos las credenciales
@@ -542,7 +542,7 @@ def mark_content_as_watched_on_alfa(path):
         if contentType == "episode_view":
             title_plain = title.replace('.strm', '')                    #Si es Serie, quitamos el sufijo .strm
         else:
-            title_plain = scrapertools.find_single_match(item.strm_path, r'.(.*?\s\[.*?\])') #si es peli, quitamos el título
+            title_plain = scrapertools.find_single_match(item.strm_path, '.(.*?\s\[.*?\])') #si es peli, quitamos el título
         if playCount is None or playCount == 0:                         #todavía no se ha visto, lo ponemos a 0
             playCount_final = 0
         elif playCount >= 1:
@@ -553,7 +553,7 @@ def mark_content_as_watched_on_alfa(path):
     if item.infoLabels['mediatype'] == "tvshow":                        #Actualizamos los playCounts de temporadas y Serie
         for season in item.library_playcounts.copy():
             if "season" in season:                                      #buscamos las etiquetas "season" dentro de playCounts
-                season_num = int(scrapertools.find_single_match(season, r'season (\d+)'))    #salvamos el núm, de Temporada
+                season_num = int(scrapertools.find_single_match(season, 'season (\d+)'))    #salvamos el núm, de Temporada
                 item = check_season_playcount(item, season_num)    #llamamos al método que actualiza Temps. y Series
 
     write_nfo(path, head_nfo, item)
@@ -646,7 +646,7 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
             update_path = filetools.join(videolibrarypath, folder_content, folder, ' ').rstrip()        #Probelmas de encode en folder
             #update_path = filetools.join(videolibrarypath, folder_content, ' ').rstrip()
 
-        if not scrapertools.find_single_match(update_path, r'(^\w+:\/\/)'):
+        if not scrapertools.find_single_match(update_path, '(^\w+:\/\/)'):
             payload["params"] = {"directory": update_path}
 
     while xbmc.getCondVisibility('Library.IsScanningVideo()'):
@@ -833,7 +833,7 @@ def set_content(content_type, silent=False):
         if sql_videolibrarypath.startswith("special://"):
             sql_videolibrarypath = sql_videolibrarypath.replace('/profile/', '/%/').replace('/home/userdata/', '/%/')
             sep = '/'
-        elif scrapertools.find_single_match(sql_videolibrarypath, r'(^\w+:\/\/)'):
+        elif scrapertools.find_single_match(sql_videolibrarypath, '(^\w+:\/\/)'):
             sep = '/'
         else:
             sep = os.sep
@@ -1047,7 +1047,7 @@ def add_sources(path):
     # Nodo <name>
     nodo_name = xmldoc.createElement("name")
     sep = os.sep
-    if path.startswith("special://") or scrapertools.find_single_match(path, r'(^\w+:\/\/)'):
+    if path.startswith("special://") or scrapertools.find_single_match(path, '(^\w+:\/\/)'):
         sep = "/"
     name = path
     if path.endswith(sep):

@@ -136,9 +136,9 @@ def mainlist(item):
         if i.infoLabels["mediatype"] == "movie":
             year = i.infoLabels["year"]
         else:
-            year = scrapertools.find_single_match(i.infoLabels["aired"], r"\d{4}")
+            year = scrapertools.find_single_match(i.infoLabels["aired"], "\d{4}")
         if not year and i.infoLabels["release_date"]:
-            year = scrapertools.find_single_match(i.infoLabels["release_date"], r"\d{4}")
+            year = scrapertools.find_single_match(i.infoLabels["release_date"], "\d{4}")
             i.infoLabels["year"] = year
 
         # Listado principal
@@ -439,7 +439,7 @@ def get_progress(item):
     torrent_dirs(item)
     torrent_paths = TORRENT_PATHS
     torr_client = (
-        scrapertools.find_single_match(item.downloadFilename, r"\:\s*(\w+)\:").lower()
+        scrapertools.find_single_match(item.downloadFilename, "\:\s*(\w+)\:").lower()
         or torrent_paths["TORR_client"].lower()
     )
     torrent_paths["TORR_client"] = TORRENT_PATHS["TORR_client"] = torr_client
@@ -451,7 +451,7 @@ def get_progress(item):
         folder = item.torr_folder
     else:
         folder = scrapertools.find_single_match(
-            item.downloadFilename, r"^\:\w+\:\s*(.*?)$"
+            item.downloadFilename, "^\:\w+\:\s*(.*?)$"
         )
 
     if folder:
@@ -599,21 +599,21 @@ def browser(item):
                     year = download_item.infoLabels["year"]
                 else:
                     year = scrapertools.find_single_match(
-                        download_item.infoLabels["aired"], r"\d{4}"
+                        download_item.infoLabels["aired"], "\d{4}"
                     )
                 if not year and download_item.infoLabels["release_date"]:
                     year = scrapertools.find_single_match(
-                        download_item.infoLabels["release_date"], r"\d{4}"
+                        download_item.infoLabels["release_date"], "\d{4}"
                     )
                     download_item.infoLabels["year"] = year
 
                 if download_item.downloadFilename.startswith(":"):
                     torr_client = scrapertools.find_single_match(
-                        download_item.downloadFilename, r"^\:(\w+)\:"
+                        download_item.downloadFilename, "^\:(\w+)\:"
                     ).upper()
                     if not torr_client or not torrent_paths[torr_client]:
                         continue
-                    path = re.sub(r"^\:\w+\:\s*", "", download_item.downloadFilename)
+                    path = re.sub("^\:\w+\:\s*", "", download_item.downloadFilename)
                     if (
                         download_item.infoLabels["mediatype"] == "movie"
                         or item.infoLabels["tmdb_id"] == null
@@ -627,7 +627,7 @@ def browser(item):
                         )
                     if not title:
                         title = scrapertools.find_single_match(
-                            download_item.downloadFilename, r"^\:\w+\:\s*([^$]+$)"
+                            download_item.downloadFilename, "^\:\w+\:\s*([^$]+$)"
                         )
                     if filetools.dirname(path) and filetools.isdir(
                         filetools.join(
@@ -674,7 +674,7 @@ def browser(item):
                     if not title:
                         title = download_item.downloadFilename
 
-                url_clean = re.sub(r"://.*?\:.*?\@", "://", url)
+                url_clean = re.sub("://.*?\:.*?\@", "://", url)
                 title = TITLE_VIDEO % (
                     unify.set_color(
                         title,
@@ -723,7 +723,7 @@ def browser(item):
                         if (
                             scrapertools.find_single_match(
                                 filetools.basename(download_item.downloadFilename),
-                                r"(\.\w+)$",
+                                "(\.\w+)$",
                             )
                             in extensions_list
                         ):
@@ -755,7 +755,7 @@ def browser(item):
                     if file.startswith(".") or "torrents" in file.lower():
                         continue
                     url = filetools.join(path, file)
-                    url_clean = re.sub(r"://.*?\:.*?\@", "://", url)
+                    url_clean = re.sub("://.*?\:.*?\@", "://", url)
                     if url in [c for c in torrent_paths_list_seen]:
                         continue
                     torrent_paths_list_seen += [url]
@@ -781,11 +781,11 @@ def browser(item):
                         )
                     else:
                         if (
-                            scrapertools.find_single_match(file, r"(\.\w+)$")
+                            scrapertools.find_single_match(file, "(\.\w+)$")
                             in extensions_list
                         ):
                             if (
-                                scrapertools.find_single_match(file, r"(\.\w+)$")
+                                scrapertools.find_single_match(file, "(\.\w+)$")
                                 == ".rar"
                             ):
                                 action = ""
@@ -813,7 +813,7 @@ def browser(item):
         if file == "list":
             continue
         url = filetools.join(item.url, file)
-        url_clean = re.sub(r"://.*?\:.*?\@", "://", url)
+        url_clean = re.sub("://.*?\:.*?\@", "://", url)
         if url in [c for c in torrent_paths_list_seen]:
             continue
         torrent_paths_list_seen += [url]
@@ -854,8 +854,8 @@ def browser(item):
                 )
             )
         else:
-            if scrapertools.find_single_match(file, r"(\.\w+)$") in extensions_list:
-                if scrapertools.find_single_match(file, r"(\.\w+)$") == ".rar":
+            if scrapertools.find_single_match(file, "(\.\w+)$") in extensions_list:
+                if scrapertools.find_single_match(file, "(\.\w+)$") == ".rar":
                     action = ""
                 else:
                     action = "play"
@@ -882,7 +882,7 @@ def get_size(url, file_stat=True):
     size = "0,0 GB"
     size_bytes = 0
     file_stat_pattern = (
-        r"([^\s]+)\s+\d+\s+([^\s]+)\s+([^\s]+)\s+\d+\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})"
+        "([^\s]+)\s+\d+\s+([^\s]+)\s+([^\s]+)\s+\d+\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})"
     )
     file_stat_result = ""
 
@@ -1772,11 +1772,11 @@ def menu(item):
             torrent_dirs(item)
             torrent_paths = TORRENT_PATHS
             torr_client = scrapertools.find_single_match(
-                item.downloadFilename, r"^\:(\w+)\:"
+                item.downloadFilename, "^\:(\w+)\:"
             )
             folder_view = torrent_paths[torr_client.upper()]
             file_view = scrapertools.find_single_match(
-                item.downloadFilename, r"^\:\w+\:\s*(.*?)$"
+                item.downloadFilename, "^\:\w+\:\s*(.*?)$"
             )
         else:
             folder_view = DOWNLOAD_PATH
@@ -1816,11 +1816,11 @@ def delete_torrent_session(item, delete_RAR=True, action="delete"):
     # Obtenemos los datos del gestor de torrents
     torrent_dirs(item)
     torrent_paths = TORRENT_PATHS
-    torr_client = scrapertools.find_single_match(item.downloadFilename, r"^\:(\w+)\:")
+    torr_client = scrapertools.find_single_match(item.downloadFilename, "^\:(\w+)\:")
     if item.torr_folder:
         folder = item.torr_folder
     folder_new = scrapertools.find_single_match(
-        item.downloadFilename, r"^\:\w+\:\s*(.*?)$"
+        item.downloadFilename, "^\:\w+\:\s*(.*?)$"
     )
     if folder_new.startswith("\\") or folder_new.startswith("/"):
         folder_new = folder_new[1:]
@@ -2033,7 +2033,7 @@ def move_to_library(item, forced=False):
             torrent_dirs(item)
             torrent_dir = TORRENT_PATHS[torrent_client]
             absolute_path = filetools.join(
-                torrent_dir, (re.sub(r"(?is):(.+?):\s?", "", download_path))
+                torrent_dir, (re.sub("(?is):(.+?):\s?", "", download_path))
             )
         else:
             download_path = ":downloads: {}".format(item.downloadFilename)
@@ -2355,7 +2355,7 @@ def sort_torrents(play_items, emergency_urls=False, channel="", torrent_info=[])
         play_items_direct = []
         size = ""
         torrent_params["size"] = size
-        patron = r"(?i)(\d+[\.|\,]?\d*?)\s[G|M]"
+        patron = "(?i)(\d+[\.|\,]?\d*?)\s[G|M]"
         magnitude = 1.0
 
         if emergency_urls:
@@ -2384,7 +2384,7 @@ def sort_torrents(play_items, emergency_urls=False, channel="", torrent_info=[])
                             size = scrapertools.find_single_match(
                                 torrent_info[x], patron
                             ).replace(",", ".")
-                            if scrapertools.find_single_match(torrent_info[x], r"\d+.M"):
+                            if scrapertools.find_single_match(torrent_info[x], "\d+.M"):
                                 magnitude = 0.001
                         else:
                             size = "ERROR"
@@ -2407,7 +2407,7 @@ def sort_torrents(play_items, emergency_urls=False, channel="", torrent_info=[])
                         logger.error("Size ERROR: %s" % play_item)
                         continue
                     else:
-                        if scrapertools.find_single_match(size, r"\d+.M"):
+                        if scrapertools.find_single_match(size, "\d+.M"):
                             magnitude = 0.001
                         if scrapertools.find_single_match(size, patron).replace(
                             ",", "."
@@ -2471,7 +2471,7 @@ def sort_torrents(play_items, emergency_urls=False, channel="", torrent_info=[])
                                 play_item.torrent_info, patron
                             ).replace(",", ".")
                             if scrapertools.find_single_match(
-                                play_item.torrent_info, r"\d+.M"
+                                play_item.torrent_info, "\d+.M"
                             ):
                                 magnitude = 0.001
                             if play_item.contentChannel in blocked_channels:
@@ -2549,7 +2549,7 @@ def sort_torrents(play_items, emergency_urls=False, channel="", torrent_info=[])
                                 continue
                             else:
                                 if scrapertools.find_single_match(
-                                    play_item.torrent_info, r"\d+.M"
+                                    play_item.torrent_info, "\d+.M"
                                 ):
                                     magnitude = 0.001
                                 size = scrapertools.find_single_match(
@@ -3446,7 +3446,7 @@ def get_episodes(item):
 
                 # Calculamos la última temporada disponible
                 y = []
-                patron = r"season (\d+)"
+                patron = "season (\d+)"
                 matches = re.compile(patron, re.DOTALL).findall(
                     str(nfo_json.library_playcounts)
                 )
@@ -3458,9 +3458,9 @@ def get_episodes(item):
                 for ses_epi, visto in list(nfo_json.library_playcounts.items()):
                     ses_num = 0
                     try:
-                        if scrapertools.find_single_match(ses_epi, r"^(\d+)x\d+"):
+                        if scrapertools.find_single_match(ses_epi, "^(\d+)x\d+"):
                             ses_num = int(
-                                scrapertools.find_single_match(ses_epi, r"^(\d+)x\d+")
+                                scrapertools.find_single_match(ses_epi, "^(\d+)x\d+")
                             )
                         else:
                             continue
@@ -3528,7 +3528,7 @@ def get_episodes(item):
             for file in serie_listdir:
                 if not file.endswith(".json"):
                     continue
-                file_channel = scrapertools.find_single_match(file, r"\[(.*?)\]")
+                file_channel = scrapertools.find_single_match(file, "\[(.*?)\]")
                 if file_channel not in [
                     item.channel,
                     item.category.lower(),
@@ -3536,7 +3536,7 @@ def get_episodes(item):
                 ]:
                     continue
                 if item.sub_action == "season" and scrapertools.find_single_match(
-                    file, r"^(\d+)x\d+"
+                    file, "^(\d+)x\d+"
                 ) != str(item.infoLabels["season"]):
                     continue
 
@@ -3808,7 +3808,7 @@ def get_episodes(item):
             # Episodio, Temporada y Titulo
             if not episode.contentTitle:
                 episode.contentTitle = re.sub(
-                    r"\[[^\]]+\]|\([^\)]+\)|\d*x\d*\s*-", "", episode.title
+                    "\[[^\]]+\]|\([^\)]+\)|\d*x\d*\s*-", "", episode.title
                 ).strip()
 
             if not isinstance(episode.contentSeason, int):
@@ -4457,8 +4457,8 @@ def save_download_tvshow(item, silent=False):
 def set_movie_title(item):
     if not item.contentTitle:
         item.contentTitle = re.sub(
-            r"\[[^\]]+\]|\([^\)]+\)", "", item.contentTitle
+            "\[[^\]]+\]|\([^\)]+\)", "", item.contentTitle
         ).strip()
 
     if not item.contentTitle:
-        item.contentTitle = re.sub(r"\[[^\]]+\]|\([^\)]+\)", "", item.title).strip()
+        item.contentTitle = re.sub("\[[^\]]+\]|\([^\)]+\)", "", item.title).strip()

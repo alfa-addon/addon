@@ -103,9 +103,9 @@ trackers = [
 magnet_trackets = '&tr=http://tracker.gbitt.info:80/announce&tr=udp://tracker.openbittorrent.com:6969/announce'
 magnet_trackets += '&tr=udp://tracker.openbittorrent.com:80/announce&tr=udp://tracker.torrent.eu.org:451/announce'
 
-patron_domain = r'(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
-patron_host = r'((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
-patron_canal = r'(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
 
 domain_CF_blacklist = ['atomohd', 'atomixhq', 'atomtt', 'wolfmax4k', 'Wolfmax4k', 'enlacito']    ############# TEMPORAL
 
@@ -187,7 +187,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
     if PY3: PK = bytes(PK, 'utf-8')
     RAR = 'Rar!'
     if PY3: RAR = bytes(RAR, 'utf-8')
-    patron = r'^d\d+:.*?\d+:'
+    patron = '^d\d+:.*?\d+:'
     if referer and post:
         headers.update({'Content-Type': 'application/x-www-form-urlencoded', 'Referer': referer})   # Necesario para el Post del .Torrent
     else:
@@ -204,7 +204,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
     """
 
     videolibrary_path = config.get_videolibrary_path()                          # Obtenemos el path absoluto a partir de la Videoteca
-    if scrapertools.find_single_match(videolibrary_path, r'(^\w+:\/\/)'):       # Si es una conexión REMOTA, usamos userdata local
+    if scrapertools.find_single_match(videolibrary_path, '(^\w+:\/\/)'):        # Si es una conexión REMOTA, usamos userdata local
         videolibrary_path = config.get_data_path()
     download_path = config.get_setting('downloadpath', default='')              # Obtenemos el path absoluto a partir de Download
 
@@ -217,7 +217,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
     if torrent_params.get('local_torr', None):
         if filetools.exists(torrent_params['local_torr']) \
                             and not scrapertools.find_single_match(torrent_params['torrents_path'], 
-                            r'(?:\d+x\d+)?\s+\[.*?\]_\d+') and torrent_params['torrents_path'] != 'CF_BLOCKED':
+                            '(?:\d+x\d+)?\s+\[.*?\]_\d+') and torrent_params['torrents_path'] != 'CF_BLOCKED':
             torrent_params['torrents_path'] = torrent_params['local_torr']
         elif not filetools.exists(filetools.dirname(torrent_params['local_torr'])) and download_path \
                             and download_path not in torrent_params['local_torr']:
@@ -235,9 +235,9 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
         torrent_params['torrents_path'] += '.torrent'                           # Path para dejar el .torrent
     torrents_path_encode = filetools.encode(torrent_params['torrents_path'])    # Encode utf-8 del path
     
-    if scrapertools.find_single_match(torrent_params['local_torr'], r'(?:\d+x\d+)?\s+\[.*?\]_\d+'):
+    if scrapertools.find_single_match(torrent_params['local_torr'], '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
         torrent_params['local_torr'] = ''
-    if scrapertools.find_single_match(torrent_params['torrents_path'], r'(?:\d+x\d+)?\s+\[.*?\]_\d+') \
+    if scrapertools.find_single_match(torrent_params['torrents_path'], '(?:\d+x\d+)?\s+\[.*?\]_\d+') \
                         and 'CF_BLOCKED' not in torrent_params.get('local_torr', ''):
         torrent_params['local_torr'] = torrent_params['torrents_path']
 
@@ -248,7 +248,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
         torrent_cached_list = torrent_params['torrent_cached_list']
         if 'cliente_torrent_Alfa.torrent' not in url:
             if url.startswith("magnet"):
-                key = scrapertools.find_single_match(url, r'urn:btih:([\w\d]+)\&').upper()
+                key = scrapertools.find_single_match(url, 'urn:btih:([\w\d]+)\&').upper()
             else:
                 key = url_set
             for link, path_torrent in torrent_cached_list:                      # Si ya estaba cacheado lo usamos
@@ -257,7 +257,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
                 torrent_file = filetools.read(path_torrent, silent=True, mode='rb', vfs=VFS)
                 if torrent_file:
                     torrent_params['cached'] = True
-                    if not scrapertools.find_single_match(torrent_params['torrents_path'], r'(?:\d+x\d+)?\s+\[.*?\]_\d+'):
+                    if not scrapertools.find_single_match(torrent_params['torrents_path'], '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
                         torrent_params['torrents_path'] = path_torrent
                         cached_torrent = True
         
@@ -481,7 +481,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
         except Exception:
             logger.error(traceback.format_exc(1))
 
-        if t_hash and not scrapertools.find_single_match(torrent_params['torrents_path'], r'(?:\d+x\d+)?\s+\[.*?\]_\d+'):
+        if t_hash and not scrapertools.find_single_match(torrent_params['torrents_path'], '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
             torrent_params['torrents_path'] = filetools.encode(filetools.join(filetools.dirname(torrent_params.get('local_torr', None) \
                                                                or torrent_params['torrents_path']), t_hash + '.torrent'))
             if url.startswith("magnet"): torrent_params['url'] = torrent_params['torrents_path']
@@ -503,7 +503,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
                     config.set_setting('torrent_cached_list', torrent_cached_list, server='torrent')
                     torrent_params['torrent_cached_list'] = torrent_cached_list
                     cached_torrent = True
-        elif t_hash and scrapertools.find_single_match(torrent_params['torrents_path'], r'(?:\d+x\d+)?\s+\[.*?\]_\d+'):
+        elif t_hash and scrapertools.find_single_match(torrent_params['torrents_path'], '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
             torrent_params['torrent_cached_list'] = config.get_setting('torrent_cached_list', server='torrent', default=[])
             torrent_cached_list = torrent_params['torrent_cached_list']
             if t_hash_upper not in str(torrent_cached_list):
@@ -731,15 +731,15 @@ def magnet2torrent(magnet, headers={}, downloadStatus=4):
     if PY3: PK = bytes(PK, 'utf-8')
     RAR = 'Rar!'
     if PY3: RAR = bytes(RAR, 'utf-8')
-    patron = r'^d\d+:.*?\d+:'
+    patron = '^d\d+:.*?\d+:'
     if PY3: patron = bytes(patron, 'utf-8')
     LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default="")
     LIBTORRENT_MAGNET_PATH = filetools.join(config.get_setting("downloadpath"), 'magnet')
     progreso = None
     header_progreso = 'Buscando un torrent para el magnet'
-    magnet_title = scrapertools.find_single_match(magnet, r'\&(?:amp;)?dn=([^\&]+)\&')\
+    magnet_title = scrapertools.find_single_match(magnet, '\&(?:amp;)?dn=([^\&]+)\&')\
                                                   .replace('+', ' ').replace('.', ' ').replace('%5B', '[').replace('%5D', ']')[:40]
-    btih = scrapertools.find_single_match(magnet, r'urn:btih:([\w\d]+)\&').upper()
+    btih = scrapertools.find_single_match(magnet, 'urn:btih:([\w\d]+)\&').upper()
     logger.info('btih: %s; status: %s' % (btih, downloadStatus))
 
     if magnet.startswith('magnet'):
@@ -885,7 +885,7 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
         for json_name in filetools.listdir(records[0][0]):
             if not json_name.endswith('.json'): continue
             if not filename in json_name: continue
-            json_channel = scrapertools.find_single_match(json_name, r'\[([^\]]+)\]')
+            json_channel = scrapertools.find_single_match(json_name, '\[([^\]]+)\]')
             if json_channel in channels_alt or json_channel == channel_name:
                 channel_name = json_channel.lower()
                 break
@@ -1269,10 +1269,10 @@ def delete_torrent_folder(folder_new, item=Item()):
             break
         time.sleep(1)
 
-    if item.downloadFilename and scrapertools.find_single_match(item.downloadFilename, r'^\:(\w+)\:') == 'ELEMENTUM' \
+    if item.downloadFilename and scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:') == 'ELEMENTUM' \
                              and torrent_paths['ELEMENTUM'] == 'Memory':
         hash_torrent = scrapertools.find_single_match(item.downloadServer.get('url', '') or item.url, 
-                                                                     r'(?:\\\|\/|btih\:)(\w+)(?:\.torrent|&)')
+                                                                     '(?:\\\|\/|btih\:)(\w+)(?:\.torrent|&)')
         if hash_torrent:
             hash_torrent = '.%s.memory' % hash_torrent
             if filetools.exists(filetools.join(torrent_paths['ELEMENTUM_torrents'], hash_torrent)):
@@ -1378,9 +1378,9 @@ def torrent_dirs():
     if torrent_paths['TORR_opt'] == 0 and len(torrent_options):
         torrent_paths['TORR_opt_bkg'] = len(torrent_options)
     if torrent_paths['TORR_opt'] > 0:
-        torrent_paths['TORR_client'] = scrapertools.find_single_match(torrent_options[torrent_paths['TORR_opt']-1][0], r':\s*(\w+)').lower()
+        torrent_paths['TORR_client'] = scrapertools.find_single_match(torrent_options[torrent_paths['TORR_opt']-1][0], ':\s*(\w+)').lower()
     elif torrent_paths['TORR_opt_bkg'] > 0:
-        torrent_paths['TORR_client_bkg'] = scrapertools.find_single_match(torrent_options[torrent_paths['TORR_opt_bkg']-1][0], r':\s*(\w+)').lower()
+        torrent_paths['TORR_client_bkg'] = scrapertools.find_single_match(torrent_options[torrent_paths['TORR_opt_bkg']-1][0], ':\s*(\w+)').lower()
 
     torrent_paths['TORR_libtorrent_path'] = config.get_setting("libtorrent_path", server="torrent", default='')
     torrent_paths['TORR_unrar_path'] = config.get_setting("unrar_path", server="torrent", default='')
@@ -1391,7 +1391,7 @@ def torrent_dirs():
     
     for torr_client_g, torr_client_url in torrent_options:
         # Localizamos el path de descarga del .torrent y la carpeta de almacenamiento de los archivos .torrent
-        torr_client = scrapertools.find_single_match(torr_client_g, r':\s*(\w+)').lower()
+        torr_client = scrapertools.find_single_match(torr_client_g, ':\s*(\w+)').lower()
         __settings__ = ''
         
         try:
@@ -1573,7 +1573,7 @@ def update_control(item, function=''):
             item_control.downloadFilename = item.downloadFilename
             if item.downloadAt: item_control.downloadAt = item.downloadAt
             if not item.torr_folder and item.downloadFilename:
-                item.torr_folder = scrapertools.find_single_match(item.downloadFilename, r'(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
+                item.torr_folder = scrapertools.find_single_match(item.downloadFilename, '(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
             item_control.torr_folder = item.torr_folder
             item_control.torrent_info = item.torrent_info
             if not item.url.startswith('magnet:') and item.contentAction == 'play' and item.server and item.downloadProgress:
@@ -1687,7 +1687,7 @@ def mark_torrent_as_watched():
     
     # Creo la carpeta temporal para .torrents
     videolibrary_path = config.get_videolibrary_path()
-    if scrapertools.find_single_match(videolibrary_path, r'(^\w+:\/\/)'):       # Si es una conexión REMOTA, usamos userdata local
+    if scrapertools.find_single_match(videolibrary_path, '(^\w+:\/\/)'):        # Si es una conexión REMOTA, usamos userdata local
         videolibrary_path = config.get_data_path()
     torrent_temp = filetools.join(videolibrary_path, 'temp_torrents_Alfa')
     if not filetools.exists(torrent_temp):
@@ -1799,7 +1799,7 @@ def restart_unfinished_downloads():
                             continue
                         
                         torr_client = torrent_paths['TORR_client'].upper() or torrent_paths['TORR_client_bkg'].upper()
-                        torr_client_file = scrapertools.find_single_match(item.downloadFilename, r'^\:(\w+)\:')
+                        torr_client_file = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
                         if not torr_client and torr_client_file:
                             torr_client = torr_client_file
                         if item.downloadStatus not in [0] and (not torr_client or (not item.downloadFilename and 'downloadFilename' in item)):
@@ -1810,7 +1810,7 @@ def restart_unfinished_downloads():
 
                         if torr_client_file == 'ELEMENTUM' and torrent_paths[torr_client_file] == 'Memory':
                             hash_torrent = scrapertools.find_single_match(item.downloadServer.get('url', '') or item.url, 
-                                                                     r'(?:\\\|\/|btih\:)(\w+)(?:\.torrent|&)')
+                                                                     '(?:\\\|\/|btih\:)(\w+)(?:\.torrent|&)')
                             if hash_torrent:
                                 hash_torrent = '.%s.memory' % hash_torrent
                                 if not filetools.exists(filetools.join(torrent_paths[torr_client_file+'_torrents'], hash_torrent)):
@@ -1941,13 +1941,13 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
         if not torr_client:
             torr_client = torrent_paths['TORR_client'].upper() or torrent_paths['TORR_client_bkg'].upper()
             if not torr_client and item.downloadFilename:
-                torr_client = scrapertools.find_single_match(item.downloadFilename, r'^\:(\w+)\:')
+                torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
             if not torr_client:
                 return False
 
         try:                                                                    # Preguntamos por el estado de la descarga
             if not item.torr_folder and item.downloadFilename:
-                item.torr_folder = scrapertools.find_single_match(item.downloadFilename, r'(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
+                item.torr_folder = scrapertools.find_single_match(item.downloadFilename, '(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
             
             torr_data, deamon_url, index = get_tclient_data(item.torr_folder, 
                                                             torr_client.lower(), port=torrent_paths.get(torr_client.upper()+'_port', 0), 
@@ -1999,7 +1999,7 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
         else:
             folder = config.get_setting("folder_tvshows")                       # o series
         
-        if scrapertools.find_single_match(videolibrary_path, r'(^\w+:\/\/)'):   # Si es una conexión REMOTA, usamos userdata local
+        if scrapertools.find_single_match(videolibrary_path,'(^\w+:\/\/)'):     # Si es una conexión REMOTA, usamos userdata local
             videolibrary_path_local = config.get_data_path()
         torrents_path = filetools.join(videolibrary_path_local, 'temp_torrents_Alfa', \
                         'cliente_torrent_Alfa.torrent')                         # path descarga temporal
@@ -2073,7 +2073,7 @@ def check_seen_torrents():
                     DOWNLOAD_PATH = item.downloadAt
                 else:
                     DOWNLOAD_PATH = DOWNLOAD_PATH_ALFA
-                filename = filetools.basename(scrapertools.find_single_match(item.downloadFilename, r'(?:\:\w+\:\s*)?(.*?)$'))
+                filename = filetools.basename(scrapertools.find_single_match(item.downloadFilename, '(?:\:\w+\:\s*)?(.*?)$'))
                 if item.contentType == 'movie':
                     PATH = MOVIES
                 else:
@@ -2143,10 +2143,10 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
                                 (item.downloadStatus, item.downloadProgress, item.downloadQueued, nun_records, fichero, filename))
 
         # Busca sesiones y archivos de descarga "zombies" y los borra
-        torr_client = scrapertools.find_single_match(item.downloadFilename, r'\:(\w+)\:')
+        torr_client = scrapertools.find_single_match(item.downloadFilename, '\:(\w+)\:')
         if not torr_client and item.server == 'torrent':
             torr_client = torrent_paths['TORR_client'].upper() or torrent_paths['TORR_client_bkg'].upper()
-        downloadFilename = scrapertools.find_single_match(item.downloadFilename, r'\:\w+\:\s*(.*?)$')
+        downloadFilename = scrapertools.find_single_match(item.downloadFilename, '\:\w+\:\s*(.*?)$')
         file = ''
         folder = ''
         folder_new = ''
@@ -2154,7 +2154,7 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
         if item.server != 'torrent':
             if item.downloadProgress >= 100 and item.downloadQueued == 0:
                 if not filetools.exists(filetools.join(DOWNLOAD_PATH, scrapertools.find_single_match\
-                                (item.downloadFilename, r'(?:\:\w+\:\s*)?(.*?)$'))):
+                                (item.downloadFilename, '(?:\:\w+\:\s*)?(.*?)$'))):
                     if item.torrents_path: filetools.remove(item.torrents, silent=True)
                     filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero), silent=True)
                     logger.info('DELETED  %s: file: %s' % (torr_client, fichero))
@@ -2205,7 +2205,7 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
             
             if item.torr_folder:
                 folder = item.torr_folder
-            folder_new = scrapertools.find_single_match(item.downloadFilename, r'^\:\w+\:\s*(.*?)$')
+            folder_new = scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$')
             if filetools.dirname(folder_new):
                 folder_new = filetools.dirname(folder_new)
             if folder_new.startswith('\\') or folder_new.startswith('/'):
@@ -2380,7 +2380,7 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
     folder = ''
     size = item.torrent_info
     download_path = config.get_setting('downloadpath', default='')
-    if scrapertools.find_single_match(download_path, r'(^\w+:\/\/)'):           # Si es una conexión REMOTA, usamos userdata local
+    if scrapertools.find_single_match(download_path, '(^\w+:\/\/)'):            # Si es una conexión REMOTA, usamos userdata local
         download_path = config.get_data_path()
     cached_torrents_Alfa = filetools.join(download_path, 'cached_torrents_Alfa')
     if not filetools.isdir(cached_torrents_Alfa):
@@ -2432,7 +2432,7 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
     
     if not rar_files and item.url.startswith('magnet') and downloadServer:
         info_hash = torrent_analysis['folder'] = filetools.basename(downloadServer).split('.')[0].lower()
-        magnet_title = scrapertools.find_single_match(item.url, r'\&(?:amp;)?dn=([^\&]+)\&')\
+        magnet_title = scrapertools.find_single_match(item.url, '\&(?:amp;)?dn=([^\&]+)\&')\
                                                       .replace('+', ' ').replace('.', ' ').replace('%5B', '[').replace('%5D', ']')[:40]
         found = False
         progreso = None
@@ -2519,7 +2519,7 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
                     
                     torrent_params['torrent_cached_list'] = config.get_setting('torrent_cached_list', server='torrent', default=[])
                     torrent_cached_list = torrent_params['torrent_cached_list']
-                    t_hash = scrapertools.find_single_match(item.url, r'urn:btih:([\w\d]+)\&').upper()
+                    t_hash = scrapertools.find_single_match(item.url, 'urn:btih:([\w\d]+)\&').upper()
                     if t_hash not in torrent_cached_list:
                         torrent_cached_list.append([t_hash, torrent_params['torrents_path']])
                         if torrent_params.get('url_index', ''):
@@ -2774,7 +2774,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
                     pass
                 return ('', '', folder, rar_control)                            # Volvemos
             
-            torr_data_status = scrapertools.find_single_match(torr_data['label'], r'%\s*-\s*\[COLOR\s*\w+\](\w+)\[\/COLOR')
+            torr_data_status = scrapertools.find_single_match(torr_data['label'], '%\s*-\s*\[COLOR\s*\w+\](\w+)\[\/COLOR')
             torr_down_rate = scrapertools.find_single_match(torr_data['label'], '###(.*?)Kb/s')
             if item.downloadProgress > 0 and torr_data_status == 'Paused' and filetools.exists(path):
                 item = Item().fromjson(filetools.read(path))
@@ -2805,7 +2805,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
                                     '_rar_control.json'), jsontools.dump(rar_control))
                 log("##### %s Descargado: %s, ID: %s, Status: %s, Rate: %s / %s, Torrents: %s, Tot.Prog: %s, Desc.total: %s" % \
                                     (str(torr_client).upper(), scrapertools.find_single_match(torr_data['label'], \
-                                    r'(^.*?\%)'), index, torr_data_status, torr_down_rate, \
+                                    '(^.*?\%)'), index, torr_data_status, torr_down_rate, \
                                     totals.get('download_rate', ''), totals.get('num_torrents', ''), 
                                     totals.get('progress', ''), totals.get('total_wanted', '')))
                 if monitor.waitForAbort(wait_time):                             # Esperamos un poco y volvemos a empezar
@@ -2910,7 +2910,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
                 for z, returncode, out__, error__ in responses:                 # Analizamos las respuestas
                     if returncode == '0':                                       # Ya se ha descargado... parte ...
                         dl_files += 1
-                        part_name = scrapertools.find_single_match(str(out__), r'(\.part\d+.rar)')
+                        part_name = scrapertools.find_single_match(str(out__), '(\.part\d+.rar)')
                         log("##### Torrent descargando: %s, %s" % (part_name, str(returncode)))
                         if dl_files == len(cmd):                                # ... o todo
                             fast = True
@@ -2933,7 +2933,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
                             loop_error = 6                                      # Restauramos loop_error por si acaso
                         break
                     elif returncode == '1':                                     # Ha alcanzado el fin de archivo ??? pasamos
-                        part_name = scrapertools.find_single_match(str(out__), r'(\.part\d+.rar)')
+                        part_name = scrapertools.find_single_match(str(out__), '(\.part\d+.rar)')
                         log("##### Torrent descargando: %s, %s" % (part_name, str(returncode)))
                     else:                                                       # No entendemos el error
                         loop_change = loop_error                                # ... pasamos a un loop de 1 minutos para reintentar
@@ -3489,7 +3489,7 @@ def stream_rar_video(rar_file, save_path_videos, password, xlistitem, item, \
                     pos = rar_content.tell()
                     logger.debug('TELL: %s' % pos)
                     if request.headers.get('Range'):
-                        next_pos = int(scrapertools.find_single_match(request.headers.get('Range', 0), r'=(\d+)-') or 0)
+                        next_pos = int(scrapertools.find_single_match(request.headers.get('Range', 0), '=(\d+)-') or 0)
                         pos = next_pos if pos + buffer_size >= next_pos else pos
                         rar_content.seek(pos, 0)
                         logger.debug('RANGE: %s; %s' % (request.headers.get('Range', ''), pos))
@@ -3632,7 +3632,7 @@ def rename_rar_dir(item, rar_file, save_path_videos, video_path, torr_client):
                     rar_file = video_path + '/' + folders[1]
                     rename_status = True
                     if item.downloadFilename:
-                        downloadFilename = scrapertools.find_single_match(item.downloadFilename, r'^\:\w+\:\s*(.*?)$')
+                        downloadFilename = scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$')
                         item.downloadFilename = ':%s: %s' % (torr_client.upper(), \
                                 filetools.join(dst_file, filetools.basename(downloadFilename)))
                         update_control(item, function='rename_rar_dir')
@@ -3651,8 +3651,8 @@ def last_password_search(pass_path, erase_file_path=''):
 
     # Busca en el Path de extracción si hay algún archivo que contenga la URL donde pueda estar la CONTRASEÑA
     password = ''
-    patron_url = r'(http.*\:\/\/(?:www.)?\w+\.\w+\/.*?)[\n|\r|$]'
-    patron_pass = r'<input\s*type="text"\s*id="txt_password"\s*name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"'
+    patron_url = '(http.*\:\/\/(?:www.)?\w+\.\w+\/.*?)[\n|\r|$]'
+    patron_pass = '<input\s*type="text"\s*id="txt_password"\s*name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"'
     
     try:
         pass_path_list = filetools.listdir(pass_path)
@@ -3764,9 +3764,9 @@ def shorten_rar_path(item):
         video_path = '%s [%s] [%s]' % (item.contentTitle.strip(), item.infoLabels['quality'], \
                             item.infoLabels['tmdb_id'])
     else:
-        epi_al = scrapertools.find_single_match(item.infoLabels['episodio_titulo'], r'(?i)al\s*(\d+)')
+        epi_al = scrapertools.find_single_match(item.infoLabels['episodio_titulo'], '(?i)al\s*(\d+)')
         if not epi_al:
-            epi_al = scrapertools.find_single_match(item.downloadFilename, r'(?i)\[\s*cap\.?\s*\d+_\d+(\d{2})\]')
+            epi_al = scrapertools.find_single_match(item.downloadFilename, '(?i)\[\s*cap\.?\s*\d+_\d+(\d{2})\]')
         if epi_al:
             epi_al = ' al %s' % str(epi_al).zfill(2)
         else:
