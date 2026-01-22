@@ -28,7 +28,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://(?:www.|)(?:fuckamouth|hd-porn|freehdporn|thehdporn).(?:com|co|xyz|ru)/hdporn/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:fuckamouth|hd-porn|freehdporn|thehdporn).(?:com|co|xyz|ru|\\w{2,4})/hdporn/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -60,7 +60,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|beta.|)(?:xfreehd|tubewolf|sextvx|pornxp|sxyprnxxx).(?:com|net)/(?:es/|)(?:video|videos|embed)/[0-9]+(?:/|))",
+        "pattern": "(https://(?:www.|beta.|)(?:xfreehd|tubewolf|sextvx|pornxp|sxyprnxxx).(?:com|net|\\w{2,4})/(?:es/|)(?:video|videos|embed)/[0-9]+(?:/|))",
         "url": "\\1"
       },
       {
