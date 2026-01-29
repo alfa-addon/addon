@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Channel DonTorrent -*-
 # -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
+# -*- By the Alfa Develop Group -*- 
 
 import sys
 PY3 = False
