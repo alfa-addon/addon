@@ -6,6 +6,7 @@ import re
 import time
 from core import httptools
 from core import scrapertools
+from core import urlparse
 from platformcode import logger
 from core import jsontools as json
 
@@ -14,10 +15,12 @@ retries = count
 
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'cf_assistant': False}
 
+host = "https://es.pornhub.com"
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    headers = {'Referer': page_url}
+    headers = {'Referer': page_url,
+               }
     response = httptools.downloadpage(page_url, headers=headers, **kwargs)
     data = response.data
     if not response.sucess or "Not Found" in data or "flagged for  " in data or "Video Disabled" in data or "<div class=\"removed\">" in data or "is unavailable" in data:
@@ -32,7 +35,8 @@ def get_video_url(page_url, user="", password="", video_password=""):
     # retries = count
     logger.info("(page_url='%s'; retry=%s)" % (page_url, retries))
     video_urls = []
-    headers = {'Referer': page_url}
+    headers = {'Referer': page_url,
+               }
     data = httptools.downloadpage(page_url, headers=headers, **kwargs).data
     flashvars = scrapertools.find_single_match(data, '(var flashvars.*?)</script>')
     flashvars = flashvars.replace('" + "', '' ).replace("\/", "/")
@@ -51,6 +55,9 @@ def get_video_url(page_url, user="", password="", video_password=""):
             type = elem['format']
             quality = elem['quality']
             if 'hls' in type and "validfrom=" in url and "urlset" not in url:
+                headers = httptools.default_headers.copy() 
+                # url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+                url += "|Referer=%s/&Origin=%s" % (host,host)
                 video_urls.append(["[pornhub] m3u %s" % quality, url])
             # elif "urlset" in url:
                 # video = url

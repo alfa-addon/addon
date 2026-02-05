@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:filemo+n|bf0skv|klcams|bysedikamoum|bysesayeveum|byseraguci|bysezoxexe|bysebuho|g9r6).(?:sx|to|in|top|nl|lat|\\w{2,4})/(?:e|d)/([a-z0-9]+)",
+        "pattern": "https://(?:filemo+n|bf0skv|klcams|byse[a-z]+|g9r6).(?:sx|to|in|top|nl|lat|\\w{2,4})/(?:e|d)/([a-z0-9]+)",
         "url": "https://filemooon.link/e/\\1"
       },
       {

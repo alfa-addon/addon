@@ -232,7 +232,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.(?:tabootube|nubilefilm).xxx/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://www.(?:tabootube|nubilefilm).xxx/(?:video/|)[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

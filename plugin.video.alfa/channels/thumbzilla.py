@@ -50,7 +50,7 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['phimage']}]},     #'i
          'next_page_rgx': [['&page=\d+', '&page=%s'], ['?page=\d+', '?page=%s']], 
          'last_page': {},
          'plot': {}, 
-         'findvideos': {'find': [{'string': re.compile(r'"link_url":"[^"]+"')}]},
+         'findvideos': {},
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
@@ -117,8 +117,9 @@ def play(item):
     logger.info()
     itemlist = []
     
-    soup = AlfaChannel.create_soup(item.url, **kwargs)
-    
+    # soup = AlfaChannel.create_soup(item.url, **kwargs)
+    data = AlfaChannel.httptools.downloadpage(item.url, **kwargs).data
+    soup = AlfaChannel.do_soup(data, encoding='utf-8')
     if soup.find_all('a', href=re.compile("/pornstars/[A-z0-9-]+")):
         pornstars = soup.find_all('a', href=re.compile("/pornstars/[A-z0-9-]+"))
         for x, value in enumerate(pornstars):
@@ -131,22 +132,21 @@ def play(item):
         lista.insert (2, pornstar)
         item.contentTitle = '[/COLOR]'.join(lista)
     
-    
-    url = ""
-    patt = re.compile(r'"link_url":"([^"]+)"')
-    data = soup.find(text=patt)
+    video = ""
     video = scrapertools.find_single_match(data,'"link_url":"([^"]+)"').replace("\/", "/")
-    matches = scrapertools.find_multiple_matches(data, ',"videoUrl":"([^"]+)","quality":"(\d+)"')
-    for url, quality in matches:
-        url = url.replace("\/", "/")
-        if not "?validfrom=" in url: 
-            continue
-        else:
-            itemlist.append(['.mp4 %s' %quality, url])
-            itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-    if not url:
+    if video:
         itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=video))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    else:
+        matches = scrapertools.find_multiple_matches(data, ',"videoUrl":"([^"]+)","quality":"(\d+)"')
+        for url, quality in matches:
+            url = url.replace("\/", "/")
+            url += "|Referer=%s/&Origin=%s" % (host,host)
+            # if not "?validfrom=" in url: 
+                # continue
+            # else:
+            itemlist.append(['.mp4 %sp' %quality, url])
+            itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     
     return itemlist
 
