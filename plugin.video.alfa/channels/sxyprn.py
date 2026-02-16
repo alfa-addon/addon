@@ -139,11 +139,14 @@ def lista(item):
         serv = ['jetload', 'waaw', 'aparat.cam/reg', 'ninjastream']
         url = elem.find('a', class_='post_time')['href']
         titulo = elem.find('a', class_='post_time')['title']
-        thumbnail = elem.img
-        if thumbnail.get("src", "" ): 
-            thumbnail = thumbnail['src']
+        if not elem.img:
+            thumbnail = ""
         else:
-            thumbnail = thumbnail['data-src']
+            thumbnail = elem.img
+            if thumbnail.get("src", ""): 
+                thumbnail = thumbnail['src']
+            else:
+                thumbnail = thumbnail['data-src']
         if "removed.png" in thumbnail:
             thumbnail = urlparse.urljoin(item.url,thumbnail)
         titulo = re.sub("#\w+", "", titulo).strip()
@@ -176,7 +179,7 @@ def lista(item):
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, contentTitle = title,
                           thumbnail=thumbnail, fanart=thumbnail, ext=ext))
     next_page = soup.find('div', class_='next_page')
-    logger.debug(next_page)
+    # logger.debug(next_page)
     if next_page:
         next_page = next_page.parent['href']
         next_page = urlparse.urljoin(item.url,next_page)
@@ -193,7 +196,7 @@ def findvideos(item):
     soup = create_soup(item.url)
     # if item.ext:  post_el_small 
     matches = soup.find('div', class_='post_el_post').find_all('a', class_='extlink')
-    logger.debug(matches)
+    # logger.debug(matches)
     for elem in matches:
         url = elem['href']
         itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
