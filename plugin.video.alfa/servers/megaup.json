@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(megaup.net/[A-z0-9]+/[A-z0-9.]+)",
+        "pattern": "(megaup.net/[A-z0-9]+/[A-z0-9_.]+)",
         "url": "https://\\1"
       }
     ]

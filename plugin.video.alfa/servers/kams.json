@@ -4,14 +4,15 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:bestwish|bestb|streamup|strmup|bbcanal|streamix).(?:stream|\\w{2,4}))/(?:e/|v/|)([A-z0-9-]+)",
-        "url": "\\1/ajax/stream?filecode=\\2|\\1"
+        "pattern": "https://kams.com/video/([0-9]+)",
+        "url": "https://api.kams.com/v1/videos/start/\\1"
       }
+
     ]
   },
   "free": true,
-  "id": "bestb",
-  "name": "bestb",
+  "id": "kams",
+  "name": "kams",
   "settings": [
     {
       "default": false,
@@ -38,5 +39,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://streamup.cc/panel/assets/images/streamup.png"
+  "thumbnail": "https://kams.com/storage/og-image.jpg"
 }

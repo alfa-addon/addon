@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|movearnpre|seraphinapl|bingezove|dinisglows|dingtezunicdnvids).(?:com|\\w{2,4})/(?:f|v|embed|d|file)/[A-z0-9]+)",
+        "pattern": "(?i)(https://(?:dhtpre|nikaplayerr|ryderjet|peytonepre|movearnpre|seraphinapl|bingezove|dinisglows|dingtezuni|cdnvids|minochinos|sauceplayer).(?:com|\\w{2,4})/(?:f|v|embed|d|file)/[A-z0-9]+)",
         "url": "\\1"
       },
       {

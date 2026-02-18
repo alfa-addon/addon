@@ -19,14 +19,18 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES_A
 list_quality_tvshow = []
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
+
 forced_proxy_opt = 'ProxySSL'
 
-# https://pornxp.com/  https://pornxp.net/
+
+#  https://pornxp.ph/  https://pornxp.hn/ https://pornxp.com/  https://pornxp.net/
+
+
 canonical = {
              'channel': 'pornxp', 
              'host': config.get_setting("current_host", 'pornxp', default=''), 
-             'host_alt': ["https://pornxp.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://pornxp.ph/"], 
+             'host_black_list': ["https://pornxp.com/", "https://pornxp.net/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

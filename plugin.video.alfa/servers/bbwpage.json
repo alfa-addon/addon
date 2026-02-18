@@ -4,14 +4,15 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:bestwish|bestb|streamup|strmup|bbcanal|streamix).(?:stream|\\w{2,4}))/(?:e/|v/|)([A-z0-9-]+)",
-        "url": "\\1/ajax/stream?filecode=\\2|\\1"
+        "pattern": "(https://bbwpage.com/videos/[A-z0-9]+/[A-z0-9-]+)",
+        "url": "\\1/fp.html"
       }
+
     ]
   },
   "free": true,
-  "id": "bestb",
-  "name": "bestb",
+  "id": "bbwpage",
+  "name": "bbwpage",
   "settings": [
     {
       "default": false,
@@ -38,5 +39,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://streamup.cc/panel/assets/images/streamup.png"
+  "thumbnail": "https://bbwpage.com/css/logo.png"
 }

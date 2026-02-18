@@ -27,7 +27,7 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host ))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "home/1"))
     itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "category"))
@@ -112,14 +112,9 @@ def lista(item):
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
-    next_page = soup.find("a", string="Next")
-    if not next_page:
-        next_page = soup.find('li', class_='active')
+    next_page = soup.find('ul', class_='pagination').find_all('a')[-1]
     if next_page:
-        if "li" in next_page.name:
-            next_page = next_page.a['href']
-        else:
-            next_page = next_page['href']
+        next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -129,6 +124,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
+    
     url = soup.find('div', class_='single-video').iframe['src']
     if url.startswith("//"):
         url = "https:%s" % url
@@ -136,11 +132,13 @@ def findvideos(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+# https://xiaoshenke.net/video/61c38fabaf396/4
 
 def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
+    
     pornstars = soup.find_all('a', class_='fullname')
     for x , value in enumerate(pornstars):
         pornstars[x] = value.text.strip()
@@ -148,7 +146,8 @@ def play(item):
     pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
     lista = item.contentTitle.split()
     lista.insert (2, pornstar)
-    item.contentTitle = ' '.join(lista)    
+    item.contentTitle = ' '.join(lista)
+    
     url = soup.find('div', class_='single-video').iframe['src']
     if url.startswith("//"):
         url = "https:%s" % url

@@ -8,15 +8,19 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|en.|)(?:luxuretv|sextubefun|freehdporn|wanktv|iporntoo|hdporn-movies).(?:com|xxx)/video(?:s|)/[A-z0-9-]+.html)",
+        "pattern": "(https://(?:www.|en.|)(?:luxuretv|sextubefun|freehdporn|wanktv|iporntoo|hdporn-movies|pornvee).(?:com|xxx)/video(?:s|)/[A-z0-9-]+.html)",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:justporn|pulpo69|publicsexhub).(?:com|net)/video(?:s|)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:justporn|pulpo69|publicsexhub|pornzona).(?:com|\\w{2,4})/video(?:s|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:bingato|sexmex|taboodude).(?:com|net|to)/(?:item|video)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:bingato|sexmex|taboodude).(?:com|\\w{2,4})/(?:item|video)/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://jizztube.(?:com|\\w{2,4})/(?:view|video)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -52,7 +56,15 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)mrluckypov.com/updates/[A-z0-9-]+.html)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)canalporno.com/ver/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)hdpornvideos.tv/view/[0-9-]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -91,7 +103,11 @@
         "pattern": "(https://(?:www.|)(?:tubehentai|wetsins|pornyteen).(?:com|sexy)/video/[A-z0-9-]+.html)",
         "url": "\\1"
       },
-     {
+      {
+        "pattern": "(https://pornyteen.com/embed/[0-9]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)efukt.com/[A-z0-9-_]+.html)",
         "url": "\\1"
       },     {
@@ -155,11 +171,6 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.pornoxo.com/(?:videos|embed)/[0-9]+/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-
-      {
         "pattern": "(https://www.serviporno.com/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
@@ -217,5 +228,6 @@
       "visible": false
     }
   ],
-  "thumbnail": ""
+  "thumbnail": "",
+  "force_inputstream": "none"
 }

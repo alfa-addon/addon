@@ -16,7 +16,7 @@ list_servers = []
 
 # https://playpornfree.org/   https://streamporn.pw/  https://mangoporn.net/   https://watchfreexxx.net/   https://losporn.org/  https://xxxstreams.me/  https://speedporn.net/
 # pandamovie https://watchpornfree.info  https://xxxparodyhd.net  http://www.veporns.com  http://streamporno.eu
-# https://www.netflixporno.net   https://xxxscenes.net   https://mangoporn.net   https://speedporn.net
+# https://www.netflixporno.net   https://xxxscenes.net   https://mangoporn.net   https://speedporn.net  https://streamporn.nl/
 
 canonical = {
              'channel': 'playpornx', 

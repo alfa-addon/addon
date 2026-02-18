@@ -24,7 +24,11 @@
         "url": "https://wolfstream.tv/embed-\\1.html"
       },
       {
-        "pattern": "(https://leakslove.net/e/[A-z0-9]+)",
+        "pattern": "(https://leakslove.net/(?:e|d)/[A-z0-9]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://tenstream.net/(?:e|d)/[A-z0-9]+)",
         "url": "\\1"
       }
     ]

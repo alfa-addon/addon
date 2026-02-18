@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:bestwish|bestb|streamup|strmup|bbcanal|streamix).(?:stream|\\w{2,4}))/(?:e/|v/|)([A-z0-9-]+)",
-        "url": "\\1/ajax/stream?filecode=\\2|\\1"
+        "pattern": "(https://www.429men.com/videos/[0-9]+)",
+        "url": "\\1/a/"
       }
     ]
   },
   "free": true,
-  "id": "bestb",
-  "name": "bestb",
+  "id": "429men",
+  "name": "429men",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://streamup.cc/panel/assets/images/streamup.png"
+  "thumbnail": "https://c8bfba2668.mjedge.net/static/images/logo-lightbg.png"
 }

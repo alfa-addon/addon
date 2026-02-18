@@ -60,7 +60,7 @@ finds = {'find': {'find_all': [{'tag': ['article']}]},
                             'list_all_quality': dict([('find', [{'tag': ['span'], 'class': ['hd-video']}]),
                                                       ('get_text', [{'tag': '', 'strip': True}])]),
                             },
-         'controls': {'url_base64': False, 'cnt_tot': 20, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
+         'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
                                      idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -73,14 +73,14 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="SEX MEX" , action="list_all", url=host + "sexmex-xxx/page/2/"))
+    itemlist.append(Item(channel=item.channel, title="SEX MEX" , action="list_all", url=host + "sexmex-xxx/page/1/"))
     itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host + "page/1/?filter=latest"))
     itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=host + "page/1/?filter=most-viewed"))
     itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="list_all", url=host + "page/1/?filter=popular"))
     itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "page/1/?filter=longest"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "categories/page/1", extra="Canal"))
         # itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "actors/", extra="PornStar"))
-        # itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "tags/", extra="Categorias"))
+    # itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "tags/", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
@@ -92,6 +92,7 @@ def section(item):
     logger.info()
     
     findS = finds.copy()
+    findS['controls']['cnt_tot'] = 20
     # findS['url_replace'] = [['(\/(?:categories|channels|models|pornstars)\/[^$]+$)', r'\1?sort_by=post_date&from=1']]
     if item.extra == 'Categorias':
         findS['categories'] = dict([('find', [{'tag': ['main'], 'class': 'site-main'}]), 

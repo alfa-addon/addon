@@ -37,53 +37,61 @@ def get_video_url(page_url, video_password):
     
     global data, host, server
     
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-    if soup.find("div", id="player-wrap"):  ####  anyporn
-        data = soup.find("div", class_="player-wrap")
-        data = str(data)
-        patron = "([0-9]+)\s*:\s*'([^']+)'"
-        matches = re.compile(patron, re.DOTALL).findall(data)
-        for quality, url in matches:
+    if "var sources =" in data:
+        patron = '"src":"([^"]+)","desc":"(\d+p)"'
+        matches = scrapertools.find_multiple_matches(data, patron)
+        
+        for url, quality in matches:
+            url = url.replace("\/", "/")
             video_urls.append(["[%s] %s" % (server, quality), url])
     else:
-        if soup.find("video"):
-            matches = soup.video.find_all("source")
-        if soup.find("dl8-video"):
-            matches = soup.find("dl8-video").find_all("source")  ####  sexVR
-        quality = ""
-        for elem in matches:
-            url = elem["src"]
-            if elem.get("data-res", ""):
-                quality = elem["data-res"]
-            if elem.get("title", ""):
-                quality = elem["title"]
-            if elem.get("label", ""):
-                quality = elem["label"]
-            if elem.get("quality", ""):
-                quality = elem["quality"]
-            if elem.get("size", ""):
-                quality = elem["size"]
-            if "sd" in quality.lower():
-                quality = "480p"
-            if "hd" in quality.lower():
-                quality = "720p"
-            if "lq" in quality.lower():
-                quality = "360p"
-            if "hq" in quality.lower():
-                quality = "720p"
-            if "auto" in quality.lower() or "preview" in quality.lower():
-                continue  # pornobande checkporno
-            if not quality:
-                quality = "480p"
-            if server not in url:
-                url = urlparse.urljoin(page_url, url)  # pornobande
-            if not url.startswith("http"):
-                url = "http:%s" % url
-            
-            # url += "|Referer=%s/" % host
-            headers = httptools.default_headers.copy() 
-            url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
-            video_urls.append(["[%s] %s" % (server, quality), url])
+        soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+        if soup.find("div", id="player-wrap"):  ####  anyporn
+            data = soup.find("div", class_="player-wrap")
+            data = str(data)
+            patron = "([0-9]+)\s*:\s*'([^']+)'"
+            matches = re.compile(patron, re.DOTALL).findall(data)
+            for quality, url in matches:
+                video_urls.append(["[%s] %s" % (server, quality), url])
+        else:
+            if soup.find("video"):
+                matches = soup.video.find_all("source")
+            if soup.find("dl8-video"):
+                matches = soup.find("dl8-video").find_all("source")  ####  sexVR
+            quality = ""
+            for elem in matches:
+                url = elem["src"]
+                if elem.get("data-res", ""):
+                    quality = elem["data-res"]
+                if elem.get("title", ""):
+                    quality = elem["title"]
+                if elem.get("label", ""):
+                    quality = elem["label"]
+                if elem.get("quality", ""):
+                    quality = elem["quality"]
+                if elem.get("size", ""):
+                    quality = elem["size"]
+                if "sd" in quality.lower():
+                    quality = "480p"
+                if "hd" in quality.lower():
+                    quality = "720p"
+                if "lq" in quality.lower():
+                    quality = "360p"
+                if "hq" in quality.lower():
+                    quality = "720p"
+                if "auto" in quality.lower() or "preview" in quality.lower():
+                    continue  # pornobande checkporno
+                if not quality:
+                    quality = "480p"
+                if server not in url:
+                    url = urlparse.urljoin(page_url, url)  # pornobande
+                if not url.startswith("http"):
+                    url = "http:%s" % url
+                
+                # url += "|Referer=%s/" % host
+                headers = httptools.default_headers.copy() 
+                url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+                video_urls.append(["[%s] %s" % (server, quality), url])
     
     video_urls.sort(key=lambda item: int(re.sub("\D", "", item[0])))
     return video_urls

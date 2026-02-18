@@ -15,6 +15,8 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url, **kwargs).data
     if "This video is no longer available" in data or 'no está disponible' in data:
         return False, "[spankbang] El fichero no existe o ha sido borrado"
+    if "This video is private" in data:
+        return False, "[spankbang] [COLOR red]VIDEO PRIVADO[/COLOR]"
     return True, ""
 
 

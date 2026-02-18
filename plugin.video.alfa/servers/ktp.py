@@ -3,7 +3,7 @@
 # Conector vipporns By Alfa development Group
 # --------------------------------------------------------
 import re
-from datetime import datetime
+import time
 
 from core import httptools
 from core import scrapertools
@@ -19,6 +19,7 @@ kwargs = {'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 6, 'ignor
 
 # https://trahkino.cc/video/353484/ necesita "False"
 # https://www.porn00.org/ necesita "None"
+#  generate_mp4  ENCRYPT  https://www.porngrey.net/video/charlie-red-enjoys-anal-in-a-wild-gonzo-scene_v1/  
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
@@ -36,6 +37,7 @@ def test_video_exists(page_url):
     
     global data, host, license_code
     data = response.data
+    
     host = "https://%s/" % scrapertools.get_domain_from_url(page_url)
     license_code = scrapertools.find_single_match(response.data, 'license_code:\s*(?:\'|")([^\,]+)(?:\'|")')
     
@@ -47,7 +49,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     invert = ""
     url = ""
-    data = httptools.downloadpage(page_url, **kwargs).data
+    global data, host, license_code
+    # data = httptools.downloadpage(page_url, **kwargs).data
+    
     if "flashvars.video_url_text" in data: #sunporno
         data = scrapertools.find_single_match(data, '(flashvars.video_url[^\}]+)')
         patron = "(?:flashvars.video_url|flashvars.video_alt_url)\s*=\s*'([^']+)'.*?"
@@ -59,6 +63,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         patron = 'video_url:\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += 'postfix:\s*(?:\'|")([^\,]+)(?:\'|")'
     matches = re.compile(patron,re.DOTALL).findall(data)
+    
     for url, quality in matches:
         if "?login" not in url and "signup" not in url and "_preview" not in url and ".mp4" in url:
             if "function/" in url:

@@ -1,7 +1,7 @@
 {
   "id": "stripchat",
   "name": "cam_stripchat",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "https://i.postimg.cc/zGXSGYnX/stripchat.png",

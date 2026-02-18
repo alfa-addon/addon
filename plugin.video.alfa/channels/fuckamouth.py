@@ -9,6 +9,8 @@ from core import servertools
 from core import httptools
 from core import urlparse
 
+###########  OUT DIC 2025
+
 #  https://fuckamouth.com  http://freehdporn.xyz  http://hd-porn.co  http://thehdporn.xyz/
 canonical = {
              'channel': 'fuckamouth', 

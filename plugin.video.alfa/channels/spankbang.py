@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 
 forced_proxy_opt = ''
 timeout = 45
-
+ ####   Fotos error 403 en canal y pornstar
 canonical = {
              'channel': 'spankbang', 
              'host': config.get_setting("current_host", 'spankbang', default=''), 
@@ -32,8 +32,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas valorados", action="lista", url=host + "trending_videos/"))
     itemlist.append(Item(channel=item.channel, title="Mas vistos", action="lista", url= host + "most_popular/"))
     itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "channels/1?o=top"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels/1?o=top"))
+    # itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -54,12 +54,14 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('main', id='container')
-    matches = soup.find_all('a', class_='image')
+    soup = create_soup(item.url)#.find('main', class_='container')
+    matches = soup.find_all('div', attrs={"data-testid": "hottest-models"})
     for elem in matches:
-        url = elem['href']
-        title = elem.img['title']
-        thumbnail = elem.img['src']
+        url = elem.a['href']
+        title = elem.img['alt']
+        thumbnail = elem.img['data-src']
+        if thumbnail.startswith("//"):
+            thumbnail = "https:%s|Referer=%s" % (thumbnail, host)
         cantidad = elem.find('span', class_='videos')
         if cantidad:
             title = "%s (%s)" %(title, cantidad.text)
@@ -80,12 +82,14 @@ def catalogo(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('ul', class_='list')
+    soup = create_soup(item.url).find('ul', class_='results')
     matches = soup.find_all('li')
     for elem in matches:
         url = elem.a['href']
-        title = elem.a.text
-        thumbnail = ""
+        title = elem.img['alt']
+        thumbnail = elem.img['src']
+        if thumbnail.startswith("//"):
+            thumbnail = "https:%s|Referer=%s" % (thumbnail, host)
         url =  urlparse.urljoin(item.url,url)
         url += "?o=new"
         plot = ""

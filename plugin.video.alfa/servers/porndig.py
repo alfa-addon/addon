@@ -22,6 +22,7 @@ def test_video_exists(page_url):
     global data
     data = httptools.downloadpage(page_url).data
     data = data.replace("\/", "/")
+    logger.debug(data)
     if "<h2>WE ARE SORRY</h2>" in data or 'Not Found' in data or 'Invalid profile' in data:
         return False, "[porndig] El fichero no existe o ha sido borrado"
     return True, ""

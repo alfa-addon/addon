@@ -4,22 +4,22 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:filemo+n|bf0skv|klcams|byse[a-z]+|g9r6).(?:sx|to|in|top|nl|lat|\\w{2,4})/(?:e|d)/([a-z0-9]+)",
-        "url": "https://filemooon.link/e/\\1"
+        "pattern": "(https://www.porntopedia.com/video/[0-9]+/)",
+        "url": "\\1/a/"
       },
       {
-        "pattern": "https://moonembed.(?:sx|to|in|top|nl|xyz)/(?:e|d)/([a-z0-9]+)",
-        "url": "https://filemooon.link/e/\\1"
+        "pattern": "https://click.porntopedia.com/tracker-tubetraffic2.php\\?key=tomato&v=([0-9]+)",
+        "url": "https://www.porntopedia.com/video/\\1/a/"
       },
       {
-        "pattern": "https://x08.(?:online|\\w{2,4})/(?:e|d)/([a-z0-9]+)",
-        "url": "https://filemooon.link/e/\\1"
+        "pattern": "click.porntopedia.com/tracker-tubetraffic.php\\?key=tomato&campaign_id=1&lander=https.*?%2f(\d+)%2f",
+        "url": "https://www.porntopedia.com/video/\\1/a/"
       }
-    ]
+      ]
   },
   "free": true,
-  "id": "filemoon",
-  "name": "filemoon",
+  "id": "porntopedia",
+  "name": "porntopedia",
   "settings": [
     {
       "default": false,
@@ -46,6 +46,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/NMx8YQ1W/filemoon.png",
-  "force_inputstream": "adaptive"
+  "thumbnail": "https://www.porntopedia.com/contents/zzmddlegahek/theme/logo.png"
 }

@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:bestwish|bestb|streamup|strmup|bbcanal|streamix).(?:stream|\\w{2,4}))/(?:e/|v/|)([A-z0-9-]+)",
-        "url": "\\1/ajax/stream?filecode=\\2|\\1"
+        "pattern": "(https://bigshare.io/watch/[0-9-]+/e)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "bestb",
-  "name": "bestb",
+  "id": "bigshare",
+  "name": "bigshare",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://streamup.cc/panel/assets/images/streamup.png"
+  "thumbnail": "https://bigshare.io/thumbnails/1755525437.png"
 }

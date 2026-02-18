@@ -133,7 +133,7 @@ def findvideos(item):
     logger.info(item)
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    videos = scrapertools.find_multiple_matches(data, '\("#playerframe"\).attr\("src", "([^"]+)"')
+    videos = scrapertools.find_multiple_matches(data, '\).attr\("src", "([^"]+)"')
     for elem in videos:
         url = elem
         if url:
@@ -146,7 +146,7 @@ def play(item):
     logger.info(item)
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    videos = scrapertools.find_multiple_matches(data, '\("#playerframe"\).attr\("src", "([^"]+)"')
+    videos = scrapertools.find_multiple_matches(data, '"\).attr\("src", "([^"]+)"')
     for elem in videos:
         url = elem
         if url:
