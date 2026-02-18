@@ -2,15 +2,13 @@
         [B]Estos son los cambios para esta versión:[/B]
         
         • +18
-        • Asialiveaction
+        • CineCalidad
         • Dontorrent
-        • Doramasflix
-        • Eztv
-        • FullSerieHD
+        • GranTorrent
         • HDFull
-        • JKanime
-        • Osjonosu
-        • VerAnime
-        • Veronline
+        • Mitorrent
+        • Pelis XD
+        • SeriesKao
+        • TubeOnLine
         • WolfMax4K
         
