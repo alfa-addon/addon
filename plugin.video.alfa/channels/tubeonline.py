@@ -265,7 +265,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
 
     for elem_season in matches_int:
-
+        item.contentSeason = item.contentSeason or 1
         if elem_season.find("span", class_="se-t").get_text(strip=True) != str(item.contentSeason): continue
         epi_list = elem_season.find("ul", class_="episodios")
 
@@ -279,9 +279,15 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             try:
                 info = elem.find("div", class_="episodiotitle")
                 elem_json['url'] = info.a.get("href", "")
-                elem_json['episode'] = int(elem.find("div", class_="numerando").get_text(strip=True).split("x")[1] or 1)
-                elem_json['title'] = info.a.get_text(strip=True)
                 elem_json['season'] = item.contentSeason
+                elem_json['episode'] = 1
+                episode_data = elem.find("div", class_="numerando")
+                if episode_data:
+                    episode_data = episode_data.get_text(strip=True)
+                    match = re.search(r'\d+.*?(\d+)', episode_data)
+                    if match:
+                        elem_json['episode'] = int(match.group(1))
+                elem_json['title'] = info.a.get_text(strip=True)
                 elem_json['thumbnail'] = elem.img.get('data-src', '') or elem.img.get('src', '')
 
             except Exception:
@@ -349,7 +355,7 @@ def play(item):
     try:
         kwargs['headers'] = {'Referer': item.url}
         kwargs['post'] = {"nombre": item.extra}
-        new_soup = AlfaChannel.create_soup('https://www.tubeonline.net/wp-content/themes/dooplayorig123/inc/encriptar.php', **kwargs)
+        new_soup = AlfaChannel.create_soup('%swp-content/themes/dooplayorig123/inc/encriptar.php' % host, **kwargs)
         url = new_soup.iframe["src"]
         itemlist.append(item.clone(url=url, server=""))
         itemlist = servertools.get_servers_itemlist(itemlist)

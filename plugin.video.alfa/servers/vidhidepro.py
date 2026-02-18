@@ -49,7 +49,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         enc_data = scrapertools.find_single_match(data, "text/javascript(?:'|\")>(eval.*?)</script>")
         dec_data = jsunpack.unpack(enc_data)
         # logger.debug("dec_data: %s" % dec_data)
-        m3u8_source = scrapertools.find_single_match(dec_data,r'"hls\d":"([^"]+?\.m3u8[^"]+)')
+        m3u8_source = scrapertools.find_single_match(dec_data, r'"hls\d":"([^"]+?\.m3u8[^"]+)')
         m3u8_source = urlparse.urljoin(host, m3u8_source)
         video_urls.append(['[vidhide] m3u', m3u8_source])
     except Exception as e:

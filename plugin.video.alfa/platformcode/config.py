@@ -143,7 +143,7 @@ def get_addon_version_fix():
                 elif PY3 and isinstance(data, (bytes, bytearray)):
                     data = "".join(chr(x) for x in data)
                 f.close()
-            fix = re.findall('"fix_version"\s*:\s*(\d+)', data)
+            fix = re.findall(r'"fix_version"\s*:\s*(\d+)', data)
             if fix:
                 return '.fix%s' % fix[0]
     except:
@@ -235,7 +235,7 @@ def get_platform(full_version=False):
     from platformcode import logger
     if not __kodi_version__:
         num_version = xbmc.getInfoLabel('System.BuildVersion')
-        num_version = re.match("\d+\.\d+", num_version).group(0)
+        num_version = re.match(r"\d+\.\d+", num_version).group(0)
         __kodi_version__['name_version'] = codename.get(num_version.split('.')[0], num_version)
         __kodi_version__['video_db'] = code_db.get(num_version.split('.')[0], "")
         __kodi_version__['num_version'] = float(num_version)
@@ -539,7 +539,7 @@ def set_setting(name, value, channel="", server=""):
     canal 'channel'.
     Devuelve el valor cambiado o None si la asignacion no se ha podido completar.
 
-    Si se especifica el nombre del canal busca en la ruta \addon_data\plugin.video.alfa\settings_channels el
+    Si se especifica el nombre del canal busca en la ruta \\addon_data\\plugin.video.alfa\\settings_channels el
     archivo channel_data.json y establece el parametro 'name' al valor indicado por 'value'. Si el archivo
     channel_data.json no existe busca en la carpeta channels el archivo channel.json y crea un archivo channel_data.json
     antes de modificar el parametro 'name'.

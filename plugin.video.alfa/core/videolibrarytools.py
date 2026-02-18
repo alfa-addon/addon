@@ -233,7 +233,7 @@ def save_movie(item, silent=False):
 
     for raiz, subcarpetas, ficheros in filetools.walk(MOVIES_PATH):
         for c in subcarpetas:
-            code = scrapertools.find_single_match(c, '\[(.*?)\]')
+            code = scrapertools.find_single_match(c, r'\[(.*?)\]')
             if code and code in item.infoLabels['code']:
                 path = filetools.join(raiz, c)
                 _id = code
@@ -411,7 +411,7 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True, monitor=None):
 
     for raiz, subcarpetas, ficheros in filetools.walk(TVSHOWS_PATH):
         for c in subcarpetas:
-            code = scrapertools.find_single_match(c, '\[(.*?)\]')
+            code = scrapertools.find_single_match(c, r'\[(.*?)\]')
             if code and code != 'None' and code in item.infoLabels['code']:
                 path = filetools.join(raiz, c)
                 _id = code
@@ -603,12 +603,12 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True, monito
             # No podemos darle valor de episodio por defecto
             if e.contentEpisodeNumber and isinstance(e.contentSeason, int):
                 season_episode = scrapertools.get_season_and_episode('{}x{}'.format(e.contentSeason, e.contentEpisodeNumber))
-            elif scrapertools.find_single_match(e.title.lower(), '(?i)\d+x(\d+)'):
+            elif scrapertools.find_single_match(e.title.lower(), r'(?i)\d+x(\d+)'):
                 season_episode = scrapertools.get_season_and_episode(e.title.lower())
             elif e.contentEpisodeNumber:
                 season_episode = scrapertools.get_season_and_episode('{}x{}'.format(1, e.contentEpisodeNumber))
-            elif scrapertools.find_single_match(e.title.lower(), '(?i)x(\d+)'):
-                episode_number = scrapertools.find_single_match(e.title.lower(), '(?i)x(\d+)')
+            elif scrapertools.find_single_match(e.title.lower(), r'(?i)x(\d+)'):
+                episode_number = scrapertools.find_single_match(e.title.lower(), r'(?i)x(\d+)')
                 season_episode = scrapertools.get_season_and_episode('{}x{}'.format(1, episode_number))
             if not season_episode:
                 season_episode = scrapertools.get_season_and_episode(e.title.lower())
@@ -696,8 +696,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True, monito
 
         high_sea = e.contentSeason
         high_epi = e.contentEpisodeNumber
-        if scrapertools.find_single_match(e.title, '[a|A][l|L]\s*(\d+)'):
-            high_epi = int(scrapertools.find_single_match(e.title, 'al\s*(\d+)'))
+        if scrapertools.find_single_match(e.title, r'[a|A][l|L]\s*(\d+)'):
+            high_epi = int(scrapertools.find_single_match(e.title, r'al\s*(\d+)'))
         max_sea = e.infoLabels["number_of_seasons"]
         max_epi = 0
         if e.infoLabels["number_of_seasons"] and (e.infoLabels["temporada_num_episodios"] or e.infoLabels["number_of_seasons"] == 1):
@@ -1124,7 +1124,7 @@ def redirect_url(video, channel=''):
                 logger.debug("vl url: %s" % video)
                 logger.debug("cambiando dominio....")
 
-                video = re.sub("(https?:\/\/.+?\/)", channel_host, video)
+                video = re.sub(r"(https?:\/\/.+?\/)", channel_host, video)
                 logger.debug("Nueva URL: %s" % video)
     except Exception:
         logger.error(traceback.format_exc())
@@ -1332,8 +1332,8 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             referer_save = item.referer                                         #... guarda el referer original
             headers_save = item.headers                                         #... guarda el headers original
             if item.channel_redir:                                              #... si hay un redir, se restaura temporamente el canal alternativo
-                item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
-                item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+                item.channel = scrapertools.find_single_match(item.url, r'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
+                item.category = scrapertools.find_single_match(item.url, r'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
             item_res = item.clone()
             item_res = getattr(channel, 'findvideos')(item_res)                 #... se procesa Findvideos
             item_res.channel = channel_save                                     #... restaura el canal
@@ -1474,8 +1474,8 @@ def videolibrary_backup_exec(item, videolibrary_backup):
         # Verificamos que las direcciones están accesibles
         for addr in backup_addr_list_alt:
             addr_alt = addr
-            if scrapertools.find_single_match(addr_alt, '^\w+:\/\/') and '@' in addr_alt:
-                addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
+            if scrapertools.find_single_match(addr_alt, r'^\w+:\/\/') and '@' in addr_alt:
+                addr_alt = re.sub(r':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
             if not filetools.exists(addr):
                 logger.error('Dirección no accesible: %s' % addr_alt)
                 backup_addr_list.remove(addr)
@@ -1513,7 +1513,7 @@ def videolibrary_backup_exec(item, videolibrary_backup):
             if filetools.exists(backup_path):
                 list_video_alt = []
                 list_backup_alt = []
-                patron_ls = '[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})\s+([^$]+)'
+                patron_ls = r'[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})\s+([^$]+)'
                 list_video = filetools.listdir(video_path, file_inf=True)
                 for file in list_video:
                     list_video_alt.append(scrapertools.find_single_match(file, patron_ls))
@@ -1521,8 +1521,8 @@ def videolibrary_backup_exec(item, videolibrary_backup):
                 for file in list_backup:
                     list_backup_alt.append(scrapertools.find_single_match(file, patron_ls))
                 addr_alt = backup_path
-                if scrapertools.find_single_match(addr_alt, '^\w+:\/\/') and '@' in addr_alt:
-                    addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
+                if scrapertools.find_single_match(addr_alt, r'^\w+:\/\/') and '@' in addr_alt:
+                    addr_alt = re.sub(r':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
                     logger.info('Haciendo backup en %s' % addr_alt)
                 
                 for date_time_a, file in list_video_alt:

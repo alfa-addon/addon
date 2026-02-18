@@ -25,9 +25,10 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.prof/", "https://lilatorrent.com/", "https://todotorrents.org/", "https://elitedivx.net/"], 
-             'host_alt_new': ["https://dontorrent.prof/"], 
-             'host_black_list': ["https://dontorrent.club/", "https://www21.dontorrent.link/", 
+             'host_alt': ["https://dontorrent.promo/", "https://lilatorrent.com/", "https://todotorrents.org/", "https://elitedivx.net/"], 
+             'host_alt_new': ["https://dontorrent.promo/"], 
+             'host_black_list': ["https://dontorrent.info/", 
+                                 "https://dontorrent.prof/", "https://dontorrent.club/", "https://www21.dontorrent.link/", 
                                  "https://dontorrent.sarl/", "https://dontorrent.gripe/", "https://reinventorrent.org/", 
                                  "https://dontorrent.phd/", "https://dontorrent.live/", "https://dontorrent.kiwi/", 
                                  "https://dontorrent.kids/", "https://dontorrent.onl/", "https://dontorrent.istanbul/", 
@@ -772,8 +773,8 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 if '3d' in elem_json['url'].lower() and '3d' not in elem_json['quality'].lower():
                         elem_json['quality'] = '%s,3d' % elem_json['quality']
 
-                if elem.find('b', class_='bold', string=re.compile('Clave:\s*')):
-                    elem_json['password'] = elem.find('b', class_='bold', string=re.compile('Clave:\s*'))\
+                if elem.find('b', class_='bold', string=re.compile(r'Clave:\s*')):
+                    elem_json['password'] = elem.find('b', class_='bold', string=re.compile(r'Clave:\s*'))\
                                                 .find_next('a').get('data-content', '')
                     elem_json['password'] = item.password = scrapertools.find_single_match(elem_json['password'], "value='([^']+)'")
             except Exception:

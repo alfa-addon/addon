@@ -1646,7 +1646,7 @@ def AH_find_seasons(self, item, matches, **AHkwargs):
     patron_seasons = findS.get('seasons_search_num_rgx', [[r'(?i)-(\d+)-(?:Temporada|Miniserie)', None], 
                                                           [r'(?i)(?:Temporada|Miniserie)-(\d+)(?:\W|$)', None]])
     patron_qualities = findS.get('seasons_search_qty_rgx', [[r'(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|\/|-$|$))', None]])
-    SEARCH_CLEAN = self.SEARCH_CLEAN if self else '\¿|\?|\/|\$|\@|\<|\>|\.'
+    SEARCH_CLEAN = self.SEARCH_CLEAN if self else r'\¿|\?|\/|\$|\@|\<|\>|\.'
     list_temps = []
     list_temp_int = []
     list_temp = []
