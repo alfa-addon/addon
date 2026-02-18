@@ -522,7 +522,7 @@ def run(item=None):
         logger.error(traceback.format_exc())
 
         patron = 'File "' + os.path.join(config.get_runtime_path(), "channels", "").replace("\\",
-                                                                                            "\\\\") + '([^.]+)\.py"'
+                                                                                            "\\\\") + r'([^.]+)\.py"'
         canal = scrapertools.find_single_match(traceback.format_exc(), patron)
 
         platformtools.dialog_ok(
@@ -534,7 +534,7 @@ def run(item=None):
         logger.error(traceback.format_exc())
 
         patron = 'File "' + os.path.join(config.get_runtime_path(), "channels", "").replace("\\",
-                                                                                            "\\\\") + '([^.]+)\.py"'
+                                                                                            "\\\\") + r'([^.]+)\.py"'
         canal = scrapertools.find_single_match(traceback.format_exc(), patron)
 
         try:

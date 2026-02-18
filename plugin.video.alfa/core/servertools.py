@@ -25,7 +25,7 @@ PY3 = sys.version_info >= (3,)
 IGNORE_NULL_LABELS = []
 dict_servers_parameters = {}
 proxy_channel_bloqued = {}
-patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
+patron_domain = r'(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 
 
 def find_video_items(item=None, data=None):
@@ -595,7 +595,7 @@ def get_server_setting(name, server, default=None):
 
         Devuelve el valor del parametro 'name' en la configuracion propia del servidor 'server'.
 
-        Busca en la ruta \addon_data\plugin.video.addon\settings_servers el archivo server_data.json y lee
+        Busca en la ruta /addon_data/plugin.video.addon/settings_servers el archivo server_data.json y lee
         el valor del parametro 'name'. Si el archivo server_data.json no existe busca en la carpeta servers el archivo 
         server.json y crea un archivo server_data.json antes de retornar el valor solicitado. Si el parametro 'name'
         tampoco existe en el el archivo server.json se devuelve el parametro default.

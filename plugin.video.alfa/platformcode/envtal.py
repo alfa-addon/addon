@@ -76,7 +76,7 @@ def get_environment():
                     output_cmd = output_cmd.decode()
                 output_cmd = re.sub(r'\n|\r|\s{2}', '', output_cmd)
                 environment['prod_model'] = str(scrapertools.find_single_match(output_cmd, \
-                                '\w+.*?(?i)(?:Intel\(R\))?(?:\s*Core\(TM\))\s*(.*?CPU.*?)\s*(?:\@|$)'))
+                                r'\w+.*?(?i)(?:Intel\(R\))?(?:\s*Core\(TM\))\s*(.*?CPU.*?)\s*(?:\@|$)'))
             except:
                 pass
         
@@ -87,9 +87,9 @@ def get_environment():
                     if PY3 and isinstance(label_a, bytes):
                         label_a = label_a.decode()
                     if 'build.version.release' in label_a:
-                        environment['os_release'] = str(scrapertools.find_single_match(label_a, ':\s*\[(.*?)\]$'))
+                        environment['os_release'] = str(scrapertools.find_single_match(label_a, r':\s*\[(.*?)\]$'))
                     if 'product.model' in label_a:
-                        environment['prod_model'] = str(scrapertools.find_single_match(label_a, ':\s*\[(.*?)\]$'))
+                        environment['prod_model'] = str(scrapertools.find_single_match(label_a, r':\s*\[(.*?)\]$'))
             except:
                 try:
                     for label_a in filetools.read(os.environ['ANDROID_ROOT'] + '/build.prop').split():
@@ -110,7 +110,7 @@ def get_environment():
                     if PY3 and isinstance(label_a, bytes):
                         label_a = label_a.decode()
                     if 'Operating' in label_a:
-                        environment['os_release'] = str(scrapertools.find_single_match(label_a, 'Operating\s*S\w+:\s*(.*?)\s*$'))
+                        environment['os_release'] = str(scrapertools.find_single_match(label_a, r'Operating\s*S\w+:\s*(.*?)\s*$'))
                         break
                         
                 for label_a in subprocess.check_output(['cat', '/proc/cpuinfo']).split(FF):
@@ -118,7 +118,7 @@ def get_environment():
                         label_a = label_a.decode()
                     if 'model name' in label_a:
                         environment['prod_model'] = str(scrapertools.find_single_match(label_a, \
-                                'model.*?:\s*(?i)(?:Intel\(R\))?(?:\s*Core\(TM\))\s*(.*?CPU.*?)\s*(?:\@|$)'))
+                                r'model.*?:\s*(?i)(?:Intel\(R\))?(?:\s*Core\(TM\))\s*(.*?CPU.*?)\s*(?:\@|$)'))
                         break
             except:
                 pass
@@ -191,13 +191,13 @@ def get_environment():
                     for label_a in advancedsettings:
                         if 'memorysize' in label_a:
                             environment['kodi_buffer'] = str((int(scrapertools.find_single_match
-                                    (label_a, '>(\d+)<\/')) // 1024**2))
+                                    (label_a, r'>(\d+)<\/')) // 1024**2))
                         if 'buffermode' in label_a:
                             environment['kodi_bmode'] = str(scrapertools.find_single_match
-                                    (label_a, '>(\d+)<\/'))
+                                    (label_a, r'>(\d+)<\/'))
                         if 'readfactor' in label_a:
                             environment['kodi_rfactor'] = str(scrapertools.find_single_match
-                                    (label_a, '>(.*?)<\/'))
+                                    (label_a, r'>(.*?)<\/'))
             else:
                 environment['kodi_buffer'] = str(config.get_kodi_setting('filecache.memorysize')) or environment['kodi_buffer']
                 environment['kodi_bmode'] = str(config.get_kodi_setting('filecache.buffermode')) or environment['kodi_bmode']
@@ -340,7 +340,7 @@ def get_environment():
             cliente = dict()
             cliente['D_load_Path'] = ''
             cliente['Libre'] = '?'
-            cliente['Plug_in'] = scrapertools.find_single_match(torrent_option, ':\s*(\w+)').capitalize()
+            cliente['Plug_in'] = scrapertools.find_single_match(torrent_option, r':\s*(\w+)').capitalize()
             cliente['D_load_Path'] = torrent_paths[cliente['Plug_in'].upper()]
             cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
             cliente['Buffer'] = str(torrent_paths[cliente['Plug_in'].upper()+'_buffer'])

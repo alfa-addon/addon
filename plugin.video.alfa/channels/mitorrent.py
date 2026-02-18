@@ -52,11 +52,11 @@ finds = {'find': dict([('find', [{'tag': ['section']}]),
          'categories': {},  
          'search': {}, 
          'get_language': {}, 
-         'get_language_rgx': '(?:flags\/|\/icono_(\w+))\.(?:png|jpg|jpeg|webp)', 
+         'get_language_rgx': r'(?:flags\/|\/icono_(\w+))\.(?:png|jpg|jpeg|webp)', 
          'get_quality': {}, 
          'get_quality_rgx': [], 
          'next_page': {}, 
-         'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
+         'next_page_rgx': [[r'\/page\/\d+', '/page/%s/']], 
          'last_page': dict([('find', [{'tag': ['div'], 'class': ['tsc_pagination']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-2]}]), 
                             ('get_text', [{'tag': '', '@STRIP': True}])]), 
@@ -64,7 +64,7 @@ finds = {'find': dict([('find', [{'tag': ['section']}]),
          'season_episode': {}, 
          'seasons': dict([('find', [{'tag': ['div'], 'id': ['downloads']}]), 
                           ('find_all', [{'tag': ['div'], 'class': ['accordion active']}])]),
-         'season_num': {'get_text': [{'tag': '', '@STRIP': True, '@TEXT': '(?i)temp\w*\s*(\d+)'}]}, 
+         'season_num': {'get_text': [{'tag': '', '@STRIP': True, '@TEXT': r'(?i)temp\w*\s*(\d+)'}]}, 
          'seasons_search_num_rgx': [], 
          'seasons_search_qty_rgx': [], 
          'episode_url': '', 
@@ -77,16 +77,16 @@ finds = {'find': dict([('find', [{'tag': ['section']}]),
                              ('find_next', [{'tag': ['div'], 'class': ['movie-info-fl-div movie-info-date']}]), 
                              ('find_next', [{'tag': ['div'], 'class': ['movie-info-fl-div movie-info-date']}]), 
                              ('find_all', [{'tag': ['a'], 'class': ["quality-download"]}])]), 
-         'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*imax', ''],
-                         ['(?i)[\[|\(]?\d{3,4}p[\]|\)]?|[\[|\(]?(?:4k|3d|uhd|hdr)[\]|\)]?', ''], 
-                         ['(?i)[-|\(]?\s*HDRip\)?|microHD|\(?BR-LINE\)?|\(?HDTS-SCREENER\)?', ''], 
-                         ['(?i)\(?BDRip\)?|\(?BR-Screener\)?|\(?DVDScreener\)?|\(?TS-Screener\)?|[\(|\[]\S*\.*$', ''],
-                         ['(?i)Castellano-*|Ingl.s|Trailer|Audio|\(*SBS\)*|\[*\(*dvd\s*r\d*\w*\]*\)*|[\[|\(]*dv\S*[\)|\]]*', ''], 
-                         ['(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
-                         ['(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], ['\d?\d?&#.*', ''], ['\d+[x|×]\d+.*', ''], 
-                         ['[\(|\[]\s*[\)|\]]', ''], ['(?i)(?:libro|volumen)?\s+\d{1,2}$', '']],
-         'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', ''], 
-                           ['(?i)\s*latino|\s*castellano|\s*dual|\s*Bittorrent\s*-\s*', '']],
+         'title_clean': [[r'(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*imax', ''],
+                         [r'(?i)[\[|\(]?\d{3,4}p[\]|\)]?|[\[|\(]?(?:4k|3d|uhd|hdr)[\]|\)]?', ''], 
+                         [r'(?i)[-|\(]?\s*HDRip\)?|microHD|\(?BR-LINE\)?|\(?HDTS-SCREENER\)?', ''], 
+                         [r'(?i)\(?BDRip\)?|\(?BR-Screener\)?|\(?DVDScreener\)?|\(?TS-Screener\)?|[\(|\[]\S*\.*$', ''],
+                         [r'(?i)Castellano-*|Ingl.s|Trailer|Audio|\(*SBS\)*|\[*\(*dvd\s*r\d*\w*\]*\)*|[\[|\(]*dv\S*[\)|\]]*', ''], 
+                         [r'(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
+                         [r'(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], [r'\d?\d?&#.*', ''], [r'\d+[x|×]\d+.*', ''], 
+                         [r'[\(|\[]\s*[\)|\]]', ''], [r'(?i)(?:libro|volumen)?\s+\d{1,2}$', '']],
+         'quality_clean': [[r'(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', ''], 
+                           [r'(?i)\s*latino|\s*castellano|\s*dual|\s*Bittorrent\s*-\s*', '']],
          'language_clean': [], 
          'url_replace': [], 
          'controls': {'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 21, 
@@ -277,9 +277,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         try:
             elem_json['url'] = elem.a.get('href', '')
             elem_json['season']  = item.contentSeason
-            elem_json['episode'] = int(scrapertools.find_single_match(elem.get_text(strip=True), '(?i)cap\w*\s+(\d+)') or 1)
-            if scrapertools.find_single_match(elem.get_text(strip=True), '(?i)\d+x\d+-(\d+)'):
-                elem_json['title'] = 'al %s' % scrapertools.find_single_match(sxe, '(?i)\d+x\d+-(\d+)')
+            elem_json['episode'] = int(scrapertools.find_single_match(elem.get_text(strip=True), r'(?i)cap\w*\s+(\d+)') or 1)
+            if scrapertools.find_single_match(elem.get_text(strip=True), r'(?i)\d+x\d+-(\d+)'):
+                elem_json['title'] = 'al %s' % scrapertools.find_single_match(sxe, r'(?i)\d+x\d+-(\d+)')
             elem_json['language'] = '*'
             elem_json['quality'] = '*'
             elem_json['torrent_info'] = ''
