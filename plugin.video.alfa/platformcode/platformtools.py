@@ -2205,7 +2205,7 @@ def get_seleccion(default_action, opciones, seleccion, video_urls):
             if fixpri is True and check and priority == 2:
                 seleccion = 0
             else:
-                seleccion = resolutions.index(int(len(resolutions) / 2))
+                seleccion = int(len(resolutions) / 2)
         else:
             if fixpri is True and check:
                 seleccion = 0
