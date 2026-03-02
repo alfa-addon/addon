@@ -30,6 +30,9 @@ list_servers = ['']
 
 ##############    FALTA DIVIDIR EN PAG categorias
 
+timeout = 20
+forced_proxy_opt = 'ProxySSL'
+
 
 canonical = {
              'channel': 'allpornstream', 
@@ -38,6 +41,9 @@ canonical = {
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
+             # 'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             # 'cf_assistant': False, 'CF_stat': True, 
+             # 'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
@@ -48,7 +54,7 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?page=1" ))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
     itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?page=1&sort=views" ))
     itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "?page=1&sort=rating" ))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "api/table-list?type=producers", extra="producer" ))
@@ -77,9 +83,9 @@ def search(item, texto):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical, timeout=timeout).data
     else:
-        data = httptools.downloadpage(url, canonical=canonical).data
+        data = httptools.downloadpage(url, canonical=canonical, timeout=timeout).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -125,18 +131,16 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
+    
+    soup = create_soup(item.url, referer=host)
     matches = soup.find_all('div', attrs={'data-href': re.compile(r"^/post/[a-z0-9]+")})
     for elem in matches:
         if not elem.get('data-href', ''): continue
         url = elem['data-href']
         title = elem['data-title']
         slug = elem['data-slug']
-        thumbnail = elem.img['src'].replace("/api/images?src=", "")
-        thumbnail = urlparse.unquote(thumbnail)
-        if "&" in thumbnail:
-            thumbnail = thumbnail.split("&")
-            thumbnail = thumbnail[0]
+        thumbnail = elem.img['src']
+        thumbnail = urlparse.urljoin(item.url,thumbnail)
         # canal = ""
         # canal = elem.find('a', href=re.compile("/producers/[A-z0-9-]+"))
         # if canal:
@@ -163,9 +167,12 @@ def lista(item):
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     
-    next_page = soup.find('a', tabindex='-1')
+    if not "page=" in item.url:
+        item.url = "%s?page=1" %host
+    next_page = soup.find_all('a', tabindex='-1')
     if next_page:
-        next_page = scrapertools.find_single_match(next_page['href'], 'page=(\d+)')
+        next_page = next_page[-1]['href']
+        next_page = scrapertools.find_single_match(next_page, 'page=(\d+)')
         next_page = re.sub(r"page=\d+", "page={0}".format(next_page), item.url)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -174,7 +181,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    
+    repes = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'\\"', '"', data)
     
@@ -186,7 +193,9 @@ def findvideos(item):
     patron = '"embed_url":"([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
-        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
+        if not url in repes:
+            repes.append(url)
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
     autoplay.start(itemlist, item)
