@@ -163,7 +163,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://ogporn.com/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:ogporn|thothub).com(?:.co|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

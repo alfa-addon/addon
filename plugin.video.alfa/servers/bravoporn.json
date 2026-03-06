@@ -180,11 +180,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:hdpornos|pornoente|pornoklinge|pornotommy|pornolisa|pornoaffe|drsexfilme|pornotanja).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film|filme)/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:hdpornos|pornoente|pornoklinge|pornotommy|pornolisa|pornoaffe|drsexfilme|pornotanja).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film|filme|sexfilm)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:xnxx-pornos|pornofelix|halloporno|lesbenhd|pornofisch|sexvideos-gratis|pornohirsch|pornodavid|gutesexfilme|hd-sexfilme|pornotom|pornoritze).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film|filme)/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:xnxx-pornos|pornofelix|halloporno|lesbenhd|pornofisch|sexvideos-gratis|pornohirsch|pornodavid|gutesexfilme|hd-sexfilme|pornotom|pornoritze).(?:com|\\w{2,4})/(?:video|videos|pornvideo|porno|film|filme|sexfilm)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
