@@ -17,16 +17,11 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    data = httptools.downloadpage(page_url).data
-    id = scrapertools.find_single_match(data, "'video_id': (\d+)")
-    url = "https://www.definebabe.com/player/config.php?id=%s" %id
-    data = httptools.downloadpage(url).data
-    patron = '"video(?:_alt|)_url":"([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url in matches:
-        url = url.replace("\/", "/")
-        if "sd" in url: quality="SD"
-        if "hd" in url: quality="HD"
-        video_urls.append(["[definebabe] %s" %quality, url])
+    res = ['480', '720']
+    for quality in res:
+        url = "https://www.definebabe.com/player/get_video.php?q=%sp" %quality
+        response = httptools.downloadpage(url, follow_redirects=False, referer=page_url)
+        redir = response.headers.get("location", '')
+        video_urls.append(["[definebabe] %s" %quality, redir])
     return video_urls
 
