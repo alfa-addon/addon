@@ -25,6 +25,8 @@ forced_proxy_opt = 'ProxySSL'
 ######      No muestr fotos hay que cambiar x216 x217 
 ######      RES fotos  https://familyporn.tv/contents/videos_screenshots/60000/60916/289x217/1.jpg
                     # elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
+                    
+                    ################ KTP falla por el PROXY
 
 canonical = {
              'channel': 'familypornTV', 

@@ -198,6 +198,26 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)(?:fapnfuck|fuqster|sexpester|w1mp|w4nkr|babejizz|bigbigtits|cuminstead|extremehoes|hugewangs|gogoasians|hardwhores|povpow|jizzpov|b1gtits|bigtitsxl|bigbuttz|bigbumfun|thrupnies|threesomerz|pumpjap|fukxl|hugedickz).com/(?:video|embed)/[0-9]+)",
+        "url": "\\1/a/"
+      },
+      {
+        "pattern": "https://(?:www.|)(?:japflaps|hard3r|bigassz|povpoof|an4lporn|porno-cum|public-porno).com/(?:video|embed)/([0-9]+)",
+        "url": "https://w4nkr.com/video/\\1/a/"
+      },
+      {
+        "pattern": "https://(?:www.|)(?:publicpubic|3sumxl|xxxxcum|povrz|jappornxl|lesfix|asianrz|momxl|maturexy|extremewhores|ebonypeek).com/(?:video|embed)/([0-9]+)",
+        "url": "https://fapnfuck.com/video/\\1/a/"
+      },
+      {
+        "pattern": "https://(?:www.|)(?:maturevices|m1lfs|asianslutz|pr1cks).com/(?:video|embed)/([0-9]+)",
+        "url": "https://fuqster.com/video/\\1/a/"
+      },
+      {
+        "pattern": "https://(?:www.|)(?:fetishz|bondagenest|analry|milfxl).com/(?:video|embed)/([0-9]+)",
+        "url": "https://sexpester.com/video/\\1/a/"
+      },
+      {
         "pattern": "(https://iceyfile.com/video/embed/[A-z0-9]+/[0-9x]+)",
         "url": "\\1/a"
       }
