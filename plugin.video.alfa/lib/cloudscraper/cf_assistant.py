@@ -132,6 +132,7 @@ def get_cl(
     debug = debug or opt.get("cf_debug", False)
     if debug or CF_testing or opt.get("CF_testing", False):
         alfa_s = False
+    cleanObjects = opt.get("clean_objects", False)
 
     try:
         if resp.status_code not in [403, 503, 429, 666]:
@@ -339,7 +340,8 @@ def get_cl(
                     useAdvancedWebView=True,
                     headers=headers,
                     mute=mute,
-                    alfa_s=alfa_s
+                    alfa_s=alfa_s,
+                    cleanObjects=cleanObjects
                 )
             except Exception:
                 logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed_now))
@@ -374,6 +376,7 @@ def get_cl(
                                 cookiesView=data_assistant.pop("cookies", []),
                                 jscode=jscode,
                                 extraPostDelay=extraPostDelay, 
+                                cleanObjects=cleanObjects, 
                                 **opt
                             )
                         for find_url in opt.get("cf_find_url", []):
@@ -389,6 +392,7 @@ def get_cl(
                                 cookiesView=challenge_url.get("cookies", []),
                                 jscode=jscode,
                                 extraPostDelay=extraPostDelay, 
+                                cleanObjects=cleanObjects, 
                                 urlOnly=True,
                                 **opt
                             )
@@ -408,6 +412,7 @@ def get_cl(
 
                         if challenge_url and isinstance(challenge_url, dict) and challenge_url.get("missing", False):
                             logger.debug("Challenge: %s, reintentando..." % challenge)
+                            del data_assistant
                             return get_cl(
                                 self,
                                 resp,
@@ -528,6 +533,7 @@ def get_cl(
                             except Exception:
                                 logger.error(traceback.format_exc())
                         
+                        del data_assistant
                         return resp
 
                     else:
@@ -546,6 +552,7 @@ def get_cl(
             if not retry:
                 config.set_setting("cf_assistant_ua", "")
                 logger.debug("No se obtuvieron resultados, reintentando... - %s" % str(time.time() - elapsed))
+                del data_assistant
                 return get_cl(
                     self,
                     resp,
@@ -599,6 +606,7 @@ def get_cl(
             except Exception:
                 logger.error(traceback.format_exc())
 
+    del data_assistant
     return resp
 
 
@@ -678,6 +686,7 @@ def get_source(
     if "cf_removeAllCookies" in opt and removeAllCookies is not False:
         removeAllCookies = opt["cf_removeAllCookies"]
     debug = debug or opt.get("cf_debug", False)
+    cleanObjects = opt.get("clean_objects", True)
     if debug:
         alfa_s = False
     if not alfa_s:
@@ -901,7 +910,8 @@ def get_source(
                     useAdvancedWebView=True,
                     headers=headers,
                     mute=mute,
-                    alfa_s=alfa_s
+                    alfa_s=alfa_s,
+                    cleanObjects=cleanObjects
                 )
             except Exception:
                 logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed_now))
@@ -936,6 +946,7 @@ def get_source(
                                 cookiesView=data_assistant.pop("cookies", []),
                                 jscode=jscode,
                                 extraPostDelay=extraPostDelay,
+                                cleanObjects=cleanObjects,
                                 **opt
                             )
                         for find_url in opt.get("cf_find_url", []):
@@ -952,6 +963,7 @@ def get_source(
                                 jscode=jscode,
                                 extraPostDelay=extraPostDelay,
                                 urlOnly=True,
+                                cleanObjects=cleanObjects
                                 **opt
                             )
                             if found_url:
@@ -962,7 +974,9 @@ def get_source(
                                             resp._content = jsontools.dump(found_url) if isinstance(found_url, dict) else found_url
                                         except Exception:
                                             logger.error(traceback.format_exc())
+                                        del data_assistant
                                         return resp
+                                    del data_assistant
                                     return found_url, resp
                                 elif found_url.get("url", ""):
                                     url = found_url["url"]
@@ -970,6 +984,7 @@ def get_source(
 
                         if challenge_url and isinstance(challenge_url, dict):
                             logger.debug("Challenge: %s, reintentando..." % challenge)
+                            del data_assistant
                             return get_source(
                                 url,
                                 resp,
@@ -1069,6 +1084,7 @@ def get_source(
                 timeout = 1 if timeout < 5 else timeout * 2
                 extraPostDelay = -1 if extraPostDelay < 0 else extraPostDelay * 2
                 removeAllCookies = True
+                del data_assistant
 
                 return get_source(
                     url,
@@ -1178,6 +1194,7 @@ def get_source(
                 resp.history.append(req)
             except Exception:
                 logger.error(traceback.format_exc())
+    del data_assistant   
     if from_get_cl:
         try:
             if PY3 and not isinstance(data, bytes):
@@ -1445,11 +1462,12 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
                 elapsed_now = time.time()
                 clear = True
                 response = alfa_assistant.get_urls_by_page_finished("about:blank", 1, closeAfter=True, removeAllCookies=True, 
-                                                                    userAgent=ua, debug=DEBUG)
+                                                                    userAgent=ua, debug=DEBUG, cleanObjects=opt.get("cleanObjects", False))
                 response = alfa_assistant.get_urls_by_page_finished("{}".format(host), 20, closeAfter=True, disableCache=cache, 
                                                                     clearWebCache=True, returnWhenCookieNameFound=cf_cookie, 
                                                                     jsCode=jscode, extraPostDelay=extraPostDelay, 
-                                                                    getCookies=True, userAgent=ua, debug=DEBUG)
+                                                                    getCookies=True, userAgent=ua, debug=DEBUG, 
+                                                                    cleanObjects=opt.get("cleanObjects", False))
                 if DEBUG:
                     logger.debug("data assistant: %s - %s" % (response, str(time.time() - elapsed_now)))
 

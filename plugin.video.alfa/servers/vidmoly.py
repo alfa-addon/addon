@@ -31,9 +31,39 @@ def test_video_exists(page_url):
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
+    global data
+    domains_alt = ["\/\/transit-", "\/\/box-[^\/]+\/hls\d+\/"]
+    url_alt = "biz/embed-"
+    if scrapertools.find_single_match(data, r'\{file:"([^"]+)"\}.*?label:\s"([^"]+)"'):
+        url, quality = scrapertools.find_single_match(data, r'\{file:"([^"]+)"\}.*?label:\s"([^"]+)"')
+    else:
+        url, quality = scrapertools.find_single_match(data, r'\{\s*file:\s*\'([^\']+)\'\s*\}[^$]+label:\s*"([^"]+)"')
+    for dom in domains_alt:
+        if scrapertools.find_single_match(url, dom):
+            break
+    else:
+        response = httptools.downloadpage(url, timeout=30, alfa_s=True)
+        if not response.sucess:
+            domains_alt += [httptools.obtain_domain(url)]
+    for dom in domains_alt:
+        if scrapertools.find_single_match(url, dom):
+            page_url = page_url.replace("me/", url_alt)
+            response = httptools.downloadpage(page_url, timeout=30, hide_infobox=True)
+            data = response.data
+            if response.code == 403:
+                return [["[vidmoly] Error Captcha", ""]]
+            if response.code == 404 or "/notice.php" in data:
+                return [["[vidmoly] El archivo no existe o ha sido borrado", ""]]
+            break
+
     logger.info("url=" + page_url)
     video_urls = []
-    url, quality = scrapertools.find_single_match(data, '\{file:"([^"]+)"\}.*?label:\s"([^"]+)"')
+    if scrapertools.find_single_match(data, r'\{file:"([^"]+)"\}.*?label:\s"([^"]+)"'):
+        url, quality = scrapertools.find_single_match(data, r'\{file:"([^"]+)"\}.*?label:\s"([^"]+)"')
+    elif scrapertools.find_single_match(data, r'\{\s*file:\s*\'([^\']+)\'\s*\}[^$]+label:\s*"([^"]+)"'):
+        url, quality = scrapertools.find_single_match(data, r'\{\s*file:\s*\'([^\']+)\'\s*\}[^$]+label:\s*"([^"]+)"')
+    else:
+        return [["[vidmoly] Error Captcha", ""]]
     url += "|Referer=%s" % page_url
     video_urls.append(['[vidmoly] m3u8 %s' %quality, url])
 

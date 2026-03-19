@@ -294,6 +294,7 @@ def get_source_by_page_finished(
     mute=True,
     urlParamRemoveAllCookies=False,
     useAdvancedWebView=False,
+    cleanObjects=False,
 ):
     return get_generic_call(
         "getSourceByPageFinished",
@@ -324,6 +325,7 @@ def get_source_by_page_finished(
         mute,
         urlParamRemoveAllCookies,
         useAdvancedWebView,
+        cleanObjects,
     )
 
 
@@ -362,6 +364,7 @@ def get_urls_by_page_finished(
     mute=True,
     urlParamRemoveAllCookies=False,
     useAdvancedWebView=False,
+    cleanObjects=False,
 ):
     return get_generic_call(
         "getUrlsByPageFinished",
@@ -392,6 +395,7 @@ def get_urls_by_page_finished(
         mute,
         urlParamRemoveAllCookies,
         useAdvancedWebView,
+        cleanObjects,
     )
 
 
@@ -526,6 +530,7 @@ def get_generic_call(
     mute=True,
     urlParamRemoveAllCookies=False,
     useAdvancedWebView=False,
+    cleanObjects=False,
     retry=True,
 ):
     EXTRA_TIMEOUT_PLUS = 0
@@ -719,6 +724,7 @@ def get_generic_call(
         keep_alive=keep_alive,
         retry_alt=False,
         proxy_retries=0,
+        clean_objects=cleanObjects,
     )
 
     change = False
@@ -759,6 +765,7 @@ def get_generic_call(
                 keep_alive=keep_alive,
                 retry_alt=False,
                 proxy_retries=0,
+                clean_objects=cleanObjects,
             )
             sucess = res.sucess
             code = res.code
@@ -824,6 +831,7 @@ def get_generic_call(
                 keep_alive=keep_alive,
                 retry_alt=False,
                 proxy_retries=0,
+                clean_objects=cleanObjects,
             )
         else:
             platformtools.dialog_notification(
