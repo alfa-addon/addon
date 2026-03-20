@@ -242,7 +242,7 @@ def get_cl(
                 ua = get_ua(check_assistant)
 
             if opt.get("post"):
-                headers_post = headers.copy()
+                headers_post = headers.copy() if headers else {}
                 headers = {}
                 headers_post["Content-Type"] = "application/x-www-form-urlencoded"
                 #headers_post["Access-Control-Allow-Origin"] = "*"
@@ -807,7 +807,7 @@ def get_source(
                 ua = get_ua(check_assistant)
 
             if opt.get("post"):
-                headers_post = headers.copy()
+                headers_post = headers.copy() if headers else {}
                 headers = {}
                 headers_post["Content-Type"] = "application/x-www-form-urlencoded"
                 headers_post['X-Requested-With'] = 'XMLHttpRequest'
