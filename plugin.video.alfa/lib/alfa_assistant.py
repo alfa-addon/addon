@@ -648,9 +648,10 @@ def get_generic_call(
         if not alfa_s:
             logger.info("##Assistant get-data: %s" % getData)
     if postData:
-        serverCall += "&postData=%s" % base64.b64encode(postData.encode("utf8")).decode(
-            "utf8"
-        )
+        if "POST_FORM" not in str(jsCode):
+            serverCall += "&postData=%s" % base64.b64encode(postData.encode("utf8")).decode(
+                "utf8"
+            )
         if not alfa_s:
             logger.info("##Assistant post-data: %s" % postData)
     if returnWhenCookieNameFound:
