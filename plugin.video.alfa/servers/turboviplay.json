@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:https:|)//(?:mixdrop|mxdrop|mixdropjmk|m1xdrop).(?:co|to|sx|bz|ch|\\w{2,4})/(?:e|f)/([A-z0-9]+)",
-        "url": "https://mixdrop.ag/e/\\1"
-      },
-      {
-        "pattern": "(?:https:|)//(?:md3b0j6hj|mdbekjwqa).(?:com|\\w{2,4})/(?:e|f)/([A-z0-9]+)",
-        "url": "https://mdbekjwqa.pw/e/\\1"
+        "pattern": "(https://turbovidhls.com/t/[0-9a-z]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "mixdrop",
-  "name": "mixdrop",
+  "id": "turboviplay",
+  "name": "turboviplay",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/MTL1pPdr/mixdrop.png"
+  "thumbnail": "https://turboviplay.com/frontend/images/logo1.png",
+  "force_inputstream": "adaptive"
 }

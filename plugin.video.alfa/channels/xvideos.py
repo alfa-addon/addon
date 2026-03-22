@@ -160,7 +160,7 @@ def lista(item):
             # url = "/video%s" %url
         title = elem.find('p', class_='title').a['title']
         thumbnail = elem.img['data-src']
-        thumbnail = thumbnail.replace("THUMBNUM.", "9.")
+        thumbnail = thumbnail.replace("THUMBNUM", "9")
         time = elem.find('span', class_='duration').text.strip()
         quality = elem.find('span', class_='video-hd-mark')
         url = urlparse.urljoin(host,url)

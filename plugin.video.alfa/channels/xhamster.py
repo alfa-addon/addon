@@ -52,7 +52,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('div', class_='all-categories')
+    soup = create_soup(item.url).find('div', class_='allCategories-fa5e5')
     matches = soup.find_all('li')
     for elem in matches:
         url = elem.a['href']

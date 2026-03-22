@@ -88,7 +88,7 @@ def section(item):
     logger.info()
     
     findS = finds.copy()
-    findS['url_replace'] = [['(\/(?:categories|category-name|category|channels|sites|models|model|pornstars)\/[^$]+$)', r'\1?sort_by=post_date&from=1']]
+    findS['url_replace'] = [['(\/(?:categories|tags|category|channels|sites|models|model|pornstars)\/[^$]+$)', r'\1?sort_by=post_date&from=1']]
     if item.extra == 'Categorias':
         findS['categories'] = dict([('find', [{'tag': ['div'], 'class': ['list-tags']}]),
                                ('find_all', [{'tag': ['a']}])])

@@ -23,8 +23,8 @@ list_servers = ['vidlox']
 ##          https://watchxxxfree.com/
 
 ####          Just a moment...     FUNCIONA CON WARP
-# cf_assistant = "force" if is_alfa_installed() else False
-cf_assistant = True if is_alfa_installed() else False
+cf_assistant = "force" if is_alfa_installed() else False
+# cf_assistant = True if is_alfa_installed() else False
 forced_proxy_opt = None if cf_assistant else 'ProxySSL'
 cf_debug = True
 
@@ -62,6 +62,7 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "?filter=latest"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "?filter=most-viewed"))
+    itemlist.append(item.clone(title="Mas valorado" , action="lista", url=host + "?filter=popular"))
     itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "?filter=longest"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
@@ -122,11 +123,14 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article')
+    logger.debug(soup)
+    matches = soup.find('div', class_='videos-list').find_all('article')
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        if elem.img.get('src', ''):
+        if not elem.img:
+            thumbnail = ""
+        elif elem.img.get('src', ''):
             thumbnail = elem.img['src']
         if "svg" in thumbnail:
             thumbnail = elem.img['data-lazy-src']

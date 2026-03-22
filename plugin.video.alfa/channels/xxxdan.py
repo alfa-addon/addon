@@ -7,6 +7,7 @@ from core import scrapertools
 from core.item import Item
 from core import httptools
 from core import urlparse
+from bs4 import BeautifulSoup
 
 canonical = {
              'channel': 'xxxdan', 
@@ -25,6 +26,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "newest"))
     itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "straight/popular7"))
     itemlist.append(Item(channel=item.channel, title="HD" , action="lista", url=host + "channel30/hd"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "partners"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "channels"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -46,47 +48,72 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<a href="([^"]+)" rel="tag".*?'
-    patron += 'title="([^"]+)".*?'
-    patron += 'data-original="([^"]+)".*?'
-    patron += '<span class="score">(\d+)</span>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
-        scrapedplot = ""
-        scrapedtitle = "%s (%s)" % (scrapedtitle, cantidad)
-        scrapedurl = scrapedurl.replace("channel", "channel30")
-        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail , fanart=scrapedthumbnail, plot=scrapedplot) )
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='category-list__item')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a.text.strip()
+        thumbnail = ""
+        cantidad = elem.find('span', class_='category-list__count')
+        if cantidad:
+            title = "%s (%s)" % (title,cantidad.text.strip())
+        plot = ""
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                              thumbnail=thumbnail , fanart=thumbnail, plot=plot) )
     return itemlist
+
+
+def canal(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url)
+    matches = soup.find_all('a', class_='channel-card')
+    for elem in matches:
+        url = elem['href']
+        # title = elem.img['alt']
+        title = elem.find('div', class_='channel-card__name').text.strip()
+        thumbnail = elem.img['src']
+        cantidad = elem.find('span', class_='channel-card__count')
+        title = "%s (%s)" % (title,cantidad.text.strip())
+        plot = ""
+        itemlist.append(Item(channel=item.channel, action="lista", title=title , url=url, thumbnail=thumbnail,
+                              fanart=thumbnail, plot=plot))
+    return itemlist
+
+
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
+    else:
+        data = httptools.downloadpage(url, canonical=canonical).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<li><figure>\s*<a href="([^"]+)".*?'
-    patron += 'data-original="([^"]+)".*?'
-    patron += '<time datetime="\w+">([^"]+)</time>'
-    patron += '(.*?)</ul>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,duracion,calidad in matches:
-        url = scrapedurl
-        scrapedtitle = scrapertools.find_single_match(scrapedurl,'https://xxxdan.com/es/.*?/(.*?).html')
-        title = "[COLOR yellow]%s[/COLOR] %s" % (duracion, scrapedtitle)
-        if '<li class="hd">' in calidad :
-            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (duracion, scrapedtitle)
-        thumbnail = scrapedthumbnail
+    soup = create_soup(item.url)
+    matches = soup.find_all('a', class_='video-card')
+    for elem in matches:
+        url = elem['href']
+        # title = elem.img['alt']
+        title = elem.find('div', class_='video-card__title').text.strip()
+        thumbnail = elem.img['src']
+        time = elem.find('span', class_='video-card__duration').text.strip()
+        title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
         action = "play"
         if logger.info() is False:
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title , url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = title))
-    next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
-    if next_page!="":
+    next_page = soup.find('link', rel='next')
+    if next_page:
+        next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist

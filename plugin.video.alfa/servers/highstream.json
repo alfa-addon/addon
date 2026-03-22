@@ -8,7 +8,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://vidnest.io/embed-[A-z0-9]+.html)",
+        "pattern": "(https://vidnest.(?:live|\\w{2,4})/(?:embed-|)[A-z0-9]+(?:.html|))",
         "url": "\\1"
       }
     ]

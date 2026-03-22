@@ -9,13 +9,22 @@ from core import servertools
 from core import httptools
 from core import urlparse
 from bs4 import BeautifulSoup
+from modules import autoplay
+
+list_quality = []
+list_servers = []
+
+
+    # const SERVER1_URL = "https://iceyfile.com/video/embed/48f40715f3cc4359/640x320/bigtitcreampie.26.02.21.octokuro.480p.mp4";
+    # const SERVER2_URL = "https://turbovidhls.com/t/6999c3e74a0b9";
+    # const SERVER3_URL = "https://hgcloud.to/e/aryz40rcfhcs";
 
 
 canonical = {
              'channel': 'porn4days', 
              'host': config.get_setting("current_host", 'porn4days', default=''), 
-             'host_alt': ["https://porn4days.blue/"], 
-             'host_black_list': ["https://porn4days.red/", "https://porn4days.biz/"], 
+             'host_alt': ["https://porn4days.pw/"], 
+             'host_black_list': ["https://porn4days.blue/", "https://porn4days.red/", "https://porn4days.biz/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -25,11 +34,17 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
+    
+    autoplay.init(item.channel, list_servers, list_quality)
+    
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "newest/page1"))
     itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "popullar/page1"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "paysitelist"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    
+    autoplay.show_option(item.channel, itemlist)
+    
     return itemlist
 
 
@@ -96,12 +111,13 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('div', class_='col-lg-3')
+    matches = soup.find_all('div', class_='video-card')
     for elem in matches:
+        # logger.debug(elem)
         url = elem.a['href']
         title = elem.img['alt']
         thumbnail = elem.img['src']
-        time = elem.find('div', class_='timer')
+        time = elem.find('span', class_='right')
         canal = elem.find('a', href=re.compile('search/\?s='))
         if canal:
             time = time.text.strip()
@@ -113,10 +129,10 @@ def lista(item):
         url = urlparse.urljoin(host,url)
         thumbnail = urlparse.urljoin(host,thumbnail)
         plot = ""
-        action = "play"
-        if logger.info() is False:
-            action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
+        # action = "play"
+        # if logger.info() is False:
+            # action = "findvideos"
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find(class_='pagination').find_all('a')[-1]
     if next_page:
@@ -127,29 +143,21 @@ def lista(item):
         if len(itemlist) == 24:
             itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
-
-
+    
+    
 def findvideos(item):
     logger.info(item)
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    videos = scrapertools.find_multiple_matches(data, '\).attr\("src", "([^"]+)"')
+    videos = scrapertools.find_multiple_matches(data, r'SERVER\d+_URL = "([^"]+)"')
+    logger.debug(videos)
     for elem in videos:
         url = elem
         if url:
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
     return itemlist
 
-
-def play(item):
-    logger.info(item)
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    videos = scrapertools.find_multiple_matches(data, '"\).attr\("src", "([^"]+)"')
-    for elem in videos:
-        url = elem
-        if url:
-            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    return itemlist

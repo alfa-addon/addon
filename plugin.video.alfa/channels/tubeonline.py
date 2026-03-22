@@ -325,9 +325,9 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             return matches, langs
     except Exception:
         pass
-
-    servers = {'strmup': 'bestb', 'hqq': '', 'asnwish': 'streamwish'}
-
+    
+    servers = {'strmup': 'bestb', 'hqq': '', 'asnwish': 'streamwish', 'bysejikuar': 'filemoon', 'vidnest': 'highstream'}
+    
     for lang_container in matches_int:
         language = IDIOMAS.get(lang_container["id"], "VOSE")
         for elem in lang_container.find_all("li"):
@@ -335,7 +335,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             try:
                 elem_json['server'] = re.sub(r"\.\w{2,4}", "", elem["data-name"].lower())
                 elem_json['server'] = servers.get(elem_json['server'], elem_json['server'])
-                if not elem_json['server']: continue
+                # if not elem_json['server']: continue
                 elem_json['language'] = language
                 elem_json['url'] = item.url
                 elem_json['title'] = '%s'
@@ -356,6 +356,7 @@ def play(item):
         kwargs['headers'] = {'Referer': item.url}
         kwargs['post'] = {"nombre": item.extra}
         new_soup = AlfaChannel.create_soup('%swp-content/themes/dooplayorig123/inc/encriptar.php' % host, **kwargs)
+        
         url = new_soup.iframe["src"]
         itemlist.append(item.clone(url=url, server=""))
         itemlist = servertools.get_servers_itemlist(itemlist)
