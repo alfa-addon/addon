@@ -2,13 +2,9 @@
         [B]Estos son los cambios para esta versión:[/B]
         
         • +18
-        • CineCalidad
         • Dontorrent
-        • GranTorrent
-        • HDFull
-        • Mitorrent
-        • Pelis XD
-        • SeriesKao
+        • EntrePeliculasySeries
+        • Eztv
+        • MiraPeliculas
         • TubeOnLine
-        • WolfMax4K
         
