@@ -294,6 +294,7 @@ def get_source_by_page_finished(
     mute=True,
     urlParamRemoveAllCookies=False,
     useAdvancedWebView=False,
+    cleanObjects=False,
 ):
     return get_generic_call(
         "getSourceByPageFinished",
@@ -324,6 +325,7 @@ def get_source_by_page_finished(
         mute,
         urlParamRemoveAllCookies,
         useAdvancedWebView,
+        cleanObjects,
     )
 
 
@@ -362,6 +364,7 @@ def get_urls_by_page_finished(
     mute=True,
     urlParamRemoveAllCookies=False,
     useAdvancedWebView=False,
+    cleanObjects=False,
 ):
     return get_generic_call(
         "getUrlsByPageFinished",
@@ -392,6 +395,7 @@ def get_urls_by_page_finished(
         mute,
         urlParamRemoveAllCookies,
         useAdvancedWebView,
+        cleanObjects,
     )
 
 
@@ -526,6 +530,7 @@ def get_generic_call(
     mute=True,
     urlParamRemoveAllCookies=False,
     useAdvancedWebView=False,
+    cleanObjects=False,
     retry=True,
 ):
     EXTRA_TIMEOUT_PLUS = 0
@@ -643,9 +648,10 @@ def get_generic_call(
         if not alfa_s:
             logger.info("##Assistant get-data: %s" % getData)
     if postData:
-        serverCall += "&postData=%s" % base64.b64encode(postData.encode("utf8")).decode(
-            "utf8"
-        )
+        if "POST_FORM" not in str(jsCode):
+            serverCall += "&postData=%s" % base64.b64encode(postData.encode("utf8")).decode(
+                "utf8"
+            )
         if not alfa_s:
             logger.info("##Assistant post-data: %s" % postData)
     if returnWhenCookieNameFound:
@@ -719,6 +725,7 @@ def get_generic_call(
         keep_alive=keep_alive,
         retry_alt=False,
         proxy_retries=0,
+        clean_objects=cleanObjects,
     )
 
     change = False
@@ -759,6 +766,7 @@ def get_generic_call(
                 keep_alive=keep_alive,
                 retry_alt=False,
                 proxy_retries=0,
+                clean_objects=cleanObjects,
             )
             sucess = res.sucess
             code = res.code
@@ -824,6 +832,7 @@ def get_generic_call(
                 keep_alive=keep_alive,
                 retry_alt=False,
                 proxy_retries=0,
+                clean_objects=cleanObjects,
             )
         else:
             platformtools.dialog_notification(

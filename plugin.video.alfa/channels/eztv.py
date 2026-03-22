@@ -13,13 +13,18 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay, renumbertools
 
+from lib.alfa_assistant import is_alfa_installed
+
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = []
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_T
-forced_proxy_opt = 'ProxySSL'
+
+cf_assistant = True if is_alfa_installed() else False
+forced_proxy_opt = None if cf_assistant else 'ProxyCF'
+debug = config.get_setting('debug_report', default=False)
 
 canonical = {
              'channel': 'eztv', 
@@ -27,8 +32,15 @@ canonical = {
              'host_alt': ["https://eztvx.to/"], 
              'host_black_list': ["https://eztv.li/", "https://eztv.re/"], 
              'pattern': '<div\s*id="header_logo">\s*<a\s*href="([^"]+)"', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
-             'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': False
+             'set_tls': True, 'set_tls_min': True, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': cf_assistant, 
+             'cf_assistant_ua': True, 'cf_assistant_get_source': True if cf_assistant == 'force' else False, 
+             'cf_no_blacklist': True, 'cf_removeAllCookies': False if cf_assistant == 'force' else True,
+             'cf_challenge': 1, 'cf_returnkey': 'url', 'cf_partial': True, 'cf_debug': debug, 
+             'cf_cookie': '$HOST|cf_clearance' if cf_assistant is True else None, 'cf_jscode': None, 
+             'cf_cookies_names': {'cf_clearance': False if cf_assistant is True else True},
+             'CF_if_assistant': True if cf_assistant is True else False, 'retries_cloudflare': -1, 
+             'CF_stat': True if cf_assistant is True else False, 
+             'CF': False, 'CF_test': True, 'alfa_s': True, 'renumbertools': False
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_torrent = 'https://zoink.ch/'
@@ -58,14 +70,18 @@ finds = {'find': {'find_all': [{'tag': ['tr'], 'name': ['hover'], '@LIM': 500}]}
          'last_page': {}, 
          'year': {}, 
          'season_episode': {}, 
-         'seasons': dict([('find', [{'tag': ['table'], 'class': ['show_info_description']}]), 
-                          ('find_all', [{'tag': ['h3'], 'string': re.compile('(?i)season')}])]), 
+         'seasons': dict([('find', [{'tag': ['div'], 'id': ['tab-episodes']}]), 
+                          ('find_all', [{'tag': ['div'], 'string': re.compile('(?i)season')}])]), 
+         #'seasons': dict([('find', [{'tag': ['table'], 'class': ['show_info_description']}]), 
+         #                 ('find_all', [{'tag': ['h3'], 'string': re.compile('(?i)season')}])]), 
          'season_num': {'get_text': [{'tag': '', '@STRIP': True, '@TEXT': '(?i)season\s+(?:\d{2})?(\d{1,2})\s+'}]}, 
          'seasons_search_num_rgx': [], 
          'seasons_search_qty_rgx': [], 
          'episode_url': '', 
-         'episodes': dict([('find', [{'tag': ['table'], 'class': ['show_info_description']}]), 
-                           ('find_all', [{'string': re.compile('[^-]+\s+--\s+[^\-]+(?:\s+--\s+[^$]*)?$')}])]), 
+         'episodes': dict([('find', [{'tag': ['div'], 'id': ['tab-episodes']}]), 
+                           ('find_all', [{'tag': ['div'], 'class': ['episode-row']}])]), 
+         #'episodes': dict([('find', [{'tag': ['table'], 'class': ['show_info_description']}]), 
+         #                  ('find_all', [{'string': re.compile('[^-]+\s+--\s+[^\-]+(?:\s+--\s+[^$]*)?$')}])]), 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
@@ -266,7 +282,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                    'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
 
     soup = AHkwargs.get('soup', {})
-    findS['episodes'] = {'find_all': [{'tag': ['tr'], 'name': ['hover']}]}
+    #findS['episodes'] = {'find_all': [{'tag': ['tr'], 'name': ['hover']}]}
+    findS['episodes'] = dict([('find', [{'tag': ['div'], 'id': ['tab-releases']}]), 
+                              ('find_all', [{'tag': ['tr'], 'class': ['torrent-row']}])])
     matches_links = AlfaChannel.parse_finds_dict(soup, findS['episodes'])
 
     for elem in matches_int:
@@ -274,14 +292,22 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         #logger.error(elem)
 
         try:
-            info = elem.split(' -- ')
+            if elem.find('div', class_='episode-season'):
+                seaepi = elem.find('div', class_='episode-season').get_text(strip=True)
+                date_ = elem.find('div', class_='episode-date').get_text(strip=True)
+                title = elem.find('div', class_='episode-title').get_text(strip=True) or ''
+            else:
+                info = elem.split(' -- ')
+                seaepi = info[0]
+                date_ = info[1]
+                title = info[2] if len(info) > 2 else ''
 
             try:
-                elem_json['season'], elem_json['episode'] = scrapertools.find_single_match(info[0], '(?i)(\d{1,2})x(\d{1,3})')
+                elem_json['season'], elem_json['episode'] = scrapertools.find_single_match(seaepi, '(?i)(\d{1,2})x(\d{1,3})')
                 elem_json['season'] = int(elem_json['season'])
                 elem_json['episode'] = int(elem_json['episode']) or 1
             except Exception:
-                logger.error('ERROR Info: %s' % info)
+                logger.error('ERROR seaepi: %s' % seaepi)
                 elem_json['season'] = item.contentSeason
                 elem_json['episode'] = 0
                 continue
@@ -289,10 +315,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
             sxe = 's%se%s' % (str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
             elem_json['url'] = elem_json['url_episode'] = '%ssearch/%s-%s' % (host, item.contentSerieName.replace(' ', '-').lower(), sxe)
-            elem_json['title'] = '%sx%s %s' % (str(elem_json['season']), str(elem_json['episode']).zfill(2), (info[2] if len(info) > 2 else ''))
+            elem_json['title'] = '%sx%s %s' % (str(elem_json['season']), str(elem_json['episode']).zfill(2), title)
 
-            if scrapertools.find_single_match(info[1], patron_date_in):
-                elem_json['date'] = scrapertools.find_single_match(info[1], patron_date_in)
+            if scrapertools.find_single_match(date_, patron_date_in):
+                elem_json['date'] = scrapertools.find_single_match(date_, patron_date_in)
                 elem_json['date'] = '%s %s %s' % (elem_json['date'][2], months_dict.get(elem_json['date'][0], '00'), elem_json['date'][1])
                 elem_json['title'] += ' - %s' % elem_json['date'].replace(' ', '-')
 

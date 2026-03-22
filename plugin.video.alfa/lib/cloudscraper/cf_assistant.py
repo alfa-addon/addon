@@ -132,6 +132,9 @@ def get_cl(
     debug = debug or opt.get("cf_debug", False)
     if debug or CF_testing or opt.get("CF_testing", False):
         alfa_s = False
+    cleanObjects = opt.get("clean_objects", False)
+    if not opt.get("cf_cookie"):
+        opt["cf_cookie"] = ""
 
     try:
         if resp.status_code not in [403, 503, 429, 666]:
@@ -241,7 +244,7 @@ def get_cl(
                 ua = get_ua(check_assistant)
 
             if opt.get("post"):
-                headers_post = headers.copy()
+                headers_post = headers.copy() if headers else {}
                 headers = {}
                 headers_post["Content-Type"] = "application/x-www-form-urlencoded"
                 #headers_post["Access-Control-Allow-Origin"] = "*"
@@ -253,13 +256,13 @@ def get_cl(
                 if isinstance(opt.get("post"), dict):
                     for key, value in list(opt["post"].items()):
                         post_str += "%s=%s&" % (key, urlparse.quote(value))
-                    post_str = post_str.rstrip("&")
+                    post_str = postData = post_str.rstrip("&")
                 else:
-                    post_str = str(opt["post"]).replace("'", '"')
+                    post_str = postData = str(opt["post"]).replace("'", '"')
 
-                jscode = get_jscode(1, "POST_FORM", 1, url=url, headers=headers_str, 
+                jscode = get_jscode(1, "POST_FORM", 1, url=url, headers=headers_post, 
                                     postData=post_str, Cookies_send=Cookies_send)
-                if not "function" in jscode:
+                if "function" not in jscode:
                     jscode = None
                     headers = headers_post.copy()
                     postData = str(opt["post"]).replace("'", '"')
@@ -339,7 +342,8 @@ def get_cl(
                     useAdvancedWebView=True,
                     headers=headers,
                     mute=mute,
-                    alfa_s=alfa_s
+                    alfa_s=alfa_s,
+                    cleanObjects=cleanObjects
                 )
             except Exception:
                 logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed_now))
@@ -373,7 +377,9 @@ def get_cl(
                                 ua=ua,
                                 cookiesView=data_assistant.pop("cookies", []),
                                 jscode=jscode,
+                                postData=postData,
                                 extraPostDelay=extraPostDelay, 
+                                cleanObjects=cleanObjects, 
                                 **opt
                             )
                         for find_url in opt.get("cf_find_url", []):
@@ -388,7 +394,9 @@ def get_cl(
                                 ua=ua,
                                 cookiesView=challenge_url.get("cookies", []),
                                 jscode=jscode,
+                                postData=postData,
                                 extraPostDelay=extraPostDelay, 
+                                cleanObjects=cleanObjects, 
                                 urlOnly=True,
                                 **opt
                             )
@@ -408,6 +416,7 @@ def get_cl(
 
                         if challenge_url and isinstance(challenge_url, dict) and challenge_url.get("missing", False):
                             logger.debug("Challenge: %s, reintentando..." % challenge)
+                            del data_assistant
                             return get_cl(
                                 self,
                                 resp,
@@ -528,6 +537,7 @@ def get_cl(
                             except Exception:
                                 logger.error(traceback.format_exc())
                         
+                        del data_assistant
                         return resp
 
                     else:
@@ -546,6 +556,7 @@ def get_cl(
             if not retry:
                 config.set_setting("cf_assistant_ua", "")
                 logger.debug("No se obtuvieron resultados, reintentando... - %s" % str(time.time() - elapsed))
+                del data_assistant
                 return get_cl(
                     self,
                     resp,
@@ -599,6 +610,7 @@ def get_cl(
             except Exception:
                 logger.error(traceback.format_exc())
 
+    del data_assistant
     return resp
 
 
@@ -678,6 +690,7 @@ def get_source(
     if "cf_removeAllCookies" in opt and removeAllCookies is not False:
         removeAllCookies = opt["cf_removeAllCookies"]
     debug = debug or opt.get("cf_debug", False)
+    cleanObjects = opt.get("clean_objects", True)
     if debug:
         alfa_s = False
     if not alfa_s:
@@ -798,10 +811,10 @@ def get_source(
                 ua = get_ua(check_assistant)
 
             if opt.get("post"):
-                headers_post = headers.copy()
+                headers_post = headers.copy() if headers else {}
                 headers = {}
                 headers_post["Content-Type"] = "application/x-www-form-urlencoded"
-                headers_post['X-Requested-With'] = 'XMLHttpRequest'
+                #headers_post['X-Requested-With'] = 'XMLHttpRequest'
                 #headers_post["Access-Control-Allow-Origin"] = "*"
                 #headers_post["Origin"] = host_name.rstrip("/")
 
@@ -813,11 +826,11 @@ def get_source(
                         post_str += "%s=%s&" % (key, urlparse.quote(value))
                     post_str = postData = post_str.rstrip("&")
                 else:
-                    post_str = str(opt["post"]).replace("'", '"')
+                    post_str = postData = str(opt["post"]).replace("'", '"')
 
-                jscode = get_jscode(1, "POST_FORM", 1, url=url, headers=headers_str, 
+                jscode = get_jscode(1, "POST_FORM", 1, url=url, headers=headers_post, 
                                     postData=post_str, Cookies_send=Cookies_send)
-                if not "function" in jscode:
+                if "function" not in jscode:
                     jscode = None
                     headers = headers_post.copy()
                     postData = post_str or str(opt["post"]).replace("'", '"')
@@ -901,7 +914,8 @@ def get_source(
                     useAdvancedWebView=True,
                     headers=headers,
                     mute=mute,
-                    alfa_s=alfa_s
+                    alfa_s=alfa_s,
+                    cleanObjects=cleanObjects
                 )
             except Exception:
                 logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed_now))
@@ -935,7 +949,9 @@ def get_source(
                                 ua=ua,
                                 cookiesView=data_assistant.pop("cookies", []),
                                 jscode=jscode,
+                                postData=postData,
                                 extraPostDelay=extraPostDelay,
+                                cleanObjects=cleanObjects,
                                 **opt
                             )
                         for find_url in opt.get("cf_find_url", []):
@@ -950,8 +966,10 @@ def get_source(
                                 ua=ua,
                                 cookiesView=challenge_url.get("cookies", []),
                                 jscode=jscode,
+                                postData=postData,
                                 extraPostDelay=extraPostDelay,
                                 urlOnly=True,
+                                cleanObjects=cleanObjects
                                 **opt
                             )
                             if found_url:
@@ -962,7 +980,9 @@ def get_source(
                                             resp._content = jsontools.dump(found_url) if isinstance(found_url, dict) else found_url
                                         except Exception:
                                             logger.error(traceback.format_exc())
+                                        del data_assistant
                                         return resp
+                                    del data_assistant
                                     return found_url, resp
                                 elif found_url.get("url", ""):
                                     url = found_url["url"]
@@ -970,6 +990,7 @@ def get_source(
 
                         if challenge_url and isinstance(challenge_url, dict):
                             logger.debug("Challenge: %s, reintentando..." % challenge)
+                            del data_assistant
                             return get_source(
                                 url,
                                 resp,
@@ -1069,6 +1090,7 @@ def get_source(
                 timeout = 1 if timeout < 5 else timeout * 2
                 extraPostDelay = -1 if extraPostDelay < 0 else extraPostDelay * 2
                 removeAllCookies = True
+                del data_assistant
 
                 return get_source(
                     url,
@@ -1178,6 +1200,7 @@ def get_source(
                 resp.history.append(req)
             except Exception:
                 logger.error(traceback.format_exc())
+    del data_assistant   
     if from_get_cl:
         try:
             if PY3 and not isinstance(data, bytes):
@@ -1272,26 +1295,24 @@ def get_jscode(count, key, n_iframe, timeout=3, url="", headers="", postData="",
         document.querySelector("#recaptcha-anchor > div.recaptcha-checkbox-border").click();
         """,
         'POST_FORM': """
-        var http = new XMLHttpRequest();
         var url = '%s';
-        var params = '%s';
-        http.open('POST', url, true);
-
-        //Send the proper header information along with the request
+        var params = new URLSearchParams('%s');
         %s
-        %s
-
-        http.onload = function() {//Call a function when loaded.
-            if(http.readyState == 4 && http.status == 200) {
-                //document.body.innerHTML = http.response; // Respuesta del servidor
-                return(http.response);
-            }
-        };
-        http.onerror = function() {//Call a function when error.
-            return(http.status);
-        };
-        http.send(params);
-        """  % (url, postData, headers, Cookies_send),
+        
+        fetch(url, {//POST_FORM function
+            method: 'POST',
+            headers: %s,
+            body: params
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Error en la red');
+            return response.text(); // O response.json()
+        })
+        .then(data => {
+            document.body.innerHTML = data; // Aquí es donde realmente esta la respuesta
+        })
+        .catch(error => console.error('Error:', error));
+        """  % (url, postData, Cookies_send, headers),
         'COOKIES': """
         //Send cookies to the site
         %s
@@ -1379,7 +1400,7 @@ def check_blacklist(domain, expiration=0, reset=False):
     return res
 
 
-def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey="source", 
+def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey="source", postData=None,
                      extraPostDelay=15, jscode="", DEBUG=False, cache=True, ua=None, urlOnly=False, **opt):
     logger.info("Challenge: %s" % url)
     data = False
@@ -1445,11 +1466,12 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
                 elapsed_now = time.time()
                 clear = True
                 response = alfa_assistant.get_urls_by_page_finished("about:blank", 1, closeAfter=True, removeAllCookies=True, 
-                                                                    userAgent=ua, debug=DEBUG)
+                                                                    userAgent=ua, debug=DEBUG, cleanObjects=opt.get("cleanObjects", False))
                 response = alfa_assistant.get_urls_by_page_finished("{}".format(host), 20, closeAfter=True, disableCache=cache, 
                                                                     clearWebCache=True, returnWhenCookieNameFound=cf_cookie, 
-                                                                    jsCode=jscode, extraPostDelay=extraPostDelay, 
-                                                                    getCookies=True, userAgent=ua, debug=DEBUG)
+                                                                    jsCode=jscode, postData=postData, extraPostDelay=extraPostDelay, 
+                                                                    getCookies=True, userAgent=ua, debug=DEBUG, 
+                                                                    cleanObjects=opt.get("cleanObjects", False))
                 if DEBUG:
                     logger.debug("data assistant: %s - %s" % (response, str(time.time() - elapsed_now)))
 
