@@ -204,6 +204,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://sexocean.net/gal/[0-9]+/[A-z0-9_]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)xxxshake.com/videos/[0-9]+/[A-z0-9-]+)",
         "url": "\\1"
       }
