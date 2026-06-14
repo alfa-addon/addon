@@ -274,7 +274,7 @@ class AlfaChannelHelper:
             self.KWARGS.update(kwargs)
             kwargs = copy.deepcopy(self.KWARGS)
         elif self.CACHING_DOMAINS:
-            kwargs['alfa_s': True]
+            kwargs['alfa_s'] = True
 
         #logger.debug('KWARGS: %s' % kwargs)
         response = self.httptools.downloadpage(url, **kwargs)
