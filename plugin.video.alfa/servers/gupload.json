@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:vidara|viewdara).(?:to|\\w{2,4})/e/([A-z0-9]+)",
-        "url": "https://vidara.to/e/\\1"
+        "pattern": "(https://gupload.xyz/data/e/[A-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "vidara",
-  "name": "vidara",
+  "id": "gupload",
+  "name": "gupload",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/QdBWVND4/vidara.png"
+  "thumbnail": "https://i.postimg.cc/JhwbcjFR/gupload.png"
 }

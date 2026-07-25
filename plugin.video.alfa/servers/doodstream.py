@@ -49,7 +49,7 @@ def test_video_exists(page_url):
         else:
             logger.error("[Doodstream] El acceso al video está restringido.\n%s" % response.data)
             return False, "[Doodstream] El acceso al video está restringido. Reinténtalo más tarde"
-    elif response.code == 404:
+    elif response.code == 404 or "not found" in response.data:
         return False, "[Doodstream] El archivo no existe o ha sido borrado"
     elif response.code in [301, 302]:
         redir = response.headers.get("location", '')
