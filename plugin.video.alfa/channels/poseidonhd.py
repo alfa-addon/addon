@@ -141,20 +141,20 @@ def section(item):
 
 def list_all(item):
     logger.info()
-
+    
     return AlfaChannel.list_all(item, matches_post=list_all_matches, **kwargs)
 
 
 def list_all_matches(item, matches_int, **AHkwargs):
     logger.info()
-
+    
     matches = []
     findS = AHkwargs.get('finds', finds)
 
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-
+        
         try:
             if item.c_type == 'episodios':
                 sxe = AlfaChannel.parse_finds_dict(elem, findS.get('season_episode', {}), c_type=item.c_type)
@@ -162,8 +162,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['season'] = int(elem_json['season'] or 1)
                 elem_json['episode'] = int(elem_json['episode'] or 1)
                 elem_json['year'] = '-'
-
+            
             elem_json['url'] = elem.a.get('href', '')
+            elem_json['tmdb_id'] = scrapertools.find_single_match(elem_json['url'], '(?:pelicula|serie)/(\d+)/')
             elem_json['title'] = elem.img.get('alt', '') if item.c_type != 'episodios' else elem.img.get('alt', '').replace(sxe, '').strip()
             elem_json['thumbnail'] = elem.img.get('src', '')
             elem_json['year'] = elem_json.get('year', AlfaChannel.parse_finds_dict(elem, findS.get('year', {}), year=True, c_type=item.c_type))
@@ -175,7 +176,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             continue
         
         if not elem_json['url']: continue
-
+        
         matches.append(elem_json.copy())
 
     return matches
