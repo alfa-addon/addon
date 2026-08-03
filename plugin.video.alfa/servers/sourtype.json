@@ -175,10 +175,6 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://bunkr.\\w{2,4}/e/[A-z0-9]+(?:/|))",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://youperv.\\w{2,4}/[A-z0-9-]+/[A-z0-9-’]+.html)",
         "url": "\\1"
       },
@@ -227,6 +223,10 @@
       },
       {
         "pattern": "(https://(?:\\w{2,3}.|player2.|)cdnlivestream.(?:org|\\w{2,4})/embed.php\\?id=[0-9]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)fak.\\w{2,4}/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
