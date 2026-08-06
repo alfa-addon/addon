@@ -1198,7 +1198,6 @@ def monitor_domains_update(options=None):
         alfa_path = config.get_runtime_path()
         alfa_channels_path = os.path.join(alfa_path, 'channels')
         from core import httptools
-        httptools.TEST_ON_AIR = True
         httptools.CACHING_DOMAINS = True
     except Exception as e:
         logger.error(str(e))
@@ -1232,10 +1231,14 @@ def monitor_domains_update(options=None):
             if 'forced_proxy_opt' in canonical_http: del canonical_http['forced_proxy_opt']
             if 'forced_proxy' in canonical_http: del canonical_http['forced_proxy']
             if 'forced_proxy_ifnot_assistant' in canonical_http: del canonical_http['forced_proxy_ifnot_assistant']
+            if str(canonical_http.get('forced_proxy_ifnot_assistant', '')) != 'ProxySSL': canonical_http['forced_proxy_ifnot_assistant'] = None
             opt = {'timeout': 10, 'method': 'GET', 'proxy_retries': 0, 'canonical': canonical_http, 'alfa_s': True, 'retry_alt': False}
 
             idx = canonical_http.get('host_alt_main', 0)
-            response = httptools.downloadpage(canonical_http['host_alt'][idx], **opt)
+            try:
+                response = channel_obj.AlfaChannel.create_soup(canonical_http['host_alt'][idx], soup=False, json=False, **opt)
+            except Exception as e:
+                response = httptools.downloadpage(canonical_http['host_alt'][idx], **opt)
 
             if not response.sucess:
                 current_host = config.get_setting("current_host", channel, default='')
@@ -2448,6 +2451,7 @@ def AH_find_btdigg_ENTRY_from_BTDIGG(self, title='', contentType='episode', lang
         if cached_btdigg_AGE < time.time():
             for c_type in ['movie', 'tvshow', 'episode']:
                 window.setProperty("alfa_cached_btdigg_%s_list" % c_type, "")
+                window.setProperty("alfa_matches_btdigg_%s_list" % c_type, "")
         for c_type in contentType:
             if len(window.getProperty("alfa_cached_btdigg_%s_list" % c_type)) < 3:
                 item.AH_find_btdigg_ENTRY_from_BTDIGG = True
@@ -2495,6 +2499,10 @@ def AH_find_btdigg_ENTRY_from_BTDIGG(self, title='', contentType='episode', lang
             exists += 1
             continue
         if c_type in ['movie', 'tvshow']:
+            if len(window.getProperty("alfa_matches_btdigg_%s_list" % c_type)) > 3:
+                cached_btdigg[c_type] = jsontools.load(window.getProperty("alfa_matches_btdigg_%s_list" % c_type))
+                exists += 1
+                continue
             matches_btdigg, cached_btdigg[c_type] = AH_find_btdigg_list_all_from_BTDIGG(
                     self, item.clone(c_type='peliculas' if c_type == 'movie' else 'series'), **AHkwargs
             )
@@ -3033,8 +3041,14 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                     except Exception:
                         logger.error(traceback.format_exc())
                         continue
-                    
+
         #if item.c_type == 'peliculas' and matches_btdigg: matches_btdigg = sorted(matches_btdigg, key=lambda it: int(-it['size']))
+        if contentType in ['movie', 'tvshow']:
+            window.setProperty("alfa_matches_btdigg_%s_list" % contentType, jsontools.dump(matches_index, **kwargs_json))
+            cached_btdigg[contentType] = copy.deepcopy(matches_index)
+            if cached_btdigg_AGE < time.time():
+                cached_btdigg_AGE = time.time() + timer*60
+                window.setProperty("alfa_cached_btdigg_list_AGE", str(cached_btdigg_AGE))
 
     except Exception:
         logger.error(traceback.format_exc())
