@@ -279,7 +279,7 @@ class AlfaChannelHelper:
             self.KWARGS.update(kwargs)
             kwargs = copy.deepcopy(self.KWARGS)
         elif self.CACHING_DOMAINS:
-            kwargs['alfa_s']: True
+            kwargs['alfa_s'] = True
 
         if PY3 and self.dns_params:
             from lib.alfaresolver_py3 import dns_resolve
