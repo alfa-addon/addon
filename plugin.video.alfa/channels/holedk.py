@@ -120,6 +120,22 @@ def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
+    if soup.find('a', href=re.compile("/director/[A-z0-9-]+(?:/|)")):
+        plot = "%s" % soup.find('a', href=re.compile("/director/[A-z0-9-]+(?:/|)")).get_text(strip=True)
+    if soup.find_all('a', href=re.compile("/pornstar/[A-z0-9-]+(?:/|)")):
+        pornstars = soup.find_all('a', href=re.compile("/pornstar/[A-z0-9-]+(?:/|)"))
+        for x, value in enumerate(pornstars):
+            pornstars[x] = value.get_text(strip=True)
+        
+        pornstar = ', '.join(pornstars)
+        pornstar = "[COLOR gold]%s[/COLOR]" %pornstar
+        plot += "\n%s" %pornstar
+        # lista = item.contentTitle.split('[/COLOR]')
+        # pornstar = pornstar.replace('[/COLOR]', '')
+        # pornstar = ' %s' %pornstar
+        # lista.insert (2, pornstar)
+        # item.contentTitle = '[/COLOR]'.join(lista)
+    
     matches = soup.find_all('div', id=re.compile(r"^tab\d+"))
     for elem in matches:
         text = elem.text.strip()
@@ -127,28 +143,31 @@ def findvideos(item):
         id = scrapertools.find_single_match(text, '\w+\("([^"]+)"')
         if "doo" in ser:
             url = "https://dood.to/e/%s" % id
-            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+            # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "tape" in ser:
             url = "https://streamtape.com/e/%s" % id
-            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+            # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "voe" in ser:
             url = "https://voe.sx/e/%s" % id
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "moon" in ser:
             url = "https://filemoon.to/e/%s" % id
-            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+            # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "gua" in ser:
             url = "https://listeamed.net/e/%s" % id
-            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+            # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "mix" in ser:
             url = "https://mixdrop.is/e/%s" % id
-            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+            # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "lulu" in ser:
             url = "https://lulustream.com/e/%s" % id
-            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+            # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "ntu" in ser:
             url = "https://hqq.to/e/%s" % id
-            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+            # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+        elif "vyd" in ser:
+            url = "https://holedk.easyvidplayer.com/#%s" % id
+            # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "kra" in ser:
             continue
             # https://github.com/tha23rd/py-kraken/blob/main/pykraken/kraken.py
@@ -156,6 +175,8 @@ def findvideos(item):
             # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         else:
             platformtools.dialog_ok("Server Nuevo", "Server nuevo en este canal [%s]" %ser)
+            logger.debug(matches)
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url, plot=plot))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)

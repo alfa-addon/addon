@@ -4,12 +4,12 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "/video_ext.php\\?oid=([^&]+)(?:&|)id=([^&]+)(?:&|)hash=([a-z0-9]+)",
-        "url": "https://vk.com/video_ext.php?oid=\\1&id=\\2&hash=\\3"
+        "pattern": "(https://vkvideo.ru/video_ext.php\\?oid=[0-9-]+&id=[0-9]+)",
+        "url": "\\1"
       },
       {
-        "pattern": "(/video_ext.php\\?oid=[0-9]+&id=[0-9]+)",
-        "url": "https://vkvideo.ru\\1"
+        "pattern": "/video_ext.php\\?oid=([^&]+)(?:&|)id=([^&]+)(?:&|)hash=([a-z0-9]+)",
+        "url": "https://vk.com/video_ext.php?oid=\\1&id=\\2&hash=\\3"
       },
       {
         "pattern": "(vk\\.[a-z]+\\/video[0-9]+_[0-9]+)",

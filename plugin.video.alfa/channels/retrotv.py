@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'retrotv', 
              'host': config.get_setting("current_host", 'retrotv', default=''), 
-             'host_alt': ["https://retrotv.org/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://retrotve.com/"], 
+             'host_black_list': ["https://retrotv.org/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -66,7 +66,10 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
-         'findvideos': {'find_all': [{'tag': ['div'], 'class': ['TPlayer']}]}, 
+         'findvideos': {'find_all': [{'tag': ['div'], 'class': ['TPlayerTb']}]}, 
+         # 'findvideos': {'find_all': [{'tag': ['div'], 'class': ['TPlayer']}]}, 
+         # 'findvideos': dict([('find', [{'tag': ['ul'], 'class': ['TPlayerNv']}]), 
+                             # ('find_all', [{'tag': ['li']}]) ]),
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real-*|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
@@ -89,7 +92,7 @@ def mainlist(item):
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, title="Todas las Series", action="list_all", c_type='series', 
-                         url=host + "lista-series/", thumbnail=get_thumb("all", auto=True)))
+                         url=host + "lista-de-series/", thumbnail=get_thumb("all", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Animación", action="list_all", c_type='series', 
                          url=host + "category/animacion/", thumbnail=get_thumb("animacion", auto=True)))
@@ -258,20 +261,33 @@ def findvideos(item):
 
 def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
-
     matches = []
-    findS = AHkwargs.get('finds', finds)
-
+    
     servers = {"femax20": "fembed", "embed": "mystream", "dood": "doodstream"}
-
+    
+    findS = AHkwargs.get('finds', finds)
+    
+    soup = AHkwargs.get('soup', {})
+    download = soup.find('tbody')
+    if soup.find('tbody'):
+        download= soup.find('tbody').find_all('tr')
+    
+    # https://ouo.io/qs/uU72do72?s=https%3A%2F%2Fretrotve.com%2F%3Ftrdownload%3D2%26trid%3D33542
+    # https://retrotve.com/?trdownload=2&trid=33542
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-
+        
         try:
-            elem_json['server'] = elem.div.get('id', '')
-
-            elem_json['url'] = elem.iframe.get('src', '')
+            # id  = elem.get('data-tplayernv', '')
+            # trtype = 1 if item.contentType == 'movie' else '2'
+            # elem_json['url'] = '%s?trembed=0&trid=%s&trtype=%s' % (host, id, trtype)
+            # elem_json['server'] = elem.div.get('id', '')
+            if elem.iframe:
+                elem_json['url'] = elem.iframe.get('src', '')
+            else:
+                texto = elem.get_text(strip=True)
+                elem_json['url'] = scrapertools.find_single_match(texto, 'src="([^"]+)"')
             if host in elem_json['url']:
                 trtype = 1 if item.contentType == 'movie' else '2'
                 if 'trid' not in elem_json['url']:
@@ -279,13 +295,13 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                     elem_json['url'] = '%s?trembed=0&trid=%s&trtype=%s' % (host, trid, trtype)
                 else:
                     elem_json['url'] = re.sub("amp;|#038;", "", elem_json['url'])
-
+                
                 elem_json['url'] = AlfaChannel.create_soup( elem_json['url'], referer=item.url).find("div", class_="Video").iframe.get("src", '')
                 
                 elem_json['server'] = 'directo' if 'blenditall' in elem_json['url'] else ''
                 if 'mega.' in elem_json['url']:
                     elem_json['url'] = elem_json['url'].replace("/embed/", "/file/")
-
+            
             elem_json['url'] = re.sub("amp;|#038;", "", elem_json['url'])
             if elem_json['server'].lower() in servers: elem_json['server'] = servers[elem_json['server'].lower()]
             if elem_json['server'].lower() in ["waaw", "jetload", "player"]: continue
@@ -294,11 +310,34 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
-
+        
         if not elem_json['url']: continue
-
+            
         matches.append(elem_json.copy())
-
+    
+    for elem in download:
+        
+        try:
+            
+            texto = elem.find_all('span')
+            logger.debug(texto)
+            url = elem.a.get('href', '').split("=")[-1]
+            url = AlfaChannel.do_unquote(url)
+            data = AlfaChannel.create_soup(url, referer=item.url)
+            elem_json['url'] = data.find('meta', property='og:url')['content']
+            if 'mega.' in elem_json['url']:
+                elem_json['url'] = elem_json['url'].replace("/embed/", "/file/")
+            
+            # elem_json['url'] = AlfaChannel.create_soup( elem_json['url'], referer=item.url)#.find("div", class_="Video").iframe.get("src", '')
+        
+        except:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
+        
+        if not elem_json['url']: continue
+            
+        matches.append(elem_json.copy())
     return matches, langs
 
 

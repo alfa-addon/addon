@@ -44,19 +44,21 @@ language = []
 url_replace = []
 
 
-finds = {'find': {'find_all': [{'tag': ['article'], 'class': re.compile(r"^post-\d+")}]},
-         'categories': {'find_all': [{'tag': ['div'], 'class': ['standard-category-item','taxonomy-term']}]},
+finds = {'find': dict([('find', [{'tag': ['script'], 'id': ['__NEXT_DATA__']}]), 
+                       ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'props,pageProps,videos|DEFAULT'}])]),
+                 # {'find_all': [{'tag': ['a'], 'class': ['video-card']}]},
+         'categories': {'find_all': [{'tag': ['a'], 'class': ['person-card','video-card']}]},
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {},
-         'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
+         'next_page_rgx': [['\?page=\d+', '?page=%s'], ['&page=\d+', '&page=%s']], 
          'last_page': dict([('find', [{'tag': ['nav', 'div'], 'class': ['pagination', 'taxonomy-pagination']}]), 
-                            ('find_all', [{'tag': ['a'], '@POS': [-1], 
+                            ('find_all', [{'tag': ['a'], '@POS': [-2], 
                                            '@ARG': 'href', '@TEXT': 'page(?:/|=)(\d+)'}])]), 
          'plot': {}, 
-         'findvideos': dict([('find', [{'tag': ['div'], 'class': ['iframe-buttons','video_box']}]),
-                             ('find_all', [{'tag': ['button'], '@ARG': 'data-src'}])]),
+         'findvideos': dict([('find', [{'tag': ['script'], 'id': ['__NEXT_DATA__']}]), 
+                             ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'props,pageProps,video|DEFAULT'}])]), 
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', ''],['Placeholder:\s*','']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
@@ -76,10 +78,10 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "studios/page/1/", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="submenu", url=host + "actresses/", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "category/", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "?page=1"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "studios/?page=1", extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "actresses/?page=1", extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     autoplay.show_option(item.channel, itemlist)
@@ -87,34 +89,11 @@ def mainlist(item):
     return itemlist
 
 
-def submenu(item):
-    logger.info()
-    itemlist = []
-    
-    soup = AlfaChannel.create_soup(item.url, **kwargs)
-    
-    matches = soup.find_all('li', class_='has-terms')
-    for elem in matches:
-        # actresses/page/2/?letter=A
-        title = elem.a.get_text(strip=True)
-        url = "%sactresses/page/1/?letter=%s" %(host, title)
-        id = elem.a['href'].replace("#", "")
-        itemlist.append(Item(channel=item.channel, title=title, id=id , action="section", url=url)) #, extra="Abc"
-    
-    return itemlist
-
 def section(item):
     logger.info()
     
     findS = finds.copy()
-    findS['url_replace'] = [['(\/(?:category|actress)\/[^$]+$)', r'\1page/1/']]
-    
-    if item.extra == 'Abc':
-        findS['categories'] =  dict([('find', [{'tag': ['div'], 'id': ['%s' %item.id]}]),
-                                     ('find_all', [{'tag': ['span'], 'class': ['tag-groups-tag']}])])
-        findS['profile_labels']['section_title'] = dict([('find', [{'tag': ['a']}]),
-                                                         ('get_text', [{'tag': '', 'strip': True}])])
-        findS['profile_labels']['section_cantidad'] = {'find': [{'tag': 'a', '@ARG': 'title', '@TEXT': '(\d+)'}]}
+    findS['url_replace'] = [['(\/(?:categories|actress|studios)\/[^$]+$)', r'\1?page=1']]
     
     return AlfaChannel.section(item, finds=findS, **kwargs)
 
@@ -125,6 +104,12 @@ def list_all(item):
     findS = finds.copy()
     findS['controls']['action'] = 'findvideos'
     
+    if item.c_type in ['search']:
+        findS['find'] = dict([('find', [{'tag': ['body']}]), 
+                              ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'results|DEFAULT'}])])
+        # findS['last_page'] = dict([('find', [{'tag': ['body']}]), 
+                                   # ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'total|DEFAULT'}])])
+    
     return AlfaChannel.list_all(item, finds=findS, matches_post=list_all_matches, **kwargs)
 
 
@@ -134,33 +119,24 @@ def list_all_matches(item, matches_int, **AHkwargs):
     
     findS = AHkwargs.get('finds', finds)
     
+    try:
+        patron_pages = '\],\s*"total"\s*:\s*(\d+)\s*,\s*"page"\s*:(\d+)'
+        items, pages = scrapertools.find_single_match(str(AHkwargs['soup']), patron_pages)
+        AlfaChannel.last_page = int((int(items)+finds['controls']['cnt_tot']-1)/finds['controls']['cnt_tot'])
+    except Exception:
+        logger.error(traceback.format_exc())
+    
     for elem in matches_int:
         elem_json = {}
         
         try:
-            elem_json['url'] = elem.a.get('href', '')
-            img = elem.a.get('style', '')
-            elem_json['thumbnail'] =  scrapertools.find_single_match(img, "'([^']+)'") \
-                                      or scrapertools.find_single_match(img, '"([^"]+)"')\
-                                      or elem.a.get('data-wpfc-original-src', '')
-            
-            title = elem.h2.get_text(strip=True)
-            texto = elem['class']
-            pornstars = []
-            for txt in texto:
-                if "studio-" in txt:
-                    canal = txt.replace("studio-", "").capitalize()
-                    canal = canal.replace("Onlyfans", "OnlyFans")
-                    elem_json['canal'] = canal
-                    title = title.replace(canal, "")
-                if "actress-" in txt:
-                    txt = txt.replace("actress-", ""). replace("-", " ").title()
-                    pornstars.append(txt)
-                    elem_json['star'] = ' & '.join(pornstars)
-                    for elem in pornstars:
-                        title = title.replace(elem, "")
-                        
-            elem_json['title'] = title
+            id = elem['id']
+            elem_json['url'] = "%svideo/%s" %(host, id)
+            elem_json['thumbnail'] = elem.get('poster_path', '')
+            title = elem.get('title', '')
+            elem_json['title'] = title.replace(elem.get('actress', '').strip(), '')
+            elem_json['star'] = elem.get('actress', '').strip()
+            elem_json['canal'] = elem.get('studio', '').strip()
         
         except:
             logger.error(elem)
@@ -185,13 +161,20 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
     
-    for elem in matches_int:
+    for elem, valor in matches_int.items():
         elem_json = {}
         
         try:
-            elem_json['url'] = elem
-            elem_json['language'] = ''
-        
+            if elem.startswith('iframe_url') and valor is not None:
+                elem_json['url'] = valor
+                elem_json['language'] = ''
+            if elem.startswith('actress') and valor is not None:
+                pornstar = valor
+                pornstar = AlfaChannel.unify_custom('', item, {'play': pornstar})
+            if elem == 'studio' and valor is not None:
+               canal = '[%s]' %valor
+            item.plot = " %s \n  %s" %(canal, pornstar)
+
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -206,7 +189,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%spage/1/?s=%s" % (host, texto.replace(" ", "+"))
+    item.url = "%sapi/search?q=%s&page=1" % (host, texto.replace(" ", "+"))
     
     try:
         if texto:

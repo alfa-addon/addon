@@ -50,12 +50,14 @@ finds = {'find': {'find_all': [{'tag': ['li'], 'id': re.compile(r"^post-\d+")}]}
                             ('find_all', [{'tag': ['a'], '@POS': [-2], 
                                            '@ARG': 'href', '@TEXT': 'page/(\d+)'}])]), 
          'plot': {}, 
-         'findvideos': dict([('find', [{'tag': ['ul'], 'id': 'link-tabs'}]),
-                             ('find_all', [{'tag': ['a']}])]),
+         'findvideos': dict([('find', [{'tag': ['div'], 'class': ['vtabs-bar']}]),
+                             ('find_all', [{'tag': ['button']}])]),
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
-         'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'}, 
+         'profile_labels': {
+                           },
+         'controls': {'url_base64': False, 'cnt_tot': 20, 'reverse': False, 'profile': 'default'}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
                                      idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -136,30 +138,28 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
     matches = []
     findS = AHkwargs.get('finds', finds)
-    srv_ids = {"Doodstream": "Doodstream",
-               "Streamtape": "Streamtape ",
-               "StreamSB": "Streamsb",
-               "VOE": "voe",
-               "MIXdrop": "Mixdrop",
-               "Upstream": "Upstream"}
-    for elem in matches_int:
+    
+    data = AlfaChannel.httptools.downloadpage(item.url, **kwargs).data
+    
+    pornstar = scrapertools.find_single_match(data, 'Cast:</strong>\s*([^<]+)')
+    item.plot = AlfaChannel.unify_custom('', item, {'play': pornstar})
+    
+    videos = scrapertools.find_multiple_matches(data, '\{"label":"[^"]+","url":"([^"]+)"')
+    for elem in videos:
         elem_json = {}
         
         try:
-            elem_json['url'] = elem.get("href", "")
-            elem_json['server'] = elem.get_text(strip=True).capitalize()
-            if elem_json['server'] in ["Netu", "trailer"]: continue
-            if elem_json['server'] in srv_ids:
-                elem_json['server'] = srv_ids[elem_json['server']]
+            elem_json['url'] = elem
+            elem_json['server'] = ''
             elem_json['language'] = ''
         
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
-
+        
         if not elem_json.get('url', ''): continue
         matches.append(elem_json.copy())
-
+    
     return matches, langs
 
 

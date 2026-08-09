@@ -10,6 +10,8 @@ from core import httptools
 from core import urlparse
 
 # xvideos
+
+
 canonical = {
              'channel': 'xnxx', 
              'host': config.get_setting("current_host", 'xnxx', default=''), 
@@ -50,7 +52,6 @@ def submenu(item):
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url="%s%s/" %(host,item.id) ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", id=item.id))
     return itemlist
-
 
 
 def search(item, texto):
@@ -129,7 +130,7 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = ' data-id="(\d+)".*?'
+    patron = 'data-eid="([^"]+)".*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
     patron += 'title="([^"]+)".*?'
@@ -137,9 +138,7 @@ def lista(item):
     patron += '</span>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for id,url,scrapedthumbnail,scrapedtitle,scrapedtime,quality in matches:
-        url = urlparse.urljoin(item.url,url)
-        if "/search-video/" in url:
-            url = "%s/embedframe/%s" %(host, id)
+        url = urlparse.urljoin(host,"video-%s" % id)+"/a"
         if "acute\;" in scrapedtitle:
             scrapedtitle = scrapedtitle.replace("acute;", "").replace("&","")
         title = '[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s' % (scrapedtime,quality,scrapedtitle)

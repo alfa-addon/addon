@@ -57,13 +57,15 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['thumbs-list']}]),
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
-         'profile_labels': {'list_all_stime': dict([('find', [{'tag': ['span'], 'itemprop': ['duration']}]),
-                                                    ('get_text', [{'strip': True}])]),
-                            'list_all_quality': dict([('find', [{'tag': ['span'], 'class': ['hd']}]),
-                                                      ('get_text', [{'strip': True}])]),
+         'profile_labels': {
+                            # 'list_all_stime': dict([('find', [{'tag': ['span'], 'class': ['length']}]),
+                                                    # ('get_text', [{'strip': True}])]),
+                            # 'list_all_quality': dict([('find', [{'tag': ['span'], 'class': ['hd']}]),
+                                                      # ('get_text', [{'strip': True}])]),
                             'section_cantidad': dict([('find', [{'tag': ['span'], 'class': ['vids']}]),
-                                                      ('get_text', [{'strip': True}])])},
-         'controls': {'url_base64': False, 'cnt_tot': 32, 'reverse': False, 'profile': 'default'}, 
+                                                      ('get_text', [{'strip': True}])])
+                           },
+         'controls': {'url_base64': False, 'cnt_tot': 20, 'reverse': False, 'profile': 'default'}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
                                      idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -77,6 +79,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "latest-updates/"))
     itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=host + "most-popular/"))
     itemlist.append(Item(channel=item.channel, title="Mas Valorada" , action="list_all", url=host + "top_rated/"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "pornstars/?sort_by=total_videos", extra="PornStar"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/?sort_by=title", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url= host))
     return itemlist
@@ -91,7 +94,59 @@ def section(item):
 def list_all(item):
     logger.info()
     
-    return AlfaChannel.list_all(item, **kwargs)
+    # return AlfaChannel.list_all(item, **kwargs)
+    return AlfaChannel.list_all(item, matches_post=list_all_matches, **kwargs)
+
+
+def list_all_matches(item, matches_int, **AHkwargs):
+    logger.info()
+    matches = []
+    findS = AHkwargs.get('finds', finds)
+   
+    for elem in matches_int:
+        elem_json = {}
+        try:
+            elem_json['url'] = elem.a.get('href', '')
+            elem_json['title'] = elem.a.get('title', '') \
+                                 or elem.find(class_='title').get_text(strip=True) if elem.find(class_='title') else ''
+            if not elem_json['title']:
+                elem_json['title'] = elem.img.get('alt', '')
+            
+            thumbnail = elem.img.get('data-webp', '') or elem.img.get('data-original', '') \
+                                     or elem.img.get('data-src', '') \
+                                     or elem.img.get('src', '')
+            elem_json['thumbnail'] = re.sub(r"\d+x\d+/\d+.jpg", "preview.jpg",thumbnail)
+            elem_json['stime'] = elem.find(class_='length').get_text(strip=True) if elem.find(class_='length') else ''
+            if elem.find('span', class_=['hd']):
+                elem_json['quality'] = elem.find('span', class_=['hd']).get_text(strip=True)
+            
+            elem_json['premium'] = elem.find('i', class_='premiumIcon') \
+                                     or elem.find('span', class_=['ico-private', 'premium-video-icon']) or ''
+            
+            if elem.find('div', class_='videoDetailsBlock') \
+                                     and elem.find('div', class_='videoDetailsBlock').find('span', class_='views'):
+                elem_json['views'] = elem.find('div', class_='videoDetailsBlock')\
+                                    .find('span', class_='views').get_text('|', strip=True).split('|')[0]
+            elif elem.find('div', class_='views'):
+                elem_json['views'] = elem.find('div', class_='views').get_text(strip=True) 
+            elif elem.find('span', class_='video_count'):
+                elem_json['views'] = elem.find('span', class_='video_count').get_text(strip=True)
+            
+            if elem.find('a',class_='site'):
+                elem_json['canal'] = elem.find('a',class_='site').get_text(strip=True)
+            pornstars = elem.find_all('li', class_="pstar")
+            if pornstars:
+                for x, value in enumerate(pornstars):
+                    pornstars[x] = value.get_text(strip=True)
+                elem_json['star'] = ' & '.join(pornstars)
+        except:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
+        
+        if not elem_json['url']: continue
+        matches.append(elem_json.copy())
+    return matches
 
 
 def findvideos(item):
@@ -99,6 +154,33 @@ def findvideos(item):
     
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=None, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
+
+
+def play(item):
+    logger.info()
+    itemlist = []
+    
+    soup = AlfaChannel.create_soup(item.url, **kwargs)
+    if soup.find('div', class_='models-holder'):
+        pornstars = soup.find('div', class_='models-holder').find_all('a')
+        
+        for x, value in enumerate(pornstars):
+            pornstars[x] = value.get_text(strip=True)
+        pornstar = ' & '.join(pornstars)
+        pornstar = AlfaChannel.unify_custom('', item, {'play': pornstar})
+        lista = item.contentTitle.split('[/COLOR]')
+        pornstar = pornstar.replace('[/COLOR]', '')
+        pornstar = ' %s ' %pornstar
+        if AlfaChannel.color_setting.get('quality', '') in item.contentTitle:
+            lista.insert (2, pornstar)
+        else:
+            lista.insert (1, pornstar)
+        item.contentTitle = '[/COLOR]'.join(lista)
+    
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    
+    return itemlist
 
 
 def search(item, texto, **AHkwargs):

@@ -4,8 +4,8 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://uqload.(?:com|co|io|to|ws|\\w{2,4})/(?:embed-|)([a-z0-9]+).html",
-        "url": "https://uqload.net/embed-\\1.html"
+        "pattern": "https://uqload.(?:com|co|io|to|ws|\\w{2,4})/(?:embed-|e/|d/|)([a-z0-9]+)",
+        "url": "https://uqload.is/embed-\\1.html"
       }
     ]
   },

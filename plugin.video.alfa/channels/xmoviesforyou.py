@@ -35,6 +35,7 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
+
 timeout = 5
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
@@ -43,7 +44,9 @@ tv_path = ''
 language = []
 url_replace = []
 
-finds = {'find': {'find_all': [{'tag': ['article'], 'class': ['gap-2']}]},
+
+finds = {'find': dict([('find', [{'tag': ['section', 'main']}]),
+                                 ('find_all', [{'tag': ['a'], 'class': ['gap-2']}])]),
          'categories': dict([('find', [{'tag': ['main'], 'class': ['container']}]),
                              ('find_all', [{'tag': ['a'], 'href': re.compile("/(?:category|pornstar|studio)/[A-z0-9-]+(?:/|)")}])]),
          'search': {}, 
@@ -53,9 +56,8 @@ finds = {'find': {'find_all': [{'tag': ['article'], 'class': ['gap-2']}]},
          'next_page_rgx': [['\?page=d+', '?page=%s']], 
          'last_page': {}, 
          'plot': {}, 
-         'findvideos': {'find_all': [{'tag': ['a'], 'class': ['gap-3']}]},
-                       # dict([('find', [{'tag': ['div'], 'class': 'post_content'}]),
-                             # ('find_all', [{'tag': ['a'], '@ARG': 'href'}])]),
+         'findvideos': dict([('find', [{'tag': ['div'], 'class': ['lg:col-span-3']}]),
+                                       ('find_all', [{'tag': ['a'], 'class': ['gap-3']}])]),
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
@@ -113,29 +115,14 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
     matches = []
     findS = AHkwargs.get('finds', finds)
-    # srv_ids = {"Doodstream": "Doodstream",
-               # "dooood": "Doodstream",
-               # "vide0": "Doodstream",
-               # "ds2play": "Doodstream",
-               # "Streamtape": "Streamtape ",
-               # "streamSB": "Streamsb",
-               # "VOE": "voe",
-               # "mixdrop": "Mixdrop",
-               # "upstream": "Upstream"}
     
     for elem in matches_int:
         elem_json = {}
         
         try:
             elem_json['url'] = elem['href']
-            # if AlfaChannel.obtain_domain(elem_json['url']):
-                # elem_json['server'] = AlfaChannel.obtain_domain(elem_json['url']).split('.')[-2]
-            # if elem_json['server'] in ["Netu", "trailer"]: continue
             elem_json['server'] = ''
-            # if elem_json['server'] in srv_ids:
-                # elem_json['server'] = srv_ids[elem_json['server']]
             elem_json['language'] = ''
-        
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())

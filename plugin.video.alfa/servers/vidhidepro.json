@@ -4,11 +4,11 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:vidhide|mivalyo)(?:pro|pre|vip|plus|hub|).(?:com|\\w{2,4})/(?:f|v|/v|embed|d|file)/([A-z0-9]+)",
+        "pattern": "https://(?:vidhide|mivalyo|fapsharing)(?:pro|pre|vip|plus|hub|).(?:com|\\w{2,4})/(?:f|v|/v|embed|d|file)/([A-z0-9]+)",
         "url": "https://vidhidevip.com/v/\\1"
       },
       {
-        "pattern": "(https://(?:filelions|fviplions|azipcdn).(?:com|\\w{2,4})/(?:e|d|v|f|embed)/[a-z0-9]+)",
+        "pattern": "(https://(?:filelions|fviplions|azipcdn|morencius).(?:com|\\w{2,4})/(?:e|d|v|f|embed)/[a-z0-9]+)",
         "url": "\\1"
       },
       {

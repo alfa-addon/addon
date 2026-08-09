@@ -22,6 +22,7 @@ list_servers = []
 forced_proxy_opt = 'ProxySSL'
 
 #  https://www.eroticage.net/  100    https://www.erogarga.com/  
+#####  eroticage no contiene videos en la web
 
 canonical = {
              'channel': 'eroticage', 
@@ -76,7 +77,7 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="eroticage" , action="submenu", url= "https://www.eroticage.net/", chanel="eroticage", thumbnail = "https://i.postimg.cc/dVhYnmVg/eroticage-logo.jpg")) 
+    itemlist.append(Item(channel=item.channel, title="[COLOR red]eroticage[/COLOR]" , action="submenu", url= "https://www.eroticage.net/", chanel="eroticage", thumbnail = "https://i.postimg.cc/dVhYnmVg/eroticage-logo.jpg")) 
     itemlist.append(Item(channel=item.channel, title="erogarga" , action="submenu", url= "https://www.erogarga.com/", chanel="erogarga", thumbnail = "https://i.postimg.cc/wvtXxBg1/erogarga.png"))
     # itemlist.append(Item(channel=item.channel, title="" , action="submenu", url= "", chanel="", thumbnail = ""))
     # itemlist.append(Item(channel=item.channel, title="" , action="submenu", url= "", chanel="", thumbnail = ""))
@@ -176,8 +177,8 @@ def play(item):
         url = data['source'][0]['file']
     # else:
         # url = url
-    if ".m3u" in url:
-        url += "|Referer=%s" %AlfaChannel.host
+    # if ".m3u" in url:
+    url += "|Referer=%s" %AlfaChannel.host
     if not "meta" in url:
         itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url, plot=item.plot ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

@@ -8,15 +8,15 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|v.|)(?:fetishshrine|javbangers|fapnado|xozilla|camwhoresbay|pornrewind|megatube|zbporn|momvids|wankoz|4kporn|freeporn8|porndictator|fapster|rat|pornwhite|pornicom|hqbang|homemade|ebony8|pornditt|filtercams).(?:com|xxx)/(?:video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|v.|)(?:fetishshrine|javbangers|fapnado|xozilla|camwhoresbay|pornrewind|megatube|zbporn|momvids|wankoz|4kporn|freeporn8|porndictator|fapster|rat|pornwhite|pornicom|hqbang|homemade|ebony8|pornditt|filtercams).(?:com|\\w{2,4})/(?:video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:shooshtime|love4porn|submityourflicks|freehardcore|moviesand|interracial|feetporno|chubbyporn|cartoonporn|trannylime|gotgayporn|myporntape|bigtitslust|amateur8|thepornarea|motherporno|heroero).com/videos/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:shooshtime|love4porn|submityourflicks|freehardcore|moviesand|interracial|feetporno|chubbyporn|cartoonporn|trannylime|gotgayporn|myporntape|bigtitslust|amateur8|thepornarea|motherporno|heroero|allclassic).(?:com|\\w{2,4})/videos/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy|pornvase|sortporn|4wank|porncaper|camstreams|celebsroulette|pornve|xhand|baddies247|baddiesonly|vidzx).(?:com|\\w{2,4})/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy|pornvase|sortporn|4wank|porncaper|camstreams|celebsroulette|pornve|xhand|baddies247|baddiesonly|vidzx|xxthots|porntn|porndd).(?:com|\\w{2,4})/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -44,11 +44,11 @@
         "url": "https://heroero.com/videos/\\1/a/"
       },
       {
-        "pattern": "(https://\\w{2,4}.huyamba.\\w{2,4}/video/[0-9]+(?:/|))",
+        "pattern": "(https://(?:\\w{2,4}|claude).huyamba.\\w{2,4}/video/[0-9]+(?:/|))",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:mix.|x.|\\w{2,4}.|)(?:onlinetube|pornoreka).(?:tv|\\w{2,4})/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:\\w{2,4}|cloud).(?:onlinetube|pornoreka).(?:tv|\\w{2,4})/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

@@ -21,6 +21,7 @@ kwargs = {'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 6, 'ignor
 # https://www.porn00.org/ necesita "None"
 #  generate_mp4  ENCRYPT  https://www.porngrey.net/video/charlie-red-enjoys-anal-in-a-wild-gonzo-scene_v1/  
 
+
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     
@@ -75,7 +76,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             if "?br=" in url:
                 # url += "&rnd=" + str(int(datetime.now().timestamp() * 1000))
                 url += "&rnd=" + str(int(time.time() * 1000))
-            url += "|Referer=%s" % host
+            if not "analdin" in url:
+                url += "|Referer=%s" % host
             video_urls.append(['[ktplayer] %s' % quality, url])
         
         if "lq" in quality.lower() or "high" in quality.lower() or "low" in quality.lower():
@@ -92,7 +94,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     if not url:
         url = scrapertools.find_single_match(data, '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?')
-        url += "|Referer=%s" % host
+        if "allclassic.porn" in url:
+            url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, **kwargs).headers.get("location", "")
+        if not "allclassic.porn" in url:
+            url += "|Referer=%s" % host
+        
         video_urls.append(['[ktplayer]', url])
     return video_urls
 

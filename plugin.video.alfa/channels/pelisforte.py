@@ -25,8 +25,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'pelisforte', 
              'host': config.get_setting("current_host", 'pelisforte', default=''), 
-             'host_alt': ["https://www1.pelisforte.se/"], 
-             'host_black_list': ["https://pelisforte.co/"], 
+             'host_alt': ["https://www2.pelisforte.se/"], 
+             'host_black_list': ["https://www1.pelisforte.se/", "https://pelisforte.co/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -35,7 +35,8 @@ host = canonical['host'] or canonical['host_alt'][0]
 
 IDIOMAS = {'Subtitulado': 'VOSE', 'Latino': 'LAT', 'Castellano': 'CAST'}
 SERVER = {'swish': 'Streamwish', 'vgfplay': 'Vidguard', 'playpf': 'Tiwikiwi',
-          'filemoon': 'Filemoon', 'okhd': 'Okhd', 'bf0skv': 'Filemoon'}
+          'filemoon': 'Filemoon', 'okhd': 'Okhd', 'bf0skv': 'Filemoon',
+          'byse': 'Filemoon', 'w1tv': 'Kinoger'}
 
 list_language = list(IDIOMAS.values())
 list_servers = list(SERVER.values())
@@ -66,16 +67,16 @@ def mainlist(item):
                          url=host + "pelis/idiomas/subtituladas-p02", extra = "VOSE",
                          thumbnail=get_thumb("vose", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Sagas", action="section", url=host + "portal002",
+    # itemlist.append(Item(channel=item.channel, title="Sagas", action="section", url=host + "pelicula",
+                         # thumbnail=get_thumb("genres", auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host + "pelicula",
                          thumbnail=get_thumb("genres", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host + "portal002",
-                         thumbnail=get_thumb("genres", auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="Alfabetico", action="alphabet", url=host + "portal002",
+    itemlist.append(Item(channel=item.channel, title="Alfabetico", action="alphabet", url=host + "pelicula",
                          thumbnail=get_thumb('year', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Años", action="alphabet", url=host + "portal002",
+    itemlist.append(Item(channel=item.channel, title="Años", action="alphabet", url=host + "pelicula",
                          thumbnail=get_thumb('year', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
@@ -134,7 +135,6 @@ def list_all(item):
     return itemlist
 
 
-
 def section(item):
     logger.info()
     itemlist = []
@@ -175,6 +175,7 @@ def findvideos(item):
     soup = create_soup(item.url).find('section', class_='player')
     matches = soup.find_all("iframe")
     servers = soup.find_all("span", class_="server")
+    
     for elem, serv in zip(matches, servers):
         url = elem['data-src']
         url = url.replace("?h=", "r.php?h=")
@@ -213,8 +214,11 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
+    
     url = httptools.downloadpage(item.url).url
-    if "vgfplay" not in url and "listeamed" not in url and "bf0skv" not in url:
+    
+    # if "vgfplay" not in url and "listeamed" not in url and "bf0skv" not in url:
+    if "okhd" in url:
         url += "|Referer=%s" %item.url
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

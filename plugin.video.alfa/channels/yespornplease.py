@@ -28,17 +28,17 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-
+    
     autoplay.init(item.channel, list_servers, list_quality)
-
+    
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
     itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host ))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "xxx-categories/" ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
-
+    
     autoplay.show_option(item.channel, itemlist)
-
+    
     return itemlist
 
 
@@ -61,7 +61,6 @@ def categorias(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='box')
     for elem in matches:
-        logger.debug(elem)
         if elem.find('iframe'): continue
         url = elem.a['href']
         title = elem.figcaption.text.strip()
@@ -77,10 +76,10 @@ def categorias(item):
 def canal(item):
     logger.info()
     itemlist = []
-    # itemlist.append(Item(channel=item.channel, title="BangBros" , action="lista", url=host + "/bangbros/"))
-    itemlist.append(Item(channel=item.channel, title="Brazzers" , action="lista", url=host + "/brazzers/"))
-    itemlist.append(Item(channel=item.channel, title="Reality Kings" , action="lista", url=host + "/reality-kings/"))
-    itemlist.append(Item(channel=item.channel, title="SexMex" , action="lista", url=host + "/sexmex/"))
+    # itemlist.append(Item(channel=item.channel, title="BangBros" , action="lista", url=host + "bangbros/"))
+    itemlist.append(Item(channel=item.channel, title="Brazzers" , action="lista", url=host + "brazzers/"))
+    itemlist.append(Item(channel=item.channel, title="Reality Kings" , action="lista", url=host + "reality-kings/"))
+    itemlist.append(Item(channel=item.channel, title="SexMex" , action="lista", url=host + "sexmex/"))
     # soup = create_soup(item.url)
     # matches = soup.find('div', class_='text-center').find_all('a', href=re.compile(r"^https://yespornpleasexxx.com/")) #.select('a[href^="https://yespornpleasexxx.com/"]')
     # for elem in matches:

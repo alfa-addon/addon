@@ -22,8 +22,8 @@ list_servers = ['lauchacohete']
 canonical = {
              'channel': 'pelis182', 
              'host': config.get_setting("current_host", 'pelis182', default=''), 
-             'host_alt': ["https://pelis182.com/"], 
-             'host_black_list': ["https://www.pelis182.com/"], 
+             'host_alt': ["https://pelis182.net/"], 
+             'host_black_list': ["https://pelis182.com/", "https://www.pelis182.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -56,7 +56,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Películas', url=host, action='list_all',
                          thumbnail=get_thumb('movies', auto=True)))
         
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'category/series/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'category/series/', action='list_all', c_type = "tvshow",
                          thumbnail=get_thumb('tvshows', auto=True)))
     
     itemlist.append(Item(channel=item.channel, title='Categorias', url=host, action='categories',
@@ -102,8 +102,9 @@ def list_all(item):
     except Exception as e:
         logger.error("URL: {0}\nError: {1}".format(str(item.url), str(e)))
         return itemlist
-
+    
     for elem in matches:
+        season = ""
         url = elem.a["href"]
         title = elem.a["title"].strip()
         match = re.search(r'\((\d{4})\)\s*$', title)
@@ -114,7 +115,10 @@ def list_all(item):
         title = re.sub(r'\s+\(.*?\)\s*$', '', title)
         season_pattern = r'(?i)\s+–\s+Temporada\s+(\d+)'
         season = scrapertools.find_single_match(title, season_pattern)
-        c_type = "tvshow" if season else "movie"
+        if item.c_type and item.c_type != 'search': 
+            c_type = item.c_type
+        else:
+            c_type = "tvshow" if season else "movie"
         thumbnail = elem.find("img")["src"]
         
         new_item = Item(channel=item.channel,
@@ -157,7 +161,8 @@ def list_all(item):
                                 title=title,
                                 url=next["href"],
                                 thumbnail=get_thumb("next.png"),
-                                action='list_all')
+                                action='list_all',
+                                c_type = item.c_type)
             
                 itemlist.append(new_item)
     except Exception as e:

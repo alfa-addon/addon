@@ -34,6 +34,7 @@ url_api = "https://store.externulls.com"
 
 # https://store.externulls.com/facts/tag?id=27173&limit=48&offset=0
 # https://store.externulls.com/tag/facts/tags?get_original=true&slug=index
+# https://store.externulls.com/tag/recommends?type=brand&slug=index
 
 timeout = 5
 kwargs = {}
@@ -69,9 +70,9 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Útimos videos", action="list_all", url= url_api + "/facts/tag?id=27173&limit=48&offset=0"))
-    itemlist.append(Item(channel=item.channel, title="Canal", action="section", url= url_api + "/tag/facts/tags?get_original=true&slug=index", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstar", action="section", url= url_api + "/tag/facts/tags?get_original=true&slug=index", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias", action="section", url= url_api + "/tag/facts/tags?get_original=true&slug=index", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Canal", action="section", url= url_api + "/tag/recommends?type=brand&slug=index", extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstar", action="section", url= url_api + "/tag/recommends?type=person&slug=index", extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="section", url= url_api + "/tag/recommends?type=other&slug=index", extra="Categorias"))
     # itemlist.append(item.clone(title="Buscar...", action="search"))
     return itemlist
 
@@ -90,18 +91,9 @@ def section_matches(item, matches_int, **AHkwargs):
     if not item.orientation:
         item.orientation = "str"
     
-    if "Categorias" in item.extra: 
-        matches_int = matches_int.get('other', {}).copy()
-    elif "Canal" in item.extra: 
-        matches_int = matches_int.get('productions', {}).copy()
-    else:
-        matches_int = matches_int.get('human', {}).copy()
-        logger.debug(matches_int)
-    
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-        
         try:
             elem_json['thumbnail'] = ""
             id = elem["id"]

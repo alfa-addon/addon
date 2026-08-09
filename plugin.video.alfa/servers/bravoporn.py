@@ -90,7 +90,10 @@ def get_video_url(page_url, video_password):
                 
                 # url += "|Referer=%s/" % host
                 headers = httptools.default_headers.copy() 
-                url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+               
+                if not "xxdbx" in page_url:
+                    url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+                    
                 video_urls.append(["[%s] %s" % (server, quality), url])
     
     video_urls.sort(key=lambda item: int(re.sub("\D", "", item[0])))

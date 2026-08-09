@@ -3,23 +3,14 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-import re
-import sys
-from core.item import Item
-from core import httptools
-from core import servertools
-from core import scrapertools
-from core import tmdb
+import ast
+from core import httptools, servertools, tmdb, urlparse
 from platformcode import logger, config
 from channelselector import get_thumb
-from bs4 import BeautifulSoup
-from modules import filtertools
+from core.item import Item
 from modules import autoplay
-import datetime
+from modules import filtertools
+from core.jsontools import json
 
 
 list_language = ["LAT"]
@@ -27,168 +18,394 @@ list_language = ["LAT"]
 list_quality = []
 list_servers = ["streampe", "fembed", "jawcloud"]
 
+forced_proxy_opt = '' # 'ProxyDirect'
+
+# https://lamovie.org/   https://lamovie.la/   https://allpeliculas.la/
+
+
 canonical = {
              'channel': 'allpeliculas', 
              'host': config.get_setting("current_host", 'allpeliculas', default=''), 
-             'host_alt': ["https://allpeliculas.se/"], 
-             'host_black_list': ["https://allpeliculas.ac/"], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'host_alt': ["https://allpeliculas.la/"], 
+             'host_black_list': ["https://allpeliculas.se/", "https://allpeliculas.ac/"], 
+             'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'cf_assistant': False, 'CF_stat': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
+             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             # 'CF': False, 'CF_test': False, 'alfa_s': True
+             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             # 'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-forced_proxy_opt = 'ProxyDirect'
-this_year = datetime.date.today().year
 
 
-def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
+def read_api(type = 'movie', filter = "", _id = 0, season = 1, page = 1, terms = "busca"):
     logger.info()
-
-    if referer:
-        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}, canonical=canonical).data
+    
+    try:
+        url_filter = urlparse.urlencode({'filter':"{{{0}}}".format(filter)})
+    except Exception as e:
+        url_filter = urlparse.urlencode({'filter':"{}"})
+        logger.error(str(e))
+    
+    url_terms = urlparse.quote_plus(str(terms))
+    
+    ##### https://allpeliculas.la/wp-api/v1/listing/tax/years
+    ##### https://allpeliculas.la/wp-api/v1/listing/tax/genres
+    ##### https://allpeliculas.la/wp-api/v1/listing/tax/quality
+    
+    ######"https://la.movie/wp-api/v1/single/episodes/list?_id=7606&season=1&page=2&postsPerPage=15
+    ######"https://la.movie/wp-api/v1/player?postId=29285&demo=0"
+    ######"https://la.movie/wp-api/v1/search?filter=%7B%7D&postType=any&q=loca&postsPerPage=26"
+    ######"https://la.movie/wp-api/v1/listing/movies?filter=%7B%22genres%22%3A%5B8%5D%7D&page=1&orderBy=latest&order=desc&postType=movies&postsPerPage=12"
+    
+    if type == 'season':
+        url = "{0}wp-api/v1/single/episodes/list?_id={1}&season={2}&page={3}&postsPerPage=15".format(host, _id, season, page)
+    elif type == 'links':
+        url = "{0}wp-api/v1/player?postId={1}&demo=0".format(host, _id)
+    elif type == 'search':
+        url = "{0}wp-api/v1/search?{1}&postType=any&q={2}&postsPerPage=26".format(host, url_filter, url_terms)
     else:
-        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, canonical=canonical).data
-
-    if unescape:
-        data = scrapertools.unescape(data)
-
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-
-    return soup
+        type = "{0}s".format(type)
+        url = "{0}wp-api/v1/listing/{1}?{2}&page={3}&orderBy=latest&order=desc&postType={1}&postsPerPage=20".format(host, type, url_filter, page)
+    
+    referer = host
+    
+    response = httptools.downloadpage(url, referer=referer, ignore_response_code=True, hide_infobox=True)
+    if response.code != 200:
+        return False
+    return json.loads(response.data)
 
 
 def mainlist(item):
     logger.info()
-
+    itemlist = []
+    
     autoplay.init(item.channel, list_servers, list_quality)
-
-    itemlist = list()
-
-    itemlist.append(Item(channel=item.channel, title="Estrenos", url=host + "year_pelicula/%s/" % this_year,
-                         action="list_all", thumbnail=get_thumb("premieres", auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="Todas", url=host + "peliculas", action="list_all",
-                         thumbnail=get_thumb("all", auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="Generos", url=host + "peliculas", action="section",
-                         thumbnail=get_thumb("all", auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="Buscar...", url=host+ "?s=",
-                         action="search", thumbnail=get_thumb("search", auto=True)))
-
+    
+    itemlist.append(Item(channel=item.channel, title="Películas",
+                         action="list_all",
+                         thumbnail=get_thumb('movies', auto=True),
+                         c_type='movie'))
+    itemlist.append(Item(channel=item.channel, title="Series",
+                         action="list_all",
+                         thumbnail=get_thumb('tvshows', auto=True),
+                         c_type='tvshow'))
+    itemlist.append(Item(channel=item.channel, title="Animes",
+                         action="list_all",
+                         thumbnail=get_thumb('anime', auto=True),
+                         c_type='anime'))
+    itemlist.append(Item(channel=item.channel, title="Por Genero",
+                         action="submenu",
+                         thumbnail=get_thumb('genres', auto=True),
+                         extra='genres'))
+    itemlist.append(Item(channel=item.channel, title="Por Año",
+                         action="submenu",
+                         thumbnail=get_thumb('year', auto=True),
+                         extra='years'))
+    itemlist.append(Item(channel=item.channel, title="Buscar",
+                         action="search",
+                         thumbnail=get_thumb('search', auto=True),
+                         c_type='search'))
+    
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality, list_quality)
+    
     autoplay.show_option(item.channel, itemlist)
+    
+    return itemlist
 
+
+def submenu(item):
+    logger.info()
+    itemlist = list()
+    
+    itemlist.append(item.clone( title="Películas",
+                                action="list_filter",
+                                thumbnail=get_thumb('movies', auto=True),
+                                c_type='movie'))
+    
+    itemlist.append(item.clone( title="Series",
+                                action="list_filter",
+                                thumbnail=get_thumb('tvshows', auto=True),
+                                c_type='tvshow'))
+    
+    itemlist.append(item.clone( title="Animes",
+                                action="list_filter",
+                                thumbnail=get_thumb('anime', auto=True),
+                                c_type='anime'))
+    
+    return itemlist
+
+
+def list_filter(item):
+    logger.info()
+    itemlist = list()
+    
+    from core import scrapertools
+    
+    data = httptools.downloadpage(host).data
+    site_config = scrapertools.find_single_match(data, r"siteConfig\s*=\s*([^<]+)")
+    
+    if site_config:
+        site_config = site_config.replace(r"\/", "/")
+        pattern = r"{0}:([^\n]+),".format(item.extra)
+        filter_data = scrapertools.find_single_match(site_config, pattern)
+        
+        try:
+            data = ast.literal_eval(filter_data)
+            
+            for filter in data:
+                filter_string = "\"{0}\":[{1}]".format(item.extra, filter)
+                
+                itemlist.append(
+                    item.clone(
+                        title=str(data[filter]['name']).replace('&amp;', '&'),
+                        action="list_all",
+                        extra=filter_string
+                    )
+                )
+        
+        except Exception as e:
+            logger.error(str(e))
+    
     return itemlist
 
 
 def list_all(item):
     logger.info()
-
     itemlist = list()
-
-    soup = create_soup(item.url)
-    matches = soup.find("ul", class_="cc-list")
-
-    for elem in matches.find_all("article"):
-        url = elem.find("a", class_="btn")["href"]
-
-        full_title = elem.h2.text
-        if "netflix" in full_title.lower():
-            continue
-        try:
-            title, year = scrapertools.find_single_match(full_title, "(.*) \((\d{4})\)")
-        except:
-            title = full_title
-            year = "-"
-        thumb = elem.img["src"]
-
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos", thumbnail=thumb,
-                             contentTitle=title, infoLabels={"year": year}, contentType='movie'))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-
-    # Pagination
-    try:
-        next_page = soup.find("a", class_="next")["href"]
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
-    except:
-        pass
-
+    
+    pagination = False
+    filter = item.extra
+    
+    if item.c_type in ['movie', 'tvshow', 'anime']:
+        page = 1
+        if item.page:
+            page = item.page
+        data_json = read_api(type = item.c_type, filter = filter, page = page)
+          
+    elif item.c_type in ['search']:
+        data_json = read_api(type = item.c_type, terms = item.terms)
+    
+    if not data_json:
+        return itemlist
+    
+    content_list = data_json.get('data', {}).get('posts',{})
+    pagination = data_json.get('data', {}).get('pagination',{})
+    
+    for content in content_list:
+        infoLabels = {}
+        item_args = {}
+        
+        item_args['channel'] = item.channel
+        
+        if 'type' in content:
+            item.c_type = content['type'].rstrip('s')
+        
+        if item.c_type in ['tvshow', 'episode', 'anime']:
+            item_args['contentSerieName'] = content['original_title']
+        else:
+            item_args['contentTitle'] = content['original_title']
+        
+        if item.c_type == 'episode':
+            infoLabels['season'] = content['season_number']
+            infoLabels['episode'] = content['episode_number']
+            item_args['title'] = "{}x{} {}".format(infoLabels['season'], infoLabels['episode'], item_args['contentSerieName'])
+        else:
+            item_args['title'] = content['original_title']
+        
+        item_args['language'] = get_lang(content['lang'])
+        item_args['action'] = 'findvideos' if item.c_type in ['movie','episode'] else 'seasons'  
+        item_args['c_type'] = item.c_type
+        item_args['contentType'] = 'tvshow' if item.c_type == 'anime' else item.c_type
+        item_args['_id'] = content['_id']
+        item_args['infoLabels'] = infoLabels
+        
+        new_item = Item(**item_args)
+        new_item.context = filtertools.context(new_item, list_language, list_quality)
+        new_item.context.extend(autoplay.context)
+        
+        itemlist.append(new_item)
+    
+    tmdb.set_infoLabels_itemlist(itemlist, force_no_year=True, seekTmdb=True)
+    
+    # Paginacion
+    if pagination and pagination['next_page_url']:
+        itemlist.append(item.clone(
+                                   action="list_all",
+                                   title=">> {} {}/{}".format(config.get_localized_string(30992), pagination['current_page'], pagination['last_page']),
+                                   page=page+1,
+                                   thumbnail=get_thumb("next.png")
+                                   ))
+    
     return itemlist
 
 
-def section(item):
+def episodios(item):
     logger.info()
-
-    itemlist = list()
-    matches = create_soup(host).find_all("li", class_="inline-flex")
-
-    for elem in matches:
-        title = elem.a.text
-        url = elem.a["href"]
-
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
-
+    itemlist = []
+    
+    templist = seasons(item)
+    
+    if templist[0].contentSeason:
+        for season in templist:
+            itemlist += seasons(season)
+            lastitem = itemlist[-1]
+            while isinstance(lastitem.page, int):
+                itemlist = itemlist[:-2]
+                itemlist += seasons(lastitem)
+                lastitem = itemlist[-1]
+            itemlist = itemlist[:-1]
+    else:
+        itemlist += templist
+        lastitem = itemlist[-1]
+        while isinstance(lastitem.page, int):
+            itemlist = itemlist[:-2]
+            itemlist += seasons(lastitem)
+            lastitem = itemlist[-1]
+        itemlist = itemlist[:-1]
+    
     return itemlist
+
+
+def seasons(item):
+    logger.info()
+    itemlist = []
+    
+    if not isinstance(item.contentSeason, int):
+        
+        data_json = read_api(type = 'season', _id = item._id, season = 1, page = 1)
+        
+        if not data_json:
+            return itemlist
+        
+        if len(data_json['data']['seasons']) == 1:
+            return seasons(item.clone(contentSeason=data_json['data']['seasons'][0]))
+        
+        for season in data_json['data']['seasons'][::-1]:
+            season = int(season or 1)
+            new_item = item.clone(
+                    contentSeason=season,
+                    title=(config.get_localized_string(60027) % season) if season > 0 else config.get_localized_string(70483),
+                    contentType='season'
+                )
+            
+            itemlist.append(new_item)
+            
+        tmdb.set_infoLabels_itemlist(itemlist, force_no_year=True, seekTmdb=True)
+    
+        return itemlist
+    
+    page = 1
+    if item.page:
+        page = item.page
+    
+    data_json = read_api(type = 'season', _id = item._id, season = item.contentSeason, page = page)
+    
+    if not data_json:
+        return itemlist
+    
+    infoLabels = item.infoLabels
+    for episode in data_json['data']['posts']:
+        infoLabels['season'] = episode['season_number']
+        infoLabels['episode'] = episode['episode_number']
+        itemlist.append(Item(channel=item.channel, contentType='episode', title=episode['title'], 
+                             contentSerieName=item.contentSerieName, _id=episode['_id'],
+                             action='findvideos', c_type='episode', infoLabels=infoLabels))
+    
+    tmdb.set_infoLabels_itemlist(itemlist, force_no_year=True, seekTmdb=True)
+    
+    if item.contentSerieName != '' and config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(
+            Item(channel=item.channel, title=config.get_localized_string(70146), _id=item._id,
+                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
+    
+    # Paginacion
+    try:
+        pagination = data_json['data']['pagination']
+        
+        if pagination['next_page_url']:
+            itemlist.append(
+                item.clone(
+                    contentSeason=item.contentSeason,
+                    title=">> {} {}/{}".format(config.get_localized_string(30992), pagination['current_page'], pagination['last_page']),
+                    page=page+1,
+                    thumbnail=get_thumb("next.png"),
+                    contentType='season'
+                )
+            )
+    except Exception:
+        pass
+    
+    return itemlist
+
+
+def search(item, texto):
+    logger.info()
+    
+    if texto != '':
+        return list_all(item.clone(terms=texto))
 
 
 def findvideos(item):
     logger.info()
-
-    itemlist = list()
-
-    soup = create_soup(item.url, forced_proxy_opt=forced_proxy_opt)
-    matches = soup.find("div", class_="players").find_all("iframe")
-
-    for elem in matches:
-        url = elem["data-src"]
-        itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play",
-                        language="LAT", infoLabels=item.infoLabels))
-
-    itemlist = servertools.get_servers_itemlist(itemlist)
-
-    # Requerido para FilterTools
-
-    itemlist = filtertools.get_links(itemlist, item, list_language)
-
-    # Requerido para AutoPlay
-
-    autoplay.start(itemlist, item)
-
-    return itemlist
-
-def search(item, texto):
-    logger.info()
-    try:
-        texto = texto.replace(" ", "+")
-        if texto != '':
-            item.url += texto
-            return list_all(item)
-        else:
-            return []
-    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
-
-
-def newest(categoria):
-    logger.info()
     itemlist = []
-    item = Item()
-    try:
-        if categoria in ['peliculas','latino']:
-            item.url = host + "year_pelicula/%s/" % this_year
-            itemlist = list_all(item)
-
-            if itemlist[-1].action == "list_all":
-                itemlist.pop()
-    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("{0}".format(line))
-        return []
     
+    content_list = read_api(type = 'links', _id = item._id)
+    if not content_list:
+        return itemlist
+    
+    try:
+        content = sorted(content_list['data']['embeds'], key=lambda x: x['lang'], reverse=True)
+        content += sorted(content_list['data']['downloads'], key=lambda x: x['lang'], reverse=True)
+    except Exception as e:
+        logger.error(str(e))
+        return itemlist
+    
+    for video in content:
+        if not "html?v=1" in video['url']:
+            url = video['url']
+            if "Latino/Inglés" in video['lang']: video['lang'] = "DUAL"
+            itemlist.append(Item(channel=item.channel, server=servertools.get_server_from_url(url), url=url, action='play', quality=video['quality'],
+                                 language=video['lang'], infoLabels=item.infoLabels))
+            # itemlist.append(Item(channel=item.channel, title='%s', url=video['url'], action='play', quality=video['quality'],
+                                # language=video['lang'], infoLabels=item.infoLabels))
+    
+    # itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+    
+    # Filtra los enlaces cuyos servidores no fueron resueltos por servertools
+    # itemlist = [i for i in itemlist if i.title != "Directo"]
+    
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
+    
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos' and not item.contentSerieName:
+        itemlist.append(Item(channel=item.channel, title=config.get_localized_string(70146),
+                             _id=item._id, action="add_pelicula_to_library", extra="findvideos",
+                             contentTitle=item.contentTitle))
+
     return itemlist
+
+
+def get_lang(lang_ids):
+    langs = list()
+# [356, 357]
+    lang_list = {
+                 "356":"latino",
+                 "357":"ingles",
+                 "58654":"japones",
+                 "58655":"subtitulado",
+                 "58653":"castellano"}
+    
+    for lang_id in lang_ids:
+        langs.append(lang_list[str(lang_id)])
+    
+    if len(langs) == 0:
+        langs.append('latino')
+    
+    return langs
+

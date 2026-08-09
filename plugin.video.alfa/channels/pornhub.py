@@ -26,8 +26,11 @@ canonical = {
              'host': config.get_setting("current_host", 'pornhub', default=''), 
              'host_alt': ["https://es.pornhub.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'cf_assistant': False, 'CF_stat': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
+             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             # 'CF': False, 'CF_test': False, 'alfa_s': True
             }
 
 host = canonical['host'] or canonical['host_alt'][0]
@@ -169,6 +172,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['thumbnail'] = elem.img.get('data-original', '') \
                                      or elem.img.get('data-mediumthumb', '') \
                                      or elem.img.get('src', '')
+            elem_json['thumbnail'] += "|Referer=%s" %host
             elem_json['stime'] = elem.find(class_='duration').get_text(strip=True) if elem.find(class_='duration') else ''
             if elem.find('span', class_='views'):
                 elem_json['views'] = elem.find('span', class_='views').get_text(strip=True)

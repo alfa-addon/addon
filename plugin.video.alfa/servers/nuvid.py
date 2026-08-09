@@ -3,6 +3,7 @@ from core import httptools
 from core import scrapertools
 from platformcode import logger
 
+
 def test_video_exists(page_url):
     logger.info()
     global server, vid
@@ -15,7 +16,6 @@ def test_video_exists(page_url):
     vid = scrapertools.find_single_match(page_url, '([0-9]+)')
     
     data = httptools.downloadpage(page_url).data
-    logger.debug(data)
     if "was deleted" in data\
        or "not Found" in data:
        # or "small" in data:

@@ -23,7 +23,7 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-    referer = "https://lauchacohete.top/"
+    referer = "https://barmonrey.com/" #"https://lauchacohete.top/"
     headers = "|Referer=%s" % referer
     global data
     video_urls = []

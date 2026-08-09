@@ -128,10 +128,13 @@ def play(item):
     
     if soup.find_all('a', class_="gold"):
         pornstars = soup.find_all('a', href=re.compile("/actrices-porno/[A-z0-9-]+/"))
-        pornstar = []
-        for x, value in enumerate(pornstars):
-            if not "Actriz Porno" in value.get_text(strip=True):
-                pornstar[x] = value.get_text(strip=True)
+        
+        pornstar = [
+                     link.get_text(strip=True)
+                     for link in pornstars
+                     if "Actriz Porno" not in link.get_text(strip=True)
+                    ]
+        
         if pornstar:
             pornstar = ' & '.join(pornstar)
             pornstar = AlfaChannel.unify_custom('', item, {'play': pornstar})
@@ -140,7 +143,6 @@ def play(item):
             pornstar = ' %s' %pornstar
             lista.insert (1, pornstar)
             item.contentTitle = '[/COLOR]'.join(lista)
-            logger.debug(item.contentTitle)
     
     
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))

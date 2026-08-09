@@ -4,22 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:xhgeo|xhwide|xhamster).com/(?:embed|videos|movies)/([A-z0-9-]+)",
-        "url": "https://xhamster.com/videos/\\1"
-      },
-      {
-        "pattern": "xhamster.com/xembed.php\\?video=([A-z0-9-]+)",
-        "url": "https://xhamster.com/videos/\\1"
-      },
-      {
-        "pattern": "(https://xh.(?:video|partners)/(?:v|e|p)/[A-z0-9-_]+)",
+        "pattern": "(https://bunkr.\\w{2,4}/e/[A-z0-9]+(?:/|))",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "xhamster",
-  "name": "xhamster",
+  "id": "bunkr",
+  "name": "bunkr",
   "settings": [
     {
       "default": false,

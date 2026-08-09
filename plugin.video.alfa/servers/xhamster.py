@@ -23,7 +23,7 @@ def test_video_exists(page_url):
                      'Origin': host,
                     }
     
-    if "xh.video" in page_url:
+    if "xh." in page_url:
         redir = httptools.downloadpage(page_url, **kwargs).url
         redir = redir.replace('embed', 'videos')
         response = httptools.downloadpage(redir, **kwargs)
