@@ -2,18 +2,14 @@
         [B]Estos son los cambios para esta versión:[/B]
         
         • +18
-        • AnimeJara
-        • CineCalidad
-        • Divxtotal
+        • Allpeliculas
         • Dontorrent
-        • EntrePeliculasySeries
-        • Eztv
         • HDFull
-        • Hacktorrent
-        • HenaoJara
-        • JKanime
-        • MejorTorrent
-        • Pelispanda
-        • SeriesKao
-        • SoloLatino
+        • LaMovie
+        • Pelis182
+        • PelisForte
+        • Pelisflix
+        • PoseidonHD
+        • RetroTV
+        • TubeOnLine
         
