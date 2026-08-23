@@ -51,6 +51,7 @@ def get_cl(
     httptools_obj=None,
     elapsed=0,
     challenges=0,
+    dns_params={},
     **kwargs
 ):
 
@@ -102,9 +103,11 @@ def get_cl(
             challenges=challenges,
             httptools_obj=httptools,
             from_get_cl=True,
+            dns_params=dns_params,
             **kwargs
         )
 
+    dns_params = dns_params or opt.get("canonical", {}).get("dns_params", {})
     extraPostDelay = opt.get("canonical", {}).get("cf_extraPostDelay", extraPostDelay)
     if timeout > 3 and timeout < 15:
         timeout = 20
@@ -461,6 +464,7 @@ def get_cl(
                                 httptools_obj=httptools,
                                 Cookie=Cookie,
                                 challenges=challenges+1,
+                                dns_params=dns_params,
                                 **kwargs
                             )
                         elif challenge_url and isinstance(challenge_url, dict) and not challenge_url.get("missing", False):
@@ -569,6 +573,7 @@ def get_cl(
                     alfa_s=False,
                     Cookie=Cookie,
                     challenges=challenges+1,
+                    dns_params=dns_params,
                     **kwargs
                 )
         elif host == "a":
@@ -626,6 +631,7 @@ def get_source(
     elapsed=0,
     httptools_obj=None,
     challenges=0,
+    dns_params={},
     **kwargs
 ):
 
@@ -674,6 +680,7 @@ def get_source(
         opt["cf_jscode"] = None
         opt["cf_cookies_names"] = {"cf_clearance": False}
 
+    dns_params = dns_params or opt.get("canonical", {}).get("dns_params", {})
     if opt.get("cf_cookie_send"):
         Cookie = opt.get("cf_cookie_send")
     if headers is None and opt.get("headers") and isinstance(opt["headers"], dict):
@@ -1012,6 +1019,7 @@ def get_source(
                                 httptools_obj=httptools,
                                 Cookie=Cookie,
                                 challenges=challenges+1,
+                                dns_params=dns_params,
                                 **kwargs
                             )
 
@@ -1129,6 +1137,7 @@ def get_source(
                     httptools_obj=httptools,
                     Cookie=Cookie,
                     challenges=challenges+1,
+                    dns_params=dns_params,
                     **kwargs
                 )
 

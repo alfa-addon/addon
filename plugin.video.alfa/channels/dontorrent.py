@@ -29,10 +29,10 @@ debug = config.get_setting('debug_report', default=False)
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.support/", 
+             'host_alt': ["https://dontorrent.management/", 
                           "https://todotorrents.org/", "https://elitedivx.net/", "https://divxatope.net/", "https://reinventorrent.org"], 
-             'host_alt_new': ["https://dontorrent.support/"], 
-             'host_black_list': ["https://dontorrent.science/", 
+             'host_alt_new': ["https://dontorrent.management/"], 
+             'host_black_list': ["https://dontorrent.review/", "https://dontorrent.support/", "https://dontorrent.science/", 
                                  "https://dontorrent.rocks/", "https://dontorrent.racing/", "https://lilatorrent.com/", 
                                  "https://dontorrent.reisen/", "https://dontorrent.pink/", "https://dontorrent.cfd/", 
                                  "https://dontorrent.photos/", "https://dontorrent.promo/", "https://dontorrent.info/", 
@@ -127,7 +127,7 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['text-center']}]},
          'get_quality': {}, 
          'get_quality_rgx': [], 
          'next_page': {}, 
-         'next_page_rgx': [[r'\/page\/\d+', '/page/%s'], [r'&pagina=\d+', '&pagina=%s']], 
+         'next_page_rgx': [[r'\/page\/\d+', '/page/%s'], [r'&pagina=\d+', '&pagina=%s'], [r'&p=\d+', '&p=%s']], 
          'last_page': dict([('find', [{'tag': ['ul'], 'class': ['pagination']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-2]}]), 
                             ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': r'(\d+)'}])]), 
@@ -160,12 +160,13 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['text-center']}]},
          'controls': {'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 15, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': True, 
                       'host_torrent': host_torrent, 'btdigg': True, 'btdigg_search': True, 'duplicates': [], 'dup_list': 'title', 
-                      'force_find_last_page': [5, 999, 'url'], 'btdigg_quality_control': True},
+                      'force_find_last_page': [3, 999, 'url'], 'btdigg_quality_control': True},
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
                                    list_quality_movies=list_quality_movies, list_quality_tvshow=list_quality_tvshow, 
                                    channel=canonical['channel'], actualizar_titulos=True, url_replace=url_replace, debug=debug)
+if host != canonical['host'] and channel in canonical['host']: canonical['host_alt_new'][0] = canonical['host']
 host_new = True if canonical.get('host', 'xyz') in canonical.get('host_alt_new', []) else False
 debug = debug or canonical.get('print_DEBUG', False)
 
@@ -225,6 +226,7 @@ def configuracion(item):
 
 
 def submenu(item):
+    global host, host_new
     logger.info()
 
     itemlist = []
@@ -258,6 +260,8 @@ def submenu(item):
 
     soup = AlfaChannel.create_soup(host, **kwargs)
     matches_int = AlfaChannel.parse_finds_dict(soup, findS['sub_menu'])
+    if host != canonical['host'] and channel in canonical['host']: canonical['host_alt_new'][0] = canonical['host']
+    host = canonical['host'] or canonical['host_alt'][0]
     host_new = True if canonical.get('host', 'xyz') in canonical.get('host_alt_new', []) else False
 
     # En películas las categorías se llaman con Post
@@ -390,8 +394,7 @@ def list_all(item):
     elif item.c_type == 'search':
         findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-4', 'card shadow-sm']}]}
 
-        findS['last_page'] = {}
-        if findS['controls'].get('force_find_last_page'): del findS['controls']['force_find_last_page']
+        if host_new: findS['controls'].update({'force_find_last_page': [3, 999, 'post']})
     
     return AlfaChannel.list_all(item, matches_post=list_all_matches, generictools=True, finds=findS, **kwargs)
 
@@ -538,9 +541,11 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
                 matches.append(elem_json.copy())
 
+            """
             if AlfaChannel.last_page in [9999, 99999] and items_found:
                 AlfaChannel.last_page = int(float(items_found_save / float(findS['controls']['cnt_tot'])  + 0.500009))
                 AlfaChannel.cnt_tot = items_found_save
+            """
 
         elif item.c_type in ['peliculas', 'series']:
             for elem_a in elem.find_all('a'):
@@ -871,7 +876,7 @@ def search(item, texto, **AHkwargs):
                 item.url = item.referer = host + 'buscar/' + texto
             else:
                 item.url = item.referer = host + 'buscar'
-                item.post = 'valor=%s&Buscar=Buscar' % texto
+                item.post = 'valor=%s&Buscar=Buscar&p=1' % texto
             item.c_type = "search"
             item.texto = texto
             return list_all(item)

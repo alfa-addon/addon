@@ -605,6 +605,11 @@ def bypass_embed69(data, **kwargs):
 def bypass_anubis(url, response, debug=False, **kwargs):
     import requests
 
+    debug = debug or kwargs.get("cf_debug", False)
+    domain = httptools.obtain_domain(url, sub=True).lstrip(".")
+    domain_base = httptools.obtain_domain(url, sub=False)
+    base = httptools.obtain_domain(url, scheme=True)
+
     # ──────────────────────────────────────────────
     # MONTAR TLS EN SESION
     # ──────────────────────────────────────────────
@@ -682,22 +687,26 @@ def bypass_anubis(url, response, debug=False, **kwargs):
                 pass
 
         return None
+    
+    def set_proxy(url_, resp):
+        """
+        Adapta la URL si hay proxy
+        """
+        domain_proxy = "." + domain_base
+        base_org = base
+
+        if "croxyproxy.com" in resp.proxy__ :
+            domain_proxy = "." + (httptools.obtain_domain(resp.proxy__.replace('retry', '').rstrip('|').split('|')[-1]) or domain_base)
+            cpo =  b64encode(base.encode('utf-8')).decode('utf-8')
+            separator = '?' if not '?' in url_ else '&'
+            base_ = httptools.obtain_domain(url, scheme=False)
+            url_ = url_.replace(base_, domain_proxy.lstrip(".")) + '%s__cpo=%s' % (separator, cpo)
+            base_org = httptools.obtain_domain(url_, scheme=True)
+
+        return url_, domain_proxy, base_org
 
 
-    debug = debug or kwargs.get("cf_debug", False)
-    domain = httptools.obtain_domain(url, sub=True).lstrip(".")
-    domain_base = httptools.obtain_domain(url, sub=False)
-    base = base_org = httptools.obtain_domain(url, scheme=True)
-    domain_proxy = domain_base
-    cpo = ''
-
-    if "croxyproxy.com" in response.proxy__ :
-        domain_proxy = response.proxy__.rstrip('|').split('|')[-1]
-        cpo =  b64encode(base.encode('utf-8')).decode('utf-8')
-        separator = '?' if not '?' in url else '&'
-        url = url.replace(base, domain_proxy) + '%s__cpo=%s' % (separator, b64encode(url.encode('utf-8')).decode('utf-8'))
-        domain_proxy = "." + httptools.obtain_domain(domain_proxy, sub=False)
-        base = httptools.obtain_domain(url, scheme=True)
+    url, domain_proxy, base_org = set_proxy(url, response)
 
     session = mount_TLS(url, domain, debug, kwargs)
 
@@ -722,7 +731,7 @@ def bypass_anubis(url, response, debug=False, **kwargs):
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
     })
-    if debug: logger.debug("[*] Headers iniciales: %s" % session.headers)
+    if debug: logger.debug("[*] Url: %s; Headers iniciales: %s" % (url, session.headers))
 
     challenge_txt = kwargs.get("challenge", "anubis_challenge")
 
@@ -794,18 +803,16 @@ def bypass_anubis(url, response, debug=False, **kwargs):
         "id": id_challenge,
         "response": response_pow["hash_hex"],
         "nonce": response_pow["nonce"],
-        "redir": base_org + '/',
+        "redir": base + '/',
         "elapsedTime": response_pow["elapsed"],
     }
-    if cpo:
-        payload['__cpo'] = cpo
 
     if debug: logger.debug("[+] Solución encontrada: nonce: %s, tiempo: %s, hash: %s" \
                            % (response_pow["nonce"], response_pow["elapsed"], response_pow["hash_hex"]))
 
     # URL API
     api = kwargs.get("challenge_api") or "/.within.website/x/cmd/anubis/api/pass-challenge"
-    verify_url = base + api
+    verify_url, domain_proxy, base_org = set_proxy(base_org + api, response)
 
     verify_headers  = {
         "Referer": url,

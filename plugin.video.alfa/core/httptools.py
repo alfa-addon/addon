@@ -1510,8 +1510,8 @@ def downloadpage(url, **opt):
         if proxy_data.get("dict", {}):
             session.proxies = proxy_data["dict"]
             # if opt["session_verify_save"] is None: session.verify = opt['session_verify'] = False
-        if opt.get("headers_proxy", {}):
-            req_headers.update(dict(opt["headers_proxy"]))
+        if proxy_data.get("headers_proxy", {}):
+            req_headers.update(dict(proxy_data["headers_proxy"]))
         if cf_ua and cf_ua != "Default" and (get_cookie(url, "cf_clearance") or opt.get("cf_assistant_ua", False)):
             req_headers["User-Agent"] = cf_ua
 

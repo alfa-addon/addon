@@ -59,7 +59,7 @@ canonical = {
              'retries_cloudflare': -1 if cf_assistant else 1, 
              'retry_alt': False, 'CF_proxy_alt': False, 'canonical_check': False, 
              'CF': False, 'CF_test': True, 'alfa_s': True, 'renumbertools': False,
-             'data_js': '', 'domains_test': 0
+             'data_js': '', 'domains_test': 0, 'Plan_B': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_thumb = 'https://hdfullcdn.cc/'
@@ -285,12 +285,14 @@ def sub_menu_peliculas(item):
 
     itemlist.append(Item(channel=item.channel, action="list_all", title=" - [COLOR paleturquoise]Películas Estreno[/COLOR]",
                          url=AlfaChannel.urljoin(host, "peliculas-estreno"), plot=item.plot, 
-                         extra='estreno' if window and window.getProperty("AH_hdfull_preferred_proxy_ip") else 'fichas', 
+                         #extra='estreno' if window and window.getProperty("AH_hdfull_preferred_proxy_ip") else 'fichas', 
+                         extra='fichas', 
                          thumbnail=get_thumb('premieres', auto=True), c_type=item.c_type))
 
     itemlist.append(Item(channel=item.channel, action="list_all",  title=" - [COLOR paleturquoise]Películas Actualizadas[/COLOR]",
                          url=AlfaChannel.urljoin(host, "peliculas-actualizadas"), plot=item.plot, 
-                         extra='actualizadas' if window and window.getProperty("AH_hdfull_preferred_proxy_ip") else 'fichas',
+                         #extra='actualizadas' if window and window.getProperty("AH_hdfull_preferred_proxy_ip") else 'fichas',
+                         extra='fichas',
                          thumbnail=get_thumb('updated', auto=True), c_type=item.c_type))
 
     itemlist.append(Item(channel=item.channel, action="section", extra="Género", title=" - [COLOR paleturquoise]Películas por Género[/COLOR]",
