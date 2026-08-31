@@ -30,6 +30,10 @@
       {
         "pattern": "(https://tenstream.net/(?:e|d)/[A-z0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://tube279.com/(?:e|d)/[A-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },

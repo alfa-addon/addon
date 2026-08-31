@@ -39,8 +39,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'repelishd', 
              'host': config.get_setting("current_host", 'repelishd', default=''), 
-             'host_alt': ["https://cinehdplus.gratis/"], 
-             'host_black_list': ["https://cinehdplus.cam/"], 
+             'host_alt': ["https://cinehdplus.ceo/"], 
+             'host_black_list': ["https://cinehdplus.gratis/", "https://cinehdplus.cam/"], 
              'pattern': ['href="?([^"|\s*]+)["|\s*]\s*title='], 
              # 'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              # 'cf_assistant': False, 'CF_stat': True, 
@@ -144,7 +144,7 @@ def list_all(item):
             next_page = re.sub(r"&search_start=\d+", "&search_start={0}".format(next_page), item.url)
             
         if next_page:
-            itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
+            itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all', extra=item.extra))
     except:
         pass
     
@@ -268,6 +268,7 @@ def findvideos(item):
         url = soup.find('div', class_='player_contenedor').find("iframe")['src']
         data = create_soup(url)
         matches = data.find_all('ul', class_='_player-mirrors')
+    
     if infoLabels.get('season', ''):
         for elem in matches.find_all('a'):
             url = elem['data-link']

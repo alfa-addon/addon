@@ -87,17 +87,17 @@ AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path,
 
 def mainlist(item):
     logger.info()
-
+    
     autoplay.init(item.channel, list_servers, list_quality)
-
+    
     itemlist = list()
-
+    
     itemlist.append(Item(channel=item.channel, title='Películas', url=host+movie_path, action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='movies'))
-
+    
     itemlist.append(Item(channel=item.channel, title='Películas por Género',  action='section', url=host, 
                          thumbnail=get_thumb('genres', auto=True), extra='generos', c_type='movies'))
-
+    
     itemlist.append(Item(channel=item.channel, title='Películas por Año',  action='section', url=host, 
                          thumbnail=get_thumb('year', auto=True), extra='year', c_type='movies'))
     
@@ -106,12 +106,12 @@ def mainlist(item):
     
     itemlist.append(Item(channel=item.channel, title='Películas por Calidad',  action='section', url=host, 
                          thumbnail=get_thumb('quality', auto=True), extra='quality', c_type='movies'))
-
+    
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True)))
-
+    
     autoplay.show_option(item.channel, itemlist)
-
+    
     return itemlist
 
 
@@ -119,7 +119,7 @@ def section(item):
     logger.info()
     
     findS = finds.copy()
-
+    
     if item.extra == 'year':
         findS['categories'] = dict([('find_all', [{'tag': ['ul'], 'class': ['cnt'], '@POS': [1], '@DO_SOUP': True},
                                     {'tag': ['a']}])])
@@ -128,23 +128,25 @@ def section(item):
     elif item.extra == 'quality':
         findS['categories'] = dict([('find_all', [{'tag': ['ul'], 'class': ['qualcnt'], '@POS': [0], '@DO_SOUP': True},
                                     {'tag': ['a']}])])
- 
+    
     return AlfaChannel.section(item, matches_post=section_matches, finds=findS, **kwargs)
 
 
 def section_matches(item, matches_int, **AHkwargs):
     logger.info()
-
+    
     matches = []
-
+    
     for elem in matches_int:
         elem_json = {}
         if item.extra == 'quality':
             elem_json['title'] = elem.get_text().strip()
         elif item.extra == 'language':
-            elem_json['title'] = elem.img['alt'].strip()
-            elem_json['title'] = IDIOMAS.get(elem_json['title'], elem_json['title'])
+            lang = elem.img['alt'].strip()
+            elem_json['title'] = IDIOMAS.get(lang, lang)
+            elem_json['extra'] = IDIOMAS.get(lang, lang)
             elem_json['thumbnail'] = get_thumb(elem_json['title'], auto=True)
+            
         else:
             elem_json['title'] = elem.li.div.find(string=True, recursive=False).strip()
         elem_json['url'] = elem.get('href', '')
@@ -155,22 +157,22 @@ def section_matches(item, matches_int, **AHkwargs):
 
 def list_all(item):
     logger.info()
-
+    
     findS = finds.copy()
-
+    
     return AlfaChannel.list_all(item, matches_post=list_all_matches, generictools=True, finds=findS, **kwargs)
 
 
 def list_all_matches(item, matches_int, **AHkwargs):
     logger.info()
-
+    
     matches = []
-
+    
     for elem in matches_int:
         elem_json = {}
         # logger.error(elem)
         try:
-
+            
             elem_json['mediatype'] = 'movie'
             elem_json['title'] = elem.find('div', class_="card_title").p.find(string=True, recursive=False).strip()
             elem_json['url'] = elem.get('href', '')
@@ -183,16 +185,17 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 info = elem.find('div' , class_='card_info').text.strip()
                 elem_json['year'] = scrapertools.find_single_match(info, '(\d{4})')
             elem_json['context'] = autoplay.context
-
+            elem_json['extra'] = item.extra
+        
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
-
+        
         if not elem_json.get('url', ''): continue
-
+        
         matches.append(elem_json.copy())
-
+    
     return matches
 
 
@@ -205,12 +208,19 @@ def findvideos(item, **AHkwargs):
 def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
     matches = []
-
+    
     for elem in matches_int:
         elem_json = {}
         # logger.error(elem)
         try:
-            # <a class="reportbtn" data-id="117727" data-type="Reproductor" data-lang="Audio Latino" data-num="1" data-server="abyss">
+            lang = elem.get('data-lang', '').lower()
+            lang = IDIOMAS.get(lang, 'unknown')
+            if lang != item.extra:
+                logger.error("{} ({}) != {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
+                continue
+            else:
+                logger.error("{} ({}) == {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
+            
             elem_json['server'] = elem.get('data-server', '')
             elem_json['server'] = SERVERS.get(elem_json['server'], elem_json['server'])
             if not elem_json['server']: continue
@@ -218,15 +228,15 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['language'] = IDIOMAS.get(elem_json['language'], elem_json['language'])
             elem_json['url'] = item.url + '?id=' + elem.get('data-id', '') + '&num=' + elem.get('data-num', '')
             elem_json['title'] = '%s'
-
+            
             if not elem_json.get('url'): continue
             matches.append(elem_json.copy())
-
+        
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
-
+    
     return matches, langs
 
 
@@ -252,7 +262,7 @@ def play(item):
 def get_page_num(item):
     logger.info()
     # Llamamos al método que salta al nº de página seleccionado
-
+    
     return AlfaChannel.get_page_num(item)
 
 
@@ -267,7 +277,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-
+    
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except Exception:
         for line in sys.exc_info():

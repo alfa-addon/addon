@@ -64,20 +64,28 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         patron = 'video_url:\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += 'postfix:\s*(?:\'|")([^\,]+)(?:\'|")'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    
+    logger.debug(matches)
     for url, quality in matches:
         if "?login" not in url and "signup" not in url and "_preview" not in url and ".mp4" in url:
             if "function/" in url:
                 url = decode(url, license_code)
             elif url.startswith("/get_file/"):
                 url = urlparse.urljoin(page_url, url)
+            if "SD" in quality and not "Full" in quality:
+                quality = "360p"
             if "HD" in quality and not "Full" in quality:
                 quality = "720p"
+            if "2K" in quality and not "Full" in quality:
+                quality = "1080p"
             if "?br=" in url:
                 # url += "&rnd=" + str(int(datetime.now().timestamp() * 1000))
                 url += "&rnd=" + str(int(time.time() * 1000))
-            if not "analdin" in url:
+            if not "analdin" in url and not "sunporno" in url and not "theyarehuge" in url:
                 url += "|Referer=%s" % host
+            if "sunporno" in url or "theyarehuge" in url:
+                url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, **kwargs).headers.get("location", "")
+                if "theyarehuge" in url:
+                    url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, **kwargs).headers.get("location", "")
             video_urls.append(['[ktplayer] %s' % quality, url])
         
         if "lq" in quality.lower() or "high" in quality.lower() or "low" in quality.lower():
@@ -96,7 +104,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         url = scrapertools.find_single_match(data, '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?')
         if "allclassic.porn" in url:
             url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, **kwargs).headers.get("location", "")
-        if not "allclassic.porn" in url:
+        if not "allclassic.porn":
             url += "|Referer=%s" % host
         
         video_urls.append(['[ktplayer]', url])

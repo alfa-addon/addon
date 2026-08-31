@@ -36,8 +36,12 @@
         "url": "https://\\1"
       },
       {
-        "pattern": "(https://(?:dr0pstream|dropload).\\w{2,4}/(?:e|d|v)/[a-z0-9]+)",
-        "url": "\\1"
+        "pattern": "(nowplay.\\w{2,4}/[A-z0-9]+)",
+        "url": "https://\\1"
+      },
+      {
+        "pattern": "https://vimeos.\\w{2,4}/(?:e|d)/([a-z0-9]+)",
+        "url": "https://vimeos.net/embed-\\1.html"
       },
       {
         "pattern": "(https://(?:dr0pstream|dropload).\\w{2,4}/embed-[a-z0-9]+.html)",

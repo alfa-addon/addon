@@ -52,10 +52,9 @@ def categorias(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='video')
     for elem in matches:
-        logger.debug(elem)
         t = elem.find('div', class_='thumb-info')
         title = t.a.text.strip()
-        cantidad = t.span.text.strip().replace(" videos", "").replace("ondemand_video ", "")
+        cantidad = t.span.text.strip().replace(" videos", "").replace("ondemand_video", "").strip()
         title = "%s (%s)" %(title, cantidad)
         url = elem.a['href']
         if elem.img.get('alt', ''):
@@ -67,7 +66,8 @@ def categorias(item):
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
-    
+    if "categories" in item.url:
+        itemlist.sort(key=lambda x: x.title)
     next_page = soup.find('li', class_='next')
     if next_page:
         next_page = next_page.a['href']
@@ -101,12 +101,14 @@ def lista(item):
         title = elem.img['alt']
         if "search_query" in item.url:
             thumbnail = elem.img['src']
-        else:
+        if elem.img.get('data-src', ''):
             thumbnail = elem.img['data-src']
-        time = elem.find('span', class_='duration').next_sibling
+        else:
+            thumbnail = elem.img['src']
+        time = elem.find('span', class_='duration').next_sibling.strip()
         quality = elem.find('span', class_='hd-res')
         if quality:
-            quality = quality.text
+            quality = quality.text.strip()
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)

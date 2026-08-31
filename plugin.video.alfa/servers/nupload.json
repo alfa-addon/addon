@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://nupload.(?:me|co)/watch/[A-z0-9\\?=]+)",
+        "pattern": "(https://nupload.(?:me|co|\\w{2,4})/watch/[A-z0-9\\?=]+)",
         "url": "\\1"
       }
     ]

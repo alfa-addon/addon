@@ -48,14 +48,13 @@ def create_soup(url, referer=None, unescape=False):
 
 def mainlist(item):
     logger.info()
-
-    autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist = list()
-
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host, action='list_all',
+    
+    autoplay.init(item.channel, list_servers, list_quality)
+    
+    itemlist.append(Item(channel=item.channel, title='Películas', url=host +"?p182_catalog=movies&catalog_page=1", action='list_all',
                          thumbnail=get_thumb('movies', auto=True)))
-        
+    
     itemlist.append(Item(channel=item.channel, title='Series', url=host + 'category/series/', action='list_all', c_type = "tvshow",
                          thumbnail=get_thumb('tvshows', auto=True)))
     
@@ -64,28 +63,26 @@ def mainlist(item):
     
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
                          thumbnail=get_thumb("search", auto=True)))
-
+    
     autoplay.show_option(item.channel, itemlist)
-
+    
     return itemlist
 
 
 def categories(item):
     logger.info()
-    
     itemlist = list()
     
     try:
         soup = create_soup(item.url)
-        id_regex = re.compile(r"^menu-item-\d+")
-        matches = soup.find_all("li", id=id_regex)
+        matches = soup.find('div', class_='genre-menu__panel').find_all("a")
     except Exception as e:
         logger.error("URL: {0}\nError: {1}".format(str(item.url), str(e)))
         return itemlist
-
+    
     for elem in matches:
-        name = elem.a.getText(strip=True)
-        url = elem.a["href"]
+        name = elem.getText(strip=True)
+        url = elem["href"]
         itemlist.append(item.clone(title=name, url=url, action="list_all"))
     
     return itemlist
@@ -93,7 +90,6 @@ def categories(item):
 
 def list_all(item):
     logger.info()
-    
     itemlist = list()
     
     try:
@@ -106,10 +102,10 @@ def list_all(item):
     for elem in matches:
         season = ""
         url = elem.a["href"]
-        title = elem.a["title"].strip()
-        match = re.search(r'\((\d{4})\)\s*$', title)
+        title = elem.h3.text.strip()
+        match = elem.find("div", class_='p182-card__meta').span
         if match:
-            year = match.group(1)
+            year = match.text.strip()
         else:
             year = "-"
         title = re.sub(r'\s+\(.*?\)\s*$', '', title)
@@ -119,7 +115,7 @@ def list_all(item):
             c_type = item.c_type
         else:
             c_type = "tvshow" if season else "movie"
-        thumbnail = elem.find("img")["src"]
+        thumbnail = elem.find("div", class_='p182-card__image')["style"]
         
         new_item = Item(channel=item.channel,
                         thumbnail=thumbnail,
@@ -128,96 +124,82 @@ def list_all(item):
                         infoLabels={"year": year})
         
         if c_type == "movie":
-            # new_item.infoLabels={"year": year}
+            new_item.infoLabels={"year": year}
             new_item.contentTitle = title
             new_item.action = "findvideos"
             new_item.contentType = "movie"
         elif c_type == "tvshow":
-            title = re.sub(season_pattern, '', title)
+            new_item.infoLabels={"year": "-"}
+            name = re.sub(season_pattern, '', title)
             new_item.title = title
-            new_item.contentSerieName = title
+            new_item.contentSerieName = name
             new_item.contentSeason = season
             new_item.action = "episodios"
             new_item.contentType = "tvshow"
         
         itemlist.append(new_item)
-
+    
     tmdb.set_infoLabels_itemlist(itemlist, True)
     
-    # Paginación
-    try:
-        pagination = soup.find("div", class_="nav-links")
-        if pagination:
-            title = ">> {0}".format(config.get_localized_string(30992))
-            pages = pagination.find_all(class_="page-numbers")
-            if pages:
-                next = pagination.find(class_="next")
-                total = pages[-2].text if next else pages[-1].text
-                current = pagination.find(class_="current").text
-                title = "{0} {1}/{2}".format(title, current, total)
-                if int(current) == int(total):
-                    return itemlist
-                new_item = Item(channel=item.channel,
-                                title=title,
-                                url=next["href"],
-                                thumbnail=get_thumb("next.png"),
-                                action='list_all',
-                                c_type = item.c_type)
-            
-                itemlist.append(new_item)
-    except Exception as e:
-        logger.error("URL: {0}\nError: {1}".format(str(item.url), str(e)))
-        return itemlist
+    next_page = soup.find('a', class_='next')
+    if next_page:
+        next_page = next_page['href']
+        itemlist.append(item.clone(action="list_all", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     
     return itemlist
 
 
 def episodios(item):
     logger.info()
-
     itemlist = list()
-
+    
     try:
         soup = create_soup(item.url)
-        matches = soup.find_all("div", class_="tab_content")
+        # matches = soup.find_all("div", class_="tab_content")
+        matches = soup.find_all("button", class_="server-button")
     except Exception as e:
         logger.error("URL: {0}\nError: {1}".format(str(item.url), str(e)))
         return itemlist
     
     if not matches:
         return itemlist
-
+    
     for index, elem in enumerate(matches):
         infoLabels = item.infoLabels or {}
         infoLabels["mediatype"] = "episode"
         infoLabels["season"] = item.contentSeason
         #tab-1-t5x2
-        patern = r'(?i)tab-(\d+)-t(\d+)x(\d+)'
-        res = re.search(patern, elem['id'], flags=re.DOTALL)
+        # patern = r'(?i)tab-(\d+)-t(\d+)x(\d+)'
+        patern = r'(?i)t(\d+)x(\d+)'
+        res = re.search(patern, elem.text, flags=re.DOTALL)
         if res:
-            episode = res.group(3)
+            episode = res.group(2)
         else:
             episode = index + 1
+            
         infoLabels["episode"] = episode
-
+        
+        url = elem["data-iframe"]
+        url = scrapertools.find_single_match(url, 'src="([^"]+)"')
+        
         itemlist.append(
             item.clone(
                 action = "findvideos",
                 infoLabels = infoLabels,
                 title = "Episodio {}".format(episode),
-                url = elem.find("iframe")["src"],
+                url = url,
                 contentType = 'episode',
                 contentEpisodeNumber = infoLabels["episode"]
             )
         )
-
+    
     tmdb.set_infoLabels_itemlist(itemlist, True)
     
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
         itemlist.append(Item(channel=item.channel, title=config.get_localized_string(60352),
                              url=item.url, action="add_serie_to_library", extra="episodios",
                              contentSerieName=item.contentSerieName))
-
+    
     return itemlist
 
 
@@ -234,13 +216,13 @@ def findvideos(item):
     
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
-
+    
     if config.get_videolibrary_support() and len(itemlist) > 0 \
         and item.extra != 'findvideos' and item.contentType == "movie":
         itemlist.append(Item(channel=item.channel, title=config.get_localized_string(70146),
                              url=item.url, action="add_pelicula_to_library", extra="findvideos",
                              contentTitle=item.contentTitle))
-
+    
     return itemlist
 
 
@@ -262,7 +244,7 @@ def search(item, texto):
 
 def findframe(url):
     logger.info()
-
+    
     try:
         soup = create_soup(url, referer=host)
         match = soup.find("div", class_="video-responsive").find("iframe")

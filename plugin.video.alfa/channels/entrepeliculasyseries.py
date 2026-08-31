@@ -185,7 +185,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             title = elem.find('h2') or elem.find('h3')
             elem_json['title'] = title.get_text(strip=True).strip()
             elem_json['thumbnail'] = elem.img.get('src', '') 
-            elem_json['year'] = elem.find('span', class_='tag').get_text(strip=True).strip()
+            elem_json['year'] = elem.find('span', class_='tag').get_text(strip=True).strip() if elem.find('span', class_='tag') else '-'
             
             if item.c_type == 'peliculas' and movie_path not in elem_json['url']: continue
             if item.c_type == 'series' and tv_path not in elem_json['url'] and anime_path not in elem_json['url']: continue
