@@ -207,11 +207,11 @@ def findvideos(item):
     logger.info()
     itemlist = list()
     
-    if item.contentType == "movie":
-        item.url = findframe(item.url)
+    soup = create_soup(item.url)
+    url = soup.iframe['src']
     
     itemlist.append(Item(channel=item.channel, server="lauchacohete", title='%s', 
-                         action='play', url=item.url,
+                         action='play', url=url,
                          language="LAT", infoLabels=item.infoLabels))
     
     # Requerido para AutoPlay

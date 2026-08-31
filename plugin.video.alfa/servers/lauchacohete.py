@@ -14,6 +14,7 @@ def test_video_exists(page_url):
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
     kwargs['headers'] = {'Referer': referer}
     response = httptools.downloadpage(page_url, **kwargs)
+    
     if not response or not response.sucess or "404 - NOT FOUND!" in response.data:
         return False, "[lauchacohete] El fichero no existe o ha sido borrado"
     
