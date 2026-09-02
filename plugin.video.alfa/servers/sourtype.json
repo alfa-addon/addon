@@ -92,10 +92,6 @@
         "url": "\\1"
       },
      {
-        "pattern": "(https://(?:www.|)(?:pornoflix|veporn|ultrahorny).(?:com|nl)/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-     {
         "pattern": "(https://(?:www.|)vlxxx.(?:com|porn|\\w{2,4})(?:/blog|/video|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },

@@ -24,7 +24,7 @@ canonical = {
              'host': config.get_setting("current_host", 'mirapeliculas', default=''), 
              'host_alt': ["https://ww2.dipelis.com/"], 
              'host_black_list': ["https://mirapeliculasde.com/"], 
-             'pattern': '<link\s*rel="[^>]*icon"[^>]+href="([^"]+)"', 
+             'pattern': '<link[^>]*href="([^"]+)"[^>]*icon',
              'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -47,12 +47,13 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(item.clone(title="Peliculas", action="lista_all", url= host + "page/1", language=[]))
     itemlist.append(item.clone(title="Series", action="lista_all", url= host + "series/", language=[]))
-    # itemlist.append(item.clone(title="Novedades", action="lista", url= host + "ver/estrenos/", language=[]))
-    # itemlist.append(item.clone(title="Castellano", action="lista", url= host + "ver/castellano/", language=['CAST']))
-    # itemlist.append(item.clone(title="Latino", action="lista", url= host + "ver/latino/", language=['LAT']))
-    # itemlist.append(item.clone(title="Subtituladas", action="lista", url= host + "ver/subtituladas/", language=['VOSE']))
+    
+    itemlist.append(item.clone(title="Peliculas", action="lista_all", url= host + "page/1", language=[]))
+    itemlist.append(item.clone(title="Novedades", action="lista_all", url= host + "ver/estrenos/", language=[]))
+    itemlist.append(item.clone(title="Castellano", action="lista_all", url= host + "ver/castellano/", language=['CAST']))
+    itemlist.append(item.clone(title="Latino", action="lista_all", url= host + "ver/latino/", language=['LAT']))
+    itemlist.append(item.clone(title="Subtituladas", action="lista_all", url= host + "ver/subtituladas/", language=['VOSE']))
     itemlist.append(item.clone(title="Categorias", action="categorias", url= host, language=[]))
     itemlist.append(item.clone(title="Buscar", action="search", language=[]))
     
@@ -151,7 +152,7 @@ def lista_all(item):
     tmdb.set_infoLabels(itemlist, True)
     
     pagination = soup.find('div', class_='pagenavi')
-    if pagination.span.find_next_sibling("a"):
+    if pagination and pagination.span.find_next_sibling("a"):
         next_page = pagination.span.find_next_sibling("a")['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="lista_all", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
