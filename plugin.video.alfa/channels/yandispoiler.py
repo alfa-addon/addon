@@ -297,41 +297,18 @@ def findvideos(item):
 
     itemlist = list()
     
-    soup = create_soup(item.url)
-
-    for elem in soup.find_all("li", id=re.compile(r"player-option-\d+")):
-
-        # logger.error(str(elem))
-        post = {"action": "zeta_player_ajax", "post": elem["data-post"], "nume": elem["data-nume"],
-                "type": elem["data-type"]}
-        headers = {"Referer": item.url}
-        doo_url = "%swp-admin/admin-ajax.php" % host
-
-        response = httptools.downloadpage(doo_url, timeout=TIMEOUT, post=post, 
-                                          headers=headers, canonical=canonical, 
-                                          hide_infobox=True)
-        if response.code != 200:
-            continue
-
-        data_json = json.loads(response.data)
-        
-        if data_json.get('type', '') != "iframe":
-            continue
-        
-        embed_url = data_json.get('embed_url', '')
-                        
-        iframe = BeautifulSoup(embed_url, "html5lib", from_encoding="utf-8")
-        
-        url = iframe.iframe["src"]
-        
-        lang = "VOSE"
-        
-        try:
-            lang_icon_src = elem.find("span", class_="flag").img["src"]
-            lang = extract_lang_from_url(lang_icon_src)
-        except Exception as e:
-            logger.error(str(e))
-        
+    soup = create_soup(item.url).find('div', id = 'yan-list-servers')
+    matches = soup.find_all("div", class_='ypp-card-play')
+    
+    try:
+        lang_icon_src = soup.img["src"]
+        lang = extract_lang_from_url(lang_icon_src)
+    except Exception as e:
+        logger.error(str(e))
+    
+    for elem in matches:
+        url = elem['data-url']
+        logger.debug(url)
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                                 language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
     
