@@ -332,7 +332,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             
             elem_json['language'] = '*CAST' if item.site == 2 else '*LAT'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -390,7 +390,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
             elem_json['quality'] = '*HD'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
@@ -419,7 +419,7 @@ def play(item):
             item.url = AlfaChannel.create_soup(item.url).find("iframe").get("src", "")
 
             itemlist = servertools.get_servers_itemlist([item])
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
     return itemlist
@@ -444,7 +444,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
 
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -474,7 +474,7 @@ def newest(categoria, **AHkwargs):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []

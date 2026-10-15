@@ -176,7 +176,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if elem.find('span', class_="Qlty"): elem_json['quality'] = '*%s' \
                                                  % elem.find('span', class_="Qlty").get_text(strip=True).replace('Desconocido', '')
             elem_json['year'] = elem_json.get('year', AlfaChannel.parse_finds_dict(elem, findS.get('year', {}), year=True, c_type=item.c_type))
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -234,11 +234,11 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                     elem_json['season'] = item.contentSeason
                     try:
                         elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
-                    except:
+                    except Exception:
                         elem_json['episode'] = 1
                     elem_json['thumbnail'] = elem.find("img").get('src', '') if 'img' in elem \
                                              else scrapertools.find_single_match(str(elem), 'src="([^"]+)"')
-                except:
+                except Exception:
                     logger.error(elem)
                     logger.error(traceback.format_exc())
                     continue
@@ -306,7 +306,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             if elem_json['server'].lower() in servers: elem_json['server'] = servers[elem_json['server'].lower()]
             if elem_json['server'].lower() in ["waaw", "jetload", "player"]: continue
             elem_json['title'] = '%s'
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -330,7 +330,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             
             # elem_json['url'] = AlfaChannel.create_soup( elem_json['url'], referer=item.url)#.find("div", class_="Video").iframe.get("src", '')
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -424,7 +424,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

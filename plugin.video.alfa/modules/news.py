@@ -94,7 +94,7 @@ def news(item):
     itemlist = process(channel_list[:limit], item.category, item.news, valid_channels_number, item.startpage)
     try:
         itemlist = sorted(group_results(itemlist), key=lambda i: int(i.infoLabels["year"]), reverse=True)
-    except:
+    except Exception:
         pass
 
     if len(channel_list) > 20:
@@ -136,7 +136,7 @@ def process(channel_list, category, news, total_channels, startpage=False, save=
             percentage = int(math.ceil((index + 1) * number_of_channels))
             try:
                 finished = res.result()[0]
-            except:
+            except Exception:
                 continue
 
             if not startpage:
@@ -205,7 +205,7 @@ def get_channel_news(channel, category, all=False):
     
     try:
         results = module.newest(category)
-    except:
+    except Exception:
         return channel, results, category
 
     if not results:

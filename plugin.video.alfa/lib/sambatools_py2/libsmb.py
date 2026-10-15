@@ -79,10 +79,10 @@ def connect(url):
     remote = SMBConnection(user, password, domain, server_name)
     try:
         remote.connect(ip=server_ip, timeout=5)
-    except:
+    except Exception:
         try:
             remote.close()
-        except:
+        except Exception:
             pass
         remote.connect(ip=server_ip, timeout=5)
 
@@ -227,7 +227,7 @@ class SMBFile(object):
         try:
             from core import filetools
             xbmc = True
-        except:
+        except Exception:
             xbmc = None
         self.url = url
         self.remote, self.share, self.path = path = connect(url)

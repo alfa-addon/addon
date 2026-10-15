@@ -354,7 +354,7 @@ def seasons_matches(item, matches_int, **AHkwargs):
             elem_json['season'] = scrapertools.find_single_match(elem.get_text(strip=True), patron_season)
             elem_json['url'] = item.url
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -414,7 +414,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             if pass_list.get('%sx%s' % (elem_json['season'], elem_json['episode'])):
                 elem_json['password'] = pass_list['%sx%s' % (elem_json['season'], elem_json['episode'])]
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue

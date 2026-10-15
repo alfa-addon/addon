@@ -445,7 +445,7 @@ def editar_enlace_thumbnail(item):
             else:
                 opciones.append(nombre)
             ids.append(channel_parameters['thumbnail'])
-    except:
+    except Exception:
         pass
     
     resource_path = os.path.join(config.get_runtime_path(), 'resources', 'media', 'themes', 'default')

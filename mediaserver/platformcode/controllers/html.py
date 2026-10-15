@@ -572,7 +572,7 @@ class platform(Platformtools):
                     # Cuando este cerrado,  Volvemos a mostrar el dialogo
                     progreso = self.dialog_progress("Alfa - Torrent", "Iniciando...")
 
-            except:
+            except Exception:
                 import traceback
                 logger.info(traceback.format_exc())
                 break
@@ -607,7 +607,7 @@ class platform(Platformtools):
                         for x, op in enumerate(ops):
                             ops[x] = config.get_localized_string(int(ops[x]))
                         item[key] = "|".join(ops)
-                    except:
+                    except Exception:
                         pass
 
             JsonData["data"]["items"].append(item)

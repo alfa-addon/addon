@@ -92,13 +92,13 @@ try:
     window = xbmcgui.Window(10000)
     js_data = window.getProperty("AH_hdfulls_js_data")
     data_js = window.getProperty("AH_hdfulls_data_js")
-except:
+except Exception:
     js_data = ''
     data_js = ''
     try:
         window.setProperty("AH_hdfulls_js_data", js_data)
         window.setProperty("AH_hdfulls_data_js", data_js)
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
 
@@ -223,7 +223,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['title_subs'] = elem.find('div', class_="right").get_text('.', strip=True).replace('0.0', '')
                 if elem_json['title_subs']: elem_json['title_subs'] = ['[COLOR darkgrey][%s][/COLOR]' % elem_json['title_subs']]
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -283,7 +283,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['language'] = item.language
             elem_json['thumbnail'] = elem.find('img').get("src", "")
             #if '/no-cover' in  elem_json['thumbnail']: continue
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -361,7 +361,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['title'] = '%s'
                 elem_json['server'] = ''
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -403,7 +403,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

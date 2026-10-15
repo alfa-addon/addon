@@ -52,7 +52,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + quality + " [mail.ru]", media_url])
     try:
         video_urls.sort(key=lambda video_urls: int(video_urls[0].rsplit(" ", 2)[1][:-1]))
-    except:
+    except Exception:
         pass
 
     for video_url in video_urls:

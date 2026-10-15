@@ -66,7 +66,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             else:
                 extension = ""
 
-        except:
+        except Exception:
             import traceback
             logger.error(traceback.format_exc())
             extension = ""

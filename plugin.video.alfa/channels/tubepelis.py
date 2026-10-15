@@ -148,7 +148,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             # AlfaChannel.get_language_and_set_filter(elem, elem_json)
             # if elem.find('span', class_="Qlty"): elem_json['quality'] = '*%s' % elem.find('span', class_="Qlty").get_text(strip=True)
             elem_json['year'] = ''
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -183,7 +183,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['url'] = AlfaChannel.convert_url_base64(url, '')
             elem_json['server'] = ''
             elem_json['language'] = ''
-        except:
+        except Exception:
             logger.error(server)
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -218,7 +218,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

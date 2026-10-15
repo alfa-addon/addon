@@ -33,7 +33,7 @@ encoding = None
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-except:
+except Exception:
     __modo_grafico__ = True
 
 max_result = 14
@@ -130,7 +130,7 @@ def newest(categoria):
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))
@@ -149,7 +149,7 @@ def search(item, texto):
             return peliculas(item)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

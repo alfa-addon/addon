@@ -126,7 +126,7 @@ class NBNSProtocol(DatagramProtocol, NBNS):
             del self.pending_trns[trn_id]
             try:
                 d.errback(NetBIOSTimeout(name))
-            except: pass
+            except Exception: pass
 
         map(expire_item, expired)
 

@@ -274,7 +274,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
             elem_json['quality'] = elem_json.get('quality', '') or 'HDTV' if tv_path in elem_json.get('url', '') else ''
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -343,7 +343,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                         elem_json['season'] = int(season or 1)
                         elem_json['episode'] = int(episode or 1)
                         if elem_json['season'] != item.contentSeason: break
-                    except:
+                    except Exception:
                         logger.error(td)
                         logger.error(traceback.format_exc())
                         break
@@ -450,7 +450,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                     if '.php?u=http' in elem_json.get('url', ''):
                         elem_json['url'] = elem_json['url'].replace(host[:-1], '')
 
-                except:
+                except Exception:
                     logger.error(tr)
                     logger.error(traceback.format_exc())
 
@@ -484,7 +484,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         logger.error(traceback.format_exc())
@@ -517,7 +517,7 @@ def newest(categoria, **AHkwargs):
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
 
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

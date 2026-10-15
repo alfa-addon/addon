@@ -149,7 +149,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if elem.find('span', class_="Qlty"): elem_json['quality'] = '*%s' \
                                                  % elem.find('span', class_="Qlty").get_text(strip=True).replace('Desconocido', '')
             elem_json['year'] = elem_json.get('year', AlfaChannel.parse_finds_dict(elem, findS.get('year', {}), year=True, c_type=item.c_type))
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -237,10 +237,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 elem_json['season'] = int(elem_json['season'] or 1)
                 elem_json['episode'] = int(elem_json['episode'] or 1)
                 if elem_json['season'] != item.contentSeason: continue
-            except:
+            except Exception:
                 continue
             elem_json['thumbnail'] = elem.find("img").get('src', '')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -308,7 +308,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

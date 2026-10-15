@@ -1182,7 +1182,7 @@ class CommonParser:
             if h.add_size > 0:
                 try:
                     fd.seek(h.data_offset + h.add_size, 0)
-                except:
+                except Exception:
                     try:
                         logger.error('more_vols: %s, data_offset: %s, add_size: %s.  TOTAL: %s' % \
                                 (str(more_vols), str(h.data_offset), str(h.add_size), \
@@ -1191,7 +1191,7 @@ class CommonParser:
 
                         endarc = True
                         fd.seek(0, 2)
-                    except:
+                    except Exception:
                         logger.error(traceback.format_exc(1))
 
     def process_entry(self, fd, item):
@@ -2531,7 +2531,7 @@ class DirectReader(RarExtFile):
         self._volfile = self._parser._next_volname(self._volfile)
         try:
             fd = open(self._volfile, "rb", 0)
-        except:
+        except Exception:
             raise RarUserBreak("Missing volume or User cancelled")
         self._fd = fd
         sig = fd.read(len(self._parser._expect_sig))
@@ -3279,7 +3279,7 @@ def custom_popen(cmd, classic=False):
                     with open(rar_path, "w") as f:
                         rar_control['pid'] = p.pid
                         json.dump(rar_control, f, indent=4)
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
     

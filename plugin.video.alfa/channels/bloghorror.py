@@ -144,7 +144,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             cat = elem.find("a", class_="covernews-categories").get("alt", "")
             if cat in ["View all posts in Las Mejores Peliculas de Terror", "View all posts in Editoriales"]:
                 continue
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -184,7 +184,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['server'] = 'torrent' if 'magnet' in elem_json['url'] or ',torrent' in elem_json['url'] else 'directo'
             if '1fichier' in elem_json['url']: elem_json['server'] = 'onefichier'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
@@ -218,7 +218,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
         # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -240,7 +240,7 @@ def newest(categoria, **AHkwargs):
         itemlist = list_all(item)
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

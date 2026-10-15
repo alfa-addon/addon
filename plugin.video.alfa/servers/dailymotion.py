@@ -32,7 +32,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
         sub_es = sub_data.get('es') or sub_data.get('en')
         subtitle = sub_es.get('urls', [])[0]
-    except:
+    except Exception:
         pass
     # for s in sub_data:
     #     surl = sub_data[s].get('urls', [])[0]

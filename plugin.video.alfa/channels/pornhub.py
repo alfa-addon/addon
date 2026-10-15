@@ -132,7 +132,7 @@ def section_matches(item, matches_int, **AHkwargs):
                     elem_json['cantidad'] = elem_json['cantidad'].parent.text.strip()
             if item.extra == 'PornStar':
                elem_json['url'] += "/videos"
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -186,7 +186,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['star'] = data.a.get_text(strip=True)
 
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -251,7 +251,7 @@ def search(item, texto, **AHkwargs):
             return []
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

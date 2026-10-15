@@ -108,5 +108,5 @@ def clean_watched_new_version():
                 del watched_file[msg]
         
         filetools.write(data_path, jsontools.dump(watched_file))
-    except:
+    except Exception:
         logger.error(traceback.format_exc())

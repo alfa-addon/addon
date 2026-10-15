@@ -73,7 +73,7 @@ def search(item, texto):
     item.url = "%s?search=%s&page=1" % (host,texto)
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

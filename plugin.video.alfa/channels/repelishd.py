@@ -106,7 +106,7 @@ def list_all(item):
         quality = elem.find(class_='quality').text.strip()
         try:
             thumb = elem.img["data-src"]
-        except:
+        except Exception:
             thumb = elem.img["src"]
         
         languages = elem.find_all("img", class_="idioma")
@@ -145,7 +145,7 @@ def list_all(item):
             
         if next_page:
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
-    except:
+    except Exception:
         pass
     
     return itemlist
@@ -234,7 +234,7 @@ def episodesxseasons(item):
     
     try:
         matches = create_soup(item.url).find("div", id="season-%s" % season).find("ul").find_all("li")
-    except:
+    except Exception:
         return itemlist
     for elem in matches:
         cap = elem.a.text.strip()

@@ -130,7 +130,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['url'] = scrapertools.find_single_match(elem.textarea.get_text(strip=True), 'data-lazy-src="([^"]+)"')
             elem_json['language'] = ''
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
@@ -155,7 +155,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

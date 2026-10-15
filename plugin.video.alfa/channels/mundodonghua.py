@@ -148,7 +148,7 @@ def list_all(item):
             url_next_page = ''
         else:
             url_next_page = url_next_page["href"]
-    except:
+    except Exception:
         return itemlist
 
     url_next_page = host + url_next_page
@@ -172,11 +172,11 @@ def episodios(item):
     ep_list = soup.find("ul", class_="donghua-list")
     try:
         plot = soup.find("p", class_="text-justify fc-dark").text
-    except:
+    except Exception:
         plot = ""
     try:
         state = soup.find("span", class_="badge bg-success")
-    except:
+    except Exception:
         state = ''
 
 
@@ -214,7 +214,7 @@ def episodios(item):
                              plot=plot, thumbnail=item.thumbnail,
                             action='findvideos', infoLabels=infoLabels,
                             context=item.contex))
-        except:
+        except Exception:
             pass
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -257,7 +257,7 @@ def findvideos(item):
                 url = '%sapi_donghua.php?slug=%s' %(host, slug)
                 try:
                     data = httptools.downloadpage(url, headers={'Referer': item.url}).json[0]
-                except:
+                except Exception:
                     
                     time.sleep(1)
                     data = httptools.downloadpage(url, headers={'Referer': item.url}).json[0]

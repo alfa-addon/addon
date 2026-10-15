@@ -673,7 +673,7 @@ class MAL(object):
             try:
                 start_date = origen["airing"].get('prop', {}).get('from', {})
                 air_date = '{}/{}/{}'.format(start_date.get('year'), start_date.get('month'), start_date.get('day'))
-            except:
+            except Exception:
                 logger.error("airing: {}".format(origen['airing']))
                 air_date = ""
         else:

@@ -80,7 +80,7 @@ class CipherSuiteAdapter(HTTPAdapter):
 
                 if self.server_hostname:
                     self.ssl_context.server_hostname = self.server_hostname
-            except:
+            except Exception:
                 pass
 
             self.ssl_context.set_ciphers(self.cipherSuite)
@@ -89,7 +89,7 @@ class CipherSuiteAdapter(HTTPAdapter):
             try:
                 self.ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
                 self.ssl_context.maximum_version = ssl.TLSVersion.TLSv1_3
-            except:
+            except Exception:
                 pass
 
         super(CipherSuiteAdapter, self).__init__(**kwargs)
@@ -318,7 +318,7 @@ class CloudScraper(Session):
                         cloudscraper_self = self
                         cloudscraper_self.cloudscraper = self
                         response = cf_assistant.get_cl(cloudscraper_self, response)
-                    except:
+                    except Exception:
                         import traceback
                         logging.error(traceback.format_exc())
 
@@ -419,7 +419,7 @@ if ssl.OPENSSL_VERSION_INFO < (1, 1, 1):
                 ssl.OPENSSL_VERSION
             )
         )
-    except:
+    except Exception:
         print(
             "DEPRECATION: The OpenSSL being used by this python install ({}) does not meet the minimum supported "
             "version (>= OpenSSL 1.1.1) in order to support TLS 1.3 required by Cloudflare, "

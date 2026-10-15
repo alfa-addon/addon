@@ -285,7 +285,7 @@ def search(item, texto):
             return list_all_query(item, query)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -395,7 +395,7 @@ def get_language_list(code_list):
                     lang_list.append(next(filter(lambda lang: lang['code_flix'] == code, languages))['name'])
                 else:
                     lang_list.append(filter(lambda lang: lang['code_flix'] == code, languages)[0]['name'])
-        except:
+        except Exception:
             logger.error("The code list could not be parsed : {}".format(str(code_list)))
     # logger.info(lang_list, True)
     return lang_list

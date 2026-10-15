@@ -227,7 +227,7 @@ def download_all_episodes(item, first_episode="", preferred_server="vidspot", fi
             logger.info("episode=" + episode_item.title)
             episode_title = scrapertools.get_match(episode_item.title, "(\d+x\d+)")
             logger.info("episode=" + episode_title)
-        except:
+        except Exception:
             import traceback
             logger.error(traceback.format_exc())
             continue
@@ -244,7 +244,7 @@ def download_all_episodes(item, first_episode="", preferred_server="vidspot", fi
         # Extrae los mirrors
         try:
             mirrors_itemlist = channel.findvideos(episode_item)
-        except:
+        except Exception:
             mirrors_itemlist = servertools.find_video_items(episode_item)
         print(mirrors_itemlist)
 
@@ -340,7 +340,7 @@ def download_all_episodes(item, first_episode="", preferred_server="vidspot", fi
                         try:
 
                             platformtools.dialog_ok("plugin", "Descarga abortada")
-                        except:
+                        except Exception:
                             pass
                         return
                     else:

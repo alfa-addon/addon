@@ -9,15 +9,15 @@ from platformcode import logger
 
 try:
     import json
-except:
+except Exception:
     logger.info("json incluido en el interprete **NO** disponible")
     try:
         import simplejson as json
-    except:
+    except Exception:
         logger.info("simplejson incluido en el interprete **NO** disponible")
         try:
             from lib import simplejson as json
-        except:
+        except Exception:
             logger.info("simplejson en el directorio lib **NO** disponible")
             logger.error("No se ha encontrado un parser de JSON valido")
             json = None
@@ -51,7 +51,7 @@ def load(*args, **kwargs):
                 module = module.__name__
             function = inspect.currentframe().f_back.f_back.f_code.co_name
             module = ' [%s.%s]' % (module, function)
-        except:
+        except Exception:
             module = ''
         
         logger.error("ERROR %s: **NO** se ha podido cargar el JSON: %s, args: %s, kwargs: %s" % (str(e), str(module), str(args), str(kwargs)))
@@ -79,7 +79,7 @@ def dump(*args, **kwargs):
                 module = module.__name__
             function = inspect.currentframe().f_back.f_back.f_code.co_name
             module = ' [%s.%s]' % (module, function)
-        except:
+        except Exception:
             module = ''
         
         logger.error("ERROR %s: **NO** se ha podido guardar el JSON: %s, args: %s, kwargs: %s" % (str(e), str(module), str(args), str(kwargs)))
@@ -128,7 +128,7 @@ def get_node_from_file(name_file, node, path=None, display=False, debug=False):
             window = xbmcgui.Window(10000)  # Home
             alfa_caching = bool(window.getProperty("alfa_caching"))
             debug = debug or config.DEBUG_JSON
-        except:
+        except Exception:
             alfa_caching = False
             logger.error(traceback.format_exc())
 
@@ -246,7 +246,7 @@ def update_node(dict_node, name_file, node, path=None, display=False, debug=Fals
             window = xbmcgui.Window(10000)  # Home
             alfa_caching = bool(window.getProperty("alfa_caching"))
             debug = debug or config.DEBUG_JSON
-        except:
+        except Exception:
             alfa_caching = False
             logger.error(traceback.format_exc())
 
@@ -317,7 +317,7 @@ def update_node(dict_node, name_file, node, path=None, display=False, debug=Fals
                 alfa_cached_data = {}
                 if debug: logger.error('DROP Cache JSON: %s%s: %s:' % (chanver.upper(), module, alfa_cached_data))
                 window.setProperty(contentType, json.dumps(alfa_cached_data))
-    except:
+    except Exception:
         logger.error("No se ha podido actualizar %s" % fname)
         logger.error(traceback.format_exc())
 

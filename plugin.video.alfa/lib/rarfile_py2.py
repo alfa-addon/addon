@@ -1096,7 +1096,7 @@ class CommonParser(object):
             if h.add_size > 0:
                 try:
                     fd.seek(h.data_offset + h.add_size, 0)
-                except:
+                except Exception:
                     try:
                         logger.error('more_vols: %s, data_offset: %s, add_size: %s.  TOTAL: %s' % \
                                 (str(more_vols), str(h.data_offset), str(h.add_size), \
@@ -1105,7 +1105,7 @@ class CommonParser(object):
 
                         endarc = True
                         fd.seek(0, 2)
-                    except:
+                    except Exception:
                         logger.error(traceback.format_exc(1))
 
     def process_entry(self, fd, item):
@@ -1215,7 +1215,7 @@ class CommonParser(object):
             tmpf.write(suffix)
             tmpf.close()
             rf.close()
-        except:
+        except Exception:
             rf.close()
             tmpf.close()
             os.unlink(tmpname)
@@ -2953,7 +2953,7 @@ def custom_popen(cmd, classic=False):
                     with open(rar_path, "w") as f:
                         rar_control['pid'] = p.pid
                         json.dump(rar_control, f, indent=4)
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
     
@@ -3027,7 +3027,7 @@ def membuf_tempfile(memfile):
                 break
             tmpf.write(buf)
         tmpf.close()
-    except:
+    except Exception:
         tmpf.close()
         os.unlink(tmpname)
         raise

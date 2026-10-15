@@ -146,7 +146,7 @@ def get_addon_version_fix():
             fix = re.findall(r'"fix_version"\s*:\s*(\d+)', data)
             if fix:
                 return '.fix%s' % fix[0]
-    except:
+    except Exception:
         pass
     return ''
 
@@ -196,7 +196,7 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
 
             versiones = filetools.decode(versiones)
             break
-        except:
+        except Exception:
             from platformcode import logger
             logger.error("Unable to download repo xml: %s" % versiones)
             versiones = {}
@@ -641,7 +641,7 @@ def get_localized_string(code):
         # Bytes encodings to utf8
         elif PY3 and isinstance(dev, bytes):
             dev = dev.decode("utf8")
-    except:
+    except Exception:
         pass
 
     return dev
@@ -841,7 +841,7 @@ def verify_directories_created():
                         filetools.copy(filetools.join(default, '720p', f),
                                        filetools.join(default, folder, f),
                                        True)
-    except:
+    except Exception:
         logger.error("Al comprobar o crear la carpeta de resolución")
         logger.error(traceback.format_exc())
 
@@ -874,7 +874,7 @@ def get_xml_content(xml_file, content='', retry=False):
                     return get_xml_content(xml_file, retry=True)
                 
                 content = xmltodict.parse(data)
-        except:
+        except Exception:
             content = {}
             from platformcode import logger
             logger.error('ERROR Parseando XML: %s; CONTENIDO: %s' % (xml_file, str(data) or str(data_save)))
@@ -886,7 +886,7 @@ def get_xml_content(xml_file, content='', retry=False):
             with open(xml_file, 'wb') as f:
                 f.write(data)
             content = data
-        except:
+        except Exception:
             content = ''
             from platformcode import logger
             logger.error('ERROR UNparseando XML: %s; CONTENIDO: %s' % (xml_file, str(data)))
@@ -903,5 +903,5 @@ def importer(module):
         if ad:
             lib_path = re.search('library="([^"]+)"', ad).group(1)
             sys.path.append(os.path.join(path, lib_path))
-    except:
+    except Exception:
         pass

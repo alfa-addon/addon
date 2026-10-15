@@ -43,7 +43,7 @@ def get_long_url(short_url):
             location = scrapertools.scrapertools.find_single_match(body, '<textarea.*?class="caja_des">([^<]+)</textarea>')
             logger.info("location=" + location)
             break
-        except:
+        except Exception:
             n = n + 1
             if n > 3:
                 break

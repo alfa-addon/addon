@@ -27,7 +27,7 @@ def run():
 
     try:
         monitor.onAbortRequested()
-    except:
+    except Exception:
         pass
     
     log.info("quasar: exiting quasard")
