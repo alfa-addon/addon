@@ -41,7 +41,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 url += "|Referer=%s" %page_url
                 video_urls.append([label, url])
             video_urls.sort(key=lambda i: int(i[0].replace("p","")))
-    except:
+    except Exception:
         url = scrapertools.find_single_match(data,'<source src="([^"]+)')
         video_urls.append(["MP4", url])
     return video_urls

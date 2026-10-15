@@ -200,7 +200,7 @@ class HTTPWebSocketsHandler(SimpleHTTPRequestHandler):
                 #send close and ignore exceptions. An error may already have occurred.
                 try: 
                     self._send_close()
-                except:
+                except Exception:
                     self.log_message("_ws_close we send a close to a broken line. Do not expect much")
                     pass
                 self.on_ws_closed()
@@ -221,7 +221,7 @@ class HTTPWebSocketsHandler(SimpleHTTPRequestHandler):
             self.close_connection = 1
             try:
                 self._send_close()
-            except:
+            except Exception:
                 self.log_message("_on_message we send a close to a broken line. Do not expect much")
                 pass
             self.on_ws_closed()

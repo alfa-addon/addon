@@ -123,7 +123,7 @@ def section_matches(item, matches_int, **AHkwargs):
                 cantidad = elem.find(string=re.compile(r"(?i)vídeos|videos|movies")).split("\n")
                 elem_json['cantidad'] = cantidad[0]
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -173,7 +173,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if elem.find('a', href=re.compile(r"/channel/[a-z0-9-]+/")):
                 elem_json['canal'] = elem.find('a', href=re.compile(r"/channel/[a-z0-9-]+/")).get_text(strip=True)
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -232,7 +232,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

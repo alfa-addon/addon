@@ -248,7 +248,7 @@ def add_channel(item):
             channel_to_add['channel_name'] = json_file['channel_name']
             if "poster" in json_file:
                 channel_to_add['poster'] = json_file['poster']
-        except:
+        except Exception:
             pass
 
     elif result==1:
@@ -256,7 +256,7 @@ def add_channel(item):
         try:
             channel_to_add['path'] = url
             json_file = jsontools.load(httptools.downloadpage(url).data)
-        except:
+        except Exception:
             pass
 
     if len(json_file) == 0:

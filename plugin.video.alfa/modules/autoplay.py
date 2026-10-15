@@ -104,7 +104,7 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
         channel_id = item.contentChannel
     try:
         active = autoplay_node['status']
-    except:
+    except Exception:
         active = is_active(item.channel)
 
     if not channel_id in autoplay_node or not active:
@@ -284,7 +284,7 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
         # Se prepara el plan b, en caso de estar activo se agregan los elementos no favoritos al final
         try:
             plan_b = settings_node.get('plan_b')
-        except:
+        except Exception:
             plan_b = True
         text_b = ''
         if plan_b:
@@ -357,7 +357,7 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
                         else:
                             # Si no viene de la videoteca solo reproduce
                             platformtools.play_video(videoitem, autoplay=True)
-                    except:
+                    except Exception:
                         pass
                     
                     if autoplay_elem.get('videoitem', {}) and autoplay_elem['videoitem'].server == 'torrent':
@@ -372,7 +372,7 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
                         if platformtools.is_playing():
                             PLAYED = True
                             break
-                    except:
+                    except Exception:
                         logger.debug(str(len(autoplay_list)))
 
                     # Si hemos llegado hasta aqui es por q no se ha podido reproducir
@@ -690,7 +690,7 @@ def get_languages(channel):
         try:
             if control["id"] == 'filter_languages':
                 list_language = control["lvalues"]
-        except:
+        except Exception:
             pass
 
     return list_language

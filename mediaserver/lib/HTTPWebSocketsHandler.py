@@ -187,7 +187,7 @@ class HTTPWebSocketsHandler(SimpleHTTPRequestHandler):
                 #send close and ignore exceptions. An error may already have occurred.
                 try:
                     self._send_close()
-                except:
+                except Exception:
                     pass
                 self.on_ws_closed()
             else:
@@ -206,7 +206,7 @@ class HTTPWebSocketsHandler(SimpleHTTPRequestHandler):
             self.close_connection = 1
             try:
                 self._send_close()
-            except:
+            except Exception:
                 pass
             self.on_ws_closed()
         # ping

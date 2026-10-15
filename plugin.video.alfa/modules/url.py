@@ -119,7 +119,7 @@ def findvideos(item):
                     if btdigg_magnet in link_path and len(item.emergency_urls) > 3 and len(item.emergency_urls[3]) >= x+1:
                         try:
                             z, quality, size = item.emergency_urls[3][x].split('#')
-                        except:
+                        except Exception:
                             pass
                     else:
                         torrent_params['url'] = link_path
@@ -411,7 +411,7 @@ def btdigg(item):
                 item_local.infoLabels["tmdb_id"] = "111"
                 item_local.context=context
             
-            except:
+            except Exception:
                 logger.error(traceback.format_exc())
                 continue
                 

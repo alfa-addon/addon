@@ -30,7 +30,7 @@ import xbmcaddon
 addon = None
 try:
     addon = xbmcaddon.Addon('metadata.themoviedb.org')
-except:
+except Exception:
     addon = xbmcaddon.Addon('metadata.themoviedb.org.python')
 def_lang = addon.getSetting('language') if addon else 'es'
 
@@ -268,7 +268,7 @@ def channel_search(item):
                 if cha.get('module'):
                     try:
                         cha['module'].canonical['global_search_cancelled'] = True
-                    except:
+                    except Exception:
                         pass
 
     progress.close()
@@ -370,7 +370,7 @@ def get_channel_results(ch, item):
         channel_parameters_list[ch]['module'] = module
         try:
             channel_parameters_list[ch]['module'].canonical['global_search_active'] = True
-        except:
+        except Exception:
             channel_parameters_list[ch]['module'].canonical = {'global_search_active': True}
         mainlist = getattr(module, 'mainlist')(Item(channel=ch_params["channel"]))
 
@@ -380,12 +380,12 @@ def get_channel_results(ch, item):
             for search_ in search_actions:
                 try:
                     results.extend(module.search(search_, item.text))
-                except:
+                except Exception:
                     pass
         else:
             try:
                 results.extend(module.search(item, item.text))
-            except:
+            except Exception:
                 pass
 
         if len(results) > 0 and len(results) <= max_results and item.mode != 'all':

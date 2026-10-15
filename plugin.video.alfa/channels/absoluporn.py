@@ -112,7 +112,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['quality'] = elem.find('div', class_=re.compile(r"hd")).get_text(strip=True) if elem.find('div', class_=re.compile(r"hd")) else  ''
             plot = '[COLOR yellow]Video no corresponde al seleccionado, es aleatorio.[/COLOR]'
             elem_json['plot']=plot
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -152,7 +152,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

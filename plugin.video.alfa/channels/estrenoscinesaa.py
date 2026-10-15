@@ -212,7 +212,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
             elem_json['thumbnail'] = elem.img.get("src", "")
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -274,7 +274,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 elem_json['episode'] = int(epi.find("div", class_="numerando").get_text(strip=True).split(" - ")[1] or 1)
                 elem_json['title'] = "%sx%s - %s" % (elem_json['season'], str(elem_json['episode']).zfill(2), info.a.get_text(strip=True))
 
-            except:
+            except Exception:
                 logger.error(epi)
                 logger.error(traceback.format_exc())
                 continue
@@ -320,7 +320,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['url'] = AlfaChannel.do_unquote(elem_json['url'])
             elem_json['server'] = ''
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
@@ -360,7 +360,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []

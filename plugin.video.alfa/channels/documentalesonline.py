@@ -132,7 +132,7 @@ def search(item, texto):
         item.url = host + "?s=%s" % texto
         return videos(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

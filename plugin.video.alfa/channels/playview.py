@@ -161,7 +161,7 @@ def section_matches(item, matches_int, **AHkwargs):
             elem_json['title'] = elem.a.get_text(strip=True)
             if elem_json['title'].lower() in ['próximos estrenos', 'series', 'series animadas', 'series anime'] \
                                               or not elem_json['title']: continue
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -210,7 +210,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elif elem.find("div", class_="info-series"):
                 season_path = re.sub("-temp-\d+", "", scrapertools.find_single_match(elem_json['url'], "%s(.+)" % host))
                 elem_json['url'] = "%sver-temporadas-completas-de/%s" % (host, season_path)
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -265,7 +265,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         try:
             try:
                 elem_json['episode'] = int(elem.find("div", class_="episodeNumber").get_text(strip=True))
-            except:
+            except Exception:
                 elem_json['episode'] = 1
             elem_json['season'] = item.contentSeason
             elem_json['url'] = item.url
@@ -274,7 +274,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['thumbnail'] = scrapertools.find_single_match(elem.find("div", class_="episodeImage").get('style', ''), 'url\(([^\)]+)\)')
             elem_json['title'] = elem.get("title", "")
             elem_json['plot'] = elem.find("div", class_="episodeSynopsis").get_text(strip=True)
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -332,7 +332,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                  
                 elem_json['quality'] = '*%s' % scrapertools.find_single_match(step2.get("data-quality", ""), r"\d+p")
 
-            except:
+            except Exception:
                 logger.error(step2)
                 logger.error(elem)
                 logger.error(traceback.format_exc())
@@ -364,11 +364,11 @@ def play(item):
     try:
         iframe = re.sub('https*:\/*\/*', 'https://', url_data.find("iframe", class_="embed-responsive-item")["src"])
         url = AlfaChannel.create_soup(iframe, **kwargs).url
-    except:
+    except Exception:
         try:
             url_data = url_data.find("button", class_="linkfull").get("data-url", "")
             url = base64.b64decode(scrapertools.find_single_match(url_data, "/go/(.+)")).decode('utf-8')
-        except:
+        except Exception:
             url = host
     if url:
         srv = servertools.get_server_from_url(url)
@@ -391,7 +391,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
 
         for line in sys.exc_info():
@@ -417,7 +417,7 @@ def newest(categoria, **AHkwargs):
         itemlist = list_all(item)
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

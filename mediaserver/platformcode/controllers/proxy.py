@@ -46,7 +46,7 @@ class proxy(Controller):
             h = opener.open(req)
         except urllib2.HTTPError as e:
             h = e
-        except:
+        except Exception:
             self.handler.send_response("503")
             self.handler.wfile.close()
             h.close()

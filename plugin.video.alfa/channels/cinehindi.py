@@ -129,7 +129,7 @@ def list_all(item):
         
         try:
             year = elem.find("span", class_="year").text
-        except:
+        except Exception:
             pass
 
         stitle = title
@@ -144,7 +144,7 @@ def list_all(item):
 
     try:
         url_next_page = soup.find("a", text="SIGUIENTE")["href"]
-    except:
+    except Exception:
         return itemlist
 
     itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all', type=item.type))
@@ -166,7 +166,7 @@ def findvideos(item):
             url_ = soup.find("div", id="%s" % opt).find("iframe")
             url = url_.get("data-lazy-src", '') or url_.get("data-src", '')
             url = create_soup(url).find("iframe")["src"]
-        except:
+        except Exception:
             continue
 
 
@@ -200,7 +200,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

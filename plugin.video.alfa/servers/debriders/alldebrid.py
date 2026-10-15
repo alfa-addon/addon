@@ -167,12 +167,12 @@ def authentication():
                 if check_data["activated"]:
                     api_key = check_data["apikey"]
                     break
-            except:
+            except Exception:
                 pass
 
         try:
             dialog_auth.close()
-        except:
+        except Exception:
             pass
 
         if expires <= 0:
@@ -184,7 +184,7 @@ def authentication():
             return api_key
         else:
             return False
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
         return False

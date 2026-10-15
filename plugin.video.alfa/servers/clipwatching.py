@@ -27,7 +27,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
         packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
         unpacked = jsunpack.unpack(packed)
         
-    except:
+    except Exception:
         unpacked = scrapertools.find_single_match(data,"window.hola_player.*")
     
     host = httptools.obtain_domain(page_url, scheme=True)

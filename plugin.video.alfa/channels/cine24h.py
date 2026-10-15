@@ -162,7 +162,7 @@ def list_all(item):
             itemlist.append(new_item)
             
         
-        except:
+        except Exception:
             logger.error(elem)
             pass
             # continue
@@ -176,7 +176,7 @@ def list_all(item):
         try:
             next_page = soup.find("a", class_="next page-numbers")["href"]
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
-        except:
+        except Exception:
             pass
 
     return itemlist
@@ -323,7 +323,7 @@ def search(item, texto):
             return list_all(item)
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

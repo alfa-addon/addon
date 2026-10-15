@@ -96,11 +96,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         kp1, kp2 = key_parts
         try:
             k1 = b64u_decode(kp1)
-        except:
+        except Exception:
             k1 = kp1.encode()
         try:
             k2 = b64u_decode(kp2)
-        except:
+        except Exception:
             k2 = kp2.encode()
         raw_key = k1 + k2
         if len(raw_key) != 32:

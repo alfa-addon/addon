@@ -228,7 +228,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 if not scrapertools.find_single_match(elem.find('span', class_="Qlty").get_text(strip=True), '(\d{4})'):
                     elem_json['quality'] = '*%s' % elem.find('span', class_="Qlty").get_text(strip=True)
             
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -282,11 +282,11 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['title'] = item.contentSerieName
             try:
                 elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
-            except:
+            except Exception:
                 elem_json['episode'] = 1
             elem_json['season'] = item.contentSeason
             elem_json['thumbnail'] = elem.img.get('src', '')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -331,7 +331,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             # logger.debug(elem_json['server'] + " @@@@ " + elem_json['language'])
             # logger.debug(elem_json['url'])
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -392,7 +392,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

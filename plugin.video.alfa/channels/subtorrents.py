@@ -218,7 +218,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     if x == 2: elem_json['quality'] = '*%s' % td.get_text(strip=True)
                     if x == 3: elem_json['quality'] = '*%s' % td.get_text(strip=True)
 
-                except:
+                except Exception:
                     logger.error(td)
                     logger.error(elem)
                     logger.error(traceback.format_exc())
@@ -234,7 +234,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['quality'] = '*'
                 elem_json['language'] = '*'
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
                 continue
@@ -310,7 +310,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 if elem_json['season'] != item.contentSeason: continue
                 if scrapertools.find_single_match(sxe, '(?i)\d+x\d+-(\d+)'):
                     elem_json['title'] = 'al %s' % scrapertools.find_single_match(sxe, '(?i)\d+x\d+-(\d+)')
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
                 continue
@@ -329,7 +329,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                                                            .find('tr', class_='fichserietabla_b').a.get('href', '')
                         elem_json['subtitle'] += [subtitle.replace(AlfaChannel.obtain_domain(subtitle, scheme=True), host.rstrip('/'))]
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -396,7 +396,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                                                   .find('tr', class_='fichserietabla_b').a.get('href', '')
                         elem_json['subtitle'] += [subtitle.replace(AlfaChannel.obtain_domain(subtitle, scheme=True), host.rstrip('/'))]
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
@@ -430,7 +430,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))
@@ -458,7 +458,7 @@ def newest(categoria, **AHkwargs):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

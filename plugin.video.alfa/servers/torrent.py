@@ -163,7 +163,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
     timeout = kwargs.pop('timeout', 10)
     try:
         if isinstance(timeout, (tuple, list)): timeout = timeout[1]
-    except:
+    except Exception:
         timeout = 10
     proxy_retries = kwargs.pop('proxy_retries', 1)
     referer = kwargs.pop('referer', None)

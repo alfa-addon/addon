@@ -28,7 +28,7 @@ def load_controllers():
 
                     if not c.startswith('_') and isclass(cls) and issubclass(cls, Controller) and Controller != cls:
                         controllers.append(cls)
-            except:
+            except Exception:
                 import traceback
                 logger.error(traceback.format_exc())
     return controllers

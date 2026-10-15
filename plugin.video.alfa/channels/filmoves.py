@@ -143,7 +143,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['year'] = elem.get('release_year', '') or elem.a.span.get_text(strip=True)
             if item.c_type == 'search': elem_json['mediatype'] = 'movie' if movie_path in elem_json['url'] else 'tvshow'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -205,11 +205,11 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = elem.a.get('href', '')
             try:
                 elem_json['episode'] = int(elem.div.span.get_text(strip=True).split("x")[1] or '1')
-            except:
+            except Exception:
                 elem_json['episode'] = 1
             elem_json['season'] = item.contentSeason
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -252,7 +252,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['server'] = ''
             elem_json['title'] = '%s'
 
-        except:
+        except Exception:
             logger.error('v_id: %s; url: %s' % (v_id, url))
             logger.error(traceback.format_exc())
             continue
@@ -290,7 +290,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -312,7 +312,7 @@ def newest(categoria, **AHkwargs):
         itemlist = list_all(item)
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []

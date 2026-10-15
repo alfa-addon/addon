@@ -189,7 +189,7 @@ def search(item, texto, **AHkwargs):
             item.c_type = "search"
             item.texto = texto
             return list_all(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

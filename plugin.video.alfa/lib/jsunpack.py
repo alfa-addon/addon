@@ -131,7 +131,7 @@ def _replacestrings(source):
     try:
         if beginstr:
             pass
-    except:
+    except Exception:
         beginstr = ''
         endstr = ''
     return beginstr + source + endstr

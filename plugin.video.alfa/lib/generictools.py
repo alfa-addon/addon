@@ -2359,7 +2359,7 @@ def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], matches_inde
                                                                    .find('span', class_='fdi-type').get_text(strip=True), r'(\d+)'))
                             if len(str(elem_json['episode'])) > 3:
                                 elem_json['episode'] = int(scrapertools.find_single_match(elem_json['url'], r'/capitulo-(\d+)'))
-                        except:
+                        except Exception:
                             logger.error(elem)
                             elem_json['season'] =  1
                             elem_json['episode'] =  1
@@ -2858,7 +2858,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
-                except:
+                except Exception:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
@@ -3398,7 +3398,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                     ASSISTANT_SERVERS = eval(window.getProperty("alfa_assistant_servers") or '127.0.0.1')
                     ASSISTANT_REMOTE = False if '127.0.0.1' in ASSISTANT_SERVERS[0] else True
-                except:
+                except Exception:
                     alfa_gateways = []
                     ASSISTANT_SERVERS = ['127.0.0.1']
                     ASSISTANT_REMOTE = False
@@ -3681,7 +3681,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                                 ASSISTANT_SERVERS = eval(window.getProperty("alfa_assistant_servers") or '127.0.0.1')
                                 ASSISTANT_REMOTE = False if '127.0.0.1' in ASSISTANT_SERVERS[0] else True
-                            except:
+                            except Exception:
                                 alfa_gateways = []
                                 ASSISTANT_SERVERS = ['127.0.0.1']
                                 ASSISTANT_REMOTE = False
@@ -4074,7 +4074,7 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py_urls, *
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
-                except:
+                except Exception:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
@@ -4401,7 +4401,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py_urls, 
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
-                except:
+                except Exception:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
@@ -4711,7 +4711,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py_urls
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
-                except:
+                except Exception:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
@@ -5010,7 +5010,7 @@ def get_torrent_size(url, **kwargs):
         return torrent_params
     try:
         if isinstance(kwargs.get('timeout', 5), (tuple, list)): kwargs['timeout'] = kwargs['timeout'][1]
-    except:
+    except Exception:
         kwargs['timeout'] = 5
     
     retry_CF = kwargs.get('retries_cloudflare', 2)

@@ -451,6 +451,6 @@ def search(item, texto):
     if texto != '':
         try:
             return list_all(item)
-        except:
+        except Exception:
             itemlist.append(item.clone(url='', title='No hay elementos...', action=''))
             return itemlist

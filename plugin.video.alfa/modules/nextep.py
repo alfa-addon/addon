@@ -63,7 +63,7 @@ def next_ep(item):
             Difference = Total - Actual
             if Total > TimeFromEnd >= Difference:
                 time_over = True
-        except:
+        except Exception:
             break
 
     if time_over:

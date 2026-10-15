@@ -163,7 +163,7 @@ def set_setting(key, val):
 def register(search, search_movie, search_episode, search_season=None):
     try:
         payload = json.loads(base64.b64decode(sys.argv[1]))
-    except:
+    except Exception:
         notify(getLocalizedString(30102), time=1000)
         return
 
@@ -186,7 +186,7 @@ def register(search, search_movie, search_episode, search_season=None):
             notify("%s: %s" % (getLocalizedString(30224), repr(e).encode('utf-8')))
             try:
                 urllib2.urlopen("%s/provider/%s/failure" % (QUASARD_HOST, ADDON_ID))
-            except:
+            except Exception:
                 pass
     finally:
         try:
@@ -199,5 +199,5 @@ def register(search, search_movie, search_episode, search_season=None):
             notify("%s: %s" % (getLocalizedString(30224), repr(e).encode('utf-8')))
             try:
                 urllib2.urlopen("%s/provider/%s/failure" % (QUASARD_HOST, ADDON_ID))
-            except:
+            except Exception:
                 pass

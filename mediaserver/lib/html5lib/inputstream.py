@@ -437,7 +437,7 @@ class HTMLBinaryInputStream(HTMLUnicodeInputStream):
 
         try:
             stream.seek(stream.tell())
-        except:
+        except Exception:
             stream = BufferedStream(stream)
 
         return stream

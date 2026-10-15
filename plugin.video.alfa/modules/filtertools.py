@@ -91,7 +91,7 @@ class Filter(object):
                     try:
                         language = control["lvalues"][global_filter_language]
                         # if not ALFA_S: logger.debug("language %s" % language)
-                    except:
+                    except Exception:
                         logger.error("No se ha encontrado el valor asociado al codigo '%s': %s" %
                                      (global_filter_lang_id, global_filter_language))
                         break
@@ -205,7 +205,7 @@ def show_option(itemlist, channel, list_language, list_quality_tvshow, list_qual
                 try:
                     list_quality_tvshow = channel_obj.list_quality_tvshow
                     list_quality_movies = channel_obj.list_quality_movies
-                except:
+                except Exception:
                     list_quality_tvshow = list_quality_tvshow_save
                 
         from lib.generictools import post_btdigg
@@ -601,7 +601,7 @@ def config_item(item):
     try:
         if channel_parameters["filter_languages"] and len(list_language) > 0:
             default_lang = list_language[1]
-    except:
+    except Exception:
         pass
 
     if default_lang == '':

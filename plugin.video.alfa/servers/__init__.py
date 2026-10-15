@@ -8,5 +8,5 @@ import sys
 try:
     # from core import logger
     import core
-except:
+except Exception:
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

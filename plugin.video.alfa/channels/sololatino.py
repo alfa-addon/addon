@@ -201,7 +201,7 @@ def list_all(item):
         # soup = create_soup(host)
         # logger.debug(soup)
         soup = create_soup(item.url)
-    except:
+    except Exception:
         return itemlist
     # logger.debug(soup)
     matches = soup.find("div", class_="movies-grid").find_all("div", class_='card') #id=re.compile(r"^post-\d+")
@@ -212,7 +212,7 @@ def list_all(item):
         thumb = elem.img["src"]
         try:
             year = elem.find('span', class_='card__year').text.strip()
-        except:
+        except Exception:
             year = '-'
         
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
@@ -224,7 +224,7 @@ def list_all(item):
                 new_item.contentEpisodeNumber = int(episode)
                 title = re.sub('\:\s*\d+.\d+', '', title)
                 new_item.title = '%sx%s - %s' % (new_item.contentSeason, str(new_item.contentEpisodeNumber).zfill(2), title)
-            except:
+            except Exception:
                 new_item.contentSeason = 1
                 new_item.contentEpisodeNumber = 0
             new_item.contentSerieName = title
@@ -246,7 +246,7 @@ def list_all(item):
     
     try:
         url_next_page = soup.find("a", rel="next")["href"]
-    except:
+    except Exception:
         return itemlist
     
     if url_next_page and len(matches) > 16:
@@ -264,7 +264,7 @@ def seasons(item):
         soup = create_soup(item.url).find("select", id="season-select")
         
         matches = soup.find_all("option")
-    except:
+    except Exception:
         return itemlist
     
     infoLabels = item.infoLabels
@@ -272,7 +272,7 @@ def seasons(item):
     for elem in matches:
         try:
             season = int(elem["value"])
-        except:
+        except Exception:
             season = 1
         title = "Temporada %s" % season
         infoLabels["season"] = season
@@ -313,7 +313,7 @@ def episodesxseasons(item):
         # soup = create_soup(host)
         soup = create_soup(item.url).find("div", attrs={"data-season-panel": season})
         matches = soup.find_all("a")
-    except:
+    except Exception:
         return itemlist
     
     for elem in matches:
@@ -464,7 +464,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

@@ -92,7 +92,7 @@ def list_all(item):
         thumb = elem.find("img")["src"]
         try:
             year = extra_info[1].text
-        except:
+        except Exception:
             year = "-"
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
         if "/peliculas/" in url:
@@ -111,7 +111,7 @@ def list_all(item):
         if url_next_page:
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all',
                                  section=item.section))
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -251,7 +251,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
 
         for line in sys.exc_info():
@@ -273,7 +273,7 @@ def newest(categoria):
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))
