@@ -54,9 +54,9 @@ finds = {
          'get_quality_rgx': '', 
          'next_page': {}, 
          'next_page_rgx': [['\/\d+', '/%s'], [r'page=\d+', 'page=%s']], 
-         'last_page': dict([('find', [{'tag': ['nav'], 'class': ['gap-2']}]), 
+         'last_page': dict([('find', [{'tag': ['nav'], 'class': ['flex gap-2']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-1], 
-                                           '@ARG': 'href', '@TEXT': 'page=(\d+)'}])]), 
+                                           '@ARG': 'href', '@TEXT': r'page[/=](\d+)'}])]), 
          'year': {'find': [{'tag': ['span'], 'class': ['year']}], 'get_text': [{'tag': '', '@STRIP': True, '@TEXT': r'(\d+)'}]}, 
          'season_episode': {}, 
          'seasons': {'find_all': [{'tag': ['li'], 'class': ['sel-temp']}]}, 
@@ -74,7 +74,7 @@ finds = {
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real-*|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'language_clean': [], 
          'url_replace': [], 
-         'controls': {'duplicates': [], 'min_temp': False, 'cnt_tot': 32, 'url_base64': False, 'add_video_to_videolibrary': True, 
+         'controls': {'duplicates': [], 'min_temp': False, 'cnt_tot': 24, 'url_base64': False, 'add_video_to_videolibrary': True, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
@@ -128,7 +128,7 @@ def section_matches(item, matches_int, **AHkwargs):
         try:
             url = elem.get("href", '')
             url = scrapertools.find_single_match(url, 'categoria/([a-z-]+)')
-            elem_json['url'] = "%sinc/php/buscar.php?q=%s&a=3&page=2" %(item.url, url)
+            elem_json['url'] = "%sinc/php/buscar.php?q=%s&a=3&page=1" %(item.url, url)
             elem_json['title'] = elem.get_text(strip=True).replace('folder', '')
                                                                 
             if elem.img: elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \

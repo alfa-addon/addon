@@ -505,6 +505,268 @@ def get_from_subdl(sub_url, sub_data=None, sub_dir='', item=Item()):
     return sub
 
 
+def _pistas_subtitulo(item):
+    """Pistas para casar un subtitulo con el fichero que se va a ver.
+
+    Se sacan del url y del titulo del item. NO del plot: es un texto largo y suelto y daria falsos
+    positivos (un "1080" o un "remux" perdidos en la sinopsis). Devuelve [] si no hay que rascar.
+    """
+    texto = ' '.join(str(x or '') for x in (getattr(item, 'url', ''),
+                                            getattr(item, 'title', ''),
+                                            getattr(item, 'contentTitle', ''))).lower()
+
+    pistas = [p for p in ('2160', '1080', '720', '480') if p in texto]
+    pistas += [p for p in ('remux', 'bluray', 'bdrip', 'brrip', 'webrip', 'web-dl', 'webdl',
+                           'hdtv', 'telesync', 'hdts', 'dvdrip', 'x264', 'x265', 'h264', 'h265')
+               if p in texto]
+
+    return pistas
+
+
+def _es_del_titulo(resultado, numero, temporada=0, episodio=0):
+    """Comprueba que el resultado es DE VERDAD de ese titulo (y de ese episodio).
+
+    Medido el 2026-10-15: si el imdbid no existe la API NO falla, devuelve 100 resultados de otras
+    peliculas (tt0000000 -> "Manhattan 1979"). Hay que mirar los campos para no dar gato por liebre:
+      - pelicula: IDMovieImdb tiene que ser el id pedido, sin el "tt" y sin ceros a la izquierda
+        (para tt0111161 la API devuelve "111161").
+      - serie: IDMovieImdb es el id del EPISODIO (1480055 para GoT S1E1); el de la serie va en
+        SeriesIMDBParent (944947). Se exigen los tres: serie, temporada y episodio.
+    """
+    def _num(valor):
+        try:
+            return int(str(valor).strip())
+        except Exception:
+            return -1
+
+    if temporada and episodio:
+        if _num(resultado.get('SeriesIMDBParent')) != _num(numero):
+            return False
+
+        return (_num(resultado.get('SeriesSeason')) == _num(temporada) and
+                _num(resultado.get('SeriesEpisode')) == _num(episodio))
+
+    return _num(resultado.get('IDMovieImdb')) == _num(numero)
+
+
+def _mejor_subtitulo(resultados, item, numero, temporada=0, episodio=0):
+    """De los resultados de opensubtitles, el .srt que mas se parece al fichero que se va a ver.
+
+    La API devuelve decenas de subtitulos, uno por release (medido el 2026-10-15: 65 para una
+    pelicula concreta), y quedarse con el primero es la forma clasica de acabar con los subtitulos
+    a destiempo. Primero se descarta lo que no es de este titulo (o de este episodio) y luego se
+    puntua cada candidato por las pistas que se puedan sacar del item. Sin pistas, o si todos
+    empatan, se queda el primero.
+    """
+    candidatos = [r for r in resultados
+                  if str(r.get('SubFormat', '')).lower() == 'srt' and r.get('ZipDownloadLink')
+                  and _es_del_titulo(r, numero, temporada, episodio)]
+
+    if not candidatos:
+        return None
+
+    pistas = _pistas_subtitulo(item)
+
+    if not pistas:
+        return candidatos[0]
+
+    mejor = candidatos[0]
+    mejor_puntos = -1
+
+    for candidato in candidatos:
+        nombre = str(candidato.get('SubFileName', '')).lower()
+        puntos = sum(1 for pista in pistas if pista in nombre)
+
+        if puntos > mejor_puntos:
+            mejor = candidato
+            mejor_puntos = puntos
+
+    return mejor
+
+
+def _nombres_subtitulo(sub):
+    """Los nombres de fichero de un subtitulo, que puede venir como ruta o como lista de rutas."""
+    if not sub:
+        return []
+
+    if not isinstance(sub, (list, tuple)):
+        sub = [sub]
+
+    return [filetools.basename(str(x)) for x in sub if x and not str(x).startswith('http')]
+
+
+def _limpia_subtitulos(sub_dir, conservar=()):
+    """Borra los subtitulos de la carpeta que NO sean los que se acaban de guardar.
+
+    Alfa tiene CUATRO implementaciones de subtitulos (subdivx, subscene, subdl y opensubtitles) y
+    las cuatro guardan en la misma carpeta. Ninguna borraba nada, asi que se acumulaban para
+    siempre (64-138 KB cada uno). Aqui esta la unica limpieza que hay.
+
+    `conservar` son los NOMBRES que hay que salvar, no "los mas nuevos": un zip puede traer fechas
+    antiguas y entonces se borraria justo el que se acaba de descargar. Con cada subtitulo que se
+    va, se va tambien su .nfo: el flujo de la videoteca los escribe emparejados en el tiempo, asi
+    que se localizan por fecha, con un margen de 5 s.
+
+    Si algo falla se sigue: una limpieza no puede romper una reproduccion.
+    """
+    try:
+        if not sub_dir or not filetools.exists(sub_dir):
+            return
+
+        guardar = [str(n) for n in (conservar or [])]
+        fechas = []
+
+        for nombre in (filetools.listdir(sub_dir, silent=True) or []):
+            base = str(nombre)
+            if not base.lower().endswith(('.srt', '.ass', '.ssa', '.sub')):
+                continue
+            if base in guardar:
+                continue
+            ruta = filetools.join(sub_dir, base)
+            try:
+                fechas.append(os.path.getmtime(filetools.translatePath(ruta)))
+            except Exception:
+                pass
+            filetools.remove(ruta, silent=True)
+            logger.info("subtitulos: borrado el antiguo %s" % base)
+
+        if not fechas:
+            return
+
+        for nombre in (filetools.listdir(sub_dir, silent=True) or []):
+            base = str(nombre)
+            if not base.lower().endswith('.nfo'):
+                continue
+            ruta = filetools.join(sub_dir, base)
+            try:
+                when = os.path.getmtime(filetools.translatePath(ruta))
+                if any(abs(when - f) <= 5 for f in fechas):
+                    filetools.remove(ruta, silent=True)
+                    logger.info("subtitulos: borrado el .nfo %s" % base)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.error("subtitulos: no se pudo limpiar la carpeta (%s)" % str(e)[:100])
+
+
+def get_from_opensubtitles(imdb_id, temporada=0, episodio=0, sub_dir='', item=Item()):
+    """Subtitulo en espanol de opensubtitles, para una pelicula o para un episodio de serie.
+
+    Medido el 2026-10-15 contra la API legacy (rest.opensubtitles.org):
+      - pelicula: /search/imdbid-<id>/sublanguageid-spa
+      - serie:    /search/episode-<ep>/imdbid-<id>/season-<t>/sublanguageid-spa
+      - el ORDEN de los parametros es OBLIGATORIO: cualquier otro orden responde un 302 hacia un
+        host que se llama literalmente "_" y la peticion muere. De cuatro ordenes probados, solo
+        ese funciona.
+      - tmdbid NO lo acepta (400 "no valid parameters specified"): hace falta el imdb_id.
+      - httptools deja los bytes en .data (httptools.py:1714/1984). Escribir el zip como texto lo
+        corrompe ("BadZipFile: Bad offset for central directory", medido).
+
+    Devuelve la ruta del .srt, o '' si no hay nada. NUNCA lanza: si esto falla, el listado del
+    canal tiene que seguir funcionando igual.
+    """
+    sub = ''
+
+    if not imdb_id or not str(imdb_id).startswith('tt'):
+        return sub
+
+    # una serie sin episodio no se puede buscar: con el imdbid de la serie la API devuelve TODOS los
+    # episodios (medido: 100) y coger el primero seria dar un subtitulo de otro capitulo.
+    if temporada and not episodio:
+        logger.info("opensubtitles: serie sin episodio, no se busca")
+        return sub
+
+    numero = str(imdb_id)[2:]
+    resultados = None
+
+    try:
+        if temporada and episodio:
+            url = ("https://rest.opensubtitles.org/search/episode-%s/imdbid-%s/season-%s"
+                   "/sublanguageid-spa" % (int(episodio), numero, int(temporada)))
+        else:
+            url = "https://rest.opensubtitles.org/search/imdbid-%s/sublanguageid-spa" % numero
+
+        respuesta = httptools.downloadpage(url, headers={'User-Agent': 'TemporaryUserAgent'},
+                                           timeout=20)
+        resultados = respuesta.json
+    except Exception as e:
+        logger.error("opensubtitles: fallo la busqueda (%s)" % str(e)[:120])
+        return sub
+
+    if not isinstance(resultados, list) or not resultados:
+        logger.info("opensubtitles: sin resultados para %s S%sE%s"
+                    % (imdb_id, temporada, episodio))
+        return sub
+
+    if not sub_dir:
+        sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
+
+    if not filetools.exists(sub_dir):
+        filetools.mkdir(sub_dir)
+
+    elegido = _mejor_subtitulo(resultados, item, numero, temporada, episodio)
+
+    if not elegido:
+        logger.info("opensubtitles: ningun .srt utilizable para %s" % imdb_id)
+        return sub
+
+    sub_name = elegido.get('SubFileName', '')
+    zip_url = elegido.get('ZipDownloadLink', '')
+
+    if not sub_name or not zip_url:
+        return sub
+
+    sub = filetools.join(sub_dir, sub_name)
+
+    # ya descargado en una busqueda anterior: no se vuelve a pedir (esto es lo que evita duplicar)
+    if filetools.exists(sub):
+        logger.info("opensubtitles: ya estaba en disco (%s)" % sub_name)
+        return sub
+
+    fichero_zip = filetools.join(sub_dir, sub_name + '.zip')
+
+    try:
+        descarga = httptools.downloadpage(zip_url, headers={'User-Agent': 'TemporaryUserAgent'},
+                                          timeout=30)
+
+        if not descarga.sucess or not descarga.data:
+            logger.error("opensubtitles: la descarga del zip no fue bien")
+            return ''
+
+        if not filetools.write(fichero_zip, descarga.data):
+            logger.error("opensubtitles: no se pudo escribir el zip")
+            return ''
+
+        try:
+            from core import ziptools
+            ziptools.ziptools().extract(fichero_zip, sub_dir)
+        except Exception as e:
+            logger.error("opensubtitles: no se pudo descomprimir (%s)" % str(e)[:120])
+            return ''
+
+        if not filetools.exists(sub):
+            logger.error("opensubtitles: tras descomprimir no aparece %s" % sub_name)
+            return ''
+    except Exception as e:
+        logger.error("opensubtitles: fallo la descarga (%s)" % str(e)[:120])
+        return ''
+    finally:
+        # el zip no hace falta para nada mas
+        try:
+            if filetools.exists(fichero_zip):
+                filetools.remove(fichero_zip, silent=True)
+        except Exception:
+            pass
+
+    logger.info("opensubtitles: subtitulo listo (%s)" % sub_name)
+
+    # No se guarda cache (volver a pedirlo cuesta ~1 s): se queda este y se van los demas. La MISMA
+    # limpieza la usa download_subtitles para las otras tres fuentes de subtitulos de Alfa.
+    _limpia_subtitulos(sub_dir, [sub_name])
+
+    return sub
+
+
 def extract_file_online(path, filename):
 
     """
@@ -547,6 +809,7 @@ def download_subtitles(item):
     else:
         subtitles = item.subtitle[:]
     item.subtitle = ''
+    subtitles_path = ''
 
     try:
         subtitles_path = config.get_kodi_setting('subtitles.custompath')
@@ -582,5 +845,10 @@ def download_subtitles(item):
                     item.subtitle = subtitle_path_name
     except Exception:
         logger.error(traceback.format_exc())
+
+    # Las tres fuentes de aqui (subdivx, subscene y subdl) guardan en esta carpeta y NINGUNA borraba
+    # nada. Se limpia igual que en get_from_opensubtitles: se queda lo recien bajado (con su .nfo) y
+    # el resto se va. Sin cache a proposito: volver a pedirlo cuesta ~1 s.
+    _limpia_subtitulos(subtitles_path, _nombres_subtitulo(item.subtitle))
 
     return item

@@ -20,13 +20,19 @@ def test_video_exists(page_url):
 def get_video_url(page_url, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    patron = '"fl_cdn_(\d+)": "([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,url in matches:
+    patron = '"fl_cdn_multi":\s*"([^"]+)"'
+    url = scrapertools.find_single_match(data, patron)
+    url = "https://video.externulls.com/%s" %url
+    url += "|Referer=https://beeg.com/"
+    video_urls.append(['[beeg]', url])
+    
+    # patron = '"fl_cdn_(\d+)": "([^"]+)"'
+    # matches = re.compile(patron,re.DOTALL).findall(data)
+    # for quality,url in matches:
         # url = "https://video.beeg.com/%s" %url
-        url = "https://video.externulls.com/%s" %url
-        url += "|Referer=https://beeg.com/"
-        video_urls.append(['[beeg] %s' %quality, url])
-    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
+        # url = "https://video.externulls.com/%s" %url
+        # url += "|Referer=https://beeg.com/"
+        # video_urls.append(['[beeg] %s' %quality, url])
+    # video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls
 

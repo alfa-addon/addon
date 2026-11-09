@@ -340,7 +340,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             try:
                 
                 lang = language
-                if lang != item.extra:
+                if item.extra and lang != item.extra:
                     logger.error("{} ({}) != {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
                     continue
                 else:

@@ -115,7 +115,7 @@ def list_all(item):
             c_type = item.c_type
         else:
             c_type = "tvshow" if season else "movie"
-        thumbnail = elem.find("div", class_='p182-card__image')["style"]
+        thumbnail = elem.img["src"]
         
         new_item = Item(channel=item.channel,
                         thumbnail=thumbnail,
@@ -207,8 +207,16 @@ def findvideos(item):
     logger.info()
     itemlist = list()
     
-    soup = create_soup(item.url)
-    url = soup.iframe['src']
+    if item.contentType == "episode":
+        # En los episodios, el data-iframe de la ficha ya apunta directamente al reproductor
+        url = item.url
+    else:
+        soup = create_soup(item.url)
+        iframe = soup.find("iframe")
+        if not iframe or not iframe.get("src"):
+            logger.error("URL: {0}\nNo se ha encontrado el iframe del reproductor".format(str(item.url)))
+            return itemlist
+        url = iframe["src"]
     
     itemlist.append(Item(channel=item.channel, server="lauchacohete", title='%s', 
                          action='play', url=url,

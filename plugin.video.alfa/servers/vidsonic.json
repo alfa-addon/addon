@@ -6,6 +6,10 @@
       {
         "pattern": "vidsonic.net/e/([A-z0-9]+)",
         "url": "https://vidsonic.net/e/\\1"
+      },
+      {
+        "pattern": "vixeo.io/e/([A-z0-9]+)",
+        "url": "https://vixeo.io/e/\\1"
       }
     ]
   },
@@ -38,5 +42,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/QdBWVND4/vidara.png"
+  "thumbnail": "https://i.postimg.cc/Wby4744m/vidsonic.png"
 }

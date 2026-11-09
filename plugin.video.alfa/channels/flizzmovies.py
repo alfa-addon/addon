@@ -15,7 +15,7 @@ from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_th
 
 
 SERVERS = {'vidhide': 'vidhidepro', 'turboviplay': 'emturbovid', 
-           'abyss': '', 'krakenfiles': '', 'flizzmovies' : '', 'dood': 'doodstream'}
+           'abyss': '', 'krakenfiles': '', 'flizzmovies' : 'kinoger', 'dood': 'doodstream'}
 IDIOMAS = {'audio latino': 'LAT', 'audiolatino': 'LAT', 'castellano': 'CAST', 'subtitulada': 'VOSE'}
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
@@ -215,11 +215,8 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         try:
             lang = elem.get('data-lang', '').lower()
             lang = IDIOMAS.get(lang, 'unknown')
-            if lang != item.extra:
-                logger.error("{} ({}) != {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
+            if item.extra in list_language and lang != item.extra:
                 continue
-            else:
-                logger.error("{} ({}) == {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
             
             elem_json['server'] = elem.get('data-server', '')
             elem_json['server'] = SERVERS.get(elem_json['server'], elem_json['server'])
@@ -252,6 +249,7 @@ def play(item):
         kwargs['post'] = {'idF': id, 'ajax': num}
         try:
             data_json = AlfaChannel.create_soup(item.url, **kwargs).json
+            logger.debug(data_json)
         except Exception:
             return itemlist
         if data_json and data_json.get('link', ''):

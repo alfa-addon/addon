@@ -341,7 +341,7 @@ def findvideos(item):
         url = video['link']
         lang = get_language_string(video['lang'])
         
-        if lang != item.extra:
+        if item.extra and lang != item.extra:
             # logger.error("{} ({}) != {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
             logger.error("{} ({}) != {}".format(lang, lang, item.extra))
             continue

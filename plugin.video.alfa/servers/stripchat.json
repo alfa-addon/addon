@@ -39,5 +39,5 @@
     }
   ],
   "thumbnail": "https://i.postimg.cc/zGXSGYnX/stripchat.png",
-  "force_inputstream": "ffmpegdirect"
+  "force_inputstream": "adaptive"
 }
