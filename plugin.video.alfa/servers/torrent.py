@@ -107,7 +107,7 @@ patron_domain = r'(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+
 patron_host = r'((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_canal = r'(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
 
-domain_CF_blacklist = ['atomohd', 'atomixhq', 'atomtt', 'wolfmax4k', 'Wolfmax4k', 'enlacito']    ############# TEMPORAL
+domain_CF_blacklist = ['atomohd', 'atomixhq', 'atomtt', 'wolfmax4k', 'Wolfmax4k', 'enlacito', 'wolftorrent']    ############# TEMPORAL
 
 torrent_paths = {}
 
@@ -353,7 +353,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
                     if not torrent_params.get('lookup', False) and cf_error:
                         torrent_params['torrents_path'] = ''
                         url_call = url
-                        if url_domain in domain_CF_blacklist and item.url_tvshow:
+                        if url_domain in domain_CF_blacklist and item.url_tvshow and item.contentType != 'movie':
                             url_call = item.url_tvshow
                             if item.contentType == 'episode' and item.url_save_rec and item.url_save_rec[0]:
                                 url_call = item.url_save_rec[0]
@@ -750,8 +750,9 @@ def magnet2torrent(magnet, headers={}, downloadStatus=4):
 
         # Tratamos de convertir el magnet on-line (opción más rápida, pero no se puede convertir más de un magnet a la vez)
         url_list = [
-                    ('https://itorrents.net/torrent/', 5, '', '.torrent')
+                    ('https://itorrents.net/torrent/', 5, '', '.torrent')       # El servicio está corrompido y descaga un virus
                    ]                                                            # Lista de servicios on-line testeados
+        url_list = []
         for x, (url, timeout, id, sufix) in enumerate(url_list):
             if progreso: progreso.update(old_div((x * 100), len(url_list)), header_progreso, magnet_title)
             if id:

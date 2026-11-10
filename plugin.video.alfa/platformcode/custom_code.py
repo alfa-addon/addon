@@ -25,6 +25,10 @@ try:
     monitor = xbmc.Monitor()
 except Exception:
     monitor = None
+try:
+    window = xbmcgui.Window(10000)
+except Exception:
+    window = None
 
 PY3 = sys.version_info > (3,)
 
@@ -156,6 +160,9 @@ def init():
         round_level = 1
         if config.get_setting("current_host", default=0) < round_level:
             reset_current_host(round_level)
+        
+        # Versificamos si TOR está instalado y accesible
+        verify_tor_availability(reset=True)
 
         # Comprime la BD de cache de TMDB para evitar que crezca demasiado
         bd_tmdb_maintenance()
@@ -1760,22 +1767,93 @@ def force_intelligent_titles():
 def set_updated_domains():
     logger.info()
 
-    try:
-        if not PY3:
-            from lib.alfaresolver import get_cached_files
-        else:
-            from lib.alfaresolver_py3 import get_cached_files
-        window = xbmcgui.Window(10000) or None
+    if window:
+        try:
+            if not PY3:
+                from lib.alfaresolver import get_cached_files
+            else:
+                from lib.alfaresolver_py3 import get_cached_files
 
-        alfa_domains_updated = get_cached_files("domains") or {}
-        if window: window.setProperty("alfa_domains_updated", jsontools.dump(alfa_domains_updated))
+            alfa_domains_updated = get_cached_files("domains") or {}
+            window.setProperty("alfa_domains_updated", jsontools.dump(alfa_domains_updated))
 
-        if window and is_alfa_installed():
-            window.setProperty("is_assistant_installed", "True")
+            if is_alfa_installed():
+                window.setProperty("is_assistant_installed", "True")
 
-    except Exception:
-        logger.error(traceback.format_exc())
-        window.setProperty("alfa_domains_updated", jsontools.dump({}))
+        except Exception:
+            logger.error(traceback.format_exc())
+            window.setProperty("alfa_domains_updated", jsontools.dump({}))
+
+
+def verify_tor_availability(strict=False, reset=False, alfa_s=False):
+
+    if window:
+        proxy_TOR = ''
+        proxy_TOR_save = window.getProperty("alfa_cached_TOR_proxy")
+        window.setProperty("alfa_cached_TOR_proxy", "NO")
+
+        try:
+            import socks
+            import requests
+            from lib.generictools import get_cached_files_
+
+            PASSWORDS = get_cached_files_("password", FORCED=True)
+            regex = PASSWORDS.get('cookies', {}).get('caching', {}).get('titles_regex', {})
+
+            url_TOR_test = regex.get("btdig_url_TOR_test", ["https://check.torproject.org/api/ip", 
+                                                            "https://www.google.com/generate_204"])
+            if strict and isinstance(url_TOR_test, (list, tuple)) and len(url_TOR_test) > 1:
+                url_TOR_test = [url_TOR_test[0]]
+
+            proxy_TOR = regex.get('btdig_server_TOR', '127.0.0.1')
+            port_TOR = regex.get('btdig_port_TOR', ["9050", "9150"])
+            port_TOR = port_TOR[1] if config.get_system_platform() == 'windows' else port_TOR[0]
+            proxies_TOR = ['%s:%s' % (proxy_TOR, port_TOR)]
+            sockt_TOR = regex.get("btdig_sockt", "socks5h")
+
+            tor_proxy = config.get_setting('tor_proxy', server='torrent', default='')
+            if tor_proxy:
+                tor_proxy = tor_proxy.split(',')
+                proxy_TOR = tor_proxy[0].split(':')[0]
+                port_TOR = tor_proxy[0].split(':')[-1]
+                proxies_TOR = []
+                for prox in tor_proxy:
+                    if not prox: continue
+                    proxies_TOR += [prox]
+
+            for url in url_TOR_test:
+                for prox in proxies_TOR:
+                    proxy_TOR = '%s://%s' % (sockt_TOR, prox)
+                    port_TOR = proxy_TOR.split(':')[-1]
+                    try:
+                        r = requests.get(url, proxies={'https': proxy_TOR, 'http': proxy_TOR}, timeout=(3, 10))
+                        if r.ok:
+                            if not alfa_s or proxy_TOR != proxy_TOR_save:
+                                logger.info("Tor accesible: %s" % proxy_TOR, force=True)
+                            window.setProperty("alfa_cached_TOR_proxy", proxy_TOR)
+
+                            if reset:
+                                try:
+                                    if not PY3: from core.proxytools import new_tor_identity
+                                    else: from core.proxytools_py3 import new_tor_identity
+                                    res = new_tor_identity(proxy=proxy_TOR)
+                                except Exception as e:
+                                    logger.info('TOR no acepta new_tor_identity: %s: %s' % (str(e), proxy_TOR), force=True)
+
+                            break
+                        else:
+                            if not alfa_s or proxy_TOR != proxy_TOR_save: 
+                                logger.info('TOR no está disponible: Error: %s: %s' % (r.status_code, proxy_TOR), force=True)
+                    except Exception as e:
+                        logger.info('TOR no está disponible: Error: %s: %s' % (str(e), proxy_TOR), force=True)
+
+                if sockt_TOR in window.getProperty("alfa_cached_TOR_proxy"):
+                    break
+
+        except Exception as e:
+            window.setProperty("alfa_cached_TOR_proxy", "NO")
+            logger.info('TOR no está disponible: Error: %s: %s' % (str(e), proxy_TOR), force=True)
+            logger.error(traceback.format_exc())
 
 
 def set_season_holidays():

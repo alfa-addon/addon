@@ -70,7 +70,7 @@ def check_addon_init():
             timer = 12  # Por defecto cada 12 horas
             verbose = False  # Por defecto, sin mensajes
         timer = timer * 3600  # Lo pasamos a segundos
-        timer_emer = 30 * 60
+        timer_emer = 15 * 60
         timer_blocks = int(timer / timer_emer)
 
         if config.get_platform(True)['num_version'] >= 14:                      # Si es Kodi, lanzamos el monitor

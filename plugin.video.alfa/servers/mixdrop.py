@@ -8,13 +8,17 @@ from core import scrapertools
 from lib import jsunpack
 from platformcode import logger, config
 
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
+          'timeout': 5, 'cf_assistant': False}
+
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    global data
+    global data, response
     if "/f/" in page_url:
         page_url = page_url.replace("/f/", "/e/")
-    data = httptools.downloadpage(page_url).data
+    response = httptools.downloadpage(page_url, **kwargs)
+    data = response.data
     if ">WE ARE SORRY</h2>" in data or '<title>404 Not Found</title>' in data:
         return False, config.get_localized_string(70449) % "MixDrop"
     return True, ""

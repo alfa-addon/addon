@@ -283,6 +283,9 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
     opciones = []
     proxy_data = dict()
     url_proxy = url
+    proxy__ = ""
+    proxy__resp = False
+    proxy__kwargs = False
 
     if httptools.channel_proxy_list(url):
         opt = {'forced_proxy': None, 'force_proxy_get': True}
@@ -361,6 +364,43 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
 
     # Si el video existe y el modo free está disponible, obtenemos la url
     if video_exists:
+        try:
+            proxy_addr = ""
+            kodi_params = config.get_kodi_setting("", total=True)
+            if kodi_params.get("network.usehttpproxy", False):
+                proxy_types = {"0": "http", "1": "socks4", "2": "socks4a", "3": "socks5", "4": "socks5h", "5": "https"}
+                proxy_addr += str(kodi_params.get('network.httpproxyusername', ""))
+                proxy_addr += (":%s" % kodi_params.get('network.httpproxypassword', "")) if kodi_params.get('network.httpproxypassword', "") else ""
+                if proxy_addr: proxy_addr += "@"
+                proxy_addr += kodi_params.get('network.httpproxyserver', "")
+                proxy_addr += (":%s" % kodi_params.get('network.httpproxyport', "")) if kodi_params.get('network.httpproxyport', "") else ""
+                if proxy_addr:
+                    proxy__ = "ProxyDirect|%s://%s" % (proxy_types.get(str(kodi_params.get('network.httpproxytype', "0"))), proxy_addr)
+        except Exception:
+            logger.error(traceback.format_exc())
+
+        try:
+            if server_module.kwargs.get('kodi_proxy', False):
+                proxy__kwargs = True
+                import xbmcgui
+                window = xbmcgui.Window(10000)
+                if window.getProperty("alfa_cached_TOR_proxy") and window.getProperty("alfa_cached_TOR_proxy") != 'NO':
+                    proxy__ = "ProxyDirect|%s" % window.getProperty("alfa_cached_TOR_proxy")
+        except Exception:
+            pass
+
+        try:
+            if server_module.response.proxy__:
+                proxy__resp = True
+                proxy__ = server_module.response.proxy__.rstrip('|').replace('|retry', '')
+                server_module.kwargs["preferred_proxy_ip"] = proxy__.split('|')[-1]
+                proxy__kwargs = True
+                if server_module.kwargs.get('kodi_proxy', True) is False:
+                    proxy__ = ""
+                    server_module.kwargs["preferred_proxy_ip"] = ""
+        except Exception:
+            pass
+
         for opcion in opciones:
             # Opcion free y premium propio usa el mismo server
             if opcion == "free" or opcion == server:
@@ -411,6 +451,22 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
             # Si ya tenemos URLS, dejamos de buscar
             if video_urls and config.get_setting("resolve_stop") is True:
                 break
+
+        if proxy__:
+            if not PY3: from core.proxytools import loop_up_proxy
+            else: from core.proxytools_py3 import loop_up_proxy
+            video_urls_save = video_urls[:]
+            video_urls = []
+
+            if proxy__resp:
+                proxy__ = server_module.response
+
+            for quality, url in video_urls_save:
+                if '720' in quality:
+                    video_urls.append([quality, loop_up_proxy(url, proxy__)])
+                    break
+            else:
+                video_urls.append([video_urls_save[0][0], loop_up_proxy(video_urls_save[0][1], proxy__)])
 
         # Cerramos el progreso
         if muestra_dialogo:

@@ -9,6 +9,11 @@ import time
 import base64
 import requests
 import re
+try:
+    import xbmcgui
+    window = xbmcgui.Window(10000)
+except:
+    window = None
 
 from .exceptions import CloudflareChallengeError
 
@@ -52,6 +57,7 @@ def get_cl(
     elapsed=0,
     challenges=0,
     dns_params={},
+    ver_req=None,
     **kwargs
 ):
 
@@ -104,16 +110,20 @@ def get_cl(
             httptools_obj=httptools,
             from_get_cl=True,
             dns_params=dns_params,
+            ver_req=ver_req,
             **kwargs
         )
 
     dns_params = dns_params or opt.get("canonical", {}).get("dns_params", {})
-    extraPostDelay = opt.get("canonical", {}).get("cf_extraPostDelay", extraPostDelay)
+    cf_stats = True
+    cf_stats = opt["cf_stats"] if "cf_stats" in opt else cf_stats
+    cf_stats = opt.get("canonical", {})["cf_stats"] if "cf_stats" in opt.get("canonical", {}) else cf_stats
+    extraPostDelay = opt.get("cf_extraPostDelay", opt.get("canonical", {}).get("cf_extraPostDelay", extraPostDelay))
     if timeout > 3 and timeout < 15:
         timeout = 20
     if timeout + extraPostDelay > 35:
         timeout = 20
-    timeout = opt.get("canonical", {}).get("cf_timeout", timeout)
+    timeout = opt.get("cf_timeout", opt.get("canonical", {}).get("cf_timeout", timeout))
 
     blacklist_clear = True
     ua_headers = False
@@ -176,10 +186,13 @@ def get_cl(
     if not domain.startswith("."):
         domain = "." + domain
     domain_host = "https://%s" % domain.lstrip(".")
+    url_domain_alt = []
     try:
         pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
     except Exception:
         pcb = ""
+
+    if not ver_req: ver_req = check_wv_version_min(domain_)
 
     if (
         opt.get("cf_assistant_if_proxy", False)
@@ -213,13 +226,13 @@ def get_cl(
         freequent_data = [domain_full, "CF2,0.0.0,0,%s0,NoApp" % host]
 
         check_assistant = alfa_assistant.open_alfa_assistant(
-            getWebViewInfo=True, retry=retry
+            getWebViewInfo=True, retry=retry, ver_req=ver_req
         )
         if not isinstance(check_assistant, dict) and not retry:
             alfa_assistant.close_alfa_assistant()
             time.sleep(2)
             check_assistant = alfa_assistant.open_alfa_assistant(
-                getWebViewInfo=True, retry=True
+                getWebViewInfo=True, retry=True, ver_req=ver_req
             )
 
         if check_assistant and isinstance(check_assistant, dict):
@@ -356,7 +369,8 @@ def get_cl(
                     headers=headers,
                     mute=mute,
                     alfa_s=alfa_s,
-                    cleanObjects=cleanObjects
+                    cleanObjects=cleanObjects,
+                    ver_req=ver_req
                 )
             except Exception:
                 logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed_now))
@@ -371,6 +385,7 @@ def get_cl(
                         cookie, 
                         domain, 
                         domain_full, 
+                        url_domain_alt,
                         opt, 
                         write=False,
                     )
@@ -465,6 +480,7 @@ def get_cl(
                                 Cookie=Cookie,
                                 challenges=challenges+1,
                                 dns_params=dns_params,
+                                ver_req=ver_req,
                                 **kwargs
                             )
                         elif challenge_url and isinstance(challenge_url, dict) and not challenge_url.get("missing", False):
@@ -500,6 +516,7 @@ def get_cl(
                         cookie, 
                         domain, 
                         domain_full, 
+                        url_domain_alt,
                         opt,
                     )
 
@@ -574,12 +591,13 @@ def get_cl(
                     Cookie=Cookie,
                     challenges=challenges+1,
                     dns_params=dns_params,
+                    ver_req=ver_req,
                     **kwargs
                 )
         elif host == "a":
             help_window.show_info("cf_2_01", wait=False)
 
-        freequency(freequent_data)
+        if cf_stats: freequency(freequent_data)
 
         if blacklist and blacklist_clear:
             if filetools.exists(PATH_BL):
@@ -632,6 +650,7 @@ def get_source(
     httptools_obj=None,
     challenges=0,
     dns_params={},
+    ver_req=None,
     **kwargs
 ):
 
@@ -667,10 +686,10 @@ def get_source(
         resp.status_code = 429
 
     opt = kwargs.get("opt", {})
-    if not opt.get("CF_assistant", True):
+    if not opt.get("cf_assistant", True):
         return (data, resp) if not from_get_cl else resp
     if not opt and "btdig" in url:
-        opt["CF_assistant"] = True
+        opt["cf_assistant"] = True
         opt["cf_assistant_ua"] = True
         opt["cf_assistant_get_source"] = True
         opt["cf_removeAllCookies"] = False
@@ -681,6 +700,9 @@ def get_source(
         opt["cf_cookies_names"] = {"cf_clearance": False}
 
     dns_params = dns_params or opt.get("canonical", {}).get("dns_params", {})
+    cf_stats = True
+    cf_stats = opt["cf_stats"] if "cf_stats" in opt else cf_stats
+    cf_stats = opt.get("canonical", {})["cf_stats"] if "cf_stats" in opt.get("canonical", {}) else cf_stats
     if opt.get("cf_cookie_send"):
         Cookie = opt.get("cf_cookie_send")
     if headers is None and opt.get("headers") and isinstance(opt["headers"], dict):
@@ -693,6 +715,8 @@ def get_source(
     cleanObjects = opt.get("clean_objects", True)
     if debug:
         alfa_s = False
+    if "cf_alfa_s" in opt:
+        alfa_s = opt["cf_alfa_s"]
     if not alfa_s:
         logger.debug("ERROR de descarga: %s" % resp.status_code)
     resp.status_code = 429 if not from_get_cl else (resp.status_code or 400)
@@ -709,16 +733,22 @@ def get_source(
     url_domain_name = httptools.obtain_domain(url, sub=True, point=True).rstrip("/") + "/"
     url_domain = url.replace(host_name, url_domain_name)
     url_domain_list = [url_domain]
+    url_domain_alt = []
     for host_alt in [opt.get('canonical', {}).get('host', '')] \
                    + opt.get('canonical', {}).get('host_alt', []) \
-                   + opt.get('canonical', {}).get('host_black_list', []):
+                   + opt.get('canonical', {}).get('host_black_list', []) \
+                   + opt.get('host_alt', []):
         if not host_alt: continue
+        if host_alt.startswith("(?i)"):
+            url_domain_list += [host_alt]
         host_name_ = httptools.obtain_domain(host_alt, scheme=True).rstrip("/") + "/"
         url_ = url.replace(host_name, host_name_)
         url_domain_name_ = httptools.obtain_domain(host_alt, sub=True, point=True).rstrip("/") + "/"
         url_domain_ = url_.replace(host_name_, url_domain_name_)
         if url_domain_ not in url_domain_list:
             url_domain_list += [url_domain_]
+
+    if not ver_req: ver_req = check_wv_version_min(domain_)
 
     try:
         pcb = base64.b64decode(config.get_setting("proxy_channel_bloqued")).decode("utf-8")
@@ -736,8 +766,10 @@ def get_source(
         blacklist_clear = False
         blacklist = False
 
+    timeout = opt.get("cf_timeout", opt.get("canonical", {}).get("cf_timeout", timeout))
+    extraPostDelay = opt.get("cf_extraPostDelay", opt.get("canonical", {}).get("cf_extraPostDelay", extraPostDelay))
     if timeout + extraPostDelay > 35:
-        timeout = 20
+        timeout = 90
 
     if opt.get("cf_no_blacklist", False):
         blacklist_clear = True
@@ -755,12 +787,9 @@ def get_source(
             freequent_data[1] += "KO_R"
 
         check_assistant = alfa_assistant.open_alfa_assistant(
-            getWebViewInfo=True, retry=True, assistantLatestVersion=False
+            getWebViewInfo=True, retry=True, assistantLatestVersion=False, ver_req=ver_req
         )
         if not isinstance(check_assistant, dict) and not retry:
-            import xbmcgui
-
-            window = xbmcgui.Window(10000) or None
             if "btdig" in url and len(window.getProperty("alfa_gateways")) > 5:
                 logger.error("Assistant no disponible: usa gateways")
                 return (data, resp) if not from_get_cl else resp
@@ -768,7 +797,7 @@ def get_source(
             alfa_assistant.close_alfa_assistant()
             time.sleep(2)
             check_assistant = alfa_assistant.open_alfa_assistant(
-                getWebViewInfo=True, retry=True, assistantLatestVersion=False
+                getWebViewInfo=True, retry=True, assistantLatestVersion=False, ver_req=ver_req
             )
             logger.debug(
                 "Reintento en acceder al Assistant: %s - %s"
@@ -923,7 +952,8 @@ def get_source(
                     headers=headers,
                     mute=mute,
                     alfa_s=alfa_s,
-                    cleanObjects=cleanObjects
+                    cleanObjects=cleanObjects,
+                    ver_req=ver_req
                 )
             except Exception:
                 logger.error("Cancelado por el usuario - %s" % str(time.time() - elapsed_now))
@@ -1020,6 +1050,7 @@ def get_source(
                                 Cookie=Cookie,
                                 challenges=challenges+1,
                                 dns_params=dns_params,
+                                ver_req=ver_req,
                                 **kwargs
                             )
 
@@ -1032,18 +1063,24 @@ def get_source(
                 for html_source in data_assistant["htmlSources"]:
                     html_sources[html_source.get("url", "")] = html_source.get("source", "")
                     url_domain_source = html_source.get("url", "")
+                    if not url_domain_source: continue
                     host_name_source = httptools.obtain_domain(url_domain_source, scheme=True).rstrip("/") + "/"
                     domain_source = httptools.obtain_domain(url_domain_source, sub=True, point=True).rstrip("/") + "/"
                     url_domain_source = url_domain_source.replace(host_name_source, domain_source)
-                    if url_domain_source not in url_domain_list:
-                        urls_ignored += [html_source.get("url", "")]
-                        for gov_block in gov_blocks:
-                            if gov_block in html_source.get("url", ""):
-                                retry = True
-                                data_assistant["cookies"] = None
-                        if not alfa_s:
-                            logger.debug("Url ignored: %s" % html_source.get("url", ""))
-                        continue
+                    for url_domain_ in url_domain_list:
+                        if not scrapertools.find_single_match(domain_source.rstrip("/"), url_domain_) \
+                                and url_domain_source != url_domain_ \
+                                and domain_source != url_domain_:
+                            urls_ignored += [html_source.get("url", "")]
+                            for gov_block in gov_blocks:
+                                if gov_block in html_source.get("url", ""):
+                                    retry = True
+                                    data_assistant["cookies"] = None
+                            if not alfa_s:
+                                logger.debug("Url ignored: %s" % html_source.get("url", ""))
+                            continue
+                        url_domain_alt += [url_domain_]
+                        break
                     if not alfa_s:
                         logger.debug("Url accepted: %s" % html_source.get("url", ""))
                     try:
@@ -1054,6 +1091,18 @@ def get_source(
                             data = data_str
                         data_str = re.sub(r'<html>|<\/html>|<head>|<\/head>|<body>|<\/body>', '', data_str)
                         if not data_str:
+                            continue
+                        if "chrome-error" in html_source.get("url", "") or "about:blank" in html_source.get("url", ""):
+                            resp.status_code = 429
+                            if "ERR_CONNECTION_RESET" in data_str:
+                                retry = True
+                                resp.status_code = 400
+                            elif "404 - Not Found" in data_str or "ERR_NAME_NOT_RESOLVED" in data_str \
+                                                               or "about:blank" in html_source.get("url", ""):
+                                retry = True
+                                resp.status_code = 404
+                            logger.debug("ERROR %s en url: %s" % (resp.status_code, 
+                                         scrapertools.find_single_match(data_str, r"(?i)Error\s*description[^<]+<p>([^>]*)<\/p")))
                             continue
                         source = True
                         if opt.get("post"):
@@ -1138,6 +1187,7 @@ def get_source(
                     Cookie=Cookie,
                     challenges=challenges+1,
                     dns_params=dns_params,
+                    ver_req=ver_req,
                     **kwargs
                 )
 
@@ -1155,6 +1205,7 @@ def get_source(
                         cookie, 
                         domain, 
                         domain_full, 
+                        url_domain_alt,
                         opt,
                     )
 
@@ -1166,7 +1217,7 @@ def get_source(
         elif host == "a":
             help_window.show_info("cf_2_01", wait=False)
 
-    freequency(freequent_data)
+    if cf_stats: freequency(freequent_data)
 
     if (
         blacklist
@@ -1216,6 +1267,14 @@ def get_source(
             logger.error(traceback.format_exc())
         return resp
     return data, resp
+
+
+def check_wv_version_min(domain):
+
+    alfa_cached_passwords = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
+    wv_version_min = alfa_cached_passwords.get("cookies", {}).get("wv_version_min", {"btdig.com": 150})
+
+    return wv_version_min.get(domain, None)
 
 
 def get_ua(data_assistant, userAgent=False):
@@ -1282,7 +1341,7 @@ def setup_cookies(Cookie, domain, headers):
     return Cookies_send
 
 
-def find_cookie_params(cookie, domain, domain_full, opt, clear=False, write=True):
+def find_cookie_params(cookie, domain, domain_full, url_domain_alt, opt, clear=False, write=True):
 
     cf_cookies_names = {}
     cookies_found = False
@@ -1292,8 +1351,13 @@ def find_cookie_params(cookie, domain, domain_full, opt, clear=False, write=True
     if dom:
         dom = urlparse.urlparse(dom[0]).netloc or dom[0]
     if write: logger.debug("dominios: %s => %s" % (domain, dom))
+    hit = []
 
-    if domain.lstrip(".") in dom:
+    for url_domain_ in url_domain_alt:
+        if scrapertools.find_single_match(dom, url_domain_):
+            hit = [".%s" % dom, dom]
+            break
+    if domain.lstrip(".") in dom or hit:
         for cookie_part in cookieslist.split(";"):
             try:
                 name, val = scrapertools.find_single_match(
@@ -1307,7 +1371,7 @@ def find_cookie_params(cookie, domain, domain_full, opt, clear=False, write=True
 
             cf_cookies_names[name.strip()] = val.strip()
             for domain_dot in [domain, domain.lstrip("."), 
-                    domain_full if domain_full != domain.lstrip(".") else ""]:
+                    domain_full if domain_full != domain.lstrip(".") else ""] + hit:
                 if not domain_dot:
                     continue
                 dict_cookie = {
@@ -1475,6 +1539,7 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
     domain_full = urlparse.urlparse(host_name).netloc 
     domain = domain or domain_full
     domain_host = "https://%s" % domain
+    url_domain_alt = []
     timeout_cha = opt.get("timeout_cha", 20)
     extraPostDelay_cha = opt.get("extraPostDelay_cha", extraPostDelay)
     cf_returnkey = cf_returnkey or opt.get("cf_returnkey", "source")
@@ -1545,6 +1610,7 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
                         cookie, 
                         domain, 
                         domain_full, 
+                        url_domain_alt,
                         opt, 
                         clear=clear,
                     )

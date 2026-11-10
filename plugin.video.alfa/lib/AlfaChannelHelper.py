@@ -140,8 +140,7 @@ class AlfaChannelHelper:
         self.alfa_cached_passwords = {}
         self.headers = {}
         self.print_DEBUG = canonical.get('print_DEBUG', False)
-        self.Plan_B = canonical.get('Plan_B', False)
-        
+        self.host_alt_findb = canonical.get('host_alt_findb', [])
         self.SUCCESS_CODES = self.httptools.SUCCESS_CODES
         self.REDIRECTION_CODES = self.httptools.REDIRECTION_CODES
         self.PROXY_CODES = self.httptools.PROXY_CODES
@@ -175,9 +174,12 @@ class AlfaChannelHelper:
                                     and 'host_alt' in self.canonical and 'host_black_list' in self.canonical \
                                     and self.canonical.get('update_host_list', True):
                 if self.channel in self.domains_updated and (self.domains_updated[self.channel].get('host_alt') \
+                                                             or self.domains_updated[self.channel].get('host_alt_tor')
                                                              or self.domains_updated[self.channel].get('UPDATE_CANONICAL')):
                     if self.host != self.domains_updated[self.channel].get('host_alt', [''])[0] or self.host != self.canonical['host_alt'][0] \
                                     or self.domains_updated[self.channel].get('host_alt', []) != self.canonical['host_alt'] \
+                                    or (self.domains_updated[self.channel].get('host_alt_tor', []) \
+                                        and self.domains_updated[self.channel].get('host_alt_tor', []) != self.canonical.get('host_alt_tor', '-')) \
                                     or self.domains_updated[self.channel].get('host_black_list', []) != self.canonical['host_black_list'] \
                                     or self.domains_updated[self.channel].get('UPDATE_CANONICAL'):
                         self.host = self.canonical['host'] = self.domains_updated[self.channel].get('host_alt', ([self.canonical['host']] \
@@ -204,13 +206,16 @@ class AlfaChannelHelper:
                             for host_alt in self.canonical['host_alt'][:]:
                                 if host_alt in self.canonical['host_black_list']:
                                     self.canonical['host_alt'].remove(host_alt)
+                        if self.domains_updated[self.channel].get('host_alt_tor', []) \
+                                and self.domains_updated[self.channel].get('host_alt_tor', []) != self.canonical.get('host_alt_tor', '-'):
+                            self.canonical['host_alt_tor'] = self.domains_updated[self.channel]['host_alt_tor']
                         if 'host_alt' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_alt']
                         if 'host_black_list' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_black_list']
                         if 'UPDATE_CANONICAL' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['UPDATE_CANONICAL']
                         if self.domains_updated: self.canonical.update(self.domains_updated[self.channel])
                         if self.DEBUG: logger.debug('HOST_updated: %s TO %s' % (host, self.canonical))
                         self.print_DEBUG = self.canonical.get('print_DEBUG', False)
-                        self.Plan_B = self.canonical.get('Plan_B', False)
+                        self.host_alt_findb = self.canonical.get('host_alt_findb', [])
         except Exception:
             self.domains_updated = {}
             logger.error(traceback.format_exc())
@@ -230,15 +235,17 @@ class AlfaChannelHelper:
         self.dns_params = kwargs.get('canonical', {}).get('dns_params', {})
         self.alfa_cached_passwords = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
         if kwargs.get('canonical', {}).get('cf_assistant', True) is not False and IS_ASSISTANT_INSTALLED:
-            kwargs_inter = copy.deepcopy(self.alfa_cached_passwords.get("cookies", {})\
-                                             .get("challenges", {}).get("assistant", {}))
+            if kwargs.get('canonical', {}).get('cf_assistant', '') == 'force':
+                kwargs_inter = copy.deepcopy(self.alfa_cached_passwords.get("cookies", {})\
+                                             .get("challenges", {}).get("assistant_get_source", {}))
+            else:
+                kwargs_inter = copy.deepcopy(self.alfa_cached_passwords.get("cookies", {})\
+                                                 .get("challenges", {}).get("assistant", {}))
             kwargs_inter['cf_assistant'] = IS_ASSISTANT_INSTALLED
             cf_debug = kwargs_inter.get('cf_debug', kwargs.get('canonical', {}).get('cf_debug', config.get_setting('debug_report', default=False)))
             if kwargs_inter and self.channel not in kwargs_inter.get('c_black_list', []) and kwargs_inter['cf_assistant']:
                 if kwargs.get('canonical', {}).get('cf_assistant', '') == 'force':
-                    kwargs['canonical']['cf_assistant_get_source'] = kwargs.get('canonical', {}).get('cf_assistant_get_source', True)
                     kwargs['canonical']['cf_removeAllCookies'] = kwargs.get('canonical', {}).get('cf_removeAllCookies', False)
-                    if 'cf_cookie' in kwargs['canonical']: del kwargs['canonical']['cf_cookie']
                 kwargs_inter.update(kwargs.get('canonical', {}))
                 kwargs_inter['cf_debug'] = cf_debug
                 kwargs['canonical'].update(kwargs_inter)
@@ -246,6 +253,24 @@ class AlfaChannelHelper:
                     self.response_preferred_proxy_ip = window.getProperty("AH_%s_preferred_proxy_ip" % self.channel)
                     kwargs['preferred_proxy_ip'] = self.response_preferred_proxy_ip
                     kwargs['canonical']['preferred_proxy_ip'] = self.canonical['preferred_proxy_ip'] = self.response_preferred_proxy_ip
+
+        if kwargs.get('canonical', {}).get('host_alt_tor') or '.onion' in url:
+            if (window.getProperty("alfa_cached_TOR_proxy") and window.getProperty("alfa_cached_TOR_proxy") != "NO") \
+                                                            or "socks5" in str(kwargs.get('canonical', {}).get('proxy_addr_forced')):
+                alfa_cached_TOR_proxy_black_list = ast.literal_eval(window.getProperty("alfa_cached_TOR_proxy_black_list") or "[]")
+                url_host = self.httptools.obtain_domain(url, scheme=True)
+                if kwargs.get('canonical', {}).get('host_alt_tor') \
+                          and kwargs['canonical']['host_alt_tor'].rstrip("/") not in alfa_cached_TOR_proxy_black_list \
+                          and url_host not in alfa_cached_TOR_proxy_black_list:
+                    kwargs["proxy_addr_forced"] = {'https': window.getProperty("alfa_cached_TOR_proxy"),
+                                                   'http': window.getProperty("alfa_cached_TOR_proxy")}
+                if kwargs.get('canonical', {}).get('proxy_addr_forced', '') \
+                                               and kwargs['canonical']['host_alt_tor'].rstrip("/") not in alfa_cached_TOR_proxy_black_list:
+                    kwargs["proxy_addr_forced"] = kwargs.get('canonical', {}).get('proxy_addr_forced', '')
+                kwargs["proxy"] = True
+                if kwargs.get('canonical', {}).get('host_alt_tor') \
+                          and kwargs['canonical']['host_alt_tor'].rstrip("/") not in alfa_cached_TOR_proxy_black_list:
+                    url = url.replace(url_host, kwargs['canonical']['host_alt_tor'].rstrip("/"))
 
         if "soup" not in kwargs: kwargs["soup"] = True
         json = kwargs.pop("json", False)
@@ -287,7 +312,10 @@ class AlfaChannelHelper:
             logger.error(self.dns_params)
 
         #logger.debug('KWARGS: %s' % kwargs)
-        response = self.httptools.downloadpage(url, **kwargs)
+        if url:
+            response = self.httptools.downloadpage(url, **kwargs)
+        else:
+            response = self.httptools.build_response(HTTPResponse=True)         # crea estructura vacía de response
 
         if PY3 and self.dns_params:
             self.dns_params = dns_resolve('install', self.dns_params)
@@ -1067,6 +1095,37 @@ class AlfaChannelHelper:
         #if self.DEBUG: logger.debug('TIME: %s / %s' % (seconds, duration))
         return duration
 
+    def convert_script_to_json(self, script):
+        text = script
+        strings = []
+
+        def replace_string(m):
+            value = ast.literal_eval(m.group(0))
+            strings.append(jsontools.dump(value, ensure_ascii=False))
+            return '@@STRING{}@@'.format(len(strings) - 1)
+
+        try:
+            text = re.sub(r"'(?:\\.|[^'\\])*'", replace_string, text)
+
+            # Poner entre comillas las claves sin entrecomillar
+            text = re.sub(
+                r'([{,]\s*)([a-zA-Z_$][\w$]*)\s*:',
+                r'\1"\2":',
+                text
+            )
+
+            # Restaurar las cadenas ya convertidas
+            for i, value in enumerate(strings):
+                text = text.replace('@@STRING{}@@'.format(i), value)
+
+            text = jsontools.load(text)
+
+        except Exception:
+            text = script
+            logger.error(traceback.format_exc())
+
+        return text
+
     def manage_torrents(self, item, elem, lang, soup={}, finds={}, **kwargs):
 
         from lib.generictools import get_torrent_size
@@ -1082,7 +1141,8 @@ class AlfaChannelHelper:
         torrent_kwargs = elem.get('torrent_kwargs', finds_controls.get('torrent_kwargs', {}))
         FOLDER = config.get_setting("folder_movies") if item.contentType == 'movie' else config.get_setting("folder_tvshows")
         size = ''
-        blacklist_links = ['enlacito.com']
+        size_save = elem.get('size', '')
+        blacklist_links = ['enlacito.com', 'wolftorrent.com']
         url_domain = self.obtain_domain(elem.get('url', ''))
 
         if finds.get('torrent_params', {}):
@@ -1100,7 +1160,8 @@ class AlfaChannelHelper:
                               'find_alt_link_option': False, 
                               'language_alt': [], 
                               'quality_alt': '', 
-                              'domain_alt': ''
+                              'domain_alt': '',
+                              'size': size_save
                               }
 
         # Puede ser necesario bajar otro nivel para encontrar la página
@@ -1257,25 +1318,11 @@ class AlfaChannelHelper:
         if self.DEBUG: logger.debug('ELEM_OUT: %s' % str(elem)[:SIZE_MATCHES])
         return elem
 
-    def Plan_B_find(self, item, matches):
+    def host_alt_findb_fun(self, item, matches=[], host_alt_findb=[]):
+        from lib.generictools import host_alt_findb_fun
 
-        try:
-            if PY3:
-                from lib.planb_py3 import e69org
-            else:
-                from lib.planb import e69org
-
-            links = e69org(item.infoLabels)
-            matches_str = str(matches)
-            if links and isinstance(links, list):
-                for y, url, lang, z in links:
-                    if url in matches_str: continue
-                    matches.append({'title': '%s', 'url': url, 'language': lang, 'server': '', 
-                                    'mediatype': item.contentType, 'quality': ''})
-
-            #if self.DEBUG: logger.debug('LINKS: %s' % links)
-        except Exception:
-            logger.error(traceback.format_exc())
+        host_alt_findb = host_alt_findb or self.host_alt_findb
+        matches = host_alt_findb_fun(item, matches, host_alt_findb)
 
         return matches
     
@@ -1317,7 +1364,8 @@ class AlfaChannelHelper:
                               'find_all_previous': [match.find_previous, match.find_all_previous], 
                               'select_one': [match.select_one, match.select], 
                               'select_all': [match.select_one, match.select], 
-                              'get_text': [match.get_text, match.get_text]
+                              'get_text': [match.get_text, match.get_text],
+                              'no_op': [None, None]
                               }
                     
                     soup_func = levels[level][0]
@@ -1366,6 +1414,11 @@ class AlfaChannelHelper:
                                                 % (level, [key for key in f if key in ['tagOR', 'tag']], 
                                             tag, attrs, string, regex, eval_test, argument, str(strip), 
                                             str(split), pos, '@DO_SOUP' if do_soup else ''))
+
+                    if soup_func is None:
+                        matches = match
+                        return matches
+
                     if '_all' not in level or ('_all' in level and x < len(finds[level])-1) or ('_all' in level and len(str(pos)) > 0):
 
                         if '_all' in level and len(str(pos)) > 0:
@@ -1679,7 +1732,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         host_referer = finds_controls.get('host_referer', host)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
-        forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None)
+        forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None) \
+                                                                        or self.canonical.get('forced_proxy_ifnot_assistant', None)
 
         self.filter_languages = config.get_setting('filter_languages', item.channel, default=0)
         modo_grafico = config.get_setting('modo_grafico', item.channel, default=True)
@@ -1854,7 +1908,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     if finds_controls.get('force_find_last_page') and isinstance(finds_controls['force_find_last_page'], list):
                         if finds_controls['force_find_last_page'][2] == 'post': 
                             url_page_control = 'post'
-                    self.last_page = int(self.parse_finds_dict(soup, finds_last_page, next_page=True, c_type=item.c_type).lstrip('#'))
+                    self.last_page = int(str(self.parse_finds_dict(soup, finds_last_page, next_page=True, c_type=item.c_type)).lstrip('#'))
                     if finds_controls.get('force_find_last_page') and isinstance(finds_controls['force_find_last_page'], list) \
                                            and isinstance(finds_controls['force_find_last_page'][0], int) \
                                            and isinstance(finds_controls['force_find_last_page'][1], int):
@@ -2962,11 +3016,12 @@ class DictionaryAllChannel(AlfaChannelHelper):
             infolabels = item.infoLabels.copy()
 
             if not elem.get('url', ''): continue
-            if url_base64: 
-                elem['url'] = self.convert_url_base64(elem['url'], self.host, item=item)
-            else:
-                elem['url'] = self.urljoin(self.host, elem['url'])
-            elem['url'] = self.do_url_replace(elem['url'], url_replace)
+            if elem['url'] and not elem['url'].startswith('magnet'):
+                if url_base64: 
+                    elem['url'] = self.convert_url_base64(elem['url'], self.host, item=item)
+                else:
+                    elem['url'] = self.urljoin(self.host, elem['url'])
+                elem['url'] = self.do_url_replace(elem['url'], url_replace)
 
             infolabels["season"] = elem.get('season', item.contentSeason)
 
@@ -3426,9 +3481,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if generictools and not item.videolibray_emergency_urls:
             item, itemlist_total = AH_post_tmdb_findvideos(self, item, itemlist_total, **AHkwargs)
 
-        #Si el canal ha marcado la opción de Plan_B, complementamos los enlaces disponibles
-        if self.Plan_B:
-            matches = self.Plan_B_find(item, matches)
+        #Si el canal ha marcado la opción de host_alt_findb, complementamos los enlaces disponibles
+        if self.host_alt_findb:
+            matches = self.host_alt_findb_fun(item, matches, self.host_alt_findb)
 
         for _lang in langs or ['CAST']:
             lang = _lang
@@ -3439,8 +3494,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if 'subtitulado' in lang: lang += ['VOS']
 
             for elem in matches:
+                if elem['url'].startswith('magnet:VOID'): elem['url'] = ''
                 if not elem.get('url', ''): continue
-                    
+
                 elem['channel'] = item.channel
                 if not elem.get('mediatype', '') and finds_controls.get('mediatype', ''): elem['mediatype'] = finds_controls['mediatype']
                 if not elem.get('action', '') and finds_controls.get('action', ''): elem['action'] = finds_controls['action']
@@ -3450,7 +3506,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 if elem['url'].startswith('//'):
                     elem['url'] = 'https:%s' % elem['url']
-                if url_base64: elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer, item=item)
+                if not elem['url'].startswith('magnet') and url_base64: 
+                    elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer, item=item)
 
                 if not 'title' in elem:
                     elem['title'] = 'torrent' if elem.get('server', '').lower() == 'torrent' else '%s'
@@ -4924,7 +4981,7 @@ class DooPlay(AlfaChannelHelper):
         self.KWARGS = copy.deepcopy(KWARGS)
         self.domains_updated = jsontools.load(window.getProperty("alfa_domains_updated") or '{}')
         self.print_DEBUG = canonical.get('print_DEBUG', False)
-        self.Plan_B = canonical.get('Plan_B', False)
+        self.host_alt_findb = canonical.get('host_alt_findb', [])
         self.dns_params = {}
 
 

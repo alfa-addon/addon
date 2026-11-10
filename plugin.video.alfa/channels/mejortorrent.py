@@ -27,8 +27,11 @@ debug = config.get_setting('debug_report', default=False)
 canonical = {
              'channel': 'mejortorrent', 
              'host': config.get_setting("current_host", 'mejortorrent', default=''), 
-             'host_alt': ["https://www38.mejortorrent.eu/"], 
-             'host_black_list': ["https://www37.mejortorrent.eu/", "https://www36.mejortorrent.eu/", "https://www35.mejortorrent.eu/",
+             'host_alt': ["https://www47.mejortorrent.eu/"], 
+             'host_black_list': ["https://www46.mejortorrent.eu/", "https://www45.mejortorrent.eu/", "https://www44.mejortorrent.eu/", 
+                                 "https://www43.mejortorrent.eu/", "https://www42.mejortorrent.eu/", "https://www41.mejortorrent.eu/", 
+                                 "https://www40.mejortorrent.eu/", "https://www39.mejortorrent.eu/", "https://www38.mejortorrent.eu/",
+                                 "https://www37.mejortorrent.eu/", "https://www36.mejortorrent.eu/", "https://www35.mejortorrent.eu/",
                                  "https://www34.mejortorrent.eu/", "https://www33.mejortorrent.eu/", "https://www32.mejortorrent.eu/", 
                                  "https://www31.mejortorrent.eu/", "https://www30.mejortorrent.eu/", "https://www29.mejortorrent.eu/", 
                                  "https://www28.mejortorrent.eu/", "https://www26.mejortorrent.eu/", "https://www24.mejortorrent.zip/", 
