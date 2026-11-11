@@ -43,12 +43,12 @@ language = []
 url_replace = []
 
 finds = {'find': {'find_all': [{'tag': ['article']}]},     # , 'class': ['movies']             'id': re.compile(r"^browse_\d+")}]},
-         'categories': dict([('find', [{'tag': ['div'], 'class': ['tgrid']}]), 
+         'categories': dict([('find', [{'tag': ['div'], 'class': ['tgrid', 'chips']}]), 
                              ('find_all', [{'tag': ['a']}])]),
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
-         'next_page': dict([('find', [{'tag': ['div','ul'], 'class': ['pagination']}]), 
+         'next_page': dict([('find', [{'tag': ['nav'], 'class': ['pg']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href'}])]), 
          'next_page_rgx': [['\/page\/\d+', '\/page\/%s'], ['&page=\d+', '&page=%s']], 
          'last_page': {}, 
@@ -83,9 +83,14 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="list_all", url=host + "genres/porn-movies/page/1/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "/ratings/page/1/"))
-    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=host + "/trending/page/1/"))
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host + "page/1?filter=latest"))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all", url=host + "page/1?filter=most-viewed"))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorada", action="list_all", url=host + "page/1?filter=popular"))
+    itemlist.append(Item(channel=item.channel, title="Mas Larga", action="list_all", url=host + "page/1?filter=longest"))
+    
+    # itemlist.append(Item(channel=item.channel, title="Peliculas" , action="list_all", url=host + "genres/porn-movies/page/1/"))
+    # itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "/ratings/page/1/"))
+    # itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=host + "/trending/page/1/"))
     itemlist.append(Item(channel=item.channel, title="Año" , action="section", url=host + "mango-years" , extra="Año"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "mango-studios/?pg=1&sort=pop" , extra="Canal"))
     itemlist.append(Item(channel=item.channel, title="Pornstar" , action="section", url=host + "mango-pornstars/?pg=1&sort=pop" , extra="Canal"))
@@ -118,13 +123,9 @@ def section(item):
     logger.info()
     
     findS = finds.copy()
-    # if item.extra == 'Canal':
-        # findS['categories'] =  dict([('find', [{'tag': ['div'], 'class': ['menu-main-menu-container']}]), 
-                                               # ('find_all', [{'tag': ['a'], 'href': re.compile(r"/studios/[A-z0-9-]+")}])]) 
-    if item.extra == 'Año':
-        findS['categories'] =  dict([('find', [{'tag': ['nav'], 'class': ['releases']}]), 
-                                               ('find_all', [{'tag': ['li']}])]) 
-
+    
+    findS['controls']['cnt_tot'] = 30
+    
     return AlfaChannel.section(item, finds=findS, **kwargs)
 
 

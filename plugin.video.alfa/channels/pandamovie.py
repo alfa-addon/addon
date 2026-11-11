@@ -87,7 +87,6 @@ def categorias(item):
     logger.info()
     itemlist = []
     
-    # tgrid--years
     soup = create_soup(item.url)
     matches = soup.find('div', class_='chips').find_all('a')
     
