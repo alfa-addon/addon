@@ -460,18 +460,17 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                 if not PY3: from core.proxytools import loop_up_proxy
                 else: from core.proxytools_py3 import loop_up_proxy
                 video_urls_save = video_urls[:]
-                video_urls = []
 
                 if proxy__resp:
                     proxy__ = server_module.response
 
-                for quality, url in video_urls_save:
-                    if '720' in quality:
-                        video_urls.append([quality, loop_up_proxy(url, proxy__)])
+                for x, video_url in enumerate(video_urls_save):
+                    if '720' in video_url[0]:
+                        video_urls[x][1] = loop_up_proxy(video_url[1], proxy__)
                         break
                 else:
                     if video_urls_save:
-                        video_urls.append([video_urls_save[0][0], loop_up_proxy(video_urls_save[0][1], proxy__)])
+                        video_urls[0][1] = loop_up_proxy(video_urls_save[0][1], proxy__)
             except Exception:
                 logger.error("Error en el servidor: %s: %s" % (server, video_urls_save))
                 logger.error(traceback.format_exc())
