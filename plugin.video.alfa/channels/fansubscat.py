@@ -82,6 +82,11 @@ def list_all(item):
 
 def newest(item):
     logger.info()
+    # El agregador de novedades pasa una categoría; el menú pasa un Item.
+    if not isinstance(item, Item):
+        if item != "anime":
+            return []
+        item = Item(channel="fansubscat", url=host)
     itemlist = []
     try:
         data = _download(host).data
