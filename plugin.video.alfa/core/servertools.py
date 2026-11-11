@@ -365,17 +365,20 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
     # Si el video existe y el modo free está disponible, obtenemos la url
     if video_exists:
         try:
-            proxy_addr = ""
-            kodi_params = config.get_kodi_setting("", total=True)
-            if kodi_params.get("network.usehttpproxy", False):
-                proxy_types = {"0": "http", "1": "socks4", "2": "socks4a", "3": "socks5", "4": "socks5h", "5": "https"}
-                proxy_addr += str(kodi_params.get('network.httpproxyusername', ""))
-                proxy_addr += (":%s" % kodi_params.get('network.httpproxypassword', "")) if kodi_params.get('network.httpproxypassword', "") else ""
-                if proxy_addr: proxy_addr += "@"
-                proxy_addr += kodi_params.get('network.httpproxyserver', "")
-                proxy_addr += (":%s" % kodi_params.get('network.httpproxyport', "")) if kodi_params.get('network.httpproxyport', "") else ""
-                if proxy_addr:
-                    proxy__ = "ProxyDirect|%s://%s" % (proxy_types.get(str(kodi_params.get('network.httpproxytype', "0"))), proxy_addr)
+            if config.get_setting("use_kodi_proxy", server='torrent', default=False):
+                proxy_addr = ""
+                kodi_params = config.get_kodi_setting("", total=True)
+                if kodi_params.get("network.usehttpproxy", False):
+                    proxy_types = {"0": "http", "1": "socks4", "2": "socks4a", "3": "socks5", "4": "socks5h", "5": "https"}
+                    proxy_addr += str(kodi_params.get('network.httpproxyusername', ""))
+                    proxy_addr += (":%s" % kodi_params.get('network.httpproxypassword', "")) if kodi_params.get('network.httpproxypassword', "") else ""
+                    if proxy_addr: proxy_addr += "@"
+                    proxy_addr += kodi_params.get('network.httpproxyserver', "")
+                    proxy_addr += (":%s" % kodi_params.get('network.httpproxyport', "")) \
+                                   if kodi_params.get('network.httpproxyport', "") else ""
+                    if proxy_addr:
+                        proxy__ = "ProxyDirect|%s://%s" % (proxy_types.get(str(kodi_params.get('network.httpproxytype', "0"))),
+                                                           proxy_addr)
         except Exception:
             logger.error(traceback.format_exc())
 
@@ -453,20 +456,25 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                 break
 
         if proxy__:
-            if not PY3: from core.proxytools import loop_up_proxy
-            else: from core.proxytools_py3 import loop_up_proxy
-            video_urls_save = video_urls[:]
-            video_urls = []
+            try:
+                if not PY3: from core.proxytools import loop_up_proxy
+                else: from core.proxytools_py3 import loop_up_proxy
+                video_urls_save = video_urls[:]
+                video_urls = []
 
-            if proxy__resp:
-                proxy__ = server_module.response
+                if proxy__resp:
+                    proxy__ = server_module.response
 
-            for quality, url in video_urls_save:
-                if '720' in quality:
-                    video_urls.append([quality, loop_up_proxy(url, proxy__)])
-                    break
-            else:
-                video_urls.append([video_urls_save[0][0], loop_up_proxy(video_urls_save[0][1], proxy__)])
+                for quality, url in video_urls_save:
+                    if '720' in quality:
+                        video_urls.append([quality, loop_up_proxy(url, proxy__)])
+                        break
+                else:
+                    if video_urls_save:
+                        video_urls.append([video_urls_save[0][0], loop_up_proxy(video_urls_save[0][1], proxy__)])
+            except Exception:
+                logger.error("Error en el servidor: %s: %s" % (server, video_urls_save))
+                logger.error(traceback.format_exc())
 
         # Cerramos el progreso
         if muestra_dialogo:

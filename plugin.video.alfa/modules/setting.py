@@ -186,6 +186,8 @@ def setting_torrent(item):
     TOR_PROXY = config.get_setting("tor_proxy", server="torrent", default="")
     
     SET_KODI_PROXY = config.get_setting("set_kodi_proxy", server="torrent", default=False)
+    
+    USE_KODI_PROXY = config.get_setting("use_kodi_proxy", server="torrent", default=False)
 
     torrent_options = [config.get_localized_string(30006)]
     torrent_options.extend(platformtools.torrent_client_installed())
@@ -262,8 +264,16 @@ def setting_torrent(item):
         {
             "id": "set_kodi_proxy",
             "type": "bool",
-            "label": "¿Quiere activar el acceso via TOR par todo Kodi, en caso de bloqueo general?",
+            "label": "¿Quiere activar el acceso via TOR para todo Kodi, en caso de bloqueo general?",
             "default": SET_KODI_PROXY,
+            "enabled": True,
+            "visible": True,
+        },
+        {
+            "id": "use_kodi_proxy",
+            "type": "bool",
+            "label": "¿Quiere usar el proxy general de Kodi para reproducciones de Alfa?",
+            "default": USE_KODI_PROXY,
             "enabled": True,
             "visible": True,
         },
@@ -319,6 +329,10 @@ def save_setting_torrent(item, dict_data_saved):
     if dict_data_saved and "set_kodi_proxy" in dict_data_saved:
         config.set_setting(
             "set_kodi_proxy", dict_data_saved["set_kodi_proxy"], server="torrent"
+        )
+    if dict_data_saved and "use_kodi_proxy" in dict_data_saved:
+        config.set_setting(
+            "use_kodi_proxy", dict_data_saved["use_kodi_proxy"], server="torrent"
         )
 
 
