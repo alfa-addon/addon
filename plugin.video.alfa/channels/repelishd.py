@@ -11,7 +11,7 @@ from core import httptools, scrapertools, tmdb
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
-from lib import generictools
+from lib import planbtools
 
 
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'sub': 'VOSE'}
@@ -186,7 +186,7 @@ def seasons(item):
     if infoLabels.get('number_of_seasons', ''):
         numeros = [n for n in range(1, int(infoLabels['number_of_seasons'])+1)]
     else:
-        reales = generictools.host_alt_findb_fun(item, seasons=True)
+        reales = planbtools.host_alt_findb_fun(item, seasons=True)
 
         if reales:
             numeros = [str(n) for n in sorted(reales.keys())]
@@ -236,7 +236,7 @@ def episodesxseasons(item):
     if infoLabels.get('temporada_num_episodios', '') or infoLabels.get('last_episode_to_air', ''):
         numeros = [n for n in range(1, (int(infoLabels.get('last_episode_to_air', '') or infoLabels.get('temporada_num_episodios', ''))+1))]
     else:
-        reales = generictools.host_alt_findb_fun(item, seasons=True)
+        reales = planbtools.host_alt_findb_fun(item, seasons=True)
         try:
             de_lsrc = reales.get(int(season), []) if reales else []
         except Exception:
@@ -271,7 +271,7 @@ def episodesxseasons(item):
 def findvideos(item):
     logger.info()
     
-    return generictools.build_findvideos(canonical, list_language, item)
+    return planbtools.build_findvideos(canonical, list_language, item)
 
 
 def search(item, texto):

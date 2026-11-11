@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-import re
 from core import httptools
-from core import scrapertools
-from lib import jsunhunt
 from platformcode import logger
 # import requests
 import json
@@ -15,14 +12,18 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
     response = httptools.downloadpage(page_url)
-    data = response.data
+    data = {}
     if response.code == 404:
         return False, "[bitchute] El fichero no existe o ha sido borrado"
     
     post_url= "https://api.bitchute.com/api/beta/video/media"
     id = page_url.split("embed/")[-1]
     post = {"video_id": id}
-    data = httptools.downloadpage(post_url, post=json.dumps(post), headers=headers).json
+    headers = {'Content-Type': 'application/json', 'Referer': page_url, 'Origin': server}
+    response = httptools.downloadpage(post_url, post=json.dumps(post), headers=headers)
+    if response.code != 200 or not isinstance(response.json, dict) or not response.json.get('media_url'):
+        return False, "[bitchute] No se pudo obtener el enlace del vídeo"
+    data = response.json
     logger.debug(data)
     
     return True, ""

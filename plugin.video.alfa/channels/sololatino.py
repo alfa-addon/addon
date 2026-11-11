@@ -16,7 +16,7 @@ from core.item import Item
 from core import servertools
 from core import scrapertools
 from core import jsontools
-from lib import generictools, jsunpack
+from lib import planbtools, jsunpack
 from channelselector import get_thumb
 from platformcode import config, logger
 from modules import filtertools
@@ -333,7 +333,7 @@ def episodesxseasons(item):
 def findvideos(item):
     logger.info()
     
-    return generictools.build_findvideos(canonical, list_language, item)
+    return planbtools.build_findvideos(canonical, list_language, item)
 
 
 def search(item, texto):
