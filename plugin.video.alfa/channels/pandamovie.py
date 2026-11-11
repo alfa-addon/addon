@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
+
 import re
 
 from platformcode import config, logger, unify
@@ -121,6 +122,7 @@ def catalogo(item):
     logger.info()
     itemlist = []
     
+    soup = create_soup(item.url)
     matches = soup.find('div', class_='tgrid').find_all('a')
     
     for elem in matches:
@@ -144,7 +146,7 @@ def catalogo(item):
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url, next_page)
-        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     
     return itemlist
 
