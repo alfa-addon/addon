@@ -14,7 +14,7 @@ import traceback
 import re
 import time
 
-from core import filetools, scraper, scrapertools
+from core import filetools, scraper, scrapertools, urlparse
 from core.item import Item
 from platformcode import config, logger, platformtools
 from lib import generictools
@@ -1114,17 +1114,18 @@ def redirect_url(video, channel=''):
                 if obj.host and isinstance(obj.host, str):
                     channel_host = obj.host
                     if obj.canonical and isinstance(obj.canonical, dict):
-                        if channel_host in canonical.get('host_black_list', []) and canonical.get('host_alt', []):
+                        canonical = urlparse.normalize_canonical(obj.canonical)
+                        if urlparse.normalize_domain(channel_host) in canonical.get('host_black_list', []) and canonical.get('host_alt', []):
                             channel_host = canonical['host_alt'][0]
             except Exception:
                 pass
             
-            if channel_host and not video.startswith(channel_host) and config.BTDIGG_URL not in video:
+            if channel_host and urlparse.url_domain(video) != urlparse.normalize_domain(channel_host) and config.BTDIGG_URL not in video:
                 logger.debug("vl channel: %s" % channel)
                 logger.debug("vl url: %s" % video)
                 logger.debug("cambiando dominio....")
 
-                video = re.sub(r"(https?:\/\/.+?\/)", channel_host, video)
+                video = urlparse.replace_domain(video, channel_host)
                 logger.debug("Nueva URL: %s" % video)
     except Exception:
         logger.error(traceback.format_exc())
@@ -1135,8 +1136,9 @@ def redirect_url(video, channel=''):
 def is_host_url(url, channel):
     # compureba que la url haya pertenecido a algun host del canal.
     ch = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
-    all_hosts = ch.canonical.get('host_black_list', []) + ch.canonical.get('host_alt', [])
-    return any(host in url for host in all_hosts)
+    canonical = urlparse.normalize_canonical(ch.canonical)
+    all_hosts = canonical.get('host_black_list', []) + canonical.get('host_alt', [])
+    return urlparse.url_domain(url) in all_hosts
 
 
 def add_movie(item):

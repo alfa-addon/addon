@@ -14,6 +14,7 @@ import base64
 
 from platformcode import config, logger
 from core import filetools
+from core import urlparse
 
 from platformcode import platformtools
 from core import jsontools
@@ -1795,8 +1796,9 @@ def reset_current_host(round_level):
                         ["channels.%s" % channel_name],
                     )
                     host = channel.host
-                    new_host = channel.canonical["host_alt"][0]
-                    if host and new_host and host != new_host:
+                    new_host = urlparse.normalize_domain(channel.canonical["host_alt"][0])
+                    if host and new_host and urlparse.normalize_domain(host) != new_host:
+                        new_host = urlparse.format_channel_host(new_host, host)
                         config.set_setting(
                             "current_host", new_host, channel=channel_name
                         )

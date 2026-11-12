@@ -125,3 +125,88 @@ def urlunparse(components):
 
 def urlunsplit(components):
     return _urlparse.urlunsplit(components)
+
+
+def normalize_domain(domain):
+    """Remove root slashes from HTTP(S) domains, not from content URLs."""
+    if not isinstance(domain, (str, type(u""))):
+        return domain
+    try:
+        parsed = _urlparse.urlsplit(domain)
+    except ValueError:
+        return domain
+    if (parsed.scheme in ("http", "https") and parsed.netloc
+            and not parsed.path.strip("/") and not parsed.query
+            and not parsed.fragment):
+        return domain.rstrip("/")
+    return domain
+
+
+def normalize_canonical(canonical):
+    """Return a domain-normalized copy, keeping other options and list order."""
+    result = dict(canonical)
+    for key in ("host", "host_alt", "host_black_list", "host_alt_new", "host_alt_tor"):
+        if key not in result:
+            continue
+        value = result[key]
+        if isinstance(value, (list, tuple)):
+            domains = []
+            for domain in value:
+                domain = normalize_domain(domain)
+                if domain not in domains:
+                    domains.append(domain)
+            if key == "host_alt" and "host_alt_main" in result:
+                index = result["host_alt_main"]
+                if isinstance(index, int) and 0 <= index < len(value):
+                    result["host_alt_main"] = domains.index(normalize_domain(value[index]))
+            result[key] = domains
+        else:
+            result[key] = normalize_domain(value)
+    return result
+
+
+def url_domain(url):
+    """Extract the HTTP(S) origin for canonical comparisons."""
+    try:
+        parsed = _urlparse.urlsplit(url)
+    except (TypeError, ValueError):
+        return ""
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return ""
+    return _urlparse.urlunsplit((parsed.scheme, parsed.netloc, "", "", ""))
+
+
+def replace_domain(url, domain):
+    """Replace only the origin, preserving paths, queries and fragments."""
+    if not url_domain(url) or not url_domain(domain):
+        return url
+    target = _urlparse.urlsplit(domain)
+    if target.path.strip("/") or target.query or target.fragment:
+        return url
+    parsed = _urlparse.urlsplit(url)
+    return _urlparse.urlunsplit((target.scheme, target.netloc, parsed.path,
+                                parsed.query, parsed.fragment))
+
+
+def format_channel_host(domain, reference):
+    """Keep the channel's legacy separator until its URL builders migrate."""
+    domain = normalize_domain(domain)
+    if (isinstance(domain, (str, type(u""))) and domain
+            and isinstance(reference, (str, type(u"")))
+            and normalize_domain(domain + "/") == domain
+            and reference.endswith("/")):
+        return domain + "/"
+    return domain
+
+
+def format_channel_canonical(canonical, reference):
+    """Adapt normalized metadata for channels that still concatenate hosts."""
+    result = normalize_canonical(canonical)
+    for key in ("host", "host_alt", "host_black_list", "host_alt_new", "host_alt_tor"):
+        if key not in result:
+            continue
+        if isinstance(result[key], list):
+            result[key] = [format_channel_host(domain, reference) for domain in result[key]]
+        else:
+            result[key] = format_channel_host(result[key], reference)
+    return result

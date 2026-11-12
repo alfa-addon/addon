@@ -35,7 +35,7 @@ canonical = {
                                  'https://pelisflix.works/', 'https://pelisflix.loan/', 'https://pelisflix.casa/',
                                  'https://pelisflix.show/', 'https://pelisflix.zone/', 'https://pelisflix.host/', 
                                  'https://pelisflix.codes/', 'https://pelisflix.mom/', 'https://pelisflix.tools/', 
-                                 'https://pelisflix.quest/', 'https://pelisflix.hair/', 'https://pelisflix.store/'
+                                 'https://pelisflix.quest/', 'https://pelisflix.hair/', 'https://pelisflix.store/',
                                  "https://pelis28.art/", "https://pelisflix2.fun/", "https://pelisflix.run/", 
                                  "https://pelisflix.pw/", "https://pelisflix.biz/", "https://ww2.pelisflix2.one/", 
                                  "https://pelisflix2.one/", "https://pelisflix.li/", "https://ww3.pelisflix2.one/"], 

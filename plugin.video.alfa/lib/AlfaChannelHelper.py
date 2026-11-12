@@ -20,6 +20,7 @@ if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from channelselector import get_thumb
 from core import scrapertools
+from core import urlparse
 from core import servertools
 from core import jsontools
 from core.item import Item
@@ -161,6 +162,8 @@ class AlfaChannelHelper:
             self.ASSISTANT_VERSION = tuple()
         try:
             self.domains_updated = jsontools.load(window.getProperty("alfa_domains_updated") or '{}')
+            if self.channel in self.domains_updated:
+                self.domains_updated[self.channel] = urlparse.normalize_canonical(self.domains_updated[self.channel])
             if self.channel in self.domains_updated and 'finds' in self.domains_updated[self.channel]:
                 finds_updated = self.domains_updated[self.channel].pop('finds', '')
                 for key, value in finds_updated.items():
@@ -170,52 +173,56 @@ class AlfaChannelHelper:
                         for key_c, value_c in finds_updated[key].items():
                             self.finds_controls_updated[key_c] = eval('%s' % value_c)
 
-            if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and 'host' in self.canonical \
-                                    and 'host_alt' in self.canonical and 'host_black_list' in self.canonical \
-                                    and self.canonical.get('update_host_list', True):
+            canonical_view = urlparse.normalize_canonical(self.canonical)
+            if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and 'host' in canonical_view \
+                                    and 'host_alt' in canonical_view and 'host_black_list' in canonical_view \
+                                    and canonical_view.get('update_host_list', True):
                 if self.channel in self.domains_updated and (self.domains_updated[self.channel].get('host_alt') \
                                                              or self.domains_updated[self.channel].get('host_alt_tor')
                                                              or self.domains_updated[self.channel].get('UPDATE_CANONICAL')):
-                    if self.host != self.domains_updated[self.channel].get('host_alt', [''])[0] or self.host != self.canonical['host_alt'][0] \
-                                    or self.domains_updated[self.channel].get('host_alt', []) != self.canonical['host_alt'] \
+                    if urlparse.normalize_domain(self.host) != self.domains_updated[self.channel].get('host_alt', [''])[0] or urlparse.normalize_domain(self.host) != canonical_view['host_alt'][0] \
+                                    or self.domains_updated[self.channel].get('host_alt', []) != canonical_view['host_alt'] \
                                     or (self.domains_updated[self.channel].get('host_alt_tor', []) \
-                                        and self.domains_updated[self.channel].get('host_alt_tor', []) != self.canonical.get('host_alt_tor', '-')) \
-                                    or self.domains_updated[self.channel].get('host_black_list', []) != self.canonical['host_black_list'] \
+                                        and self.domains_updated[self.channel].get('host_alt_tor', []) != canonical_view.get('host_alt_tor', '-')) \
+                                    or self.domains_updated[self.channel].get('host_black_list', []) != canonical_view['host_black_list'] \
                                     or self.domains_updated[self.channel].get('UPDATE_CANONICAL'):
-                        self.host = self.canonical['host'] = self.domains_updated[self.channel].get('host_alt', ([self.canonical['host']] \
-                                                                                                    if self.canonical['host'] else []) \
-                                                                                                    or self.canonical['host_alt'])[0]
+                        canonical_view['host'] = self.domains_updated[self.channel].get('host_alt', ([canonical_view['host']] \
+                                                                                                    if canonical_view['host'] else []) \
+                                                                                                    or canonical_view['host_alt'])[0]
+                        self.host = urlparse.format_channel_host(canonical_view['host'], self.host)
                         if config.get_setting("current_host", self.channel) != self.host:
                             config.set_setting("current_host", self.host, self.channel)
                             channel = __import__('channels.%s' % self.channel, None, None, ["channels.%s" % self.channel])
                             channel.host = self.host
-                        self.canonical['host_black_list'] = self.domains_updated[self.channel].get('host_black_list', 
-                                                                                 self.canonical['host_black_list'])
-                        for host_alt in self.canonical['host_alt'][:]:
-                            if host_alt not in self.canonical['host_black_list'] \
+                        canonical_view['host_black_list'] = self.domains_updated[self.channel].get('host_black_list',
+                                                                                 canonical_view['host_black_list'])
+                        for host_alt in canonical_view['host_alt'][:]:
+                            if host_alt not in canonical_view['host_black_list'] \
                                         and host_alt not in self.domains_updated[self.channel]\
-                                                                .get('host_alt', self.canonical['host_alt']): 
-                                self.canonical['host_black_list'].insert(0, host_alt)
-                                self.canonical['host_alt'].remove(host_alt)
-                        self.canonical['host_alt'] = self.domains_updated[self.channel].get('host_alt', self.canonical['host_alt'])
-                        if self.host not in self.canonical['host_alt'] and self.host not in self.canonical['host_black_list']:
-                            self.canonical['host_alt'].insert(0, self.host)
-                        if self.host in self.canonical['host_black_list'] and self.canonical['host_alt']:
-                            self.host = self.canonical['host'] = self.canonical['host_alt'][0]
+                                                                .get('host_alt', canonical_view['host_alt']):
+                                canonical_view['host_black_list'].insert(0, host_alt)
+                                canonical_view['host_alt'].remove(host_alt)
+                        canonical_view['host_alt'] = self.domains_updated[self.channel].get('host_alt', canonical_view['host_alt'])
+                        if urlparse.normalize_domain(self.host) not in canonical_view['host_alt'] and urlparse.normalize_domain(self.host) not in canonical_view['host_black_list']:
+                            canonical_view['host_alt'].insert(0, urlparse.normalize_domain(self.host))
+                        if urlparse.normalize_domain(self.host) in canonical_view['host_black_list'] and canonical_view['host_alt']:
+                            canonical_view['host'] = canonical_view['host_alt'][0]
+                            self.host = urlparse.format_channel_host(canonical_view['host'], self.host)
                         if len(self.domains_updated[self.channel].get('host_alt', [])) > 1:
-                            for host_alt in self.canonical['host_alt'][:]:
-                                if host_alt in self.canonical['host_black_list']:
-                                    self.canonical['host_alt'].remove(host_alt)
+                            for host_alt in canonical_view['host_alt'][:]:
+                                if host_alt in canonical_view['host_black_list']:
+                                    canonical_view['host_alt'].remove(host_alt)
                         if self.domains_updated[self.channel].get('host_alt_tor', []) \
-                                and self.domains_updated[self.channel].get('host_alt_tor', []) != self.canonical.get('host_alt_tor', '-'):
-                            self.canonical['host_alt_tor'] = self.domains_updated[self.channel]['host_alt_tor']
+                                and self.domains_updated[self.channel].get('host_alt_tor', []) != canonical_view.get('host_alt_tor', '-'):
+                            canonical_view['host_alt_tor'] = self.domains_updated[self.channel]['host_alt_tor']
                         if 'host_alt' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_alt']
                         if 'host_black_list' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_black_list']
                         if 'UPDATE_CANONICAL' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['UPDATE_CANONICAL']
-                        if self.domains_updated: self.canonical.update(self.domains_updated[self.channel])
-                        if self.DEBUG: logger.debug('HOST_updated: %s TO %s' % (host, self.canonical))
-                        self.print_DEBUG = self.canonical.get('print_DEBUG', False)
-                        self.host_alt_findb = self.canonical.get('host_alt_findb', [])
+                        if self.domains_updated: canonical_view.update(self.domains_updated[self.channel])
+                        if self.DEBUG: logger.debug('HOST_updated: %s TO %s' % (host, canonical_view))
+                        self.print_DEBUG = canonical_view.get('print_DEBUG', False)
+                        self.host_alt_findb = canonical_view.get('host_alt_findb', [])
+                        self.canonical.update(urlparse.format_channel_canonical(canonical_view, self.host))
         except Exception:
             self.domains_updated = {}
             logger.error(traceback.format_exc())
@@ -232,6 +239,7 @@ class AlfaChannelHelper:
         get_cached_files_('password')
 
         if "canonical" not in kwargs: kwargs["canonical"] = copy.deepcopy(self.canonical)
+        kwargs.setdefault("_canonical_host_reference", self.host)
         self.dns_params = kwargs.get('canonical', {}).get('dns_params', {})
         self.alfa_cached_passwords = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
         if kwargs.get('canonical', {}).get('cf_assistant', True) is not False and IS_ASSISTANT_INSTALLED:
@@ -340,19 +348,22 @@ class AlfaChannelHelper:
                     req = self.anubis_challenge(url, response, challenge, **kwargs)
                     response = self.httptools.downloadpage(url, **kwargs)
                     if response.url and response.url != url and scrapertools.find_single_match(str(response.data), regex):
-                        self.host = self.obtain_domain(url, scheme=True).rstrip('/') + '/'
-                        response.host = self.obtain_domain(response.url, scheme=True).rstrip('/') + '/'
-                        self.doo_url = self.doo_url.replace(self.host, response.host)
-                        self.url = url = url.replace(self.host, response.host)
+                        old_domain = urlparse.url_domain(url)
+                        new_domain = urlparse.url_domain(response.url)
+                        response.host = urlparse.format_channel_host(new_domain, self.host)
+                        self.doo_url = urlparse.replace_domain(self.doo_url, new_domain)
+                        self.url = url = urlparse.replace_domain(url, new_domain)
                         if "canonical" not in kwargs: kwargs["canonical"] = copy.deepcopy(self.canonical) if not self.TEST_ON_AIR else {}
-                        kwargs["canonical"]["host"] = response.host
+                        kwargs["canonical"]["host"] = new_domain
                         if not kwargs.get("canonical", {}).get("host_black_list"): kwargs["canonical"]["host_black_list"] = []
-                        kwargs["canonical"]["host_black_list"].insert(0, self.host)
+                        kwargs["canonical"]["host_black_list"].insert(0, old_domain)
                         if not kwargs.get("canonical", {}).get("host_alt"): kwargs["canonical"]["host_alt"] = []
                         kwargs["canonical"]["host_alt"][0] = kwargs["canonical"]["host"]
                         if kwargs.get("canonical", {}).get("host_alt_new"):
                             kwargs["canonical"]["host_alt_new"].insert(0, kwargs["canonical"]["host"])
+                        kwargs["canonical"].update(urlparse.format_channel_canonical(kwargs["canonical"], self.host))
                         self.host = response.host
+                        self.canonical['host'] = response.host
                         response.proxy__ = ''
                         req = self.anubis_challenge(url, response, challenge, **kwargs)
                         response = self.httptools.downloadpage(url, **kwargs)
@@ -400,9 +411,11 @@ class AlfaChannelHelper:
 
         if response.host:
             logger.error('response.host: %s' % response.host)
-            self.doo_url = self.doo_url.replace(self.host, response.host)
-            self.url = url.replace(self.host, response.host)
+            response.host = urlparse.format_channel_host(response.host, self.host)
+            self.doo_url = urlparse.replace_domain(self.doo_url, response.host)
+            self.url = urlparse.replace_domain(url, response.host)
             self.host = response.host
+            self.canonical['host'] = response.host
         elif response.url and response.url != url:
             if not response.url.startswith('http'):
                 logger.error('WRONG response.url: %s / %s' % (url, response.url))
