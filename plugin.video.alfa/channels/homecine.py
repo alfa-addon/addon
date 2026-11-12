@@ -187,7 +187,7 @@ def section_matches(item, matches_int, **AHkwargs):
             else:
                 elem_json['url'] = "%spage/1?ptype=post&tax_category[]=%s" %(item.url, id)
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -242,7 +242,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if item.c_type == 'search' and not tv_path in elem_json['url']:
                 elem_json['mediatype'] = 'movie'
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -325,7 +325,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = elem.get('href', '')
             elem_json['episode'] = elem.get_text(strip=True).replace('Episode ', '')
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -363,7 +363,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['language'] = lang.get_text('', strip=True).split("-")[-1]
             elem_json['server'] = ''
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -396,7 +396,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

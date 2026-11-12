@@ -54,7 +54,7 @@ class QuasarRPCServer(BaseHandler):
         for i in self._objects:
             try:
                 self._objects[i].hide()
-            except:
+            except Exception:
                 pass
         log.info("Resetting RPC objects...")
         self._objects = {}
@@ -192,7 +192,7 @@ class QuasarRPCServer(BaseHandler):
                 time.sleep(10)
                 notify(getLocalizedString(30111))
                 urllib2.urlopen("%s/provider/%s/disable" % (QUASARD_HOST, addonId))
-            except:
+            except Exception:
                 notify(getLocalizedString(30112))
                 return 0
         return self._failures[addonId]
@@ -248,7 +248,7 @@ class QuasarRPCServer(BaseHandler):
         f.close()
         try:
             src = re.search('defaultresolution="([^"]+)', read, re.DOTALL).group(1)
-        except:
+        except Exception:
             src = re.search('<res.+?folder="([^"]+)', read, re.DOTALL).group(1)
         src = os.path.join(skinPath, src, 'MyVideoNav.xml')
         f = xbmcvfs.File(src)

@@ -108,7 +108,7 @@ def section_matches(item, matches_int, **AHkwargs):
             
             elem_json['url'] = '%s/facts/tag?slug=%s&limit=48&offset=0' % (url_api, elem.get('tg_slug', '') )
             elem_json['title'] = elem.get('tg_name', '')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -162,7 +162,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['title'] = title
             elem_json['thumbnail'] = "https://thumbs.externulls.com/videos/%s/0.webp?size=480x270" %id
             elem_json['stime'] = stime
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -195,7 +195,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

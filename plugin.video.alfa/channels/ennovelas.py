@@ -169,7 +169,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elif tv_path not in elem_json['url'] and item.c_type == 'search':
                 continue
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -228,7 +228,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['episode'] = scrapertools.find_single_match(elem.find('div', class_='episodeNum').get_text('|', strip=True), '\d+')
             elem_json['episode'] = int(elem_json['episode'] or 1)
             elem_json['language'] = elem_json.get('language', '*')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -283,7 +283,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 try:
                     bs4 = base64.b64decode(soup.find('div', id="btnServers").find('form').find('input').get('value', '')).decode('utf-8')
                     matches_alt = jsontools.load(bs4).values()
-                except:
+                except Exception:
                     pass
             
             if not matches_alt and (soup.find('ul', class_="serversList") or soup.find('div', class_="watch")):
@@ -321,7 +321,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                         logger.debug('Servidor no soportado: %s' % elem_json['url'])
                         continue
 
-                except:
+                except Exception:
                     logger.error(elem)
                     logger.error(traceback.format_exc())
                     continue
@@ -332,7 +332,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
                 matches.append(elem_json.copy())
 
-        except:
+        except Exception:
             logger.error(elem_ini)
             logger.error(traceback.format_exc())
             continue
@@ -362,7 +362,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

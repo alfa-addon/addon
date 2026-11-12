@@ -138,7 +138,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['star'] = elem.get('actress', '').strip()
             elem_json['canal'] = elem.get('studio', '').strip()
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -175,7 +175,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                canal = '[%s]' %valor
             item.plot = " %s \n  %s" %(canal, pornstar)
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
@@ -200,7 +200,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

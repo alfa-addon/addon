@@ -42,26 +42,47 @@ class proxy(Controller):
         req = urllib2.Request(url, headers=request_headers)
         opener = urllib2.build_opener(urllib2.HTTPHandler(debuglevel=0))
 
+        h = None
+        handled = False
         try:
-            h = opener.open(req)
-        except urllib2.HTTPError as e:
-            h = e
-        except:
-            self.handler.send_response("503")
-            self.handler.wfile.close()
-            h.close()
+            try:
+                h = opener.open(req)
+            except urllib2.HTTPError as e:
+                h = e
+            except Exception:
+                self.handler.send_response("503")
+                handled = True
+                return
 
-        self.handler.send_response(h.getcode())
-        for header in h.info():
-            self.handler.send_header(header, h.info()[header])
+            self.handler.send_response(h.getcode())
+            for header in h.info():
+                self.handler.send_header(header, h.info()[header])
 
-        self.handler.end_headers()
+            self.handler.end_headers()
 
-        blocksize = 1024
-        bloqueleido = h.read(blocksize)
-        while len(bloqueleido) > 0:
-            self.handler.wfile.write(bloqueleido)
+            blocksize = 1024
             bloqueleido = h.read(blocksize)
-
-        self.handler.wfile.close()
-        h.close()
+            while len(bloqueleido) > 0:
+                self.handler.wfile.write(bloqueleido)
+                bloqueleido = h.read(blocksize)
+            handled = True
+        finally:
+            failed = not handled
+            close_error = None
+            close_handled = False
+            try:
+                try:
+                    self.handler.wfile.close()
+                except Exception as exc:
+                    if not failed:
+                        close_error = exc
+                close_handled = True
+            finally:
+                if h is not None:
+                    try:
+                        h.close()
+                    except Exception as exc:
+                        if not failed and close_handled and close_error is None:
+                            close_error = exc
+            if close_error is not None:
+                raise close_error

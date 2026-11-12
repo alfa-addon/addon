@@ -43,7 +43,7 @@ class ziptools(object):
                             break
                     else:
                         filetools.mkdir(path)
-                except:
+                except Exception:
                     pass
                 if folder_to_extract:
                     outfilename = filetools.join(dir, filename)
@@ -75,14 +75,14 @@ class ziptools(object):
 
                     if not filetools.write(outfilename, zf.read(nameo), silent=True, vfs=VFS):  #TRUNCA en FINAL en Kodi 19 con VFS
                         logger.error("Error al escribir en el fichero %s" % outfilename)
-                except:
+                except Exception:
                     import traceback
                     logger.error(traceback.format_exc())
                     logger.error("Error en fichero " + nameo)
         
         try:
             zf.close()
-        except:
+        except Exception:
             logger.info("Error cerrando .zip " + file)
 
     def _createstructure(self, file, dir):
@@ -92,7 +92,7 @@ class ziptools(object):
         try:
             (path, name) = filetools.split(filename)
             filetools.mkdir(path)
-        except:
+        except Exception:
             pass
 
     def _makedirs(self, directories, basedir):

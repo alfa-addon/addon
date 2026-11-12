@@ -59,7 +59,7 @@ def find_and_set_infoLabels(item):
         # Llamamos a la funcion find_and_set_infoLabels del scraper seleccionado
         try:
             scraper_result = scraper.find_and_set_infoLabels(item)
-        except:
+        except Exception:
             scraper_result = None
 
         # Verificar si existe 'code'

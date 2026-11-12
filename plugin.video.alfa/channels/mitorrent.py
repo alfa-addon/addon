@@ -222,7 +222,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['year'] = elem.find('div', class_='browse-movie-year').get_text(strip=True)
             elem_json['language'] = '*%s' % elem.find('div', class_='browse-movie-tags').get_text(strip=True)
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -285,7 +285,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['torrent_info'] = ''
             elem_json['server'] = 'torrent'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -350,7 +350,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['torrent_info'] = size.find('p').find_next('p').get_text(strip=True)
                 elem_json['server'] = 'torrent'
 
-            except:
+            except Exception:
                 logger.error(size)
                 logger.error(elem)
                 logger.error(traceback.format_exc())
@@ -385,7 +385,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []
@@ -425,7 +425,7 @@ def newest(categoria, **AHkwargs):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []

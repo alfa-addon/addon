@@ -144,7 +144,7 @@ def section_matches(item, matches_int, **AHkwargs):
             if  elem.get('cf4', ''):  elem_json['thumbnail'] = elem.get('cf4', '')
             if  elem.get('total_videos', ''):  elem_json['cantidad'] = elem.get('total_videos', '')
             else: elem_json['cantidad'] =  elem.get('statistics', {}).get('videos', '')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -185,7 +185,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             quality = elem.get('file_dimensions', '').split('x') if elem.get('file_dimensions') else ''
             elem_json['quality'] = "%sp" % quality[-1]
             elem_json['star'] = elem.get('models', '') if elem.get('models', '') else ''
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -219,7 +219,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

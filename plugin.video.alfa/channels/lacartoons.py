@@ -38,7 +38,7 @@ __channel__ = canonical['channel']
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-except:
+except Exception:
     __modo_grafico__ = True
 
 

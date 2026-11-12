@@ -137,12 +137,12 @@ def authentication():
                 if "client_secret" in data:
                     # Código introducido, salimos del bucle
                     break
-            except:
+            except Exception:
                 pass
 
         try:
             dialog_auth.close()
-        except:
+        except Exception:
             pass
 
         debrid_id = data["client_id"]
@@ -163,7 +163,7 @@ def authentication():
         config.set_setting("refresh", refresh, server="realdebrid")
 
         return token
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
         return ""

@@ -193,7 +193,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             
             if not elem_json['url']: continue
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -281,7 +281,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['episode'] = int(epi.div.get_text(strip=True).split(" ")[-1] or 1)
             elem_json['title'] = "%sx%s" % (elem_json['season'], elem_json['episode'])
         
-        except:
+        except Exception:
             logger.error(epi)
             logger.error(traceback.format_exc())
             continue
@@ -381,7 +381,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                         elem_json['server'] = ''
                         elem_json['language'] = IDIOMAS.get(lang, lang)
                         matches.append(elem_json.copy())
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -418,7 +418,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

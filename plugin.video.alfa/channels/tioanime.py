@@ -149,7 +149,7 @@ def list_all(item):
         url_next_page = host + soup.find("a", rel="next")["href"]
         if url_next_page and len(itemlist) > 8:
             itemlist.append(item.clone(title="Siguiente >>", url=url_next_page))
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -249,7 +249,7 @@ def search(item, texto):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

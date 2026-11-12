@@ -49,7 +49,7 @@ def ensure_exec_perms(file_):
     try:
         st = os.stat(file_)
         os.chmod(file_, st.st_mode | stat.S_IEXEC)
-    except:
+    except Exception:
         pass
     return file_
 
@@ -159,7 +159,7 @@ def get_quasar_binary():
                     shutil.rmtree(path)
                 else:
                     os.remove(path)
-        except:
+        except Exception:
             pass
 
     return dest_binary_dir, ensure_exec_perms(dest_binary_path)
@@ -170,7 +170,7 @@ def clear_fd_inherit_flags():
     
     try:
         from ctypes import windll
-    except:
+    except Exception:
         log.error("Error clearing inherit flag, disk file handle. NO CTYPES")
         return
 
@@ -276,7 +276,7 @@ def start_quasard(**kwargs):
 def shutdown():
     try:
         urllib2.urlopen(QUASARD_HOST + "/shutdown")
-    except:
+    except Exception:
         pass
 
 def wait_for_abortRequested(proc, monitor):
@@ -304,7 +304,7 @@ def quasard_thread(monitor):
                     assistant = True
                 else:
                     assistant = False
-            except:
+            except Exception:
                 assistant = False
             
             def polling_assistant(proc, monitor):
@@ -460,7 +460,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                     USER_APP_URL = "%s:%s" % (user_params['USER_APP_URL'], user_params['USER_APP_PORT'])
                     USER_APP_URL_ALT = "%s:%s" % (user_params['USER_APP_URL'], user_params['USER_APP_PORT_ALT'])
                 if USER_APP_STATUS: break
-            except:
+            except Exception:
                 log.error(traceback.format_exc())
         
         if user_addon == 'Alfa':
@@ -476,12 +476,12 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                         USER_APP_URL_base = user_params['USER_APP_URL']
                         USER_APP_URL = "%s:%s" % (USER_APP_URL_base, user_params['USER_APP_PORT'])
                         USER_APP_URL_ALT = "%s:%s" % (USER_APP_URL_base, user_params['USER_APP_PORT_ALT'])
-                except:
+                except Exception:
                     # Only Alfa Assistant installed and not Alfa
                     if os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
                         USER_APP_STATUS = True
                 if USER_APP_STATUS: break
-            except:
+            except Exception:
                 log.error(traceback.format_exc())
 
     if not USER_APP_STATUS:
@@ -511,7 +511,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                         if 'build.version.release' in label_a:
                             os_release = int(re.findall(r':\s*\[(.*?)\]$', label_a, flags=re.DOTALL)[0])
                             break
-                except:
+                except Exception:
                     try:
                         with open(os.environ['ANDROID_ROOT'] + '/build.prop', "r") as f:
                             labels = read(f)
@@ -521,7 +521,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                             if 'build.version.release' in label_a:
                                 os_release = int(re.findall('=(.*?)$', label_a, flags=re.DOTALL)[0])
                                 break
-                    except:
+                    except Exception:
                         os_release = 10
                 
                 log.info(os_release)
@@ -540,7 +540,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                         if not os.path.exists(library_path):
                             res = xbmcvfs.mkdirs(library_path)
 
-            except:
+            except Exception:
                 log.info('## Assistant checking download_path: ERROR on processing')
                 log.info(traceback.format_exc())
             
@@ -675,7 +675,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                         app_response = app_response.decode()
                     app_response = re.sub('\n|\r|\t', '', app_response)
                     app_response = json.loads(app_response)
-            except:
+            except Exception:
                 status_code = resp.content
                 launch_status = False
                 log.info("## Calling Quasar: Invalid app response: %s" % resp.content)
@@ -725,7 +725,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
             
             try:
                 p.pid = int(app_response['pid'])
-            except:
+            except Exception:
                 raise ValueError("No valid PID returned:  PID code: %s" % resp.content)
 
             # Handle initial messages
@@ -743,7 +743,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
 
             log.info('## Assistant executing CMD: %s - PID: %s' % (command[0], p.pid))
             #log.warning('## Assistant executing CMD **kwargs: %s' % command[1])
-        except:
+        except Exception:
             log.info('## Assistant ERROR %s in CMD: %s%s' % (status_code, url, command))
             log.error(traceback.format_exc())
             
@@ -836,7 +836,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                                     if not 'awakingInterval' in url: 
                                         url += '&awakingInterval=%s' % p.binary_awake
                                         resp = p.sess.get(url, timeout=5)
-                                except:
+                                except Exception:
                                     pass
                                 time.sleep(1)
                                 continue
@@ -852,7 +852,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         app_response = re.sub('\n|\r|\t', '', app_response)
                         app_response = json.loads(app_response)
                         test_json = app_response["pid"]
-                    except:
+                    except Exception:
                         status_code = resp.content
                         log.error("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s - awake: %s" % \
                                     (p.pid, resp.content, retry_app, p.binary_awake))
@@ -910,7 +910,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                                 line = line.encode('utf-8')
                             p.stdin.write(line)
                             p.stdin.flush()
-                    except:
+                    except Exception:
                         pass
             
             p.returncode = None
@@ -921,11 +921,11 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                 try:
                     p.stdin.flush()
                     p.stdin.close()
-                except:
+                except Exception:
                     pass
                 try:
                     p.returncode = int(app_response['retCode'])
-                except:
+                except Exception:
                     p.returncode = app_response['retCode']
                 
             if action == 'communicate' and p.returncode is not None:
@@ -945,13 +945,13 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         if not p.torrest:
                             try:
                                 resp_t = p.sess.get(url_close, timeout=1)
-                            except:
+                            except Exception:
                                 pass
                     elif p.returncode == 998:
                         if not p.torrest:
                             xbmc.executebuiltin(cmd_android_close)
                         time.sleep(4)
-                except:
+                except Exception:
                     logging.info(traceback.format_exc())
                     time.sleep(1)
                     if not p.torrest:
@@ -966,7 +966,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
             msg = ''
             app_response = {}
 
-    except:
+    except Exception:
         log.error(traceback.format_exc())
     return None
 
@@ -1050,7 +1050,7 @@ def install_app(APP_PARAMS):
                     time.sleep(1)
                 break
     
-    except:
+    except Exception:
         log.info(traceback.format_exc())
         user_params = {}
     return user_params

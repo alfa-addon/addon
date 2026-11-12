@@ -105,7 +105,7 @@ def section_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = '%sv3/readmodel/cache/sectioncamlist?genre=["w","m","c","t"]&tag=%s' % (host, elem_json['title'])
             elem_json['thumbnail'] = ''
             elem_json['cantidad'] = elem.get('count', '')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -144,7 +144,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['thumbnail'] = elem.get('capture', '') if elem.get('capture', []) else ''
             elem_json['quality'] = 'HD' if elem.get('hd') else ''
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue

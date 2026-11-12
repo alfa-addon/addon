@@ -18,15 +18,15 @@ class DialogSelect(xbmcgui.WindowXMLDialog):
             label1 = labels[0]
             try:
                 label2 = labels[1]
-            except:
+            except Exception:
                 label2 = ''
             try:
                 icon = labels[2]
-            except:
+            except Exception:
                 icon = None
             try:
                 multi = labels[3] == 'multi'
-            except:
+            except Exception:
                 multi = False
             self.addItem(label1, label2, icon, multi)
         self.setFocusId(32503)

@@ -170,7 +170,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['year'] = elem_json.get('year', AlfaChannel.parse_finds_dict(elem, findS.get('year', {}), year=True, c_type=item.c_type))
             if findS.get('plot', {}) and AlfaChannel.parse_finds_dict(elem, findS.get('plot', {}), c_type=item.c_type):
                 elem_json['plot'] = AlfaChannel.parse_finds_dict(elem, findS.get('plot', {}), c_type=item.c_type)
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -230,7 +230,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 elem_json['season'] = item.contentSeason
                 elem_json['episode'] = int(elem.get('number', '1') or '1')
                 elem_json['thumbnail'] = elem.get('image', '')
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
                 continue
@@ -272,7 +272,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['language'] = '*%s' % lang
                 elem_json['quality'] = '*%s' % link.get('quality', '')
                 elem_json['title'] = '%s'
-            except:
+            except Exception:
                 logger.error(link)
                 logger.error(traceback.format_exc())
                 continue
@@ -315,7 +315,7 @@ def play(item):
         
         itemlist.append(item.clone(url=url, server=""))
         itemlist = servertools.get_servers_itemlist(itemlist)
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
     return itemlist
@@ -344,7 +344,7 @@ def search(item, texto, **AHkwargs):
             return []
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -368,7 +368,7 @@ def newest(categoria, **AHkwargs):
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
 
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

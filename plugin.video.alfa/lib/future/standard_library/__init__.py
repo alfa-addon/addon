@@ -462,10 +462,10 @@ def install_aliases():
 
             obj = getattr(oldmod, oldobjname)
             setattr(newmod, newobjname, obj)
-        except:
+        except Exception:
             try:
                 flog.warning('*** FUTURE ERROR in module %s %s ' % (str(oldmod), str(oldobjname)))
-            except:
+            except Exception:
                 pass
 
     # Hack for urllib so it appears to have the same structure on Py2 as on Py3
@@ -489,7 +489,7 @@ def install_aliases():
             sys.modules['urllib.parse'] = urllib
             urllib.error = urllib
             sys.modules['urllib.error'] = urllib
-        except:
+        except Exception:
             pass
     try:
         from future.backports.urllib import request
@@ -505,7 +505,7 @@ def install_aliases():
             sys.modules['urllib.request'] = urllib
             urllib.robotparser = urllib
             sys.modules['urllib.robotparser'] = urllib
-        except:
+        except Exception:
             pass
 
     # Patch the test module so it appears to have the same structure on Py2 as on Py3
@@ -521,7 +521,7 @@ def install_aliases():
         try:
             test.support = support
             sys.modules['test.support'] = support
-        except:
+        except Exception:
             pass
 
     # Patch the dbm module so it appears to have the same structure on Py2 as on Py3
@@ -548,7 +548,7 @@ def install_aliases():
             else:
                 dbm.ndbm = ndbm
                 sys.modules['dbm.ndbm'] = ndbm
-        except:
+        except Exception:
             flog.warning('*** FUTURE ERROR importing MOVES.dbm')
 
     # install_aliases.run_already = True

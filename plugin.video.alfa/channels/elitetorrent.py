@@ -167,7 +167,7 @@ def submenu(item):
             title = elem.a.get_text(strip=True).title()
             url = AlfaChannel.urljoin(host, elem.a.get('href', ''))
             thumb = "channels_%s_hd.png" % contentType if not genres else 'genres.png'
-        except:
+        except Exception:
             title = elem.get('title', '').replace('Series y peliculas torrent ', '').title()
             url = AlfaChannel.urljoin(host, elem.get('href', ''))
             thumb = "channels_vos.png"
@@ -228,7 +228,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                                                                                 .a.get("title", ""), '(?i)\s+(\d{1,2})\s*.\s*(\d{1,3})')
                     elem_json['season'] =  int(elem_json['season'])
                     elem_json['episode'] =  int(elem_json['episode'])
-                except:
+                except Exception:
                     logger.error(elem)
                     elem_json['season'] =  1
                     elem_json['episode'] =  1
@@ -239,7 +239,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['quality'] = '*%s' % (item.quality or elem.find('span', id=False)\
                                             .get_text(strip=True).replace('---', '') or item.extra)
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -298,7 +298,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['language'] = item.language
                 elem_json['torrent_info'] = ''
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
@@ -333,7 +333,7 @@ def search(item, texto, **AHkwargs):
             return []
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -360,7 +360,7 @@ def newest(categoria, **AHkwargs):
                 itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

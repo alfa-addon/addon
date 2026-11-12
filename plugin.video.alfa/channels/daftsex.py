@@ -48,7 +48,7 @@ def search(item, texto):
     item.url = "%spage/1/?s=%s&filter=latest" % (host,texto)
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

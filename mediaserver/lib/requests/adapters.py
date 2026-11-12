@@ -456,6 +456,7 @@ class HTTPAdapter(BaseAdapter):
 
                 low_conn = conn._get_conn(timeout=DEFAULT_POOL_TIMEOUT)
 
+                response_ready = False
                 try:
                     low_conn.putrequest(request.method,
                                         url,
@@ -488,11 +489,14 @@ class HTTPAdapter(BaseAdapter):
                         preload_content=False,
                         decode_content=False
                     )
-                except:
-                    # If we hit any problems here, clean up the connection.
-                    # Then, reraise so that we can handle the actual exception.
-                    low_conn.close()
-                    raise
+                    response_ready = True
+                finally:
+                    if not response_ready:
+                        # Preserve the send error, including cancellation.
+                        try:
+                            low_conn.close()
+                        except Exception:
+                            pass
 
         except (ProtocolError, socket.error) as err:
             raise ConnectionError(err, request=request)

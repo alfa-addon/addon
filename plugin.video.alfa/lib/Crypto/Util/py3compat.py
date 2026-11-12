@@ -75,7 +75,7 @@ if sys.version_info[0] == 2:
         def tobytes(s):
             try:
                 return s.encode('latin-1')
-            except:
+            except Exception:
                 return ''.join(s)
     else:
         def tobytes(s):

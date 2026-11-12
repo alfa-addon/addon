@@ -47,7 +47,7 @@ def get_long_urls(data):
             logger.info(longurl_data)
             try:
                 long_url = scrapertools.scrapertools.find_single_match(longurl_data, '<long-url><!\[CDATA\[(.*?)\]\]></long-url>')
-            except:
+            except Exception:
                 long_url = ""
             if (long_url != ""): data = data.replace(short_url, long_url)
     return data

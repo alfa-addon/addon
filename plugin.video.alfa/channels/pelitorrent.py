@@ -317,7 +317,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if item.c_type == 'peliculas' and movie_path not in elem_json['url']: continue
             if item.c_type == 'series' and tv_path not in elem_json['url']: continue
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -367,7 +367,7 @@ def seasons_matches(item, matches_int, **AHkwargs):
                     pass_list['%sx%s' % (season, episode)][quality] = passw
                 episode = quality = season = ''
 
-        except:
+        except Exception:
             logger.error(elem)
 
     for elem in matches_int:
@@ -379,7 +379,7 @@ def seasons_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = item.url
             if pass_list: elem_json['password'] = pass_list
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -445,7 +445,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             if pass_list.get('%sx%s' % (elem_json['season'], elem_json['episode'])):
                 elem_json['password'] = pass_list['%sx%s' % (elem_json['season'], elem_json['episode'])]
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -501,7 +501,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 if x == 2:
                     elem_json['language'] = '*%s' % td.get_text(strip=True)
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
@@ -594,7 +594,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []

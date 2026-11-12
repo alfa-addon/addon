@@ -75,7 +75,7 @@ def search(item, texto):
     item.url = "%sapi/search?q=%s&sort=newest&cursor=" % (host,texto)
     try:
         return list_all(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

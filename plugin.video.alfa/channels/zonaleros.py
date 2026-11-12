@@ -153,7 +153,7 @@ def list_all(item):
                 try:
                     year = scrapertools.find_single_match(codecs.encode(info.text, "utf-8"), "\d+ de \w+ de (\d{4})")
                     if not year: year = "-"
-                except:
+                except Exception:
                     year = "-"
             new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
 
@@ -173,7 +173,7 @@ def list_all(item):
 
     try:
         url_next_page = soup.find("a", rel="next")["href"]
-    except:
+    except Exception:
        return itemlist
 
     itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
@@ -320,7 +320,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -340,7 +340,7 @@ def newest(categoria):
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

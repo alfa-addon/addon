@@ -35,7 +35,7 @@ if xbmc_vfs:
             reload(sys)                                         ### Workoround Python 2
             sys.setdefaultencoding('utf-8')                     # xbmcvfs degrada el valor de defaultencoding.  Se reestablece
         xbmc_vfs = True
-    except:
+    except Exception:
         xbmc_vfs = False
 
 samba = None
@@ -248,18 +248,19 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
     @return: datos que contiene el fichero
     """
     path = encode(path)
+    f = None
     try:
         mode_open = mode.replace('s', '')
         if not isinstance(linea_inicio, int):
             try:
                 linea_inicio = int(linea_inicio)
-            except:
+            except Exception:
                 logger.error('Read: ERROR de linea_inicio: %s' % str(linea_inicio))
                 linea_inicio = 0
         if total_lineas != None and not isinstance(total_lineas, int):
             try:
                 total_lineas = int(total_lineas)
-            except:
+            except Exception:
                 logger.error('Read: ERROR de total_lineas: %s' % str(total_lineas))
                 total_lineas = None
         
@@ -281,9 +282,10 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
                 if not isinstance(whence, int):
                     try:
                         whence = int(whence)
-                    except:
+                    except Exception:
                         if not silent: logger.info('Whence error: ' + str(whence) + ' in: ' + str(path), force=True)
-                        f.close()
+                        file_to_close, f = f, None
+                        file_to_close.close()
                         return False
                 f.seek(linea_inicio, whence)
                 logger.debug('POSICIÓN de comienzo de lectura, tell(): %s' % f.seek(0, 1))
@@ -301,7 +303,8 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
                         raise Exception(e)
             if mode not in ['r', 'ra']:
                 data = f.readBytes(total_lineas)
-            f.close()
+            file_to_close, f = f, None
+            file_to_close.close()
             if mode in ['r', 'ra']:
                 return "".join(data)
             elif mode in ['rbs', 'rabs'] and isinstance(data, (bytes, bytearray)):
@@ -326,15 +329,12 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
             if x < linea_inicio: continue
             if len(data) == total_lineas: break
             data.append(line)
-        f.close()
-    except:
+        file_to_close, f = f, None
+        file_to_close.close()
+    except Exception:
         logger.error("ERROR al leer el archivo: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
-        try:
-            f.close()
-        except:
-            pass
         return False
 
     else:
@@ -346,6 +346,12 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
             return "".join(decode(data))
         else:
             return b"".join(data)
+    finally:
+        if f is not None:
+            try:
+                f.close()
+            except Exception:
+                pass
 
 
 def write(path, data, mode="wb", silent=False, vfs=True, ch_mod=''):
@@ -359,6 +365,7 @@ def write(path, data, mode="wb", silent=False, vfs=True, ch_mod=''):
     @return: devuelve True si se ha escrito correctamente o False si ha dado un error
     """
     path = encode(path)
+    f = None
     try:
         mode_open = mode.replace('s', '')
         if xbmc_vfs and vfs:
@@ -377,7 +384,8 @@ def write(path, data, mode="wb", silent=False, vfs=True, ch_mod=''):
                 data = bytearray(data)
             f = xbmcvfs.File(path, mode_open)
             result = bool(f.write(data))
-            f.close()
+            file_to_close, f = f, None
+            file_to_close.close()
             if result and ch_mod:
                 result = chmod(path, ch_mod, silent=silent)
             return result
@@ -395,17 +403,20 @@ def write(path, data, mode="wb", silent=False, vfs=True, ch_mod=''):
             data = bytes(list(ord(x) for x in data))
 
         f.write(data)
-        f.close()
-    except:
+        file_to_close, f = f, None
+        file_to_close.close()
+    except Exception:
         logger.error("ERROR al guardar el archivo: %s" % path)
         logger.error(traceback.format_exc())
-        try:
-            f.close()
-        except:
-            pass
         return False
     else:
         return True
+    finally:
+        if f is not None:
+            try:
+                f.close()
+            except Exception:
+                pass
 
 
 def file_open(path, mode="r", silent=False, vfs=True):
@@ -437,7 +448,7 @@ def file_open(path, mode="r", silent=False, vfs=True):
         else:
             return open(path, mode)
     
-    except:
+    except Exception:
         logger.error("ERROR al abrir el archivo: %s, %s" % (path, mode))
         if not silent:
             logger.error(traceback.format_exc())
@@ -460,7 +471,7 @@ def file_stat(path, silent=False, vfs=True):
             if not exists(path): return False
             return xbmcvfs.Stat(path)
         raise
-    except:
+    except Exception:
         logger.error("File_Stat no soportado: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -499,14 +510,14 @@ def file_info(path, silent=False, vfs=True):
                 if not uid: uid = stat.st_uid()
                 gid = find_single_match(str(pwd.getpwuid(stat.st_gid())), "pw_name='([^']+)'")
                 if not gid: gid = stat.st_gid()
-            except:
+            except Exception:
                 uid = stat.st_uid()
                 gid = stat.st_gid()
             
             try:                                                                # Puede haber errores en la fecha
                 mod_time = stat.st_mtime()
                 mod_time = datetime.datetime.fromtimestamp(mod_time).strftime('%Y-%m-%d %H:%M')
-            except:
+            except Exception:
                 mod_time = '0000-00-00 00:00'                                   # Fecha en caso de error
             
             # Construimos la respuesta
@@ -518,7 +529,7 @@ def file_info(path, silent=False, vfs=True):
                 res = res.encode("utf-8", "ignore")
             return res
         raise
-    except:
+    except Exception:
         logger.error("File_Stat no soportado: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -567,7 +578,7 @@ def chmod(path, ch_mod, su=False, silent=False):
             
             if not silent and error_cmd:
                 logger.error('Command ERROR: %s, %s' % (str(command), str(error_cmd)))
-        except:
+        except Exception:
             if not silent:
                 logger.error(traceback.format_exc())
             
@@ -614,7 +625,7 @@ def rename(path, new_name, silent=False, strict=False, vfs=True, ch_mod=''):
         else:
             new_name = encode(new_name, False)
             os.rename(path, os.path.join(os.path.dirname(path), new_name))
-    except:
+    except Exception:
         logger.error("ERROR al renombrar el archivo: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -670,7 +681,7 @@ def move(path, dest, silent=False, strict=False, vfs=True, ch_mod=''):
                 from platformcode.platformtools import dialog_progress
                 dialogo = dialog_progress("Copiando archivo", "")
             return copy(path, dest) == True and remove(path) == True
-    except:
+    except Exception:
         logger.error("ERROR al mover el archivo: %s a %s" % (path, dest))
         if not silent:
             logger.error(traceback.format_exc())
@@ -703,7 +714,7 @@ def copy(path, dest, silent=False, vfs=True, ch_mod='', su=False):
                     import shutil
                     shutil.copytree(path, dest)
                     result = True
-                except:
+                except Exception:
                     logger.error(traceback.format_exc())
                     logger.info("Copiando carpeta por archivo %s a %s" % (path, dest), force=True)
                     for file in listdir(path):
@@ -759,7 +770,7 @@ def copy(path, dest, silent=False, vfs=True, ch_mod='', su=False):
                 copiado += len(buf)
             if not silent:
                 dialogo.close()
-    except:
+    except Exception:
         logger.error("ERROR al copiar el archivo: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -788,7 +799,7 @@ def exists(path, silent=False, vfs=True):
             return samba.exists(path)
         else:
             return os.path.exists(path)
-    except:
+    except Exception:
         logger.error("ERROR al comprobar la ruta: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -821,7 +832,7 @@ def isfile(path, silent=False, vfs=True):
             return samba.isfile(path)
         else:
             return os.path.isfile(path)
-    except:
+    except Exception:
         logger.error("ERROR al comprobar el archivo: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -854,7 +865,7 @@ def isdir(path, silent=False, vfs=True):
             return samba.isdir(path)
         else:
             return os.path.isdir(path)
-    except:
+    except Exception:
         logger.error("ERROR al comprobar el directorio: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -882,7 +893,7 @@ def getsize(path, silent=False, vfs=True):
             return long(samba.get_attributes(path).file_size)
         else:
             return os.path.getsize(path)
-    except:
+    except Exception:
         logger.error("ERROR al obtener el tamaño: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -924,7 +935,7 @@ def remove(path, silent=False, vfs=True, su=False):
             samba.remove(path)
         else:
             os.remove(path)
-    except:
+    except Exception:
         logger.error("ERROR al eliminar el archivo: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -964,7 +975,7 @@ def rmdirtree(path, silent=False, vfs=True):
         else:
             import shutil
             shutil.rmtree(path, ignore_errors=True)
-    except:
+    except Exception:
         logger.error("ERROR al eliminar el directorio: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -994,7 +1005,7 @@ def rmdir(path, silent=False, vfs=True):
             samba.rmdir(path)
         else:
             os.rmdir(path)
-    except:
+    except Exception:
         logger.error("ERROR al eliminar el directorio: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -1024,11 +1035,11 @@ def mkdir(path, silent=False, vfs=True, ch_mod=''):
                 try:
                     os.makedirs(path)
                     result = True
-                except:
+                except Exception:
                     try:
                         os.mkdir(path)
                         result = True
-                    except:
+                    except Exception:
                         pass
             if not result:
                 import time
@@ -1043,9 +1054,9 @@ def mkdir(path, silent=False, vfs=True, ch_mod=''):
         else:
             try:
                 os.makedirs(path)
-            except:
+            except Exception:
                 os.mkdir(path)
-    except:
+    except Exception:
         logger.error("ERROR al crear el directorio: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -1153,7 +1164,7 @@ def listdir(path, silent=False, vfs=True, file_inf=False):
         
         else:
             return decode(os.listdir(path))
-    except:
+    except Exception:
         logger.error("ERROR al leer el directorio: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
@@ -1200,7 +1211,7 @@ def split(path, vfs=True):
     else:
         try:
             return decode(os.path.split(path))
-        except:
+        except Exception:
             return os.path.split(path)
 
 
@@ -1215,7 +1226,7 @@ def basename(path, vfs=True):
     path = encode(path)
     try:
         return decode(split(path)[1])
-    except:
+    except Exception:
         return split(path)[1]
 
 
@@ -1230,7 +1241,7 @@ def dirname(path, vfs=True):
     path = encode(path)
     try:
         return decode(split(path)[0])
-    except:
+    except Exception:
         return split(path)[0]
 
 

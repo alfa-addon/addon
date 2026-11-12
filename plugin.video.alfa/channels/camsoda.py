@@ -55,7 +55,7 @@ def search(item, texto):
     item.url = "%sapi/v1/browse/react/search/%s?p=1" % (host, texto)
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

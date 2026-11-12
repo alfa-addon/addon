@@ -87,7 +87,7 @@ def list_all(item):
         title = elem.img["alt"]
         try:
             thumb = elem.img["data-src"]
-        except:
+        except Exception:
             thumb = elem.img["src"]
         
         languages = elem.find_all("img", class_="idioma")
@@ -127,7 +127,7 @@ def list_all(item):
             
         if next_page:
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
-    except:
+    except Exception:
         pass
     
     return itemlist

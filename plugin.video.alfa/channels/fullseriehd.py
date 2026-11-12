@@ -119,7 +119,7 @@ def list_all(item):
         year = elem.find('span', class_='year')
         try:
             thumb = re.sub(r'-\d+x\d+.jpg', '.jpg', elem.find("img")["data-src"])
-        except:
+        except Exception:
             thumb = elem.find("img")["src"]
         if not thumb.startswith("https"):
             thumb = "https:%s" % thumb
@@ -138,7 +138,7 @@ def list_all(item):
             try:
                 quality = ''
                 quality = elem.find("span", class_="Qlty").text
-            except:
+            except Exception:
                 pass
 
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
@@ -162,7 +162,7 @@ def list_all(item):
     try:
         next_page = soup.find_all("a", string="SIGUIENTE")[0]['href']
         itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -204,7 +204,7 @@ def section(item):
                 title = elem.a.text
                 itemlist.append(Item(channel=item.channel, title=title, action="list_all",
                                      url=url, type=item.type))
-        except:
+        except Exception:
             logger.error(traceback.format_exc())
             logger.error(soup)
 
@@ -244,7 +244,7 @@ def alpha_list(item):
             quality = elem.find("span", class_="Qlty").text
             try:
                 year = elem.find("td", text=re.compile(r"\d{4}")).text
-            except:
+            except Exception:
                 pass            
 
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
@@ -266,7 +266,7 @@ def alpha_list(item):
     try:
         next_page = data.find("a", class_="next page-numbers")["href"]
         itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -286,7 +286,7 @@ def seasons(item):
         title = "Temporada %s" % season
         try:
             infoLabels["season"] = int(season)
-        except:
+        except Exception:
             infoLabels["season"] = 1
         
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseason', id=id, 
@@ -333,7 +333,7 @@ def episodesxseason(item):
         url = elem.a["href"]
         try:
             cap = int(elem.find("span", class_="num-epi").text.split('x')[1])
-        except:
+        except Exception:
             cap = 1
         if cap < 10:
             cap = "0%s" % cap
@@ -366,7 +366,7 @@ def findvideos(item):
     try:
         video_urls = data.find("aside", class_="video-player").find_all('iframe')
         info = data.find("aside", class_="video-options").find_all('li')
-    except:
+    except Exception:
         try:
             video_urls = data.find("tbody").find_all('a', class_="btn sm rnd blk")
             for video_url in video_urls:
@@ -376,7 +376,7 @@ def findvideos(item):
                 logger.error(video_urls)
                 return itemlist
             return findvideos_acorta(item)
-        except:
+        except Exception:
             logger.error(traceback.format_exc())
             logger.error(item.url)
             logger.error(data)
@@ -398,7 +398,7 @@ def findvideos(item):
             quality = ""
             itemlist.append(Item(channel=item.channel, title=srv, url=url, action='play', server=srv, opt="1",
                                 infoLabels=infoLabels, language=lang, quality=quality))
-        except:
+        except Exception:
             logger.error(traceback.format_exc())
             logger.error(url)
             logger.error(info)
@@ -435,7 +435,7 @@ def findvideos_acorta(item):
         data = create_soup(url)
         info = data.find("ul", class_="tabs").find_all('li')
         video_urls = data.find_all("div", class_="tab_content")
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
         logger.error(item.url)
         logger.error(data)
@@ -453,7 +453,7 @@ def findvideos_acorta(item):
 
                 itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', 
                                     infoLabels=infoLabels, language=lang, quality=quality))
-            except:
+            except Exception:
                 logger.error(traceback.format_exc())
                 logger.error(info_block)
                 logger.error(url_block)
@@ -496,7 +496,7 @@ def search(item, texto):
             return list_all(item)
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -528,7 +528,7 @@ def get_downlist(item, data):
                 for x in range(7):
                     durl = base64.b64decode(burl).decode('utf-8')
                     burl = durl
-            except:
+            except Exception:
                 url = burl
             info = tr.find_all('td')
             srv = info[0].text.split()[1]

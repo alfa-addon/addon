@@ -176,7 +176,7 @@ def seasons(item):
     
     try:
         item.season_num = data['title']['primary_video']['season_num']# if data['title'].get('primary_video', '') else data['seasons']['total']
-    except:
+    except Exception:
         item.season_num = data['seasons']['total']
     
     total = int(item.season_num)

@@ -135,7 +135,7 @@ def section_matches(item, matches_int, **AHkwargs):
                                                                                      or elem.img.get('data-src', '') \
                                                                                      or elem.img.get('src', '')
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -185,7 +185,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['title'] = elem.img.get("alt", "")
             elem_json['thumbnail'] = elem.img['src']
             elem_json['year'] = elem.find('div', class_='gap-2').find('span').get_text(strip=True) if elem.find('div', class_='gap-2').find('span') else ''
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -220,7 +220,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['url'] = AlfaChannel.convert_url_base64(url, '')
             elem_json['server'] = ''
             elem_json['language'] = ''
-        except:
+        except Exception:
             logger.error(server)
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -255,7 +255,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

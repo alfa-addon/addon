@@ -52,7 +52,7 @@ def auth_trakt():
             title = config.get_localized_string(60250)
             itemlist.append(item.clone(title=title, action="token_trakt"))
             return itemlist
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
 
@@ -98,12 +98,12 @@ def token_trakt(item):
                     if "access_token" in data:
                         # Código introducido, salimos del bucle
                         break
-                except:
+                except Exception:
                     pass
 
             try:
                 dialog_auth.close()
-            except:
+            except Exception:
                 pass
 
         token = data.get("access_token", '')
@@ -118,7 +118,7 @@ def token_trakt(item):
                 xbmc.executebuiltin("Container.Refresh")
             return
 
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
         if not item.folder:
@@ -142,7 +142,7 @@ def set_trakt_info(item):
         info = item.infoLabels
         ids = jsontools.dump({'tmdb': info['tmdb_id'] , 'imdb': info['imdb_id'], 'slug': info['title']})
         xbmcgui.Window(10000).setProperty('script.trakt.ids', ids)
-    except:
+    except Exception:
         pass
 
 def get_trakt_watched(id_type, mediatype, update=False):
@@ -202,7 +202,7 @@ def get_trakt_watched(id_type, mediatype, update=False):
                         elif mediatype == 'movies':
                             for item in watched_dict:
                                 id_list.append(str(item['movie']['ids'][id_type]))
-                except:
+                except Exception:
                     pass
 
     return id_list
@@ -249,7 +249,7 @@ def trakt_check(itemlist):
                                         item.infoLabels['playcount'] = 1
             else:
                 break
-    except:
+    except Exception:
         pass
 
     return itemlist

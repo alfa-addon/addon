@@ -56,7 +56,7 @@ def test_video_exists(page_url):
     else:
         try:
             req_api = req1_api.json[0]
-        except:
+        except Exception:
             req_api = req1_api.json
     
     logger.debug(req_api)

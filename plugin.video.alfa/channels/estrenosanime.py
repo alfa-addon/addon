@@ -168,7 +168,7 @@ def list_all(item):
                     url = next_page_url
                 )
             )
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -280,7 +280,7 @@ def search(item, texto):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

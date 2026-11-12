@@ -519,7 +519,7 @@ def seasons_matches(item, matches_int, **AHkwargs):
             elem_json['quality'] = AlfaChannel.find_quality(elem_json, item)
             if elem_json['quality'] != item.quality: continue
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -586,7 +586,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
             elem_json['size'] = episode_json['size'] = elem.find('span', class_='wolf-episode-size').get_text(strip=True)
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue

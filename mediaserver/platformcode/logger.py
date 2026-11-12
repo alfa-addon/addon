@@ -85,7 +85,7 @@ def info(texto="", force=False):
         else:
             try:
                 texto = str(texto, "utf-8", "ignore")
-            except:
+            except Exception:
                 texto = ""
         texto = texto.replace("\n", "\n" + " " * 67)
         texto = "[{}] {}".format(inspect.currentframe().f_back.f_code.co_name, texto)
@@ -99,7 +99,7 @@ def debug(texto="", force=False):
         else:
             try:
                 texto = str(texto, "utf-8", "ignore")
-            except:
+            except Exception:
                 texto = ""
         texto = texto.replace("\n", "\n" + " " * 67)
         texto = "[{}] {}".format(inspect.currentframe().f_back.f_code.co_name, texto)
@@ -112,7 +112,7 @@ def error(texto=""):
     else:
         try:
             texto = str(texto, "utf-8", "ignore")
-        except:
+        except Exception:
             texto = ""
     texto = texto.replace("\n", "\n" + " " * 67)
     texto = "[{}] {}".format(inspect.currentframe().f_back.f_code.co_name, texto)

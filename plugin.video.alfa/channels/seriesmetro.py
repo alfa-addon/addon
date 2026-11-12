@@ -138,7 +138,7 @@ def list_all(item):
         thumb = elem.img['src']
         try:
             plot = elem.find_all('p')[1].text
-        except:
+        except Exception:
             plot = ''
 
         title = stitle
@@ -161,7 +161,7 @@ def list_all(item):
         next_page= next_[-1]['href']
         if next_page != item.url:
             itemlist.append(Item(channel=item.channel, title='Siguiente >>', url=next_page, action='list_all'))
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -186,7 +186,7 @@ def new_episodes(item):
         ctitle = re.sub(r'(?: Temporada|) (\d+x.*)', '', stitle)
         try:
             season, episode = scrapertools.find_single_match(stitle, '(?: Temporada|) (\d{1,2})x(\d{1,3})')
-        except:
+        except Exception:
             season = 1
             episode = 1
         infoLabels = {'season': int(season), 'episode': int(episode)}
@@ -203,7 +203,7 @@ def new_episodes(item):
         l = len(next_) -1
         next_page= next_[l]['href']
         itemlist.append(Item(channel=item.channel, title='Siguiente >>', url=next_page, action='list_all'))
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -218,7 +218,7 @@ def seasons(item):
 
     try:
         obj = soup.find('div', class_="aa-cn")['data-object']
-    except:
+    except Exception:
         return itemlist
 
     for elem in soup.find_all("li", class_="sel-temp"):
@@ -226,7 +226,7 @@ def seasons(item):
         title = 'Temporada %s' % elem.text
         try:
             infoLabels['season'] = int(elem.text)
-        except:
+        except Exception:
             infoLabels['season'] = 1
         url = '{}wp-admin/admin-ajax.php'.format(host)
 
@@ -295,7 +295,7 @@ def episodesxseason(item):
         t_ep = re.sub(r' – |\d+-\d+-\d+', '', t_ep)
         try:
             infoLabels['episode'] = int(ep)
-        except:
+        except Exception:
             infoLabels['episode'] = 1
         title = '%sx%s [COLOR aquamarine][I]%s[/I][/COLOR]' % (season, ep, t_ep)
         infoLabels['episode'] = ep

@@ -391,7 +391,7 @@ def search(item, text):
                     )
                 )
             return itemlist
-        except:
+        except Exception:
             for line in sys.exc_info():
                 logger.error("%s" % line)
             return itemlist

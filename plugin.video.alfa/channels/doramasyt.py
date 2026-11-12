@@ -165,7 +165,7 @@ def list_all(item):
                 new_item.contentSerieName = title
                 new_item.contentType = 'tvshow'
                 if season: new_item.contentSeason = int(season)
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -178,7 +178,7 @@ def list_all(item):
         url_next_page = soup.find("a", rel="next")["href"]
         if url_next_page and len(itemlist) > 8:
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -229,7 +229,7 @@ def episodios(item):
                 Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                      action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
                      extra1='library'))
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
     
@@ -300,7 +300,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

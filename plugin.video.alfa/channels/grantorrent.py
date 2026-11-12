@@ -192,7 +192,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['quality'] = '*%s' % elem.find('div', class_='bg-opacity-85').span.get_text(strip=True) \
                                            if elem.find('div', class_='bg-opacity-85 text-neutral-100 rounded-t-xl '\
                                            'text-xs font-medium px-2 py-2 text-center') else '*'
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -264,7 +264,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                     if elem_json['season'] != item.contentSeason: break
                     if scrapertools.find_single_match(sxe, r'(?i)\d+x\d+-(\d+)'):
                         elem_json['title'] = 'al %s' % scrapertools.find_single_match(sxe, r'(?i)\d+x\d+-(\d+)')
-                except:
+                except Exception:
                     logger.error(td)
                     logger.error(traceback.format_exc())
                     break
@@ -353,7 +353,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
                 elem_json['server'] = 'torrent'
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
@@ -403,7 +403,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []
@@ -439,7 +439,7 @@ def newest(categoria, **AHkwargs):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []

@@ -150,7 +150,7 @@ def list_all(item):
         title = elem.h2.text
         try:
             year = int(elem.find("span", class_="Date").text)
-        except:
+        except Exception:
             year = "-"
         if elem.img.has_attr("data-src"):
             thumb = elem.img["data-src"]
@@ -176,7 +176,7 @@ def list_all(item):
     
     try:
         url_next_page = soup.find("nav", class_="wp-pagenavi").find_all("a")[-1]["href"]
-    except:
+    except Exception:
         return itemlist
     
     if url_next_page and len(matches) > 16:
@@ -196,7 +196,7 @@ def seasons(item):
     for elem in matches:
         try:
             season = int(scrapertools.find_single_match(elem.text, "Temporada (\d+)"))
-        except:
+        except Exception:
             season = 1
         title = "Temporada %s" % season
         infoLabels["season"] = season
@@ -332,7 +332,7 @@ def search(item, texto):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -351,7 +351,7 @@ def newest(categoria):
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

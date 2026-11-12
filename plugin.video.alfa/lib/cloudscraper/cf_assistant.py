@@ -12,7 +12,7 @@ import re
 try:
     import xbmcgui
     window = xbmcgui.Window(10000)
-except:
+except Exception:
     window = None
 
 from .exceptions import CloudflareChallengeError
@@ -1585,7 +1585,7 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
             if not urlOnly:
                 data_copy = base64.b64decode(data).decode("utf-8", "ignore")
                 data = data_copy
-        except:
+        except Exception:
             pass
 
         if data and not urlOnly:
@@ -1628,7 +1628,7 @@ def get_value_by_url(sources, url, host, cookiesView=[], domain="", cf_returnkey
                 else:
                     break
 
-    except:
+    except Exception:
         pass
 
     return response or data
