@@ -76,7 +76,7 @@ patron_domain = r'(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+
 patron_host = r'((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_canal = r'(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
 patron_local_torrent = r'(?i)(?:(?:\\\|\/)[^\[]+\[\w+\](?:\\\|\/)[^\[]+\[\w+\]_\d+\.torrent|magnet\:)'
-find_alt_domains = 'atomohd'   # Solo poner uno.  Alternativas: pctmix, pctmix1, pctreload, pctreload1, maxitorrent, descargas2020, pctnew
+find_alt_domains = 'wolfmax4k'   # Solo poner uno.  Alternativas: pctmix, pctmix1, pctreload, pctreload1, maxitorrent, descargas2020, pctnew
 btdigg_url = config.BTDIGG_URL
 btdigg_label = config.BTDIGG_LABEL
 btdigg_label_B = config.BTDIGG_LABEL_B
@@ -616,8 +616,14 @@ def get_cached_files_(contentType, FORCED=False, cached=False, structure=True):
         if PASSWORDS.get('cookies', {}).get('cookies') or PASSWORDS.get('cookies', {}).get('cookies_cached'):
             try:
                 if DEBUG: 
-                    module = inspect.getmodule(inspect.currentframe().f_back.f_back).__name__
-                    function = inspect.currentframe().f_back.f_back.f_code.co_name
+                    try:
+                        #module = inspect.getmodule(inspect.currentframe().f_back.f_back).__name__
+                        module = inspect.currentframe().f_back.f_back.f_globals.get('__name__')
+                        function = inspect.currentframe().f_back.f_back.f_code.co_name
+                    except Exception as e:
+                        logger.debug(str(e))
+                        module = ''
+                        function = ''
                     logger.debug('mod/func: %s[%s]; cached_file/forced: %s/%s; Password_AGE: "%s"; cookies: %s/%s; cookies_exp: %s; exp.: %s' % \
                                  (module, function, True if cached_file else False, FORCED, time_to_timedelta(int(alfa_cached_password_AGE)), 
                                   PASSWORDS.get('cookies', {}).get('cookies'), PASSWORDS.get('cookies', {}).get('cookies_cached'), 
@@ -1183,6 +1189,81 @@ def context_for_videolibray(item):
     return item
 
 
+def host_alt_findb_fun(item, matches=[], host_alt_findb=[], seasons=[]):
+    links = []
+
+    try:
+        if PY3:
+            from lib import planb_py3 as planb
+        else:
+            from lib import planb
+
+        if (host_alt_findb or seasons) and item.infoLabels.get('tmdb_id'):
+            planes = {1: planb.e69org, 2: planb.lsrc, 3: planb.vhd, 4: planb.psy,  5: planb.vaplayer, 
+                      6: planb.netmirror, 7: planb.cuatrokhdhub, 8: planb.streamflix, 
+                      9: planb.vixsrc, 10: planb.vidsrc, 11: planb.unlimplay, 
+                      99: 'lsrc_temporadas'}
+            hosts_alt_findb_alt = []
+
+            if not seasons:
+                if isinstance(host_alt_findb, bool) and host_alt_findb is True:
+                    hosts_alt_findb_alt = [planb.e69org, planb.lsrc]
+                    host_alt_findb = [1, 2]
+                elif 'ALL' in host_alt_findb:
+                    host_alt_findb = []
+                    for plan, plan_import in planes.items():
+                        hosts_alt_findb_alt += [plan_import]
+                        host_alt_findb += [plan]
+                else:
+                    for host_alt_findb_alt in host_alt_findb:
+                        if planes.get(host_alt_findb_alt):
+                            hosts_alt_findb_alt += [planes[host_alt_findb_alt]]
+
+                for plan in hosts_alt_findb_alt:
+                    try:
+                        links = plan(item.infoLabels)
+                        matches_str = str(matches)
+                        if links and isinstance(links, list):
+                            for elem in links:
+                                if not isinstance(elem, (list, tuple)) or len(elem) != 4:
+                                    continue
+                                y, url, lang, z = elem
+                                if url in matches_str: continue
+                                matches.append({'title': '%s', 'url': url, 'language': lang,
+                                                'server': z if isinstance(z, str) else '',
+                                                'mediatype': item.contentType, 'quality': ''})
+                    except Exception:
+                        logger.error("%s falló: %s" % (plan, traceback.format_exc()))
+
+                #if DEGUB: logger.debug('LINKS: %s' % links)
+
+            else:
+                if isinstance(seasons, bool):
+                    seasons = [99]
+                for host_alt_findb_alt in seasons:
+                    if planes.get(host_alt_findb_alt):
+                        hosts_alt_findb_alt += [planes[host_alt_findb_alt]]
+
+                for plan in hosts_alt_findb_alt:
+                    try:
+                        fn = getattr(planb, plan, None)
+                        if not fn:
+                            continue
+                        matches = links = fn(infoLabels)
+                        if matches:
+                            break
+
+                    except Exception:
+                        logger.error("%s falló: %s" % (plan, traceback.format_exc()))
+
+                #if DEGUB: logger.debug('LINKS: %s' % links)
+
+    except Exception:
+        logger.error(traceback.format_exc())
+
+    return matches
+
+
 def monitor_domains_update(options=None):
     logger.info()
     from core import channeltools
@@ -1193,6 +1274,14 @@ def monitor_domains_update(options=None):
     alfa_channels_list = {}
     alfa_domains_list = {}
     alfa_domains_errors = {}
+    alfa_domains_tor = {}
+    alfa_domains_headers = {}
+    ONION_patterns = re.compile(
+        r'(?i)(?:https?://)?'
+        r'[a-z2-7]{56}'
+        r'\.onion'
+        r'(?:/[^\s\'"<]*)?'
+    )
 
     try:
         alfa_path = config.get_runtime_path()
@@ -1231,8 +1320,10 @@ def monitor_domains_update(options=None):
             if 'forced_proxy_opt' in canonical_http: del canonical_http['forced_proxy_opt']
             if 'forced_proxy' in canonical_http: del canonical_http['forced_proxy']
             if 'forced_proxy_ifnot_assistant' in canonical_http: del canonical_http['forced_proxy_ifnot_assistant']
+            if 'cf_debug' in canonical_http: del canonical_http['cf_debug']
             if str(canonical_http.get('forced_proxy_ifnot_assistant', '')) != 'ProxySSL': canonical_http['forced_proxy_ifnot_assistant'] = None
-            opt = {'timeout': 10, 'method': 'GET', 'proxy_retries': 0, 'canonical': canonical_http, 'alfa_s': True, 'retry_alt': False}
+            opt = {'timeout': 10, 'method': 'GET', 'proxy_retries': 0, 'canonical': canonical_http, 
+                   'alfa_s': True, 'retry_alt': False, 'cf_debug': False, 'cf_alfa_s': False}
 
             idx = canonical_http.get('host_alt_main', 0)
             try:
@@ -1270,6 +1361,30 @@ def monitor_domains_update(options=None):
                         alfa_domains_list[channel] = server_domains_list[channel].copy()
                     continue
 
+            else:
+                alfa_domains_headers[channel] = {"host": canonical_http['host_alt'][idx], 
+                                                 "host_alt": canonical_http['host_alt'],
+                                                 "channel": channel,
+                                                 "canonical": channel_obj.canonical.copy(),
+                                                 "status": response.sucess, 
+                                                 "server": response.headers.get("server", ""), 
+                                                 "proxy": response.proxy__,
+                                                 "headers": base64.b64encode(str(response.headers).encode('utf-8')).decode('utf-8')}
+
+                if response.headers.get("onion-location"):
+                    alfa_domains_tor[channel] = {"headers": response.headers["onion-location"], "data": []}
+                for match in ONION_patterns.findall(response.data):
+                    onion = match.strip()
+                    if not onion.startswith(("http://", "https://")):
+                        onion = "http://" + onion
+                    onion = onion.rstrip(".,);]}>\"'")
+
+                    if channel not in alfa_domains_tor:
+                        alfa_domains_tor[channel] = {"headers": "", "data": []}
+                    alfa_domains_tor[channel]["data"].append(onion)
+                if alfa_domains_tor.get(channel):
+                    logger.error('### .ONION: %s: %s' % (channel, alfa_domains_tor[channel]))
+
             if not canonical['host_alt'][idx].endswith('/'): response.canonical = response.canonical.rstrip('/')
             if response.canonical and response.canonical != canonical['host_alt'][idx] \
                                   and response.canonical not in canonical['host_black_list'] \
@@ -1292,6 +1407,8 @@ def monitor_domains_update(options=None):
                     if response.canonical not in alfa_domains_list[channel]['host_alt']:
                         del alfa_domains_list[channel]['host_alt'][idx]
                         alfa_domains_list[channel]['host_alt'].insert(idx, response.canonical)
+                        if "host_alt_new" in alfa_domains_list[channel] and response.canonical not in alfa_domains_list[channel]['host_alt_new']:
+                            alfa_domains_list[channel]['host_alt_new'].insert(0, response.canonical)
 
                 if not alfa_domains_errors.get(channel) and alfa_domains_list[channel] != server_domains_list.get(channel, {}):
                     alfa_domains_errors[channel] = alfa_domains_list[channel]
@@ -1304,6 +1421,8 @@ def monitor_domains_update(options=None):
 
     window.setProperty("alfa_cached_domains_update", jsontools.dump(alfa_domains_list, **kwargs_json))
     window.setProperty("alfa_cached_domains_errors", jsontools.dump(alfa_domains_errors, **kwargs_json))
+    window.setProperty("alfa_cached_domains_tor", jsontools.dump(alfa_domains_tor, **kwargs_json))
+    window.setProperty("alfa_cached_domains_headers", jsontools.dump(alfa_domains_headers, **kwargs_json))
     httptools.TEST_ON_AIR = False
     httptools.CACHING_DOMAINS = False
     
@@ -2076,6 +2195,48 @@ def AH_post_tmdb_findvideos(self, item, itemlist, **AHkwargs):
     #logger.debug(item)
     
     return (item, itemlist)
+
+
+def build_findvideos(canonical, list_language, item):
+    logger.info()
+
+    from modules import filtertools, autoplay
+
+    tmdb.set_infoLabels_item(item, True)
+
+    sources = canonical.get('host_alt_findb', [])
+    matches = host_alt_findb_fun(item, [], sources)
+    itemlist = []
+    for m in matches:
+        it = item.clone()
+        it.action = 'play'
+        it.url = m['url']
+        it.language = m['language']
+        it.title = '%s'
+        it.quality = m.get('quality', '')
+        if m.get('server'):
+            it.server = m['server']
+        itemlist.append(it)
+
+    itemlist = servertools.get_servers_itemlist(
+        itemlist, lambda x: x.title % x.server.capitalize())
+
+    if list_language:
+        itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    itemlist.sort(key=lambda x: x.language)
+    autoplay.start(itemlist, item)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+        itemlist.append(item.clone(
+            channel=item.channel,
+            title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+            url=item.url,
+            action="add_pelicula_to_library",
+            extra="findvideos",
+            contentTitle=item.contentTitle))
+
+    return itemlist
 
 
 def post_btdigg(itemlist, channel, channel_obj=None, **AHkwargs):
@@ -4986,6 +5147,7 @@ def get_torrent_size(url, **kwargs):
     torrent_params['find_alt_link_option'] = torrent_params.get('find_alt_link_option', False)
     torrent_params['find_alt_link_result_save'] = torrent_params.get('find_alt_link_result_save', [])
     torrent_params['domain_alt'] = torrent_params.get('domain_alt', '') or find_alt_domains
+    size_save = torrent_params.get('size', '')
     torrent_params['size'] = ''
     torrent_params['torrent_f'] = {}
     torrent_params['files'] = {}
@@ -5081,7 +5243,8 @@ def get_torrent_size(url, **kwargs):
                         or (PY3 and isinstance(torrent_file, bytes) and torrent_file.startswith(b"magnet")) \
                         or (isinstance(torrent_file, str) and torrent_file.startswith("magnet")):
                 torrent_params['size'] = 'ERROR'
-                
+                if size_save: torrent_params['size'] += ' (%s)' % size_save
+
                 # si el archivo .torrent está bloqueado con CF, se intentará descargarlo a través de un browser externo
                 if torrent_params['torrents_path'] == 'CF_BLOCKED':
                     torrent_params['size'] += ' [COLOR hotpink][B]BLOQUEO[/B][/COLOR]'

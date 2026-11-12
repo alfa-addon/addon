@@ -33,8 +33,8 @@ debug = config.get_setting('debug_report', default=False)
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hdfull.today/", "https://hdfull.sbs/", "https://hdfull.love/", 
-                          "https://www3.hdfull.one/", "https://hdfull.org/"], 
+             "host_alt": ["https://hdfull.love/", "https://hdfull.today/", "https://hdfull.org/", 
+                          "https://www3.hdfull.one/", "https://hdfull.sbs/"], 
              "host_alt_main": 3, 
              "host_verification": '%slogin', 
              "host_black_list": ["https://hdfull.one/", "https://hd-full.biz/", "https://hdfull.cfd/",
@@ -59,7 +59,7 @@ canonical = {
              'retries_cloudflare': -1 if cf_assistant else 1, 
              'retry_alt': False, 'CF_proxy_alt': False, 'canonical_check': False, 
              'CF': False, 'CF_test': True, 'alfa_s': True, 'renumbertools': False,
-             'data_js': '', 'domains_test': 0, 'Plan_B': True
+             'data_js': '', 'domains_test': 0, 'host_alt_findb': [1, 2, 6]
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_thumb = 'https://hdfullcdn.cc/'
@@ -972,6 +972,10 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
 
 def play(item):
+    if PY3:
+        from lib import planb_py3 as planb
+    else:
+        from lib import planb
 
     verify_credentials(force_login='timer', force_check=False)
     
@@ -979,6 +983,11 @@ def play(item):
         item.info = {item.url.split("###")[1].split(";")[0]: item.url.split("###")[1].split(";")[0]}
         item.url = item.url.split("###")[0]
     mediatype = '1' if item.contentType == 'tvshow' else '2' if item.contentType == 'movie' else '3' if item.contentType == 'episode' else '4'
+
+    itemlist = planb.play(item)
+    if itemlist and isinstance(itemlist[0], Item):
+        item = itemlist[0]
+
     if item.info and config.get_setting("videolibrary_mark_as_watched"):
         post = "target_id=%s&target_type=%s&target_status=1" % (list(item.info.keys())[0], mediatype)
         
@@ -1335,9 +1344,13 @@ def verify_domain_alt(url, post=None, headers={}, soup=False, json=False, alfa_s
         for x, host_alt in enumerate(canonical['host_alt']):
             canonical_alt['host'] = host_alt
             canonical_alt['host_alt'] = [host_alt]
+            canonical_alt['host_black_list'] = canonical.get('host_black_list', [])[:]
+            canonical_alt['host_black_list'] += canonical.get('host_alt', [])[:]
+            canonical_alt['host_black_list'].remove(canonical_alt['host'])
             canonical_alt['proxy_retries'] = 1 if x < canonical.get('host_alt_main', 3) else 0
             canonical_alt['retries_cloudflare'] = 0 if x < canonical.get('host_alt_main', 3) else -1
             canonical_alt['canonical_check'] = True if x < canonical.get('host_alt_main', 3) else False
+            canonical_alt['cf_assistant'] = None if x < canonical.get('host_alt_main', 3) else cf_assistant
             canonical_alt['forced_proxy_ifnot_assistant'] = forced_proxy_opt_alt if x < canonical.get('host_alt_main', 3) else None
             retry_alt_alt = True if x < canonical.get('host_alt_main', 3) else False
             headers['Referer'] = host_alt

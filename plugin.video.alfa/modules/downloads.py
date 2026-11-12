@@ -3210,6 +3210,10 @@ def start_download(item):
                 torrent_params["local_torr"] = item.url
         torrent_params["url"] = item.torrents_path or item.url
         torrent_params["torrents_path"] = ""
+        if torrent_params["url"] == "CF_BLOCKED":
+            torrent_params["url"] = item.url
+            torrent_params["torrents_path"] = "CF_BLOCKED"
+            torrent_params["local_torr"] = torrent_params["torrents_path"]
         if item.url_save_rec and item.url_save_rec[1]:
             headers = item.url_save_rec[1]
         if item.headers:

@@ -182,6 +182,14 @@ def setting_torrent(item):
         "capture_thru_browser_path", server="torrent", default=""
     )
     ALLOW_SEEDING = config.get_setting("allow_seeding", server="torrent", default=True)
+    
+    TOR_PROXY = config.get_setting("tor_proxy", server="torrent", default="")
+    
+    SET_KODI_PROXY = config.get_setting("set_kodi_proxy", server="torrent", default=False)
+    
+    USE_KODI_PROXY = config.get_setting("use_kodi_proxy", server="torrent", default=False)
+    
+    SET_PROXY_DOMAINS = config.get_setting("set_proxy_domains", server="torrent", default='')
 
     torrent_options = [config.get_localized_string(30006)]
     torrent_options.extend(platformtools.torrent_client_installed())
@@ -247,6 +255,38 @@ def setting_torrent(item):
             "enabled": True,
             "visible": True,
         },
+        {
+            "id": "tor_proxy",
+            "type": "text",
+            "label": "Socket(s) para acceder a TOR: socks5h://127.0.0.1:9050,...",
+            "default": TOR_PROXY,
+            "enabled": True,
+            "visible": True,
+        },
+        {
+            "id": "set_kodi_proxy",
+            "type": "bool",
+            "label": "¿Quiere activar el acceso via TOR para todo Kodi, en caso de bloqueo general?",
+            "default": SET_KODI_PROXY,
+            "enabled": True,
+            "visible": True,
+        },
+        {
+            "id": "use_kodi_proxy",
+            "type": "bool",
+            "label": "¿Quiere usar el proxy general de Kodi para reproducciones de Alfa?",
+            "default": USE_KODI_PROXY,
+            "enabled": True,
+            "visible": True,
+        },
+        {
+            "id": "set_proxy_domains",
+            "type": "text",
+            "label": "¿Quiere introducir dominios vía proxy?",
+            "default": SET_PROXY_DOMAINS,
+            "enabled": True,
+            "visible": True,
+        },
     ]
 
     platformtools.show_channel_settings(
@@ -291,6 +331,22 @@ def save_setting_torrent(item, dict_data_saved):
     if dict_data_saved and "allow_seeding" in dict_data_saved:
         config.set_setting(
             "allow_seeding", dict_data_saved["allow_seeding"], server="torrent"
+        )
+    if dict_data_saved and "tor_proxy" in dict_data_saved:
+        config.set_setting(
+            "tor_proxy", dict_data_saved["tor_proxy"], server="torrent"
+        )
+    if dict_data_saved and "set_kodi_proxy" in dict_data_saved:
+        config.set_setting(
+            "set_kodi_proxy", dict_data_saved["set_kodi_proxy"], server="torrent"
+        )
+    if dict_data_saved and "use_kodi_proxy" in dict_data_saved:
+        config.set_setting(
+            "use_kodi_proxy", dict_data_saved["use_kodi_proxy"], server="torrent"
+        )
+    if dict_data_saved and "set_proxy_domains" in dict_data_saved:
+        config.set_setting(
+            "set_proxy_domains", dict_data_saved["set_proxy_domains"], server="torrent"
         )
 
 

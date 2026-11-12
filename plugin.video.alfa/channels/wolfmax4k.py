@@ -13,6 +13,8 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay, renumbertools
 
+from core import filetools
+
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES_T
@@ -20,21 +22,21 @@ list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_T
 
-cf_assistant = False
+cf_assistant = False if AlfaChannelHelper.IS_ASSISTANT_INSTALLED else False
 forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'wolfmax4k', 
              'host': config.get_setting("current_host", 'wolfmax4k', default=''), 
-             'host_alt': ["https://wolfmax4k.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://wolftorrent.com"], 
+             'host_black_list': ["https://wolfmax4k.com/"], 
              'pattern': r'<a\s*href="([^"]+)"\s*class="navbar-brand\s*me-xl-4\s*me-lg-3\s*text-gray-900">', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt,  
-             'cf_assistant': cf_assistant, 'CF_stat': True, 'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': False
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'CF_proxy_alt': False, 'cf_assistant': cf_assistant, 'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': False
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_torrent = host
-host_search = host.replace('https://', 'https://admin.')
+host_search = host
 channel = canonical['channel']
 categoria = channel.capitalize()
 plot = '[COLOR hotpink][B]Atención:[/B][/COLOR] requiere un browser tipo '
@@ -43,38 +45,37 @@ plot +='[COLOR yellow]Chrome, Firefox, Opera[/COLOR] para descargar los archivos
 timeout = config.get_setting('timeout_downloadpage', channel)
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
-movie_path = "/movie"
+movie_path = "/pelicula"
 tv_path = '/serie'
-docu_path = '/documentales'
-pr_tv_path = '/programas-tv'
-tele_path = '/telenovelas'
-anime_path = '/animacion-manga'
-infantil_path = '/animacion-infantil'
+episode_path = '/episodio'
+docu_path = '/documental'
+tele_path = '/telenovela'
+anime_path = '/animacion'
+api_catalogo = 'api/catalogo'
 language = ['CAST']
+url_replace_seasons = [[tv_path, tv_path+'s'], [docu_path, docu_path+'es'], [tele_path, tele_path+'s'], [anime_path, anime_path+'es']]
 url_replace = []
 
-finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['col-lg-2']}]}, 
+finds = {'find': {'find_all': [{'tag': ['article'], 'class': ['wolf-card']}]}, 
          'sub_menu': {}, 
          'categories': {}, 
-         'search': {'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
+         'search': {'find_all': [{'tag': ['article'], 'class': ['wolf-card']}]}, 
          'get_language': {}, 
-         'get_language_rgx': r'(?:flags\/|\/images\/)(\w+)(?:-[^\.]+)?\.(?:png|jpg|jpeg|webp)', 
+         'get_language_rgx': '', 
          'get_quality': {}, 
          'get_quality_rgx': [], 
          'next_page': {}, 
-         'next_page_rgx': [[r'\&pg=\d+', '&pg=%s'], [r'\/\d+$', '/%s']], 
-         'last_page': dict([('find', [{'tag': ['div'], 'class': ['mod-pagination']}]), 
-                            ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href', '@TEXT': r'\/(\d+)'}])]), 
+         'next_page_rgx': [[r'pagina=\d+', 'pagina=%s']], 
+         'last_page': dict([('find', [{'tag': ['div'], 'class': ['wolf-catalog-meta'], '@TEXT': r'(?i)P.gina\s*\d+\s*de\s*(\d+)'}])]), 
          'year': {}, 
          'season_episode': {}, 
-         'seasons': dict([('find', [{'tag': ['div'], 'class': ['tabs']}]), 
-                          ('find_all', [{'tag': ['summary']}])]), 
+         'seasons': {'find_all': [{'tag': ['article'], 'class': ['wolf-card']}]}, 
          'season_num': {}, 
          'seasons_search_num_rgx': [], 
          'seasons_search_qty_rgx': [], 
          'episode_url': '', 
-         'episodes': dict([('find', [{'tag': ['div'], 'class': ['tabs']}]), 
-                          ('find_all', [{'tag': ['li']}])]), 
+         'episodes': dict([('find', [{'tag': ['div'], 'class': ['wolf-episodes']}]), 
+                           ('find_all', [{'tag': ['div'], 'class': ['wolf-episode']}])]), 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
@@ -92,19 +93,19 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['col-lg-2']}]},
                            [r'(?i)\d+\.\d+', '']],
          'language_clean': [], 
          'url_replace': [], 
-         'controls': {'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 20, 
+         'controls': {'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 24, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
                       'host_torrent': host_torrent, 'duplicates': [], 'btdigg_service': True},
          'timeout': timeout,
-         'btdigg_cfg': [{'url': host + 'peliculas/bluray/', 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path}, 
-                        {'url': host + 'peliculas/bluray-1080p/', 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path}, 
-                        {'url': host + 'peliculas/4k-2160p/', 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path},
-                        {'url': host + 'series/720p/', 'c_type': 'series', 'cnt_tot': 3, 'tv_path': tv_path},
-                        {'url': host, 'c_type': 'search_token', 'find': {'find': [{'tag': ['form'], 'class': ['form-search']}], 
-                                                                         'find_all': [{'tag': ['input'], '@POS': [1], '@ARG': 'value'}]}}, 
-                        {'url': host_search + 'admin/admpctn/app/data.find.php', 'post': 'token=%s&cidr=0&c=0&l=100&pg=1&q=', 
-                                'c_type': 'search', 'cnt_tot': 3, 'movie_path': movie_path, 'tv_path': tv_path, 
-                                'find': {'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}}]}
+         'btdigg_cfg': [{'url': host + 'peliculas?pagina=1&calidad=DVDRip', 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path}, 
+                        {'url': host + 'peliculas?pagina=1&calidad=BluRay-1080p', 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path}, 
+                        {'url': host + 'peliculas?pagina=1&calidad=4K', 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path},
+                        {'url': host + 'series?pagina=1&calidad=HDTV-720p', 'c_type': 'series', 'cnt_tot': 3, 'tv_path': tv_path},
+                        {'url': host, 'c_type': 'search_token', 'find': {'find_all': [{'tag': ['article'], 'class': ['wolf-card']}]}}, 
+                        {'url': host_search + 'buscar?pagina=1&q=%s&Buscar=Buscar', 
+                                   'c_type': 'search', 'cnt_tot': 3, 'movie_path': movie_path, 'tv_path': tv_path, 
+                                   'find': {'find_all': [{'tag': ['article'], 'class': ['wolf-card']}]}}]}
+
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
                                    list_quality_movies=list_quality_movies, list_quality_tvshow=list_quality_tvshow, 
@@ -118,17 +119,23 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", c_type='peliculas', 
-                    url=host + 'peliculas/', thumbnail=get_thumb("channels_movie.png"), contentPlot=plot))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", c_type='peliculas', c_path=movie_path, 
+                    url=host + 'peliculas', thumbnail=get_thumb("channels_movie.png"), contentPlot=plot))
 
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", c_type='series', 
-                    url=host + 'series/', thumbnail=get_thumb("channels_tvshow.png"), contentPlot=plot))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", c_type='series', c_path=tv_path, 
+                    url=host + 'series', thumbnail=get_thumb("channels_tvshow.png"), contentPlot=plot))
 
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Otros", c_type='documentales', 
-                    url=host, thumbnail=get_thumb("channels_documentary.png"), contentPlot=plot))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Documentales", c_type='documentales', c_path=docu_path, 
+                    url=host + 'documentales', thumbnail=get_thumb("channels_documentary.png"), contentPlot=plot))
+
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Animaciones", c_type='animaciones', c_path=anime_path, 
+                    url=host + 'animaciones', thumbnail=get_thumb("channels_anime.png"), contentPlot=plot))
+
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Telenovelas", c_type='telenovelas', c_path=tele_path, 
+                    url=host + 'telenovelas', thumbnail=get_thumb("channels_latino.png"), contentPlot=plot))
 
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", c_type='search', 
-                    url=host_search + 'admin/admpctn/app/data.find.php', thumbnail=get_thumb("search.png")))
+                    url=host_search, thumbnail=get_thumb("search.png")))
 
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", 
                     folder=False, thumbnail=get_thumb("next.png")))
@@ -158,93 +165,193 @@ def submenu(item):
     itemlist = []
 
     if item.c_type == 'peliculas':
-        #itemlist.append(Item(channel=item.channel, title="Todas las Películas", 
-        #                     action="list_all", url=item.url, 
-        #                     thumbnail=get_thumb('movies', auto=True), c_type=item.c_type, contentPlot=item.plot))
-        itemlist.append(Item(channel=item.channel, title="Películas:", 
-                             thumbnail=get_thumb('movies', auto=True), c_type=item.c_type, contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title="Todas las Películas", 
+                             action="list_all", url=item.url, 
+                             thumbnail=get_thumb("channels_movie.png"), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
-        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: Bluray[/COLOR]", 
-                             action="list_all", url=item.url + 'bluray/', 
-                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Estrenos[/COLOR]", 
+                             action="list_all", url=item.url + '?dias=2&pagina=1', 
+                             thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
-        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: Bluray 720p[/COLOR]", 
-                             action="list_all", url=item.url + 'bluray-720p/', 
-                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Géneros[/COLOR]", 
+                             action="section", url=item.url, extra = "genero", 
+                             thumbnail=get_thumb('genres.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
-        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: Bluray 1080p[/COLOR]", 
-                             action="list_all", url=item.url + 'bluray-1080p/', 
-                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidades[/COLOR]", 
+                             action="section", url=item.url, extra = "calidad", 
+                             thumbnail=get_thumb('search_star.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
-        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: 4K[/COLOR]", 
-                             action="list_all", url=item.url + '4k-2160p/', 
-                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Añadidas últimos Días[/COLOR]", 
+                             action="section", url=item.url, extra = "dias", 
+                             thumbnail=get_thumb('years.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
-    if item.c_type == 'series':
-        itemlist.append(Item(channel=item.channel, title="Todas las Series (episodios)", 
-                             action="list_all", url=item.url + '480p/', 
-                             thumbnail=get_thumb('movies', auto=True), c_type=item.c_type, contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Años[/COLOR]", 
+                             action="section", url=item.url, extra = "year", 
+                             thumbnail=get_thumb('years.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Alfabeto[/COLOR]", 
+                             action="section", url=item.url, extra = "Alfabético", 
+                             thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+    elif item.c_type == 'series':
+        itemlist.append(Item(channel=item.channel, title="Todas las Series", 
+                             action="list_all", url=item.url + '?pagina=1', 
+                             thumbnail=get_thumb('channels_tvshow.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Últimos Episodios[/COLOR]", 
+                             action="list_all", url=item.url + '?pagina=1', extra = "episodios", 
+                             thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: HDTV[/COLOR]", 
-                             action="list_all", url=item.url + '480p/', 
-                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, contentPlot=item.plot))
+                             action="list_all", url=item.url + '?calidad=HDTV&pagina=1', extra = "calidad", 
+                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
                              
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: HDTV 720p[/COLOR]", 
-                             action="list_all", url=item.url + '720p/', 
-                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, contentPlot=item.plot))
+                             action="list_all", url=item.url + '?calidad=HDTV-720p&pagina=1', extra = "calidad", 
+                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: WEB-DL 1080p[/COLOR]", 
-                             action="list_all", url=item.url + '1080p/', 
-                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, contentPlot=item.plot))
+                             action="list_all", url=item.url + '?calidad=HDTV-1080p&pagina=1', extra = "calidad", 
+                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: 4K[/COLOR]", 
-                             action="list_all", url=item.url + '4k-2160p/', 
-                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, contentPlot=item.plot))
+                             action="list_all", url=item.url + '?calidad=4K&pagina=1', extra = "calidad", 
+                             thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
-    if item.c_type == 'documentales':
-        itemlist.append(Item(channel=item.channel, title="Documentales (episodios)", 
-                             action="list_all", url=host + docu_path.lstrip('/') + '/', 
-                             thumbnail=get_thumb('documental', auto=True), c_type='documentales', contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Añadidas últimos Días[/COLOR]", 
+                             action="section", url=item.url, extra = "dias", 
+                             thumbnail=get_thumb('years.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
-        itemlist.append(Item(channel=item.channel, title="Programas TV (episodios)", 
-                             action="list_all", url=host + pr_tv_path.lstrip('/') + '/', 
-                             thumbnail=get_thumb('tvshows', auto=True), c_type='documentales', contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Alfabeto[/COLOR]", 
+                             action="section", url=item.url, extra = "Alfabético", 
+                             thumbnail=get_thumb('channels_tvshow_az.png'), c_type=item.c_type, contentPlot=item.plot))
 
-        itemlist.append(Item(channel=item.channel, title="Telenovelas (episodios)", 
-                             action="list_all", url=host + tele_path.lstrip('/') + '/', 
-                             thumbnail=get_thumb('telenovelas', auto=True), c_type='documentales', contentPlot=item.plot))
+    elif item.c_type == 'documentales':
+        itemlist.append(Item(channel=item.channel, title="Todas los Documentales", 
+                             action="list_all", url=item.url + '?pagina=1', 
+                             thumbnail=get_thumb('channels_documentary.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
-        itemlist.append(Item(channel=item.channel, title="Animación y Manga (episodios)", 
-                             action="list_all", url=host + anime_path.lstrip('/') + '/', 
-                             thumbnail=get_thumb('anime', auto=True), c_type='documentales', contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Últimos Episodios[/COLOR]", 
+                             action="list_all", url=item.url + '?pagina=1', extra = "episodios", 
+                             thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
-        itemlist.append(Item(channel=item.channel, title="Animación Infantil (episodios)", 
-                             action="list_all", url=host + infantil_path.lstrip('/') + '/', 
-                             thumbnail=get_thumb('infantil', auto=True), c_type='documentales', contentPlot=item.plot))
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Añadidos últimos Días[/COLOR]", 
+                             action="section", url=item.url, extra = "dias", 
+                             thumbnail=get_thumb('years.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Alfabeto[/COLOR]", 
+                             action="section", url=item.url, extra = "Alfabético", 
+                             thumbnail=get_thumb('channels_tvshow_az.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+    elif item.c_type == 'animaciones':
+        itemlist.append(Item(channel=item.channel, title="Todas las Animaciones", 
+                             action="list_all", url=item.url + '?pagina=1', 
+                             thumbnail=get_thumb('channels_anime.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Últimos Episodios[/COLOR]", 
+                             action="list_all", url=item.url + '?pagina=1', extra = "episodios", 
+                             thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Añadidas últimos Días[/COLOR]", 
+                             action="section", url=item.url, extra = "dias", 
+                             thumbnail=get_thumb('years.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Alfabeto[/COLOR]", 
+                             action="section", url=item.url, extra = "Alfabético", 
+                             thumbnail=get_thumb('channels_tvshow_az.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+    elif item.c_type == 'telenovelas':
+        itemlist.append(Item(channel=item.channel, title="Todas las Telenovelas", 
+                             action="list_all", url=item.url + '?pagina=1', 
+                             thumbnail=get_thumb('channels_latino.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Últimos Episodios[/COLOR]", 
+                             action="list_all", url=item.url + '?pagina=1', extra = "episodios", 
+                             thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Añadidas últimos Días[/COLOR]", 
+                             action="section", url=item.url, extra = "dias", 
+                             thumbnail=get_thumb('years.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
+
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Alfabeto[/COLOR]", 
+                             action="section", url=item.url, extra = "Alfabético", 
+                             thumbnail=get_thumb('channels_tvshow_az.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
     return itemlist
 
 
+def section(item):
+    logger.info()
+
+    findS = finds.copy()
+
+    if item.extra == "genero":
+        findS['categories'] = dict([('find', [{'tag': ['div'], 'class': ['wolf-filter-genre-options']}]), 
+                                    ('find_all', [{'tag': ['input']}])])
+
+    elif item.extra == "calidad":
+        findS['categories'] = dict([('find', [{'tag': ['legend'], 'class': ['sr-only'], 'string': re.compile('Calidad')}]), 
+                                    ('find_next', [{'tag': ['div'], 'class': ['wolf-choice-options']}]),
+                                    ('find_all', [{'tag': ['input']}])])
+
+    elif item.extra == "Alfabético":
+        itemlist = []
+
+        for letra in ['0-9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 
+                      'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
+
+            itemlist.append(item.clone(action="list_all", title=letra, url=item.url + '?letra=%s&&pagina=1' % letra))
+
+        return itemlist
+
+    elif item.extra == "dias":
+        from platformcode.platformtools import dialog_numeric
+        
+        dias = dialog_numeric(0, "Introduzca el nº de Días de antiguedad", default="")
+        item.url += '?dias=%s&pagina=1' % dias
+
+        return list_all(item)
+
+    elif item.extra == "year":
+        from platformcode.platformtools import dialog_numeric
+        
+        year = dialog_numeric(0, "Introduzca el Año de búsqueda", default="")
+        item.url += '?anyo_desde=%s&anyo_hasta=%s&pagina=1' % (year, year)
+
+        return list_all(item)
+
+    return AlfaChannel.section(item, matches_post=section_matches, finds=findS, **kwargs)
+
+
+def section_matches(item, matches_int, **AHkwargs):
+    logger.info()
+
+    matches = []
+    findS = AHkwargs.get('finds', finds)
+
+    for elem in matches_int:
+        if not elem.get('value'): continue
+        elem_json = {}
+        #logger.error(elem)
+
+        elem_json['url'] = '%s?%s=%s&pagina=1' % (item.url, item.extra, elem['value'])
+        elem_json['title'] = elem['value']
+        elem_json['c_type'] = item.c_type
+
+        matches.append(elem_json.copy())
+
+    return matches
+
+
 def list_all(item):
     logger.info()
-    
+
     findS = finds.copy()
-    headers = {}
-    
+
     if item.category_new == 'newest':
         findS['controls']['cnt_tot'] = 40
 
-    if item.c_type == 'search':
-        if '%s' in item.post:
-            soup = AlfaChannel.create_soup(host, alfa_s=True, **kwargs)
-            token = soup.find('form', class_='form-search').find_all('input')[1].get('value', '') if soup.find('form', class_='form-search') else ''
-            if not token: 
-                logger.error('No hay TOKEN para búsquedas: %s' % soup.find('form', class_='form-search'))
-            item.post = item.post % token
-        headers['Referer'] = host
-        findS['controls']['force_find_last_page'] = [0, 0, 'post']
-                
-    return AlfaChannel.list_all(item, matches_post=list_all_matches, finds=findS, headers=headers, generictools=True, **kwargs)
+    return AlfaChannel.list_all(item, matches_post=list_all_matches, finds=findS, generictools=True, **kwargs)
 
 
 def list_all_matches(item, matches_int, **AHkwargs):
@@ -252,73 +359,122 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
+    patter_quality = r'\[(\w+)\]'
+    patter_title = r'(?i)\s*\-\s*\d+.\s*t\w*(?:\s*\[\w+\])?'
+    patter_sxe = r'(?i)(\d{1,2})x(\d{1,4})'
+    tvshow_list = []
 
-    if item.c_type == 'search':
-        if not isinstance(matches_int, _dict):
-            return matches
-        if not matches_int.get('response', False):
-            return matches
-
-        results = int(matches_int.get('data', {}).get('pgcount', 0))
-
-        if results:
-            AlfaChannel.last_page = int((results / findS['controls']['cnt_tot']) + 0.9999)
-            matches_int = matches_int.get('data', {}).get('datafinds', {})['0'].copy()
-
-            for key, elem in list(matches_int.items()):
-                elem_json = {}
-                #logger.error(elem)
-
-                elem_json['url'] = elem.get("guid", "")
-                elem_json['quality'] = '*%s' % elem.get("calidad", "")
-                elem_json['title'] = elem.get("torrentName", "")
-                elem_json['thumbnail'] = elem.get("image", "")
-
-                elem_json['mediatype'] = 'movie'
-                if scrapertools.find_single_match(elem_json['title'], r'(?i)Cap.(\d+)(\d{2})'):
-                    elem_json['mediatype'] = 'episode'
-                    try:
-                        sxe = scrapertools.find_single_match(elem_json['title'], r'(?i)Cap.(\d+)(\d{2})')
-                        elem_json['season'] = int(sxe[0] or 1)
-                        elem_json['episode'] = int(sxe[1] or 1)
-
-                    except Exception:
-                        logger.error(elem)
-                        elem_json['season'] =  1
-                        elem_json['episode'] =  1
-                elem_json['title'] = re.sub(r'\s*\[[^\]]+\](?:\s*\[*[^\]]+\])?', '', elem_json['title']).strip()
-                elem_json['broadcast'] = plot
-
-                if not elem_json.get('url'): continue
-
-                matches.append(elem_json.copy())
-
-        return matches
+    """
+    soup = AHkwargs.get('soup', '')
+    cursor = ''
+    if soup.find('section', class_='wolf-catalog') and soup.find('section', class_='wolf-catalog').get('data-catalog-checkpoint'):
+        cursor = soup.find('section', class_='wolf-catalog').get('data-catalog-checkpoint', '')
+    elif soup.find('section', class_='wolf-search-page') and soup.find('section', class_='wolf-search-page').get('data-catalog-checkpoint'):
+        cursor = soup.find('section', class_='wolf-search-page').get('data-catalog-checkpoint', '')
+    elif isinstance(soup, _dict) and soup.get('cursor'):
+        cursor = soup['cursor']
+    if cursor:
+        if not item.url_save: item.url_save = item.url
+        item.url = host + 'api/catalogo'
+        item.post = {"url": item.url_save.replace(host.rstrip('/'), ''), "checkpoint": cursor}
+        item.headers = {'Referer': item.url_save}
+        AlfaChannel.last_page = 999
+    """
 
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
 
         try:
-            if not elem.find('div', class_='card-body'): continue
+            if not elem.find('a', class_='wolf-card-poster'): continue
             elem_json['url'] = elem.a.get("href", "")
-            
-            elem_json['mediatype'] = 'tvshow' if tv_path in elem_json['url'] else 'movie'
-            if item.c_type == 'peliculas' and elem_json['mediatype'] != 'movie': continue
-            if item.c_type == 'series' and elem_json['mediatype'] != 'tvshow': continue
 
-            elem_json['title'] = elem.find('div', class_='card-body').find('h3', class_='title').get_text(strip=True)
-            if scrapertools.find_single_match(elem_json['title'], r'\s*\[([^\]]+)\]'):
-                elem_json['quality'] = '*%s' % scrapertools.find_single_match(elem_json['title'], r'\[([^\]]+)\]')
-                elem_json['title'] = re.sub(r'\s*\[[^\]]+\](?:\s*\[*[^\]]+\])?', '', elem_json['title']).strip()
-            else:
-                elem_json['quality'] = '*%s' % elem.find('div', class_='quality').get_text(strip=True).replace('Otros', '').replace('Series', '')
+            elem_json['mediatype'] = 'movie' if movie_path in elem_json['url'] else 'tvshow'
+
+            if item.c_path not in elem_json['url']: continue
+
+            elem_json['title'] = elem.find('div', class_='wolf-card-content').find('h3', class_='wolf-card-title').get_text(strip=True)
+            #elem_json['title'] = elem.a.get("alt", "")
             elem_json['thumbnail'] = elem.find('img').get("src", "")
             elem_json['language'] = language
-            elem_json['year'] = scrapertools.find_single_match(elem_json['title'], r'\((\d{4})\)') or '-'
-            if elem_json['mediatype'] != 'tvshow' and elem_json['year'] == '-' and elem.find('span', class_='fdi-type'):
-                elem_json['year'] = elem.find('span', class_='fdi-type').get_text(strip=True)
+            elem_json['year'] = '-'
+            if elem.find('div', class_='wolf-card-content').find('p', class_='wolf-card-meta'):
+                elem_json['year'] = scrapertools.find_single_match(elem.find('div', class_='wolf-card-content')\
+                                                .find('p', class_='wolf-card-meta').get_text(strip=True), r'\d{4}')
             elem_json['broadcast'] = plot
+
+            if elem_json['mediatype'] == 'movie':
+                elem_json['matches_cached'] = []
+                elem_json['quality'] = ''
+                for quality in elem.find_all('li', class_='wolf-card-file'):
+                    quality_json = {}
+                    #logger.error(quality)
+
+                    quality_json['url'] = quality.a.get("href", "").replace(movie_path, '/descarga'+movie_path).replace(tv_path, '/descarga'+tv_path)
+                    quality_json['title'] = elem_json['title']
+                    quality_json['quality'] = quality.a.get_text(strip=True)
+                    elem_json['quality'] += '%s, ' % quality_json['quality']
+                    if quality.find('span', class_='wolf-card-size'):
+                        quality_json['size'] = quality.find('span', class_='wolf-card-size').get_text(strip=True)
+                    quality_json['language'] = elem_json['language']
+                    quality_json['year'] = elem_json['year']
+                    quality_json['mediatype'] = elem_json['mediatype']
+                    quality_json['server'] = 'torrent'
+
+                    elem_json['matches_cached'].append(quality_json)
+
+                elem_json['quality'] = elem_json['quality'].rstrip('%s, ')
+            
+            else:
+                quality_save = 'HDTV'
+                if elem.find('a', class_='wolf-card-format'):
+                    quality_save = elem.find('a', class_='wolf-card-format').get_text('|', strip=True).split('|')[-1]
+                elem_json['quality'] = '*%s' % quality_save
+                elem_json['title'] = re.sub(patter_title, '', elem_json['title'])
+                if elem_json['title'] + elem_json['quality'] in tvshow_list: continue
+                tvshow_list += [elem_json['title'] + elem_json['quality']]
+                
+                if item.extra == 'episodios':
+                    elem_json['mediatype'] = 'episode'
+                    
+                    episode_json = {}
+                    elem_json['matches_cached'] = []
+                    for episode in elem.find_all('li', class_='wolf-card-file'):
+                        episode_json = {}
+                        #logger.error(episode)
+
+                        episode_json['url'] = elem_json['url'] = episode.a.get("href", "").replace(item.c_path+episode_path, '/descarga'+item.c_path)
+                        episode_json['title'] = elem_json['title']
+                        episode_json['quality'] = elem_json['quality'] = '*%s' % (episode.a.get_text('|', strip=True).split('|')[-1] \
+                                                                                  or elem_json['quality'])
+                        episode_json['language'] = elem_json['language']
+                        episode_json['info'] = episode.get('data-wolf-episode-id', '')
+                        if not episode_json['info']: continue
+                        episode_json['size'] = episode.find('span', class_='wolf-card-size').get_text(strip=True)
+                        episode_json['mediatype'] = 'episode'
+                        episode_json['server'] = 'torrent'
+                        try:
+                            episode_json['season'], episode_json['episode'] = scrapertools.find_single_match(
+                                episode.a.get_text('|', strip=True).split('|')[0], patter_sxe
+                            )
+                            episode_json['season'] = elem_json['season'] = int(episode_json['season'])
+                            episode_json['episode'] = elem_json['episode'] = int(episode_json['episode'])
+                            break
+
+                        except Exception:
+                            logger.error(episode)
+                            logger.error(traceback.format_exc())
+                            continue
+
+                    if episode_json.get('episode'):
+                        elem_json['matches_cached'].append(episode_json)
+
+                else:
+                    elem_json['url'], x = filetools.split(elem_json['url'])
+                    elem_json['url'] = AlfaChannel.do_url_replace(elem_json['url'], url_replace_seasons)
+                    elem_json['url'] = '%s?q=%s&calidad=%s' % (elem_json['url'], 
+                                        scrapertools.slugify(elem_json['title'].replace(' ', '+'), convert=['+=+']), 
+                                        quality_save)
 
         except Exception:
             logger.error(elem)
@@ -344,15 +500,24 @@ def seasons_matches(item, matches_int, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
     soup = AHkwargs.get('soup', {})
-    patron_season = r'(?i)temp\w*\s*(\d+)'
+    patron_season = r'(?i)(\d{1,2})x\d{1,4}'
+    patter_title = r'(?i)\s*\-\s*\d+.\s*t\w*(?:\s*\[\w+\])?'
 
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
 
         try:
-            elem_json['season'] = scrapertools.find_single_match(elem.get_text(strip=True), patron_season)
-            elem_json['url'] = item.url
+            elem_json['season'] = elem.find('a', class_='wolf-card-format').get_text('|', strip=True).split('|')[0]
+            elem_json['season'] = scrapertools.find_single_match(elem_json['season'], patron_season)
+            elem_json['url'] = elem.a.get("href", "")
+            elem_json['title'] = elem.find('div', class_='wolf-card-content').find('h3', class_='wolf-card-title').get_text(strip=True)
+            elem_json['title'] = re.sub(patter_title, '', elem_json['title'])
+            if scrapertools.slugify(elem_json['title']) != scrapertools.slugify(item.contentSerieName): continue
+
+            elem_json['quality'] = elem.find('a', class_='wolf-card-format').get_text('|', strip=True).split('|')[-1]
+            elem_json['quality'] = AlfaChannel.find_quality(elem_json, item)
+            if elem_json['quality'] != item.quality: continue
 
         except:
             logger.error(elem)
@@ -393,26 +558,33 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
-    patron_epis = r'(?i)temp\w*\s*\[\s*(\d+)\s*\]\s*cap\w*\s*\[\s*(\d+)\s*\]'
+    patter_sxe = r'(?i)(\d{1,2})x(\d{1,4})'
     pass_list = item.password or {}
 
     for elem in matches_int:
         elem_json = {}
+        elem_json['matches_cached'] = []
+        episode_json = {}
         #logger.error(elem)
 
         try:
-            if not elem.a and not elem.a.get_text(strip=True): continue
-            info = elem.a.get_text('|', strip=True)
-            if not scrapertools.find_single_match(info, patron_epis): continue
-            sxe = scrapertools.find_single_match(info, patron_epis)
-            elem_json['season'] = int(sxe[0])
-            if elem_json['season'] != item.contentSeason: continue
-            elem_json['episode'] = int(sxe[1])
+            url_split = elem.a.get("href", "").strip('/').split('/')
+            elem_json['url'] = episode_json['url'] = '/descarga/%s/%s' % (url_split[0], url_split[-1])
 
-            elem_json['url'] = elem.a.get('href', '')
+            try:
+                elem_json['season'], elem_json['episode'] = scrapertools.find_single_match(
+                    elem.a.get_text('|', strip=True).split('|')[0], patter_sxe
+                )
+                elem_json['season'] = episode_json['season'] = int(elem_json['season'])
+                elem_json['episode'] = episode_json['episode'] = int(elem_json['episode'])
 
-            if pass_list.get('%sx%s' % (elem_json['season'], elem_json['episode'])):
-                elem_json['password'] = pass_list['%sx%s' % (elem_json['season'], elem_json['episode'])]
+                if elem_json['season'] != item.contentSeason: continue
+            except Exception:
+                logger.error(elem)
+                logger.error(traceback.format_exc())
+                continue
+
+            elem_json['size'] = episode_json['size'] = elem.find('span', class_='wolf-episode-size').get_text(strip=True)
 
         except:
             logger.error(elem)
@@ -422,26 +594,35 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         if not elem_json.get('url', ''): 
             continue
 
-        elem_json['server'] = 'torrent'
-        elem_json['language'] = item.language
-        elem_json['quality'] = item.quality
-        elem_json['size'] = ''
-        elem_json['torrent_info'] = elem_json.get('torrent_info', '')
+        elem_json['mediatype'] = episode_json['mediatype'] = 'episode'
+        elem_json['server'] = episode_json['server'] = 'torrent'
+        elem_json['language'] = episode_json['language'] = item.language
+        elem_json['quality'] = episode_json['quality'] = item.quality
+        elem_json['torrent_info'] = episode_json['torrent_info'] = elem_json.get('torrent_info', '')
 
+        elem_json['matches_cached'].append(episode_json.copy())
         matches.append(elem_json.copy())
-    
+
     return matches
 
 
 def findvideos(item):
     logger.info()
-    
-    return AlfaChannel.get_video_options(item, item.url, matches_post=findvideos_matches, 
-                                         verify_links=False, generictools=True, findvideos_proc=True, **kwargs)
+
+    findS = finds.copy()
+    matches_cached = []
+
+    if item.matches_cached:
+        findS['findvideos'] = {'no-op': []}
+        matches_cached = item.matches_cached[:]
+        del item.matches_cached
+
+    return AlfaChannel.get_video_options(item, item.url, matches_post=findvideos_matches, data=matches_cached, langs='CAST',
+                                         finds=findS, verify_links=False, generictools=True, findvideos_proc=True, **kwargs)
 
 
 def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
-    logger.info()
+    logger.info(langs)
 
     matches = []
     findS = AHkwargs.get('finds', finds)
@@ -449,23 +630,27 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-        
-        try:
-            if not elem.find('a', class_='glow-on-hover'): continue
-            elem_json['url'] = elem.find('a', class_='glow-on-hover').get('href', '')
-            elem_json['server'] = 'torrent'
-            elem_json['quality'] = item.quality
-            elem_json['language'] = item.language
-            elem_json['torrent_info'] = ''
-            elem_json['broadcast'] = plot
 
-            if elem.find('a', class_='buttonPassword'):
-                elem_json['password'] = elem.find('a', class_='buttonPassword').get('href', '')
-                elem_json['torrent_info'] = 'RAR-'
+        if isinstance(elem, _dict):
+            elem_json = elem.copy()
 
-        except Exception:
-            logger.error(elem)
-            logger.error(traceback.format_exc())
+        else:
+            try:
+                if not elem.find('a', class_='glow-on-hover'): continue
+                elem_json['url'] = elem.find('a', class_='glow-on-hover').get('href', '')
+                elem_json['server'] = 'torrent'
+                elem_json['quality'] = item.quality
+                elem_json['language'] = item.language
+                elem_json['torrent_info'] = ''
+                elem_json['broadcast'] = plot
+
+                if elem.find('a', class_='buttonPassword'):
+                    elem_json['password'] = elem.find('a', class_='buttonPassword').get('href', '')
+                    elem_json['torrent_info'] = 'RAR-'
+
+            except Exception:
+                logger.error(elem)
+                logger.error(traceback.format_exc())
 
         if not elem_json.get('url', ''): 
             continue
@@ -486,13 +671,14 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
-    texto = texto.replace(" ", "+")
+    texto = texto.replace(" ", "%20")
 
     try:
         if texto:
-            item.post = 'token=%s&cidr=0&c=0&l=100&pg=1&q=' + texto
             item.c_type = "search"
             item.texto = texto
+            #item.url = host_search + 'buscar?pagina=1&q=%s&Buscar=Buscar' % texto
+            item.url = host_search + 'buscar/%s' % texto
             return list_all(item)
         else:
             return []
@@ -519,7 +705,7 @@ def newest(categoria, **AHkwargs):
     
     try:
         if categoria in ['peliculas', 'torrent', '4k']:
-            item.url = host + 'peliculas/4k-2160p/' if categoria == '4k' else host + 'peliculas/'
+            item.url = host + 'peliculas?pagina=1&calidad=4K' if categoria == '4k' else host + 'peliculas?pagina=1'
             item.c_type = "peliculas"
 
             itemlist = list_all(item)

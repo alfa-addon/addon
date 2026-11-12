@@ -1,7 +1,7 @@
 {
   "id": "yts",
   "name": "Yts",
-  "active": false,
+  "active": true,
   "adult": false,
   "language": ["VOS", "VOSE"],
   "thumbnail": "https://i.postimg.cc/mtCM3TZp/yts.jpg",

@@ -430,6 +430,9 @@ def channel_proxy_list(url, forced_proxy=None):
         url += "/"
 
     domain = obtain_domain(url, sub=True)
+    alfa_proxy_list = json.loads(window.getProperty("alfa_proxy_list") or "{}")
+    if alfa_proxy_list.get('channel_bloqued_list', {}).get(domain, '') == 'NONE':
+        return True
     if proxy_channel_bloqued.get(domain, ""):
         if forced_proxy and forced_proxy not in [
             "Total",
@@ -626,6 +629,7 @@ def proxy_post_processing(url, proxy_data, response, **opt):
             and opt.get("proxy_retries_counter", 0) <= opt.get("proxy_retries", 1)
             and opt.get("count_retries_tot", 5) > 1
             and opt.get("forced_proxy_ifnot_assistant", "") is not None
+            and opt.get("CF_proxy_alt", True)
         ):
             if not PY3:
                 from . import proxytools
@@ -1127,6 +1131,14 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
             del opt["proxy_web"]
         if "forced_proxy" in opt:
             del opt["forced_proxy"]
+        if "proxy_addr_forced" in opt and "socks5" in str(opt["proxy_addr_forced"]):
+            if ".onion" not in url_final:
+                del opt["proxy_addr_forced"]
+            if window:
+                alfa_cached_TOR_proxy_black_list = ast.literal_eval(window.getProperty("alfa_cached_TOR_proxy_black_list") or "[]")
+                if host_a not in alfa_cached_TOR_proxy_black_list:
+                    alfa_cached_TOR_proxy_black_list.append((host_a))
+                    window.setProperty("alfa_cached_TOR_proxy_black_list", str(alfa_cached_TOR_proxy_black_list))
 
         response = downloadpage(url_final, **opt)
 
@@ -1141,6 +1153,11 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
             break
     else:
         logger.error("ERROR 97: Webs caídas, ninguna Web alternativa encontrada")
+        if window and window.getProperty("alfa_cached_TOR_proxy_black_list"):
+            alfa_cached_TOR_proxy_black_list = ast.literal_eval(window.getProperty("alfa_cached_TOR_proxy_black_list") or "[]")
+            if host_a in alfa_cached_TOR_proxy_black_list:
+                alfa_cached_TOR_proxy_black_list.remove(host_a)
+                window.setProperty("alfa_cached_TOR_proxy_black_list", str(alfa_cached_TOR_proxy_black_list))
         return url, response_call
 
     logger.info("INFO: Web activa encontrada: %s " % host, force=True)
@@ -1376,6 +1393,8 @@ def downloadpage(url, **opt):
         req_headers["Referer"] = opt.get("referer")
 
     # Headers pasados como parametros
+    opt["headers_save"] = dict(opt.get("headers_save") or opt.get("headers") or {})
+    opt["headers"] = dict(opt["headers_save"])
     if opt.get("headers", None) is not None:
         if not opt.get("replace_headers", False):
             req_headers.update(dict(opt["headers"]))
@@ -1510,8 +1529,8 @@ def downloadpage(url, **opt):
         if proxy_data.get("dict", {}):
             session.proxies = proxy_data["dict"]
             # if opt["session_verify_save"] is None: session.verify = opt['session_verify'] = False
-        if proxy_data.get("headers_proxy", {}):
-            req_headers.update(dict(proxy_data["headers_proxy"]))
+        if opt.get("headers_proxy", {}):
+            req_headers.update(dict(opt["headers_proxy"]))
         if cf_ua and cf_ua != "Default" and (get_cookie(url, "cf_clearance") or opt.get("cf_assistant_ua", False)):
             req_headers["User-Agent"] = cf_ua
 
@@ -1746,17 +1765,30 @@ def downloadpage(url, **opt):
 
         # Retries blocked domain with proxy
         if (
-            block
+            (
+                block
+                or (
+                    'socks5' in str(proxy_data.get("dict", {}))
+                    and response_code not in SUCCESS_CODES
+                )
+            )
             and opt.get("retry_alt", retry_alt_default)
             and opt.get("proxy__test", "") != "retry"
-            and not proxy_data.get("stat", "")
+            and (
+                not proxy_data.get("stat", "") 
+                or 'socks5' in str(proxy_data.get("dict", {}))
+            )
             and opt.get("proxy_retries", 1)
             and opt.get("forced_proxy_ifnot_assistant", "") is not None
+            and (
+                opt.get("forced_proxy_opt", "") is not None
+                or 'socks5' in str(proxy_data.get("dict", {}))
+            )
             and response_code not in [404]
         ):
             if not opt.get("alfa_s", False):
                 logger.error(
-                    "Error: %s in url: %s - Reintentando" % (response_code, url)
+                    "Error: %s in url: %s %s - Reintentando" % (response_code, url, proxy_data.get("stat", ""))
                 )
             forced_proxy_web = "ProxyWeb:croxyproxy.com"
             opt["forced_proxy"] = (
@@ -1820,6 +1852,8 @@ def downloadpage(url, **opt):
                     from . import proxytools_py3 as proxytools
                 domain = obtain_domain(opt["url_save"], sub=True)
                 opt["post"] = opt["post_save"]
+                opt["headers"] = dict(opt["headers_save"])
+                opt.pop('headers_proxy', {})
                 opt["proxy_web"] = False
                 opt["proxy_retries"] = 1 if not TEST_ON_AIR else 0
                 if "forced_proxy" in opt:
@@ -1853,6 +1887,10 @@ def downloadpage(url, **opt):
                     proxytools.add_domain_retried(
                         domain, proxy__type="", delete="forced"
                     )
+                    if not channel_proxy_list(opt["url_save"]):
+                        opt["forced_proxy_ifnot_assistant"] = None
+                        if opt.get("canonical", {}):
+                            opt["canonical"]["forced_proxy_ifnot_assistant"] = opt["forced_proxy_ifnot_assistant"]
                     if not CACHING_DOMAINS:
                         logger.debug(
                             "CF Assistant reTRY without SSL... for domain: %s" % domain
@@ -1864,6 +1902,16 @@ def downloadpage(url, **opt):
                 proxytools.add_domain_retried(
                     domain, proxy__type="ProxyCF", delete="SSL"
                 )
+                if not channel_proxy_list(opt["url_save"]):
+                    opt["proxy_web"] = False
+                    opt["proxy_addr_forced"] = None
+                    opt["forced_proxy"] = None
+                    opt["forced_proxy_ifnot_assistant"] = None
+                    if opt.get("canonical", {}):
+                        opt["canonical"]["proxy_web"] = opt["proxy_web"]
+                        opt["canonical"]["proxy_addr_forced"] = opt["proxy_addr_forced"]
+                        opt["canonical"]["forced_proxy"] = opt["forced_proxy"]
+                        opt["canonical"]["forced_proxy_ifnot_assistant"] = opt["forced_proxy_ifnot_assistant"]
                 return downloadpage(opt["url_save"], **opt)
 
             else:
@@ -1872,6 +1920,8 @@ def downloadpage(url, **opt):
                 if isinstance(opt["timeout"], float):
                     opt["timeout"] += 3.0
                 opt["post"] = opt["post_save"]
+                opt["headers"] = dict(opt["headers_save"])
+                opt.pop('headers_proxy', {})
                 return downloadpage(opt["url_save"], **opt)
 
         # Retries Cloudflare errors
@@ -1941,6 +1991,8 @@ def downloadpage(url, **opt):
         ):
             update_alfa_domain_web_list(url, response_code, proxy_data, **opt)
             url = opt["url_save"]
+            opt["headers"] = dict(opt["headers_save"])
+            opt.pop('headers_proxy', {})
             domain = obtain_domain(url, sub=True)
             opt["post"] = opt["post_save"]
             opt["retries_cloudflare"] = 1
@@ -1969,7 +2021,20 @@ def downloadpage(url, **opt):
                     proxytools.add_domain_retried(
                         domain, proxy__type="ProxyWeb", delete="forced"
                         )
-                if opt.get("forced_proxy_ifnot_assistant", "") is not None:
+                    if not channel_proxy_list(opt["url_save"]):
+                        opt["proxy_web"] = False
+                        opt["proxy_addr_forced"] = None
+                        opt["forced_proxy"] = None
+                        opt["forced_proxy_ifnot_assistant"] = None
+                        if opt.get("canonical", {}):
+                            opt["canonical"]["proxy_web"] = opt["proxy_web"]
+                            opt["canonical"]["proxy_addr_forced"] = opt["proxy_addr_forced"]
+                            opt["canonical"]["forced_proxy"] = opt["forced_proxy"]
+                            opt["canonical"]["forced_proxy_ifnot_assistant"] = opt["forced_proxy_ifnot_assistant"]
+                if (
+                    opt.get("forced_proxy_ifnot_assistant", "") is not None
+                    and opt.get("CF_proxy_alt", True) 
+                ):
                     opt["forced_proxy_ifnot_assistant"] = "ProxyCF"
                     opt["CF"] = opt["CF_save"] = opt["cloudscraper_active"] = True
                 if str(opt.get("cf_assistant", '')) == 'force':
@@ -2030,15 +2095,25 @@ def downloadpage(url, **opt):
                 opt["CF"] = opt["CF_save"] = opt["CF_stat"] = opt[
                     "session_verify"
                 ] = opt["session_verify_save"] = opt["cloudscraper_active"] = False
-            opt["forced_proxy"] = "ProxyCF"
+            opt["forced_proxy"] = "ProxyCF" if opt.get("CF_proxy_alt", True) else None
             if opt["forced_proxy_ifnot_assistant"] in [
                 "ProxySSL"
             ] and not proxy_data.get("stat", ""):
                 opt["forced_proxy"] = "ProxyWeb:croxyproxy.com"
-                opt["forced_proxy_ifnot_assistant"] = "ProxyCF"
+                opt["forced_proxy_ifnot_assistant"] = "ProxyCF" if opt.get("CF_proxy_alt", True) else None
             proxytools.add_domain_retried(
                 domain, proxy__type=opt["forced_proxy"], delete="SSL"
             )
+            if not channel_proxy_list(opt["url_save"]):
+                opt["proxy_web"] = False
+                opt["proxy_addr_forced"] = None
+                opt["forced_proxy"] = None
+                opt["forced_proxy_ifnot_assistant"] = None
+                if opt.get("canonical", {}):
+                    opt["canonical"]["proxy_web"] = opt["proxy_web"]
+                    opt["canonical"]["proxy_addr_forced"] = opt["proxy_addr_forced"]
+                    opt["canonical"]["forced_proxy"] = opt["forced_proxy"]
+                    opt["canonical"]["forced_proxy_ifnot_assistant"] = opt["forced_proxy_ifnot_assistant"]
             return downloadpage(opt["url_save"], **opt)
 
         if (

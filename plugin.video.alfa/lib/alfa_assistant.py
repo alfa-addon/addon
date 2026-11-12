@@ -28,12 +28,14 @@ DEBUG = config.get_setting("debug_report", default=False)
 DATA_PATH = config.get_data_path()
 RUNTIME_PATH = config.get_runtime_path()
 ASSISTANT_SERVERS = []
+ASSISTANT_SERVERS_DICT = {}
 ASSISTANT_SERVERS_AGE = 0.0
 ASSISTANT_LOCAL = "127.0.0.1"
 ASSISTANT_SERVER = "http://%s" % ASSISTANT_LOCAL
 ASSISTANT_MODE = "este"
 ASSISTANT_SERVER_PORT = 48884
 ASSISTANT_SERVER_PORT_PING = 48886
+VERSION_REQ = None
 URL_CALL = "%s:%s" % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT)
 URL_PING = "%s:%s" % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT_PING)
 isAlfaAssistantOpen = False
@@ -46,6 +48,7 @@ android_15 = False
 def check_assistant_servers(time1=timer1, time2=timer2):
     global \
         ASSISTANT_SERVERS, \
+        ASSISTANT_SERVERS_DICT, \
         ASSISTANT_SERVERS_AGE, \
         window, \
         isAlfaAssistantOpen, \
@@ -59,17 +62,19 @@ def check_assistant_servers(time1=timer1, time2=timer2):
         )
 
         if ASSISTANT_SERVERS:
-            ASSISTANT_SERVERS = eval(ASSISTANT_SERVERS)
+            ASSISTANT_SERVERS_DICT = eval(ASSISTANT_SERVERS)
+            ASSISTANT_SERVERS = list(ASSISTANT_SERVERS_DICT.keys())
             if ASSISTANT_SERVERS_AGE < time.time():
                 ASSISTANT_SERVERS = []
-        if DEBUG:
-            logger.debug(
-                "1: servers: %s / age: %s"
-                % (
-                    ASSISTANT_SERVERS,
-                    round((ASSISTANT_SERVERS_AGE - time.time()) / 60, 2),
+                ASSISTANT_SERVERS_DICT = {}
+            if DEBUG and ASSISTANT_SERVERS:
+                logger.debug(
+                    "1: servers: %s / age: %s"
+                    % (
+                        ASSISTANT_SERVERS_DICT,
+                        round((ASSISTANT_SERVERS_AGE - time.time()) / 60, 2),
+                    )
                 )
-            )
 
         if not ASSISTANT_SERVERS:
             ASSISTANT_SERVERS = config.get_setting(
@@ -77,20 +82,23 @@ def check_assistant_servers(time1=timer1, time2=timer2):
             ).split(",")
             if not ASSISTANT_SERVERS[-1]:
                 del ASSISTANT_SERVERS[-1]
-            window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS))
+            find_webview_version()
+            window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS_DICT))
             ASSISTANT_SERVERS_AGE = time.time() + time1 * 60
             window.setProperty("alfa_assistant_servers_age", str(ASSISTANT_SERVERS_AGE))
             if DEBUG:
                 logger.debug(
                     "2: servers: %s / age: %s"
                     % (
-                        ASSISTANT_SERVERS,
+                        ASSISTANT_SERVERS_DICT,
                         round((ASSISTANT_SERVERS_AGE - time.time()) / 60, 2),
                     )
                 )
 
         for x, server in enumerate(ASSISTANT_SERVERS):
             ASSISTANT_SERVERS[x] = "http://%s" % server.replace("http://", "")
+            if not ASSISTANT_SERVERS_DICT:
+                ASSISTANT_SERVERS_DICT[server.replace("http://", "")] = {"vev_wvb": 138}
 
         check_assistant_playing(time1=time1, time2=time2)
         isAlfaAssistantOpen = False
@@ -105,6 +113,7 @@ def check_assistant_servers(time1=timer1, time2=timer2):
 def check_assistant_playing(time1=timer1, time2=timer2):
     global \
         ASSISTANT_SERVERS, \
+        ASSISTANT_SERVERS_DICT, \
         ASSISTANT_SERVERS_AGE, \
         window, \
         ASSISTANT_SERVER, \
@@ -112,6 +121,8 @@ def check_assistant_playing(time1=timer1, time2=timer2):
         isAlfaAssistantOpen, \
         URL_CALL, \
         URL_PING
+
+    found = True
 
     try:
         ASSISTANT_REMOTE = filetools.join(
@@ -143,8 +154,9 @@ def check_assistant_playing(time1=timer1, time2=timer2):
                     )
                 )
             if len(ASSISTANT_SERVERS) > 1:
-                del ASSISTANT_SERVERS[x]
-                window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS))
+                ASSISTANT_SERVERS.remove(server)
+                ASSISTANT_SERVERS_DICT.pop(server.replace("http://", ""))
+                window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS_DICT))
                 ASSISTANT_SERVERS_AGE = time.time() + time2 * 60
                 window.setProperty(
                     "alfa_assistant_servers_age", str(ASSISTANT_SERVERS_AGE)
@@ -157,14 +169,41 @@ def check_assistant_playing(time1=timer1, time2=timer2):
 
         if ASSISTANT_SERVERS_save != ASSISTANT_SERVERS:
             isAlfaAssistantOpen = False
-        ASSISTANT_SERVER = (
-            ASSISTANT_SERVERS[0] if ASSISTANT_SERVERS else "http://%s" % ASSISTANT_LOCAL
-        )
+
+        if VERSION_REQ and isinstance(VERSION_REQ, int):
+            ASSISTANT_SERVERS_save = ASSISTANT_SERVERS[:]
+            for x, server in enumerate(ASSISTANT_SERVERS):
+                if (
+                    ASSISTANT_SERVERS_DICT.get(server.replace("http://", ""))
+                    and ASSISTANT_SERVERS_DICT[server.replace("http://", "")].get("vev_wvb", 138) < VERSION_REQ
+                ):
+                    ASSISTANT_SERVERS_save.remove(server)
+            if not ASSISTANT_SERVERS_save:
+                found = False
+                ASSISTANT_SERVERS_save = ASSISTANT_SERVERS[:]
+            ASSISTANT_SERVER = (
+                ASSISTANT_SERVERS_save[0] if ASSISTANT_SERVERS_save else "http://%s" % ASSISTANT_LOCAL
+            )
+        else:
+            ASSISTANT_SERVER = (
+                ASSISTANT_SERVERS[0] if ASSISTANT_SERVERS else "http://%s" % ASSISTANT_LOCAL
+            )
+
         ASSISTANT_MODE = (
             "este"
-            if ASSISTANT_LOCAL in ASSISTANT_SERVER
+            if (
+                ASSISTANT_LOCAL in ASSISTANT_SERVER
+                or (
+                    not found 
+                    and "http://%s" % ASSISTANT_LOCAL in ASSISTANT_SERVERS 
+                    and not ASSISTANT_SERVERS_DICT.get(ASSISTANT_LOCAL, {}).get("wvbVersion")
+                )
+            )
             else "otro"
         )
+        if ASSISTANT_MODE == "este" and not found:
+            ASSISTANT_SERVER = "http://%s" % ASSISTANT_LOCAL
+
         if config.get_setting("assistant_mode").lower() != ASSISTANT_MODE:
             config.set_setting("assistant_mode", ASSISTANT_MODE)
         URL_CALL = "%s:%s" % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT)
@@ -173,13 +212,38 @@ def check_assistant_playing(time1=timer1, time2=timer2):
             logger.debug(
                 "4: servers: %s / age: %s"
                 % (
-                    ASSISTANT_SERVERS,
+                    ASSISTANT_SERVERS_DICT,
                     round((ASSISTANT_SERVERS_AGE - time.time()) / 60, 2),
                 )
             )
 
     except Exception:
         logger.error(traceback.format_exc())
+
+    return found
+
+
+def find_webview_version():
+    global ASSISTANT_SERVERS_DICT
+
+    for server in ASSISTANT_SERVERS:
+        resp = httptools.downloadpage(
+            "http://%s:%s/ping" % (server.replace("http://", ""), ASSISTANT_SERVER_PORT_PING),
+            timeout=3,
+            ignore_response_code=True,
+            alfa_s=True,
+            retry_alt=False,
+            proxy_retries=0,
+        )
+
+        ASSISTANT_SERVERS_DICT[server] = {"vev_wvb": 138}
+        if resp.sucess:
+            try:
+                if resp.json.get("wvbVersion", "") and '.' in resp.json["wvbVersion"]:
+                    ASSISTANT_SERVERS_DICT[server] = resp.json.copy()
+                    ASSISTANT_SERVERS_DICT[server]["vev_wvb"] = int(resp.json["wvbVersion"].split(".")[0])
+            except Exception:
+                pass
 
 
 check_assistant_servers()
@@ -310,6 +374,8 @@ def get_js_result(
     useAdvancedWebView=False,
     cleanObjects=False,
     formatJSdata=False,
+    retry=True,
+    ver_req=None,
 ):
     return get_generic_call(
         "getJSResult",
@@ -342,6 +408,8 @@ def get_js_result(
         useAdvancedWebView,
         cleanObjects,
         formatJSdata,
+        retry,
+        ver_req,
     )
 
 
@@ -382,6 +450,8 @@ def get_source_by_page_finished(
     useAdvancedWebView=False,
     cleanObjects=False,
     formatJSdata=False,
+    retry=True,
+    ver_req=None,
 ):
     return get_generic_call(
         "getSourceByPageFinished",
@@ -414,6 +484,8 @@ def get_source_by_page_finished(
         useAdvancedWebView,
         cleanObjects,
         formatJSdata,
+        retry,
+        ver_req,
     )
 
 
@@ -454,6 +526,8 @@ def get_urls_by_page_finished(
     useAdvancedWebView=False,
     cleanObjects=False,
     formatJSdata=False,
+    retry=True,
+    ver_req=None,
 ):
     return get_generic_call(
         "getUrlsByPageFinished",
@@ -486,6 +560,8 @@ def get_urls_by_page_finished(
         useAdvancedWebView,
         cleanObjects,
         formatJSdata,
+        retry,
+        ver_req,
     )
 
 
@@ -623,6 +699,7 @@ def get_generic_call(
     cleanObjects=False,
     formatJSdata=False,
     retry=True,
+    ver_req=None,
 ):
     EXTRA_TIMEOUT_PLUS = 0
     debug = debug or debugGlobal
@@ -634,15 +711,19 @@ def get_generic_call(
         ASSISTANT_SERVERS, \
         ASSISTANT_SERVERS_AGE, \
         ASSISTANT_SERVER, \
-        ASSISTANT_MODE
+        ASSISTANT_SERVERS_DICT, \
+        ASSISTANT_MODE, \
+        VERSION_REQ
     try:
         if isinstance(timeout, (tuple, list)):
             timeout = timeout[1]
     except Exception:
         timeout = None
+    if isinstance(ver_req, int):
+        VERSION_REQ = ver_req
 
     if endpoint not in ["ping", "getWebViewInfo", "update", "quit", "terminate"]:
-        res = open_alfa_assistant(closeAfter, alfa_s=alfa_s)
+        res = open_alfa_assistant(closeAfter, alfa_s=alfa_s, ver_req=VERSION_REQ)
         if not alfa_s:
             logger.info("##Assistant Endpoint: %s, Status: %s" % (endpoint, str(res)))
         if not res:
@@ -873,7 +954,8 @@ def get_generic_call(
             assistant_servers = []
             for url in ASSISTANT_SERVERS:
                 assistant_servers += [url.replace("http://", "")]
-            window.setProperty("alfa_assistant_servers", str(assistant_servers))
+            find_webview_version()
+            window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS_DICT))
             ASSISTANT_SERVERS_AGE = time.time() + time2 * 60
             window.setProperty("alfa_assistant_servers_age", str(ASSISTANT_SERVERS_AGE))
             if config.get_setting("assistant_mode").lower() != ASSISTANT_MODE:
@@ -882,7 +964,7 @@ def get_generic_call(
             logger.debug(
                 "C: servers: %s / res: %s / age: %s / code: %s"
                 % (
-                    ASSISTANT_SERVERS,
+                    ASSISTANT_SERVERS_DICT,
                     sucess,
                     round((ASSISTANT_SERVERS_AGE - time.time()) / 60, 2),
                     str(code),
@@ -986,6 +1068,7 @@ def get_generic_call(
                         '##Assistant "%s" TRUE, timeout %s: %s'
                         % (endpoint, timeout + EXTRA_TIMEOUT, str(data_ret))
                     )
+
         except Exception:
             data_ret = data
             logger.error(
@@ -998,7 +1081,7 @@ def get_generic_call(
                 logger.debug(
                     "D: servers: %s / age: %s"
                     % (
-                        ASSISTANT_SERVERS,
+                        ASSISTANT_SERVERS_DICT,
                         round((ASSISTANT_SERVERS_AGE - time.time()) / 60, 2),
                     )
                 )
@@ -1094,15 +1177,18 @@ def open_alfa_assistant(
     retry=False,
     assistantLatestVersion=True,
     alfa_s=False,
+    ver_req=None,
 ):
     global \
         isAlfaAssistantOpen, \
         URL_PING, \
         URL_CALL, \
         ASSISTANT_SERVERS, \
+        ASSISTANT_SERVERS_DICT, \
         ASSISTANT_SERVERS_AGE, \
         ASSISTANT_SERVER, \
-        ASSISTANT_MODE
+        ASSISTANT_MODE, \
+        VERSION_REQ
     version = "alfa-mobile-assistant.version"
     if PLATFORM not in ["android", "atv2"]:
         version = ""
@@ -1110,6 +1196,10 @@ def open_alfa_assistant(
 
     if ASSISTANT_SERVERS_AGE < time.time():
         check_assistant_servers(time1=timer1, time2=timer2)
+    VERSION_REQ = None
+    if ver_req and isinstance(ver_req, int):
+        VERSION_REQ = ver_req
+        check_assistant_playing(time1=timer1, time2=timer2)
 
     if not isAlfaAssistantOpen or android_15:
         try:
@@ -1129,7 +1219,7 @@ def open_alfa_assistant(
 
                 if not android_15:
                     ver_upd = get_generic_call(
-                        "ping", timeout=2 - EXTRA_TIMEOUT, alfa_s=True, retry=False
+                        "ping", timeout=2 - EXTRA_TIMEOUT, alfa_s=True, retry=False, ver_req=VERSION_REQ
                     )
                 else:
                     ver_upd = None
@@ -1155,9 +1245,19 @@ def open_alfa_assistant(
                         timeout=1 - EXTRA_TIMEOUT,
                         alfa_s=True,
                         retry=False,
+                        ver_req=VERSION_REQ,
                     )
                     if res:
                         if isinstance(res, dict):
+                            try:
+                                if res.get("wvbVersion", "") and '.' in res["wvbVersion"]:
+                                    ASSISTANT_SERVERS_DICT[ASSISTANT_SERVER.replace("http://", "")] = res.copy()
+                                    ASSISTANT_SERVERS_DICT[ASSISTANT_SERVER.replace("http://", "")]["vev_wvb"] \
+                                                            = int(res["wvbVersion"].split(".")[0])
+                                    window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS_DICT))
+                                    check_assistant_playing(time1=timer1, time2=timer2)
+                            except Exception:
+                                logger.error(traceback.format_exc())
                             check_webview_version(res.get("wvbVersion", ""))
                             if not getWebViewInfo:
                                 res = res.get("assistantVersion", "")
@@ -1179,10 +1279,19 @@ def open_alfa_assistant(
 
             else:
                 res = get_generic_call(
-                    "getWebViewInfo", timeout=3 - EXTRA_TIMEOUT, alfa_s=True
+                    "getWebViewInfo", timeout=3 - EXTRA_TIMEOUT, alfa_s=True, ver_req=VERSION_REQ
                 )
                 if res:
                     if isinstance(res, dict):
+                        try:
+                            if res.get("wvbVersion", "") and '.' in res["wvbVersion"]:
+                                ASSISTANT_SERVERS_DICT[ASSISTANT_SERVER.replace("http://", "")] = res.copy()
+                                ASSISTANT_SERVERS_DICT[ASSISTANT_SERVER.replace("http://", "")]["vev_wvb"] \
+                                                        = int(res["wvbVersion"].split(".")[0])
+                                window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS_DICT))
+                                check_assistant_playing(time1=timer1, time2=timer2)
+                        except Exception:
+                            logger.error(traceback.format_exc())
                         check_webview_version(res.get("wvbVersion", ""))
                         if not getWebViewInfo:
                             res = res.get("assistantVersion", "")
@@ -1266,7 +1375,9 @@ def close_alfa_assistant(retryIfTimeout=False):
             "quit", timeout=1 - EXTRA_TIMEOUT, alfa_s=True, retry=False
         )
 
-        if retryIfTimeout:
+        if (retryIfTimeout
+            and ASSISTANT_MODE == "este"
+        ):
             try:
                 if not isinstance(retryIfTimeout, bool):
                     if "ead timed out" not in retryIfTimeout.code:
@@ -1287,7 +1398,7 @@ def close_alfa_assistant(retryIfTimeout=False):
                     ):
                         time.sleep(10)
                     time.sleep(5)
-                    res = open_alfa_assistant(getWebViewInfo=True, retry=True)
+                    res = open_alfa_assistant(getWebViewInfo=True, retry=True, ver_req=VERSION_REQ)
             except Exception:
                 logger.error(traceback.format_exc())
 
@@ -2707,7 +2818,7 @@ def install_alfa_assistant(update=False, remote="", verbose=VERBOSE):
             if android_version >= 10:
                 app_active = False
                 res = open_alfa_assistant(
-                    getWebViewInfo=True, assistantLatestVersion=False, retry=True
+                    getWebViewInfo=True, assistantLatestVersion=False, retry=True, ver_req=VERSION_REQ
                 )
                 respuesta = execute_in_alfa_assistant_with_cmd(
                     cmd, dataURI=dataURI % version_mod
