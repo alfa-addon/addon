@@ -1393,9 +1393,8 @@ def downloadpage(url, **opt):
         req_headers["Referer"] = opt.get("referer")
 
     # Headers pasados como parametros
-    opt["headers_save"] = opt.get("headers_save", {}) or opt.get("headers", {})
-    if not opt["headers_save"]: opt["headers_save"] = {}
-    opt["headers"] = opt["headers_save"].copy()
+    opt["headers_save"] = dict(opt.get("headers_save") or opt.get("headers") or {})
+    opt["headers"] = dict(opt["headers_save"])
     if opt.get("headers", None) is not None:
         if not opt.get("replace_headers", False):
             req_headers.update(dict(opt["headers"]))
@@ -1853,7 +1852,7 @@ def downloadpage(url, **opt):
                     from . import proxytools_py3 as proxytools
                 domain = obtain_domain(opt["url_save"], sub=True)
                 opt["post"] = opt["post_save"]
-                opt["headers"] = opt["headers_save"].copy()
+                opt["headers"] = dict(opt["headers_save"])
                 opt.pop('headers_proxy', {})
                 opt["proxy_web"] = False
                 opt["proxy_retries"] = 1 if not TEST_ON_AIR else 0
@@ -1921,7 +1920,7 @@ def downloadpage(url, **opt):
                 if isinstance(opt["timeout"], float):
                     opt["timeout"] += 3.0
                 opt["post"] = opt["post_save"]
-                opt["headers"] = opt["headers_save"].copy()
+                opt["headers"] = dict(opt["headers_save"])
                 opt.pop('headers_proxy', {})
                 return downloadpage(opt["url_save"], **opt)
 
@@ -1992,7 +1991,7 @@ def downloadpage(url, **opt):
         ):
             update_alfa_domain_web_list(url, response_code, proxy_data, **opt)
             url = opt["url_save"]
-            opt["headers"] = opt["headers_save"].copy()
+            opt["headers"] = dict(opt["headers_save"])
             opt.pop('headers_proxy', {})
             domain = obtain_domain(url, sub=True)
             opt["post"] = opt["post_save"]

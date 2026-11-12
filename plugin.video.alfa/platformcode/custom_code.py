@@ -1813,17 +1813,11 @@ def verify_tor_availability(strict=False, reset=False, alfa_s=False):
 
             tor_proxy = config.get_setting('tor_proxy', server='torrent', default='')
             if tor_proxy:
-                tor_proxy = tor_proxy.split(',')
-                proxy_TOR = tor_proxy[0].split(':')[0]
-                port_TOR = tor_proxy[0].split(':')[-1]
-                proxies_TOR = []
-                for prox in tor_proxy:
-                    if not prox: continue
-                    proxies_TOR += [prox]
+                proxies_TOR = [prox.strip() for prox in tor_proxy.split(',') if prox.strip()]
 
             for url in url_TOR_test:
                 for prox in proxies_TOR:
-                    proxy_TOR = '%s://%s' % (sockt_TOR, prox)
+                    proxy_TOR = prox if '://' in prox else '%s://%s' % (sockt_TOR, prox)
                     port_TOR = proxy_TOR.split(':')[-1]
                     try:
                         r = requests.get(url, proxies={'https': proxy_TOR, 'http': proxy_TOR}, timeout=(3, 10))
@@ -1847,7 +1841,7 @@ def verify_tor_availability(strict=False, reset=False, alfa_s=False):
                     except Exception as e:
                         logger.info('TOR no está disponible: Error: %s: %s' % (str(e), proxy_TOR), force=True)
 
-                if sockt_TOR in window.getProperty("alfa_cached_TOR_proxy"):
+                if window.getProperty("alfa_cached_TOR_proxy") != "NO":
                     break
 
         except Exception as e:

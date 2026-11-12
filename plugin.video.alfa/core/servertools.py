@@ -465,12 +465,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                     proxy__ = server_module.response
 
                 for x, video_url in enumerate(video_urls_save):
-                    if '720' in video_url[0]:
-                        video_urls[x][1] = loop_up_proxy(video_url[1], proxy__)
-                        break
-                else:
-                    if video_urls_save:
-                        video_urls[0][1] = loop_up_proxy(video_urls_save[0][1], proxy__)
+                    video_urls[x][1] = loop_up_proxy(video_url[1], proxy__)
             except Exception:
                 logger.error("Error en el servidor: %s: %s" % (server, video_urls_save))
                 logger.error(traceback.format_exc())

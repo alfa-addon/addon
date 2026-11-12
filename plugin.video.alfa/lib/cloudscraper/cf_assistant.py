@@ -1068,19 +1068,20 @@ def get_source(
                     domain_source = httptools.obtain_domain(url_domain_source, sub=True, point=True).rstrip("/") + "/"
                     url_domain_source = url_domain_source.replace(host_name_source, domain_source)
                     for url_domain_ in url_domain_list:
-                        if not scrapertools.find_single_match(domain_source.rstrip("/"), url_domain_) \
-                                and url_domain_source != url_domain_ \
-                                and domain_source != url_domain_:
-                            urls_ignored += [html_source.get("url", "")]
-                            for gov_block in gov_blocks:
-                                if gov_block in html_source.get("url", ""):
-                                    retry = True
-                                    data_assistant["cookies"] = None
-                            if not alfa_s:
-                                logger.debug("Url ignored: %s" % html_source.get("url", ""))
-                            continue
-                        url_domain_alt += [url_domain_]
-                        break
+                        if scrapertools.find_single_match(domain_source.rstrip("/"), url_domain_) \
+                                or url_domain_source == url_domain_ \
+                                or domain_source == url_domain_:
+                            url_domain_alt += [url_domain_]
+                            break
+                    else:
+                        urls_ignored += [html_source.get("url", "")]
+                        for gov_block in gov_blocks:
+                            if gov_block in html_source.get("url", ""):
+                                retry = True
+                                data_assistant["cookies"] = None
+                        if not alfa_s:
+                            logger.debug("Url ignored: %s" % html_source.get("url", ""))
+                        continue
                     if not alfa_s:
                         logger.debug("Url accepted: %s" % html_source.get("url", ""))
                     try:
