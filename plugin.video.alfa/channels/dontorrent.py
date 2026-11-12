@@ -29,9 +29,9 @@ debug = config.get_setting('debug_report', default=False)
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.tips/"], 
-             'host_alt_new': ["https://dontorrent.tips/"], 
-             'host_black_list': ["https://dontorrent.diy/", "https://dontorrent.channel/"
+             'host_alt': ["https://dontorrent.shopping/"], 
+             'host_alt_new': ["https://dontorrent.shopping/"], 
+             'host_black_list': ["https://dontorrent.tips/", "https://dontorrent.diy/", "https://dontorrent.channel/"
                                  "https://dontorrent.meme/", "https://dontorrent.moi/", "https://divxatope.net/", 
                                  "https://dontorrent.supply/", "https://dontorrent.soccer/", "https://dontorrent.management/", 
                                  "https://dontorrent.review/", "https://dontorrent.support/", "https://dontorrent.science/", 
