@@ -358,8 +358,12 @@ def findvideos(item):
     for video in content:
         if not "html?v=1" in video['url']:
             url = video['url']
-            if "Latino/Inglés" in video['lang']: video['lang'] = "DUAL"
-            itemlist.append(Item(channel=item.channel, server=servertools.get_server_from_url(url), url=url, action='play', quality=video['quality'],
+            devuelve = servertools.findvideos(url, True)
+            if devuelve:
+                url = devuelve[0][1]
+                server = devuelve[0][2]
+            if "Latino" in video['lang']: video['lang'] = "LAT"
+            itemlist.append(Item(channel=item.channel, server=server, url=url, action='play', quality=video['quality'],
                                  language=video['lang'], infoLabels=item.infoLabels))
             # itemlist.append(Item(channel=item.channel, title='%s', url=video['url'], action='play', quality=video['quality'],
                                 # language=video['lang'], infoLabels=item.infoLabels))

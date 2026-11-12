@@ -3,18 +3,15 @@
 # -*- Created for Rebel-addon -*-
 # -*- By the Rebel Developer -*-
 
-import sys
 import re
 
-from core import urlparse
-from platformcode import config, logger, platformtools
+from platformcode import config, logger
 from core.item import Item
-from core import httptools, scrapertools, jsontools, tmdb
-from core import servertools, channeltools
+from core import httptools, scrapertools, tmdb
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
-from modules import filtertools
-from modules import autoplay
+
+from lib import planbtools
 
 
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'sub': 'VOSE'}
@@ -39,14 +36,14 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'repelishd', 
              'host': config.get_setting("current_host", 'repelishd', default=''), 
-             'host_alt': ["https://cinehdplus.gratis/"], 
-             'host_black_list': ["https://cinehdplus.cam/"], 
+             'host_alt': ["https://cinehdplus.surf/"], 
+             'host_black_list': ["https://cinehdplus.ceo/", "https://cinehdplus.gratis/", "https://cinehdplus.cam/"], 
              'pattern': ['href="?([^"|\s*]+)["|\s*]\s*title='], 
              # 'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              # 'cf_assistant': False, 'CF_stat': True, 
              # 'CF': False, 'CF_test': False, 'alfa_s': True
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'CF': False, 'CF_test': False, 'alfa_s': True, 'host_alt_findb': [2,11]
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
@@ -55,26 +52,11 @@ def mainlist(item):
     logger.info()
     itemlist = list()
     
-    autoplay.init(item.channel, list_servers, list_quality)
-    
-    itemlist.append(Item(channel=item.channel, title="RepelisHD Castellano", action="submenu", url=host, thumbnail=thumbes, extra="Castellano"))
-    itemlist.append(Item(channel=item.channel, title="RepelisHD Latino", action="submenu", url=host, thumbnail=thumbmx, extra="Latino"))
-    itemlist.append(Item(channel=item.channel, title="RepelisHD Vose", action="submenu", url=host, thumbnail=thumbus, extra="sub"))
-    
-    autoplay.show_option(item.channel, itemlist)
-    
-    return itemlist
-
-
-def submenu(item):
-    logger.info()
-    itemlist = list()
-    
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="list_all", url="%s%s/page/1/?language=%s" % (host, "cine", item.extra), thumbnail=get_thumb("movies", auto=True), extra=item.extra))
-    itemlist.append(Item(channel=item.channel, title="Series", action="list_all", url="%s%s/page/1/?language=%s" % (host, "series", item.extra), thumbnail=get_thumb("tvshows", auto=True), extra=item.extra))
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url="%s%s/page/1/?language=%s" % (host, "peliculas", item.extra), thumbnail=get_thumb("genres", auto=True), extra=item.extra))
-    itemlist.append(Item(channel=item.channel, title="Años", action="anno", url=host, thumbnail=get_thumb("year", auto=True), extra=item.extra))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host, thumbnail=get_thumb("search", auto=True), extra=item.extra))
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="list_all", url="%s%s/page/1/" % (host, "cine"), thumbnail=get_thumb("movies", auto=True), extra=item.extra))
+    itemlist.append(Item(channel=item.channel, title="Series", action="list_all", url="%s%s/page/1/" % (host, "series"), thumbnail=get_thumb("tvshows", auto=True), extra=item.extra))
+    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url="%s%s/page/1/" % (host, "peliculas"), thumbnail=get_thumb("genres", auto=True), extra=item.extra))
+    itemlist.append(Item(channel=item.channel, title="Años", action="anno", url=host, thumbnail=get_thumb("year", auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host, thumbnail=get_thumb("search", auto=True)))
     
     return itemlist
 
@@ -103,7 +85,6 @@ def list_all(item):
         lang = list()
         url = elem.a["href"]
         title = elem.img["alt"]
-        quality = elem.find(class_='quality').text.strip()
         try:
             thumb = elem.img["data-src"]
         except:
@@ -118,19 +99,20 @@ def list_all(item):
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, 
                         language=lang, infoLabels={"year": year})
         
-        if re.match(r"s\d+-e\d+", quality):
+        es_serie = bool(re.search(r"/series/", item.url))
+        
+        if es_serie:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.contentType = 'tvshow'
         else:
             new_item.contentTitle = title
             new_item.action = "findvideos"
+            new_item.contentType = 'movie'
         
         itemlist.append(new_item)
     
     tmdb.set_infoLabels_itemlist(itemlist, True)
-    
-    for itm in itemlist:
-        itm.extra = item.extra
     
     try:
         next_page = soup.find(class_="catalog__paginator").find_all("a")[-1]
@@ -193,19 +175,38 @@ def seasons(item):
     
     infoLabels = item.infoLabels
     
-    soup = create_soup(item.url)
-    matches = soup.find('div', class_='tt_season').find_all("a")
-    for elem in matches:
-        season = elem.text.strip()
+    soup = None
+    if not infoLabels.get('imdb_id', ''):
+        soup = create_soup(item.url)
+        imdb = scrapertools.find_single_match(str(soup), r"imdb\s*=\s*'([^']+)'")
+        if imdb:
+            infoLabels['imdb_id'] = imdb
+            item.infoLabels['imdb_id'] = imdb
+
+    if infoLabels.get('number_of_seasons', ''):
+        numeros = [n for n in range(1, int(infoLabels['number_of_seasons'])+1)]
+    else:
+        reales = planbtools.host_alt_findb_fun(item, seasons=True)
+
+        if reales:
+            numeros = [str(n) for n in sorted(reales.keys())]
+        else:
+            if soup is None:
+                soup = create_soup(item.url)
+            bloque = soup.find('div', class_='tt_season')
+            if bloque:
+                numeros = [e.text.strip() for e in bloque.find_all("a")]
+            else:
+                maximo = scrapertools.find_single_match(str(soup), r"DEFAULT_MAX_SEASONS\s*=\s*(\d+)")
+                numeros = [str(n) for n in range(1, int(maximo) + 1)] if maximo else []
+    
+    for season in numeros:
         title = "Temporada %s" % season
         infoLabels["season"] = season
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
                              infoLabels=infoLabels))
     
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    
-    for itm in itemlist:
-        itm.extra = item.extra
     
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
@@ -226,104 +227,51 @@ def episodios(item):
 
 
 def episodesxseasons(item):
-    logger.info()
+    logger.info(item)
     itemlist = list()
     
     infoLabels = item.infoLabels
     season = infoLabels["season"]
     
-    try:
-        matches = create_soup(item.url).find("div", id="season-%s" % season).find("ul").find_all("li")
-    except:
-        return itemlist
-    for elem in matches:
-        cap = elem.a.text.strip()
-        # if int(cap) < 10:
-            # cap = "0%s" % cap
+    if infoLabels.get('temporada_num_episodios', '') or infoLabels.get('last_episode_to_air', ''):
+        numeros = [n for n in range(1, (int(infoLabels.get('last_episode_to_air', '') or infoLabels.get('temporada_num_episodios', ''))+1))]
+    else:
+        reales = planbtools.host_alt_findb_fun(item, seasons=True)
+        try:
+            de_lsrc = reales.get(int(season), []) if reales else []
+        except Exception:
+            de_lsrc = []
+        
+        if de_lsrc:
+            numeros = [str(n) for n in de_lsrc]
+        else:
+            soup = create_soup(item.url)
+            lista = None
+            try:
+                lista = soup.find("div", id="season-%s" % season).find("ul")
+            except Exception:
+                lista = None
+            
+            if lista:
+                numeros = [e.a.text.strip() for e in lista.find_all("li")]
+            else:
+                maximo = scrapertools.find_single_match(str(soup), r"DEFAULT_MAX_EPISODES\s*=\s*(\d+)")
+                numeros = [str(n) for n in range(1, int(maximo) + 1)] if maximo else []
+    
+    for cap in numeros:
         title = "%sx%s" % (season, cap)
         infoLabels['episode'] = cap
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='findvideos', infoLabels=infoLabels))
     
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
-    for itm in itemlist:
-        itm.extra = item.extra
-    
     return itemlist
 
 
 def findvideos(item):
     logger.info()
-    itemlist = list()
     
-    infoLabels = item.infoLabels
-    
-    soup = create_soup(item.url)
-    if infoLabels.get('season', ''):
-        patron = "serie-%s_%s" %(infoLabels['season'], infoLabels['episode'])
-        matches = soup.find('a', id=patron).parent
-        matches = soup.find('div', class_='mirrors')
-    
-    else:
-        url = soup.find('div', class_='player_contenedor').find("iframe")['src']
-        data = create_soup(url)
-        matches = data.find_all('ul', class_='_player-mirrors')
-    if infoLabels.get('season', ''):
-        for elem in matches.find_all('a'):
-            url = elem['data-link']
-            server = elem.text.strip()
-            itemlist.append(Item(
-                                    channel=item.channel,
-                                    contentTitle=item.contentTitle,
-                                    contentThumbnail=item.thumbnail,
-                                    infoLabels=item.infoLabels,
-                                    # language="Latino",
-                                    title='%s', action="play",
-                                    url=url
-                                   ))
-    else:
-        for elem in matches:
-            lang = elem['class'][1]
-            lang = CUSTOM_FILTER.get(lang, 'unknown')
-            if lang != item.extra:
-                logger.error("{} ({}) != {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
-                continue
-            else:
-                logger.error("{} ({}) == {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
-            matches = elem.find_all('li')
-            for url in matches:
-                server = url.text.strip()
-                url = url['data-link']
-                if "verhdlink" in url: continue
-                if url.startswith("//"):
-                    url = "https:%s" %url
-                itemlist.append(Item(
-                                        channel=item.channel,
-                                        contentTitle=item.contentTitle,
-                                        contentThumbnail=item.thumbnail,
-                                        infoLabels=item.infoLabels,
-                                        language=IDIOMAS.get(lang, ''),
-                                        title='%s', action="play",
-                                        url=url
-                                       ))
-    
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    
-    # Requerido para FilterTools
-    itemlist = filtertools.get_links(itemlist, item, list_language)
-    
-    # Requerido para AutoPlay
-    autoplay.start(itemlist, item)
-    
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-        itemlist.append(Item(channel=item.channel,
-                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                             url=item.url,
-                             action="add_pelicula_to_library",
-                             extra="findvideos",
-                             contentTitle=item.contentTitle))
-    
-    return itemlist
+    return planbtools.build_findvideos(canonical, list_language, item)
 
 
 def search(item, texto):

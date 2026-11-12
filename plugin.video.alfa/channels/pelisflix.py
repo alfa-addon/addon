@@ -25,8 +25,8 @@ list_servers = list(SERVER.values())
 canonical = {
              'channel': 'pelisflix', 
              'host': config.get_setting("current_host", 'pelisflix', default=''), 
-             'host_alt': ['https://pelisflix1.cc/'], 
-             'host_black_list': ['https://pelisflix1.autos/',
+             'host_alt': ['https://pelisflix1.cfd/'], 
+             'host_black_list': ['https://pelisflix1.cc/', 'https://pelisflix1.autos/',
                                  'https://pelisflix1.net/', 'https://pelisflix1.loan/', 'https://pelisflixhd.fit/',
                                  'https://pelisflixhd.click/', 'https://pelisflixhd.buzz/', 'https://pelisflixhd.biz/',
                                  'https://pelisflixhd.cam/', 'https://pelisflixhd.fun/', 'https://pelisflixhd.net/', 
@@ -220,7 +220,10 @@ def lista(item):
     itemlist = []
     soup = create_soup(item.url, referer=host)
     matches = soup.find_all("li", class_=re.compile(r"^post-\d+"))
+    # matches = soup.find('ul', class_='MovieList').find_all("li")
+    
     for elem in matches:
+        if "404" in elem.figure.img['data-src']: continue
         url = elem.a['href']
         title = elem.h2.text.strip()
         thumbnail = elem.figure.img['data-src']

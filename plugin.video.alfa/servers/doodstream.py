@@ -24,6 +24,9 @@ def test_video_exists(page_url):
     # Sacar el dominio de la url con https:// delante (scheme true)
     host = httptools.obtain_domain(page_url, scheme=True)
 
+    # Referer por defecto: la propia URL (puede ser un mirror que sirve 200 sin redirección)
+    redir = page_url
+
     # Crear headers con Referer
     headers = httptools.default_headers.copy()
     headers['Referer'] = page_url
@@ -49,6 +52,12 @@ def test_video_exists(page_url):
         else:
             logger.error("[Doodstream] El acceso al video está restringido.\n%s" % response.data)
             return False, "[Doodstream] El acceso al video está restringido. Reinténtalo más tarde"
+    if "Just a moment..." in response.data:
+        retries -= 1
+        if retries >= 0:
+            time.sleep(count - retries)
+            return test_video_exists(page_url)
+    
     elif response.code == 404:
         return False, "[Doodstream] El archivo no existe o ha sido borrado"
     elif response.code in [301, 302]:

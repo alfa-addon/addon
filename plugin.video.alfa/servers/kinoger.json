@@ -16,6 +16,10 @@
         "url": "https://\\1/api/v1/video?id=\\2"
       },
       {
+        "pattern": "https://(flizzmovies.rpmvid.com)/#([A-z0-9]+)",
+        "url": "https://\\1/api/v1/video?id=\\2"
+      },
+      {
         "pattern": "https://(holedk.easyvidplayer.com)/#([A-z0-9]+)",
         "url": "https://\\1/api/v1/video?id=\\2"
       },

@@ -1,7 +1,7 @@
 {
   "id": "osjonosu",
   "name": "Osjonosu",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "https://i.imgur.com/0mtPIEI.png",

@@ -307,7 +307,7 @@ def get_from_subdivx(sub_url, sub_data=None, sub_dir='', item=Item(), sub_url_al
         sub_url_alt = httptools.obtain_domain(sub_url, scheme=True).rstrip('/') + '/descargar.php?id='
         sub_url_alt += scrapertools.find_single_match(sub_url, r'\/(\d+)$')
     if not sub_dir:
-        sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
+        sub_dir = config.get_subtitles_path()
         filetools.mkdir(sub_dir)
 
     if not sub_data:
@@ -352,7 +352,7 @@ def get_from_subscene(sub_url, sub_data=None, sub_dir='', item=Item()):
         sub = False
         host = httptools.obtain_domain(sub_url, scheme=True)
         if not sub_dir:
-            sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
+            sub_dir = config.get_subtitles_path()
         # sub_dir_init = sub_dir
         sub_dir = filetools.join(sub_dir, sub_url.split('/')[-1])
         filetools.mkdir(sub_dir)
@@ -464,7 +464,7 @@ def get_from_subdl(sub_url, sub_data=None, sub_dir='', item=Item()):
     sub_url_alt = 'https://dl.%s/subtitle/' % httptools.obtain_domain(sub_url, scheme=False).rstrip('/')
     sub_url = sub_url.replace("&amp;", "&")
     if not sub_dir:
-        sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
+        sub_dir = config.get_subtitles_path()
         filetools.mkdir(sub_dir)
 
     if not sub_data:
@@ -502,6 +502,198 @@ def get_from_subdl(sub_url, sub_data=None, sub_dir='', item=Item()):
 
     else:
        logger.info('sub no valido')
+    return sub
+
+
+def _pistas_subtitulo(item):
+    """Pistas para casar un subtitulo con el fichero que se va a ver.
+
+    Se sacan del url y del titulo del item. NO del plot: es un texto largo y suelto y daria falsos
+    positivos (un "1080" o un "remux" perdidos en la sinopsis). Devuelve [] si no hay que rascar.
+    """
+    texto = ' '.join(str(x or '') for x in (getattr(item, 'url', ''),
+                                            getattr(item, 'title', ''),
+                                            getattr(item, 'contentTitle', ''))).lower()
+
+    pistas = [p for p in ('2160', '1080', '720', '480') if p in texto]
+    pistas += [p for p in ('remux', 'bluray', 'bdrip', 'brrip', 'webrip', 'web-dl', 'webdl',
+                           'hdtv', 'telesync', 'hdts', 'dvdrip', 'x264', 'x265', 'h264', 'h265')
+               if p in texto]
+
+    return pistas
+
+
+def _es_del_titulo(resultado, numero, temporada=0, episodio=0):
+    """Comprueba que el resultado es DE VERDAD de ese titulo (y de ese episodio).
+
+    Medido el 2026-10-15: si el imdbid no existe la API NO falla, devuelve 100 resultados de otras
+    peliculas (tt0000000 -> "Manhattan 1979"). Hay que mirar los campos para no dar gato por liebre:
+      - pelicula: IDMovieImdb tiene que ser el id pedido, sin el "tt" y sin ceros a la izquierda
+        (para tt0111161 la API devuelve "111161").
+      - serie: IDMovieImdb es el id del EPISODIO (1480055 para GoT S1E1); el de la serie va en
+        SeriesIMDBParent (944947). Se exigen los tres: serie, temporada y episodio.
+    """
+    def _num(valor):
+        try:
+            return int(str(valor).strip())
+        except Exception:
+            return -1
+
+    if temporada and episodio:
+        if _num(resultado.get('SeriesIMDBParent')) != _num(numero):
+            return False
+
+        return (_num(resultado.get('SeriesSeason')) == _num(temporada) and
+                _num(resultado.get('SeriesEpisode')) == _num(episodio))
+
+    return _num(resultado.get('IDMovieImdb')) == _num(numero)
+
+
+def _mejor_subtitulo(resultados, item, numero, temporada=0, episodio=0):
+    """De los resultados de opensubtitles, el .srt que mas se parece al fichero que se va a ver.
+
+    La API devuelve decenas de subtitulos, uno por release (medido el 2026-10-15: 65 para una
+    pelicula concreta), y quedarse con el primero es la forma clasica de acabar con los subtitulos
+    a destiempo. Primero se descarta lo que no es de este titulo (o de este episodio) y luego se
+    puntua cada candidato por las pistas que se puedan sacar del item. Sin pistas, o si todos
+    empatan, se queda el primero.
+    """
+    candidatos = [r for r in resultados
+                  if str(r.get('SubFormat', '')).lower() == 'srt' and r.get('ZipDownloadLink')
+                  and _es_del_titulo(r, numero, temporada, episodio)]
+
+    if not candidatos:
+        return None
+
+    pistas = _pistas_subtitulo(item)
+
+    if not pistas:
+        return candidatos[0]
+
+    mejor = candidatos[0]
+    mejor_puntos = -1
+
+    for candidato in candidatos:
+        nombre = str(candidato.get('SubFileName', '')).lower()
+        puntos = sum(1 for pista in pistas if pista in nombre)
+
+        if puntos > mejor_puntos:
+            mejor = candidato
+            mejor_puntos = puntos
+
+    return mejor
+
+
+def get_from_opensubtitles(imdb_id, temporada=0, episodio=0, sub_dir='', item=Item()):
+    """Subtitulo en espanol de opensubtitles, para una pelicula o para un episodio de serie.
+
+    Medido el 2026-10-15 contra la API legacy (rest.opensubtitles.org):
+      - pelicula: /search/imdbid-<id>/sublanguageid-spa
+      - serie:    /search/episode-<ep>/imdbid-<id>/season-<t>/sublanguageid-spa
+      - el ORDEN de los parametros es OBLIGATORIO: cualquier otro orden responde un 302 hacia un
+        host que se llama literalmente "_" y la peticion muere. De cuatro ordenes probados, solo
+        ese funciona.
+      - tmdbid NO lo acepta (400 "no valid parameters specified"): hace falta el imdb_id.
+      - httptools deja los bytes en .data (httptools.py:1714/1984). Escribir el zip como texto lo
+        corrompe ("BadZipFile: Bad offset for central directory", medido).
+
+    Devuelve la ruta del .srt, o '' si no hay nada. NUNCA lanza: si esto falla, el listado del
+    canal tiene que seguir funcionando igual.
+    """
+    sub = ''
+
+    if not imdb_id or not str(imdb_id).startswith('tt'):
+        return sub
+
+    # una serie sin episodio no se puede buscar: con el imdbid de la serie la API devuelve TODOS los
+    # episodios (medido: 100) y coger el primero seria dar un subtitulo de otro capitulo.
+    if temporada and not episodio:
+        logger.info("opensubtitles: serie sin episodio, no se busca")
+        return sub
+
+    numero = str(imdb_id)[2:]
+    resultados = None
+
+    try:
+        if temporada and episodio:
+            url = ("https://rest.opensubtitles.org/search/episode-%s/imdbid-%s/season-%s"
+                   "/sublanguageid-spa" % (int(episodio), numero, int(temporada)))
+        else:
+            url = "https://rest.opensubtitles.org/search/imdbid-%s/sublanguageid-spa" % numero
+
+        respuesta = httptools.downloadpage(url, headers={'User-Agent': 'TemporaryUserAgent'},
+                                           timeout=20)
+        resultados = respuesta.json
+    except Exception as e:
+        logger.error("opensubtitles: fallo la busqueda (%s)" % str(e)[:120])
+        return sub
+
+    if not isinstance(resultados, list) or not resultados:
+        logger.info("opensubtitles: sin resultados para %s S%sE%s"
+                    % (imdb_id, temporada, episodio))
+        return sub
+
+    elegido = _mejor_subtitulo(resultados, item, numero, temporada, episodio)
+
+    if not elegido:
+        logger.info("opensubtitles: ningun .srt utilizable para %s" % imdb_id)
+        return sub
+
+    sub_name = elegido.get('SubFileName', '')
+    zip_url = elegido.get('ZipDownloadLink', '')
+
+    if not sub_name or not zip_url:
+        return sub
+
+    if not sub_dir:
+        sub_dir = config.get_subtitles_path()
+    if not filetools.exists(sub_dir):
+        filetools.mkdir(sub_dir)
+    sub_name = filetools.basename(sub_name)
+    sub = filetools.join(sub_dir, sub_name)
+
+    # ya descargado en una busqueda anterior: no se vuelve a pedir (esto es lo que evita duplicar)
+    if filetools.exists(sub):
+        logger.info("opensubtitles: ya estaba en disco (%s)" % sub_name)
+        return sub
+
+    fichero_zip = filetools.join(sub_dir, sub_name + '.zip')
+
+    try:
+        descarga = httptools.downloadpage(zip_url, headers={'User-Agent': 'TemporaryUserAgent'},
+                                          timeout=30)
+
+        if not descarga.sucess or not descarga.data:
+            logger.error("opensubtitles: la descarga del zip no fue bien")
+            return ''
+
+        if not filetools.write(fichero_zip, descarga.data):
+            logger.error("opensubtitles: no se pudo escribir el zip")
+            return ''
+
+        try:
+            from core import ziptools
+            ziptools.ziptools().extract(fichero_zip, sub_dir)
+        except Exception as e:
+            logger.error("opensubtitles: no se pudo descomprimir (%s)" % str(e)[:120])
+            return ''
+
+        if not filetools.exists(sub):
+            logger.error("opensubtitles: tras descomprimir no aparece %s" % sub_name)
+            return ''
+    except Exception as e:
+        logger.error("opensubtitles: fallo la descarga (%s)" % str(e)[:120])
+        return ''
+    finally:
+        # el zip no hace falta para nada mas
+        try:
+            if filetools.exists(fichero_zip):
+                filetools.remove(fichero_zip, silent=True)
+        except Exception:
+            pass
+
+    logger.info("opensubtitles: subtitulo listo (%s)" % sub_name)
+
     return sub
 
 
@@ -547,12 +739,9 @@ def download_subtitles(item):
     else:
         subtitles = item.subtitle[:]
     item.subtitle = ''
+    subtitles_path = ''
 
     try:
-        subtitles_path = config.get_kodi_setting('subtitles.custompath')
-        if not subtitles_path:
-            subtitles_path = filetools.join(config.get_videolibrary_path(), "subtitles")
-            filetools.mkdir(subtitles_path)
 
         for x, subtitle in enumerate(subtitles):
             data_dl = ''
@@ -561,7 +750,10 @@ def download_subtitles(item):
                     item.subtitle = subtitle
                 continue
 
-            subtitle_path_name = filetools.join(subtitles_path, subtitle.split('/')[-1])
+            if not subtitles_path:
+                subtitles_path = config.get_subtitles_path()
+            filename = filetools.basename(urlparse.urlparse(subtitle).path) or 'subtitle.srt'
+            subtitle_path_name = filetools.join(subtitles_path, filename)
 
             for service, funtion in subtitle_services:
                 if service in httptools.obtain_domain(subtitle):
@@ -576,7 +768,7 @@ def download_subtitles(item):
             if not data_dl and not item.subtitle:
                 data_dl = httptools.downloadpage(subtitle.replace("&amp;", "&"), soup=True, headers=item.headers or {}, **kwargs)
 
-            if data_dl: 
+            if data_dl and data_dl.sucess and data_dl.data:
                 res = filetools.write(subtitle_path_name, data_dl.data)
                 if res and not item.subtitle:
                     item.subtitle = subtitle_path_name

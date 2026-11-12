@@ -672,6 +672,11 @@ def get_temp_file(filename):
     return temp
 
 
+def get_subtitles_path():
+    """Carpeta temporal exclusiva para los subtitulos automaticos de Alfa."""
+    return get_temp_file("alfa_subtitles/")
+
+
 def get_runtime_path():
     return translatePath(__settings__.getAddonInfo('Path'))
 

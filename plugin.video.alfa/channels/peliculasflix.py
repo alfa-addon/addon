@@ -20,6 +20,7 @@ from modules import autoplay
 from modules import filtertools
 from core.jsontools import json
 
+
 canonical = {
              'channel': 'peliculasflix', 
              'host': config.get_setting("current_host", 'peliculasflix', default=''), 
@@ -39,18 +40,18 @@ items_per_page = 10
 
 def read_api(query):
     logger.info()
-
+    
     post = json.dumps(query)
-
+    
     url = "https://fluxcedene.net/api/gql"
-
+    
     referer = host
-
+    
     headers = {
                 'Content-Type':'application/json',
                 'x-access-platform':rayo()
               }
-
+    
     response = httptools.downloadpage(url, headers=headers, post=post, referer=referer, ignore_response_code=True, hide_infobox=True)
     if response.code != 200:
         return False
@@ -59,36 +60,36 @@ def read_api(query):
 
 def mainlist(item):
     logger.info()
-
+    
     autoplay.init(item.channel, list_servers, list_quality)
-
+    
     itemlist = []
-
+    
     itemlist.append(Item(channel=item.channel, title="Películas",
                          action="list_all",
                          thumbnail=get_thumb('movies', auto=True),
                          url=host, c_type='peliculas'))
-
+    
     itemlist.append(Item(channel=item.channel, title="Por Género",
                          action="genres",
                          thumbnail=get_thumb('genres', auto=True),
                          url=host, c_type='peliculas'))
-
+    
     itemlist.append(Item(channel=item.channel, title="Por Idioma",
                          action="languages",
                          thumbnail=get_thumb('language', auto=True),
                          url=host, c_type='peliculas'))
-
+    
     itemlist.append(Item(channel=item.channel, title="Buscar",
                          action="search",
                          url=host,
                          thumbnail=get_thumb('search', auto=True),
                          c_type='search'))
-
+    
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality, list_quality)
-
+    
     autoplay.show_option(item.channel, itemlist)
-
+    
     return itemlist
 
 
@@ -96,13 +97,13 @@ def languages(item):
     logger.info()
     languages = get_all_languages()
     itemlist = list()
-
+    
     for lang in languages:
         itemlist.append(Item(channel=item.channel, title=lang['name'],
                              action="list_all", code_flix=lang['code_flix'],
                              thumbnail=get_thumb(IDIOMAS[lang['name']], auto=True),
-                             url=host, c_type='peliculas'))
-
+                             url=host, c_type='peliculas', extra=lang['name']))
+    
     return itemlist
 
 
@@ -128,14 +129,14 @@ def genres(item):
             +"  }\n"
             +"}\n"
             }
-
+    
     itemlist = list()
-
+    
     data_json = read_api(query)
-
+    
     if not data_json:
         return itemlist
-
+    
     for genre in data_json['data']['listGenres']:
         itemlist.append(Item(channel=item.channel, title=genre['name'],
                              action="list_all", slug=genre['slug'],
@@ -150,7 +151,7 @@ def list_all(item):
     page = 1
     if item.page:
         page = item.page
-
+    
     if item.c_type == 'peliculas':
         addfilter = {}
         addfilter["isPublish"] = True
@@ -188,43 +189,43 @@ def list_all(item):
                         +"  }\n"
                         +"}\n"
                 }
-
+    
     return list_all_query(item, query)
 
 
 def list_all_query(item, query):
     logger.info()
-
+    
     itemlist = list()
-
+    
     data_json = read_api(query)
-
+    
     if not data_json:
         return itemlist
-
+    
     page_info = []
     # logger.info(item.c_type, True)
     # logger.info(json.dumps(data_json, indent=4), True)
     content_list = []
-
+    
     if item.c_type == 'search':
         content_list = data_json['data']['searchFilm']
-
+    
     if item.c_type == 'peliculas':
         content_list = data_json['data']['paginationFilm']['items']
         page_info = data_json['data']['paginationFilm']['pageInfo']
-
+    
     # logger.info(json.dumps(content_list, indent=4), True)
-
+    
     if not content_list:
         return itemlist
-
+    
     for pelicula in content_list:
         if not pelicula.get('languages','') or not any(pelicula['languages']):
             continue
         # logger.info("Languages = {}".format(pelicula['languages']), True)
         item_args = {}
-
+        
         item_args['channel'] = item.channel
         item_args['slug'] = pelicula['slug']
         item_args['context'] = autoplay.context
@@ -235,17 +236,19 @@ def list_all_query(item, query):
         item_args['plot'] = pelicula['overview']
         item_args['action'] = 'findvideos'
         item_args['thumbnail'] = tmdb_thumb_path.format(pelicula['poster_path'])
+        if item.extra:
+            item_args['extra'] = item.extra
         
         # logger.info(item_args, True)
-
+        
         new_item = Item(**item_args)
-
+        
         new_item.context = filtertools.context(new_item, list_language, list_quality)
-
+        
         itemlist.append(new_item)
-
+    
     tmdb.set_infoLabels_itemlist(itemlist, force_no_year=True, seekTmdb=True)
-
+    
     # Paginacion
     if page_info:
         if page_info['hasNextPage']:
@@ -255,13 +258,13 @@ def list_all_query(item, query):
                                        page=page_info['currentPage']+1,
                                        thumbnail=get_thumb("next.png")
                                        ))
-
+    
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-
+    
     try:
         if texto != '':
             query = {
@@ -294,9 +297,9 @@ def search(item, texto):
 
 def findvideos(item):
     logger.info()
-
+    
     itemlist = []
-
+    
     query = {
             "operationName":"detailFilm",
             "variables":{"slug":item.slug},
@@ -320,49 +323,59 @@ def findvideos(item):
                         +"    __typename\n"
                         +"  }\n"
                         +"}\n"}
-
+    
     data_json = read_api(query)
     if not data_json:
         return itemlist
     # logger.info(json.dumps(data_json, indent=4), True)
     content_list = data_json['data']['detailFilm']['links_online']
-
+    
     # logger.info(json.dumps(content_list, indent=4), True)
-
+    
     if not content_list:
         return itemlist
-
+    
     content_list = sorted(content_list, key=lambda x: x['lang'], reverse=True)
-
+    
     for video in content_list:
-        itemlist.append(Item(channel=item.channel, title='%s', url=video['link'], action='play', quality='HD',
-                             language=get_language_string(video['lang']), infoLabels=item.infoLabels))
-
+        url = video['link']
+        lang = get_language_string(video['lang'])
+        
+        if item.extra and lang != item.extra:
+            # logger.error("{} ({}) != {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
+            logger.error("{} ({}) != {}".format(lang, lang, item.extra))
+            continue
+        else:
+            logger.error("{} ({}) == {}".format(lang, lang, item.extra))
+        
+        itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', quality='HD',
+                             language=lang, infoLabels=item.infoLabels))
+    
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
-
+    
     # Filtra los enlaces cuyos servidores no fueron resueltos por servertools
-
+    
     itemlist = [i for i in itemlist if i.title != "Directo"]
-
+    
     # Requerido para FilterTools
-
+    
     itemlist = filtertools.get_links(itemlist, item, list_language)
-
+    
     # Requerido para AutoPlay
-
+    
     autoplay.start(itemlist, item)
-
+    
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos' and not item.contentSerieName:
         itemlist.append(Item(channel=item.channel, title=config.get_localized_string(70146),
                              url=item.url, action="add_pelicula_to_library", extra="findvideos",
                              contentTitle=item.contentTitle))
-
+    
     return itemlist
 
 
 def get_all_languages():
     logger.info()
-
+    
     lang_data = [
         {
             "code_flix": "38",

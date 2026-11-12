@@ -152,8 +152,8 @@ def findvideos(item):
     
     if not soup:
         return itemlist
-    # soup = soup.find('div', class_='entry-content')
     soup = soup.find('div', class_='entry-inner')
+    
     matches = soup.find_all('iframe')
     for elem in matches:
         url = elem['src']
@@ -161,13 +161,8 @@ def findvideos(item):
             url = elem['data-src']
         itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
     if soup.button:
-        data = soup.find_all('script')[1]
-        # data = scrapertools.find_multiple_match(data, '<script type="text/javascript">([^<]+)')
-        # data = data.string
+        data = soup.find('script')
         data = str(data).replace('\\"', '"').replace("\/", "/")
-        # data = data
-        # logger.debug(isinstance(data, bytes))
-        # logger.debug(data)
         matches =  scrapertools.find_multiple_matches(data, '(?:src|SRC)="([^"]+)"')
         for url in matches:
             itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 

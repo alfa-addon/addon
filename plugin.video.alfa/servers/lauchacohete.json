@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://lauchacohete.top/player/[A-z0-9]+/)",
+        "pattern": "(https://(?:lauchacohete|barmonrey|paulinito)\\.\\w{2,4}/player/[A-Za-z0-9]+/)",
         "url": "\\1"
       }
     ]

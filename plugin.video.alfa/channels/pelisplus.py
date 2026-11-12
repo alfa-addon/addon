@@ -37,8 +37,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'pelisplus', 
              'host': config.get_setting("current_host", 'pelisplus', default=''), 
-             'host_alt': ["https://ww3.pelisplus.to/"], 
-             'host_black_list': ["https://home.pelisplus.lat/", "https://pelisplus.lat/",
+             'host_alt': ["https://www.pelisplushd.la/"], 
+             'host_black_list': ["https://ww3.pelisplus.to/", "https://home.pelisplus.lat/", "https://pelisplus.lat/",
                                  "https://pelisplus.mov/", "https://pelisplus.ninja/", "https://www.pelisplus.lat/", 
                                  "https://www.pelisplus.me/", "https://pelisplushd.net/","https://pelisplushd.to/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 'forced_proxy_ifnot_assistant': forced_proxy_opt,
@@ -56,16 +56,17 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url=host + "peliculas",
-                         type="movies",
+                         type="peliculas",
                          thumbnail=get_thumb('movies', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu", url=host + "series", 
-                         type="tv",
+                         type="series",
                          thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Anime", action="sub_menu", url=host + "animes",
                          type="animes",
                          thumbnail=get_thumb('anime', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Doramas", action="list_all", url=host + "doramas",
-                         content="serie", thumbnail=get_thumb('doramas', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Doramas", action="list_all", url=host + "generos/dorama",
+                         content="serie", 
+                         thumbnail=get_thumb('doramas', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search",
                          thumbnail=get_thumb('search', auto=True)))
     
@@ -79,6 +80,13 @@ def sub_menu(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=item.url,
                          thumbnail=get_thumb('all', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Estrenos", action="list_all", url=item.url + "/estrenos",
+                         thumbnail=get_thumb('all', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Populares", action="list_all", url=item.url + "/populares",
+                         thumbnail=get_thumb('all', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Año", action="section", url=host,
+                         type=item.type,
+                         thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host,
                          type=item.type,
                          thumbnail=get_thumb('genres', auto=True)))
@@ -102,23 +110,22 @@ def create_soup(url, referer=None, post=None, unescape=False):
 def list_all(item):
     logger.info()
     itemlist = list()
+    
     soup = create_soup(item.url)
-    matches = soup.find_all("article", class_="item") #re.compile(r"^pitem\d+")
+    matches = soup.find_all("a", class_="Posters-link") #re.compile(r"^pitem\d+")  .find('div', class_='Posters')
     for elem in matches:
-        url = elem.a['href']
+        url = elem['href']
         thumb = elem.img['src']
         if "placever.jpg" in thumb:
             thumb = elem.img['data-src']
-        title = elem.img['alt']
-        title2 = elem.h2.text.strip()
-        
-        year = scrapertools.find_single_match(title2, r"(\d{4})")
+        title = elem.p.text.strip()
+        year = scrapertools.find_single_match(title, r"(\d{4})")
         if not year:
             year = "-"
-        # if item.type and item.type.lower() not in url:
-            # continue
+        url = urlparse.urljoin(item.url,url)
+        thumb = urlparse.urljoin(item.url,thumb)
         new_item = Item(channel=item.channel, title=title, url= url, thumbnail=thumb, infoLabels={"year": year})
-
+        
         if "/pelicula/" in url:
             new_item.contentTitle = title
             new_item.action = "findvideos"
@@ -127,20 +134,19 @@ def list_all(item):
             new_item.contentSerieName = title
             new_item.action = "seasons"
             new_item.contentType = 'tvshow'
-
+        
         itemlist.append(new_item)
+    
     tmdb.set_infoLabels_itemlist(itemlist, True)
-    #  Paginación
-
+    
     try:
         next_page = soup.find('a', rel='next')['href']
         if next_page:
-            if not next_page.startswith(host):
-                next_page = host + next_page
+            next_page = urlparse.urljoin(item.url,next_page)
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
     except Exception:
         pass
-
+    
     return itemlist
 
 
@@ -148,7 +154,7 @@ def seasons(item):
     logger.info()
     itemlist = list()
     infoLabels = item.infoLabels
-    soup = create_soup(item.url).find("ul", id="seasonAll")
+    soup = create_soup(item.url).find("ul", role="tablist")
     matches = soup.find_all("li")
     for elem in matches:
         title = elem.text.strip()
@@ -156,94 +162,95 @@ def seasons(item):
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
                              infoLabels=infoLabels, contentType='season'))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
+    
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
-
+    
     return itemlist
 
 
 def episodios(item):
     logger.info()
     itemlist = []
+    
     templist = seasons(item)
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
-
+    
     return itemlist
 
 
 def episodesxseasons(item):
     logger.info()
     itemlist = list()
+    
     infoLabels = item.infoLabels
     season = infoLabels["season"]
     
-    soup = create_soup(item.url)
-    patt = re.compile(r'const seasonsJson = \{')
-    data = soup.find(text=patt)
-    data = scrapertools.find_single_match(data,'"%s"(.*?)\]' %infoLabels["season"])
-    patron = '"title": "([^"]+)".*?'
-    patron += '"episode": (\d+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for name, cap in matches[::-1]:
+    soup = create_soup(item.url).find("div", role="tabpanel")
+    matches = soup.find_all('a')
+    for elem in matches:
+        url = elem['href']
+        cap = scrapertools.find_single_match(url, '/capitulo/(\d+)')
+        title = '%sx%s' % (season, cap)
         infoLabels['episode'] = cap
-        url = "%s/season/%s/episode/%s" %(item.url,season,cap)
-        title = '%sx%s - %s' % (season, cap, name)
+        url = urlparse.urljoin(item.url,url)
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', infoLabels=infoLabels, contentType='episode'))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
+    
     return itemlist
 
 
 def section(item):
     logger.info()
     itemlist = list()
-    soup = create_soup(item.url).find('div', id='genresMenu')
-    matches = soup.find_all("a", href=re.compile("/genres/[A-z0-9-]+"))
+    
+    soup = create_soup(item.url)# .find('div', id='genresMenu')
+    matches = soup.find('a', id='generos').parent.find_all('li')
+    if "Año"in item.title:
+        matches = soup.find_all('li', class_='twoyear')
     for elem in matches:
-        url = elem['href']
-        title = elem.text.strip()
-        url += "?type=%s" %item.type
+        url = elem.a['href']
+        title = elem.a.text.strip()
+        url += "/%s" %item.type
+        url = urlparse.urljoin(item.url,url)
         itemlist.append(Item(channel=item.channel, url=url, title=title, action='list_all', type=item.type))
-
+    
     return itemlist
 
 
-SERVER = {'earnvids' : 'vidhidepro', 'moon': 'filemoon', 'netu': 'netutv', 'vidg': 'vidguard',
-          'lulu': 'lulustream'
-         }
 def findvideos(item):
-    import base64
     logger.info()
     itemlist = list()
-    soup = create_soup(item.url).find('div', class_='bg-tabs')
-    matches = soup.find_all("li", role="presentation") #re.compile(r"^pitem\d+")
+    
+    soup = create_soup(item.url)
+    player = soup.find('div', class_='player')
+    
+    if soup.find_all('span', lid=re.compile(r"^\d+")):
+        matches = soup.find_all('span', lid=re.compile(r"^\d+"))
+    else:
+        matches = player.find_all("li", role="presentation")
     for elem in matches:
-        url = elem['data-server']
-        url = base64.b64encode(url.encode("utf-8")).decode('utf-8')
-        url = "%splayer/%s" % (host, url)
-        server = elem.span.text.strip().split("-")
-        server = server[0].strip()
-        server = server.lower()
-        # if not SERVER.get(server,''):  ### 'Directo' servers desconocidos
-            # server = ""
-        # else:
-        server = SERVER.get(server,server)
+        if elem.get('data-url',''):
+            url = elem['data-url']
+            lang = elem['data-name']
+        else:
+            lang = player.a.text
+            url = elem['url']
         
-        lang = soup.img['alt']
         if "Latino" in lang: lang= "LAT"
-        itemlist.append(Item(channel=item.channel, title=server, url=url, action='play', language=lang,
-                            server = server,
+        itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language=lang,
                             infoLabels=item.infoLabels))
+    
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
     
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
-
+    
     if item.contentType == 'movie':
         if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
             itemlist.append(Item(channel=item.channel,
@@ -252,36 +259,32 @@ def findvideos(item):
                                  action="add_pelicula_to_library",
                                  extra="findvideos",
                                  contentTitle=item.contentTitle))
+    
     return itemlist
 
 
-def play(item):
-    logger.info()
-    itemlist = list()
+# def play(item):
+    # logger.info()
+    # itemlist = list()
     
-    data = httptools.downloadpage(item.url, canonical=canonical).data
-    url = scrapertools.find_single_match(data,"(?i)Location.href = '([^']+)'")
+    # data = httptools.downloadpage(item.url, canonical=canonical).data
+    # url = scrapertools.find_single_match(data,"(?i)Location.href = '([^']+)'")
     
-    devuelve = servertools.findvideosbyserver(url, item.server)
-    if devuelve:
-        item.url =  devuelve[0][1]
-    itemlist = servertools.get_servers_itemlist([item.clone(url=url, server="")])
+    # devuelve = servertools.findvideosbyserver(url, item.server)
+    # if devuelve:
+        # item.url =  devuelve[0][1]
+    # itemlist = servertools.get_servers_itemlist([item.clone(url=url, server="")])
     
-    return itemlist
+    # return itemlist
 
 
 def search(item, texto):
     logger.info()
-
+    texto = texto.replace(" ", "+")
+    item.url = "%ssearch?s=%s" % (host,texto)
     try:
-        if texto != '':
-            texto = urlparse.quote_plus(texto)
-            item.url = urlparse.urljoin('search/', texto)
-            item.url = urlparse.urljoin(host, item.url)
-            return list_all(item)
-        else:
-            return []
-    except Exception:
+        return list_all(item)
+    except:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

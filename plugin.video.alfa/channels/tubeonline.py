@@ -111,9 +111,9 @@ AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path,
 
 def mainlist(item):
     logger.info()
-
+    
     autoplay.init(item.channel, list_servers, list_quality)
-
+    
     itemlist = list()
     
     itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host + 'episodio/', action='list_all',
@@ -126,50 +126,50 @@ def mainlist(item):
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
     
     itemlist.append(Item(channel=item.channel, title='Castellano', url=host + 'idioma/castellano/', action='list_all',
-                         thumbnail=get_thumb('cast', auto=True), c_type='peliculas'))
+                         thumbnail=get_thumb('cast', auto=True), c_type='peliculas', extra="CAST"))
     
     itemlist.append(Item(channel=item.channel, title='Latino', url=host + 'idioma/latino/', action='list_all',
-                         thumbnail=get_thumb('latino', auto=True), c_type='peliculas'))
+                         thumbnail=get_thumb('latino', auto=True), c_type='peliculas', extra="LAT"))
     
     itemlist.append(Item(channel=item.channel, title='Subtitulado', url=host + 'idioma/subtitulado/', action='list_all',
-                         thumbnail=get_thumb('vose', auto=True), c_type='peliculas'))
-
+                         thumbnail=get_thumb('vose', auto=True), c_type='peliculas', extra="VOSE"))
+    
     itemlist.append(Item(channel=item.channel, title='Géneros', action='section', url=host,
                          thumbnail=get_thumb('genres', auto=True), c_type='peliculas'))
-
+    
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True)))
-
+    
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
-
+    
     autoplay.show_option(item.channel, itemlist)
-
+    
     return itemlist
 
 
 def section(item):
     logger.info()
-
+    
     itemlist = AlfaChannel.section(item, **kwargs)
     return [i for i in itemlist if "Porno" not in i.title]
 
 
 def list_all(item):
     logger.info()
-
+    
     return AlfaChannel.list_all(item, matches_post=list_all_matches, **kwargs)
 
 
 def list_all_matches(item, matches_int, **AHkwargs):
     logger.info()
-
+    
     matches = []
     findS = AHkwargs.get('finds', finds)
-
+    
     for elem in matches_int:
         elem_json = {}
         #logger.error(elem)
-
+        
         try:
             plus18 = elem.find("a", text="Peliculas Porno +18")
             if plus18:
@@ -181,7 +181,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['thumbnail'] = elem.img.get('data-src', '') or elem.img.get('src', '')
                 if elem.find("span", class_="year"): elem_json['year'] = elem.find("span", class_="year").get_text(strip=True)
                 elem_json['mediatype'] = 'tvshow' if "serie" in elem_json['url'] and not "pelicula" in elem_json['url'] else 'movie'
-
+            
             else:
                 if item.c_type == 'episodios':
                     sxe = elem.find("span", class_="b").getText(strip=True)
@@ -196,7 +196,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elem_json['title'] = "%s - %s" % (sxe, elem.find("span", class_="c").getText(strip=True))
                 else:
                     elem_json['title'] = elem.find("div", class_="poster").img.get("alt", '')
-
+                
                 elem_json['url'] = elem.find("a")['href']
                 if not elem_json.get('mediatype'):
                     elem_json['mediatype'] = 'tvshow' if "serie" in elem_json['url'] and not "pelicula" in elem_json['url'] else 'movie'
@@ -206,7 +206,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elem_json['year'] = elem.find("div", class_="data").find("span").get_text(strip=True)
                 except Exception:
                      elem_json['year'] = '-'
-
+            
             qlty = elem.find("span", class_="quality")
             if qlty:
                 elem_json['quality'] = qlty.getText(strip=True)
@@ -216,24 +216,26 @@ def list_all_matches(item, matches_int, **AHkwargs):
             plot = elem.find("div", class_=["texto", "contenido"])
             if plot: 
                 elem_json['plot'] = plot.get_text(strip=True)
-
+            
             elem_json['context'] = autoplay.context
-
+            
+            elem_json['extra'] = item.extra
+        
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
-
+        
         if not elem_json['url']: continue
-
+        
         matches.append(elem_json.copy())
-
+    
     return matches
 
 
 def seasons(item):
     logger.info()
-
+    
     return AlfaChannel.seasons(item, **kwargs)
 
 
@@ -246,16 +248,16 @@ def episodios(item):
     
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
-
+    
     return itemlist
 
 
 def episodesxseason(item, **AHkwargs):
     logger.info()
-
+    
     kwargs['matches_post_get_video_options'] = findvideos_matches
     soup = AHkwargs.get('soup', '')
-
+    
     return AlfaChannel.episodes(item, data=soup, matches_post=episodesxseason_matches, **kwargs)
 
 
@@ -264,19 +266,19 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     
     matches = []
     findS = AHkwargs.get('finds', finds)
-
+    
     for elem_season in matches_int:
         item.contentSeason = item.contentSeason or 1
         if elem_season.find("span", class_="se-t").get_text(strip=True) != str(item.contentSeason): continue
         epi_list = elem_season.find("ul", class_="episodios")
-
+        
         if 'no hay episodios para' in str(epi_list):
             return matches
-
+        
         for elem in epi_list.find_all("li"):
             elem_json = {}
             #logger.error(elem)
-
+            
             try:
                 info = elem.find("div", class_="episodiotitle")
                 elem_json['url'] = info.a.get("href", "")
@@ -290,25 +292,25 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                         elem_json['episode'] = int(match.group(1))
                 elem_json['title'] = info.a.get_text(strip=True)
                 elem_json['thumbnail'] = elem.img.get('data-src', '') or elem.img.get('src', '')
-
+            
             except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
                 continue
-
+            
             if not elem_json.get('url', ''): 
                 continue
-
+            
             matches.append(elem_json.copy())
-
+    
     return matches
 
 
 def findvideos(item):
     logger.info()
-
+    
     kwargs['matches_post_episodes'] = episodesxseason_matches
-
+    
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
 
@@ -330,12 +332,20 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     servers = {'strmup': 'bestb', 'hqq': '', 'asnwish': 'streamwish', 'hgcloud': 'streamwish',
                'bysejikuar': 'filemoon', 'vidnest': 'highstream', 'luluvdo': 'lulustream',
                'luluvid': 'lulustream', }
-    logger.debug(matches_int)
+    
     for lang_container in matches_int:
         language = IDIOMAS.get(lang_container["id"], "VOSE")
         for elem in lang_container.find_all("li"):
             elem_json = {}
             try:
+                
+                lang = language
+                if item.extra and lang != item.extra:
+                    logger.error("{} ({}) != {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
+                    continue
+                else:
+                    logger.error("{} ({}) == {}".format(lang, IDIOMAS.get(lang, ''), item.extra))
+                
                 elem_json['server'] = re.sub(r"\.\w{2,4}", "", elem["data-name"].lower())
                 elem_json['server'] = servers.get(elem_json['server'], elem_json['server'])
                 # if not elem_json['server']: continue
@@ -348,7 +358,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 logger.error(elem)
                 logger.error(traceback.format_exc())
                 continue
-
+    
     return matches, langs
 
 
@@ -365,32 +375,32 @@ def play(item):
         itemlist = servertools.get_servers_itemlist(itemlist)
     except Exception:
         logger.error(traceback.format_exc())
-
+    
     return itemlist
 
 
 def actualizar_titulos(item):
     logger.info()
     #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
-
+    
     return AlfaChannel.do_actualizar_titulos(item)
 
 
 def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
-
+    
     try:
         texto = AlfaChannel.do_quote(texto, '', plus=True)
         item.url = item.url + "?s=" + texto
-
+        
         if texto:
             item.c_type = 'search'
             item.texto = texto
             return list_all(item)
         else:
             return []
-
+    
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except Exception:
         for line in sys.exc_info():
@@ -403,31 +413,31 @@ def newest(categoria, **AHkwargs):
     kwargs.update(AHkwargs)
     
     logger.debug("AQUI HAY NIVEL " + categoria)
-
+    
     itemlist = []
     item = Item()
-
+    
     item.title = "newest"
     item.category_new = "newest"
     item.channel = canonical['channel']
-
+    
     try:
         if categoria == 'series':
             item.url = host + 'episodio/'
             item.c_type = 'episodios'
             item.action = "list_all"
             itemlist = list_all(item)
-
+        
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
-
+    
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         logger.error(traceback.format_exc())
         return []
-
+    
     return itemlist
 
 

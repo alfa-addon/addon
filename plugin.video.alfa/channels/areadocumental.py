@@ -265,7 +265,7 @@ def play(item):
 
     try:
         from core import filetools
-        ficherosubtitulo = filetools.join(config.get_data_path(), 'subtitulo_areadocu.srt')
+        ficherosubtitulo = filetools.join(config.get_subtitles_path(), 'subtitulo_areadocu.srt')
         if filetools.exists(ficherosubtitulo):
             try:
                 filetools.remove(ficherosubtitulo)

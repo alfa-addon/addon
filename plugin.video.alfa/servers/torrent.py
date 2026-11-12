@@ -402,7 +402,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
         if torrent_file.startswith(PK) or torrent_file.startswith(RAR):
             if torrent_file.startswith(PK): arch_ext = 'zip'
             if torrent_file.startswith(RAR): arch_ext = 'rar'
-            subtitle_path = config.get_kodi_setting("subtitles.custompath")
+            subtitle_path = config.get_subtitles_path()
             logger.info('Es un archivo .%s: %s' % (arch_ext.upper(), url))
             
             torrents_path_zip = filetools.join(videolibrary_path, 'temp_torrents_arch', \
@@ -443,9 +443,12 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
                         input_file = filetools.join(root, file)                 # Ruta al archivo
                         if file.endswith(".srt") and not torrent_params.get('lookup', False):           # Archivo de subtítulos.  Lo copiamos
                             res = filetools.copy(input_file, filetools.join(filetools.dirname(torrents_path_encode), file), silent=True)
-                            if res: torrent_params['subtitles_list'] += [filetools.join(filetools.dirname(torrents_path_encode), file)]
-                            if subtitle_path:
-                                filetools.copy(input_file, filetools.join(subtitle_path, file), silent=True)
+                            saved_subtitle = filetools.join(filetools.dirname(torrents_path_encode), file) if res else ''
+                            temp_subtitle = filetools.join(subtitle_path, file)
+                            if filetools.copy(input_file, temp_subtitle, silent=True):
+                                saved_subtitle = temp_subtitle
+                            if saved_subtitle:
+                                torrent_params['subtitles_list'] += [saved_subtitle]
                         
                         elif file.endswith(".torrent"):
                             torrent_file = filetools.read(input_file, mode='rb', vfs=VFS)               # Leemos el .torrent

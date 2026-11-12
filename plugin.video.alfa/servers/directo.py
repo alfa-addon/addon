@@ -2,6 +2,7 @@
 
 from platformcode import logger
 from core import scrapertools
+from core import urlparse
 
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
           'timeout': 5, 'cf_assistant': False}
@@ -15,13 +16,32 @@ def test_video_exists(page_url):
 
     exists = True if page_url else False
     reason = invaid_url if not exists else ""
+    # El sufijo de Alfa es "url|clave=valor&clave=valor" (Kodi lo entiende igual). Antes solo se
+    # miraban |Referer y |ignore_response_code, asi que un |User-Agent= se quedaba DENTRO de la
+    # URL: en un fichero normal eso da 415 y en una URL firmada (r2.cloudflarestorage.com,
+    # X-Amz-) rompe la firma y da 403. Medido el 2026-10-16 con streamflix (415) y con 4khdhub
+    # (403). Aqui se separa bien y cada clave va como cabecera.
+    cabeceras = {'Range': 'bytes=0-100'}
     ignore_response_code = False
-    if "|ignore_response_code=True" in page_url:
-        page_url, ignore_response_code = page_url.split("|")[0], True 
-    referer = None
-    if "|Referer" in page_url or "|referer" in page_url:
-        page_url, referer = page_url.split("|")
-        referer = referer.replace('Referer=', '').replace('referer=', '')
+
+    if '|' in page_url:
+        page_url, resto = page_url.split('|', 1)
+
+        for trozo in resto.split('&'):
+            if '=' not in trozo:
+                continue
+
+            clave, valor = trozo.split('=', 1)
+            clave = clave.strip()
+            valor = urlparse.unquote(valor.strip())
+
+            if not clave:
+                continue
+
+            if clave.lower() == 'ignore_response_code':
+                ignore_response_code = (valor.lower() == 'true')
+            else:
+                cabeceras[clave] = valor
 
     if page_url:
         pattern = r'(?:^[A-Za-z]+://|^/|^[A-Za-z]+:[\\/]+)\S+'
@@ -31,7 +51,7 @@ def test_video_exists(page_url):
 
         if page_url.startswith('http'):
             from core import httptools
-            response = httptools.downloadpage(page_url, headers = {'Referer': referer, "Range": "bytes=0-100"}, **kwargs)
+            response = httptools.downloadpage(page_url, headers=cabeceras, **kwargs)
 
             if not ignore_response_code and not response.sucess:
                 if response.code != 403:
@@ -45,8 +65,11 @@ def test_video_exists(page_url):
 
     if not exists and not ignore_response_code:
         reason += " Repórtalo en el foro https://alfa-addon.com\n"
-    else:
-        reason = "Ha ocurrido un error con este video"
+    elif exists:
+        # antes ponia aqui "Ha ocurrido un error con este video" INCLUSO cuando el video
+        # existia: un mensaje de error en el caso bueno. Alfa solo usa el motivo si exists es
+        # False, asi que era inocuo, pero ensuciaba el log.
+        reason = ""
 
     return exists, reason
 
