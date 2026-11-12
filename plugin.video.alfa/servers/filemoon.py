@@ -311,8 +311,7 @@ def _resuelve_pow(nonce, dificultad, dialogo=None):
             if porcentaje > 99:
                 porcentaje = 99
             try:
-                dialogo.update(porcentaje, 'Filemoon',
-                               'Resolviendo el captcha del reproductor... '
+                dialogo.update(porcentaje, 'Resolviendo el captcha del reproductor... '
                                '%s intentos (%s%%). Se hace una vez cada 30 minutos.' % (s, porcentaje))
                 if dialogo.iscanceled():
                     logger.info('[filemoon] captcha cancelado por el usuario')
@@ -541,6 +540,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             pass
         token = _pide_token(base, codigo, url, dialogo)
         _cierra(dialogo)
+        if not token:
+            return video_urls
 
     playback = _playback(base, codigo, url, token)
     if playback is None and pide_captcha:
@@ -556,8 +557,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             pass
         token = _pide_token(base, codigo, url, dialogo)
         _cierra(dialogo)
-        if token:
-            playback = _playback(base, codigo, url, token)
+        if not token:
+            return video_urls
+        playback = _playback(base, codigo, url, token)
 
     if not playback:
         logger.error('[filemoon] sin playback para %s' % page_url)
