@@ -4,6 +4,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -33,7 +34,7 @@ from modules import renumbertools
 DEBUG = False
 BTDIGG = 'btdig'
 BTDIGG_URL = config.BTDIGG_URL
-BTDIGG_URL_SEARCH = '%ssearch_%s/' % (BTDIGG_URL, BTDIGG)
+BTDIGG_URL_SEARCH = alfa_urlparse.build_url(BTDIGG_URL, u'search_{}/'.format(BTDIGG))
 BTDIGG_LABEL = config.BTDIGG_LABEL
 PLOT_BTDIGG = 'Introduce criterios de búsqueda:\r\n' + \
               '[COLOR lime]título calidad |Orden [filtro A Filtro B ...] [filtro CALIDAD ...] [filtro IDIOMA ...][/COLOR]\r\n' + \
@@ -92,7 +93,7 @@ class AlfaChannelHelper:
         self.host = host
         self.host_torrent = finds.get('controls', {}).get('host_torrent', self.host)
         self.timeout = timeout
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         self.channel = channel or canonical.get('channel', '')
         if self.channel and canonical and 'host' in canonical and not canonical['host'] and canonical.get('host_alt', []): 
             config.set_setting("current_host", canonical['host_alt'][0], channel=self.channel)
@@ -659,75 +660,48 @@ class AlfaChannelHelper:
 
     def do_quote(self, url, safe='', encoding=None, errors=None, plus=True):
         try:
-            if PY3:
-                import urllib.parse as urllib
-                if plus:
-                    return urllib.quote_plus(url, safe=safe, encoding=encoding, errors=errors)
-                else:
-                    return urllib.quote(url, safe=safe, encoding=encoding, errors=errors)
-            else:
-                import urllib
-                if plus:
-                    return urllib.quote_plus(url, safe=safe)
-                else:
-                    return urllib.quote(url, safe=safe)
-
+            encoder = urlparse.quote_plus if plus else urlparse.quote
+            return encoder(url, safe=safe, encoding=encoding, errors=errors)
         except Exception:
             return ''
 
     def do_unquote(self, url, encoding='utf-8', errors='replace', plus=True):
         try:
-            if PY3:
-                import urllib.parse as urllib
-                if plus:
-                    return urllib.unquote_plus(url, encoding=encoding, errors=errors)
-                else:
-                    return urllib.unquote(url, encoding=encoding, errors=errors)
-            else:
-                import urllib
-                if plus:
-                    return urllib.unquote_plus(url)
-                else:
-                    return urllib.unquote(url)
-
+            decoder = urlparse.unquote_plus if plus else urlparse.unquote
+            return decoder(url, encoding=encoding, errors=errors)
         except Exception:
             return ''
 
     def do_urlencode(self, post, doseq=False, safe='', encoding=None, errors=None):
         try:
-            if PY3:
-                import urllib.parse as urllib
-                return urllib.urlencode(post, doseq=doseq, safe=safe, encoding=encoding, errors=errors)
-            else:
-                import urllib
-                return urllib.urlencode(post, doseq=doseq)
-
+            return urlparse.urlencode(post, doseq=doseq, safe=safe,
+                                      encoding=encoding, errors=errors)
         except Exception:
             return ''
 
     def urljoin(self, domain, url, allow_fragments=True):
-        if PY3:
-            import urllib.parse as urlparse
-        else:
-            import urlparse
-        
         return urlparse.urljoin(domain, url, allow_fragments=allow_fragments)
-    
+
     def urlparse(self, url, scheme='', allow_fragments=True):
-        if PY3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
-        
-        return urlparse(url, scheme=scheme, allow_fragments=allow_fragments)
+        return urlparse.urlparse(url, scheme=scheme, allow_fragments=allow_fragments)
 
     def parse_qs(self, url, keep_blank_values=False, strict_parsing=False, encoding="utf-8", errors="replace", max_num_fields=None):
-        if PY3:
-            from urllib.parse import parse_qs
-            return parse_qs(url, keep_blank_values, strict_parsing, encoding, errors, max_num_fields)
-        else:
-            from urlparse import parse_qs
-            return parse_qs(url, keep_blank_values, strict_parsing)
+        if PY3 and max_num_fields is not None:
+            separator = b'&' if isinstance(url, bytes) else '&'
+            if (1 + url.count(separator) if url else 0) > max_num_fields:
+                raise ValueError("Max number of fields exceeded")
+        return urlparse.parse_qs(url, keep_blank_values=keep_blank_values,
+                                 strict_parsing=strict_parsing,
+                                 encoding=encoding, errors=errors)
+
+    def build_url(self, base, *paths, **options):
+        return urlparse.build_url(base, *paths, **options)
+
+    def update_query(self, url, values=(), **parameters):
+        return urlparse.update_query(url, values, **parameters)
+
+    def add_url_headers(self, url, headers, *additional_headers):
+        return urlparse.add_url_headers(url, headers, *additional_headers)
 
     def obtain_domain(self, url, sub=False, point=False, scheme=False):
 
@@ -1741,7 +1715,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         timeout_search = timeout * 2 if isinstance(timeout, (int, float)) else (timeout[0], timeout[1] * 2)     # Timeout para búsquedas
 
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
@@ -1847,7 +1821,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             finds_controls = finds.get('controls', {})
             self.cnt_tot = self.cnt_tot or finds_controls.get('cnt_tot', 20)
             host = finds_controls.get('host', self.host)
-            self.doo_url = "%swp-admin/admin-ajax.php" % host
+            self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
             if AHkwargs.get('url') and AHkwargs['url'] != item.url: self.next_page_url = next_page_url = item.url
             next_page_url = self.next_page_url
             host_referer = finds_controls.get('host_referer', host) or host_referer
@@ -1895,10 +1869,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     for rgx_org, rgx_des in finds_next_page_rgx:
                         if scrapertools.find_single_match(url_page, rgx_org): break
                     else:
-                        url = item.url.split('?')
-                        item.url = url[0].rstrip('/') + finds_next_page_rgx[0][1] % str(self.curr_page)
-                        if '?' in item.url and len(url) > 1: url[1] = url[1].replace('?', '&')
-                        if len(url) > 1: item.url = '%s?%s' % (item.url, url[1].lstrip('/'))
+                        item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
                     next_page_url = item.url
                     for rgx_org, rgx_des in finds_next_page_rgx:
                         if url_page_control == 'url':
@@ -2243,7 +2214,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if self.DEBUG: logger.debug('FINDS_categories: %s; FINDS_controls: %s' % (finds_out, finds_controls))
 
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
@@ -2440,7 +2411,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         item.title  = item.title.replace('(V)-' , '')
         item.contentTitle  = item.contentTitle.replace('(V)-' , '')
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         url_replace = self.url_replace = self.finds.get('url_replace', [])
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)
@@ -2660,7 +2631,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds = self.finds.copy()
         finds_controls = finds.get('controls', {})
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host) or host_referer
         post = item.post or finds_controls.pop('post', None) or post
         headers = item.headers or finds_controls.get('headers', {}) or headers
@@ -2911,7 +2882,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None)
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         url_replace = self.url_replace = self.finds.get('url_replace', [])
         min_temp = finds_controls.get('min_temp', False)
@@ -3006,7 +2977,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds_controls = finds.get('controls', {})
         find_add_video_to_videolibrary = finds_controls.get('add_video_to_videolibrary', True)
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host) or host_referer
         post = item.post or finds_controls.pop('post', None) or post
         headers = item.headers or finds_controls.get('headers', {}) or headers
@@ -3299,7 +3270,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None)
         self.host_torrent = finds_controls.get('host_torrent', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         url_replace = self.url_replace = self.finds.get('url_replace', [])
         manage_torrents = finds_controls.get('manage_torrents', True)
@@ -3469,7 +3440,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds = self.finds.copy()
         finds_controls = finds.get('controls', {})
         self.host_torrent = finds_controls.get('host_torrent', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         post = item.post or finds_controls.pop('post', None) or post
         headers = item.headers or finds_controls.get('headers', {}) or headers
@@ -3782,7 +3753,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if item.chanel:
             host = self.host = config.get_setting("current_host", item.chanel, default=host)
             self.canonical.update({'channel': item.chanel, 'host': self.host, 'host_alt': [self.host]})
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
@@ -3943,7 +3914,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
             finds_controls = finds.get('controls', {})
             self.cnt_tot = self.cnt_tot or finds_controls.get('cnt_tot', 20)
             host = self.host = finds_controls.get('host', self.host)
-            self.doo_url = "%swp-admin/admin-ajax.php" % host
+            self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
             if AHkwargs.get('url') and AHkwargs['url'] != item.url: self.next_page_url = next_page_url = item.url
             next_page_url = self.next_page_url
             host_referer = finds_controls.get('host_referer', host) or host_referer
@@ -3980,10 +3951,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                     for rgx_org, rgx_des in finds_next_page_rgx:
                         if scrapertools.find_single_match(url_page, rgx_org): break
                     else:
-                        url = item.url.split('?')
-                        item.url = url[0].rstrip('/') + finds_next_page_rgx[0][1] % str(self.curr_page)
-                        if '?' in item.url and len(url) > 1: url[1] = url[1].replace('?', '&')
-                        if len(url) > 1: item.url = '%s?%s' % (item.url, url[1].lstrip('/'))
+                        item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
                     next_page_url = item.url
                     for rgx_org, rgx_des in finds_next_page_rgx:
                         if url_page_control == 'url':
@@ -4252,7 +4220,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if item.chanel:
             host = self.host = config.get_setting("current_host", item.chanel, default=host)
             self.canonical.update({'channel': item.chanel, 'host': self.host, 'host_alt': [self.host]})
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
@@ -4446,10 +4414,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                     for rgx_org, rgx_des in finds_next_page_rgx:
                         if scrapertools.find_single_match(url_page, rgx_org): break
                     else:
-                        url = item.url.split('?')
-                        item.url = url[0].rstrip('/') + finds_next_page_rgx[0][1] % str(self.curr_page)
-                        if '?' in item.url and len(url) > 1: url[1] = url[1].replace('?', '&')
-                        if len(url) > 1: item.url = '%s?%s' % (item.url, url[1].lstrip('/'))
+                        item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
                     next_page_url = item.url
                     for rgx_org, rgx_des in finds_next_page_rgx:
                         if url_page_control == 'url':
@@ -4666,7 +4631,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if item.chanel:
             self.host = self.host_torrent = config.get_setting("current_host", item.chanel, default=self.host_torrent)
             self.canonical.update({'channel': item.chanel, 'host': self.host_torrent, 'host_alt': [self.host_torrent]})
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         url_replace = self.url_replace = self.finds.get('url_replace', [])
         manage_torrents = finds_controls.get('manage_torrents', True)
@@ -4763,7 +4728,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         finds = self.finds.copy()
         finds_controls = finds.get('controls', {})
         self.host_torrent = finds_controls.get('host_torrent', self.host_torrent)
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         post = item.post or finds_controls.pop('post', None) or post
         headers = item.headers or finds_controls.get('headers', {}) or headers
@@ -4958,7 +4923,7 @@ class DooPlay(AlfaChannelHelper):
         self.finds_controls_updated = {}
         self.url = self.movie_path = self.tv_path = self.movie_action = self.tv_action = ''
         self.timeout = finds.get('control', {}).get('timeout', 5)
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         self.forced_proxy_opt = forced_proxy_opt
         self.list_language = list_language
         self.list_servers = list_servers or LIST_SERVERS
@@ -5107,7 +5072,7 @@ class DooPlay(AlfaChannelHelper):
 
         matches = []
         finds = self.finds
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         pattern_url = r'(?i)src="([^"]+)"'
 
         for elem in matches_int:
