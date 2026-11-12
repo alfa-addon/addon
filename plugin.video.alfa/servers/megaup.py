@@ -3,6 +3,7 @@
 # Conector Megaup By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -40,7 +41,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     media_url = ""
     url = scrapertools.find_single_match(data,"<a class='btn btn--primary' href='([^<]+)'")
-    url += "|Referer=%s" % url
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(url)})
     if url:
         time.sleep(5.5)
         data_url = httptools.downloadpage(url, follow_redirects=False)

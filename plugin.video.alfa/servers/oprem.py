@@ -3,6 +3,7 @@
 # Conector Oprem By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import sys, base64
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -50,7 +51,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     if v_type == "mp4":
         url = httptools.downloadpage(url, headers=headers, follow_redirects=False, stream=True, **kwargs).headers["location"]
-        page_url = "%s|Referer=%s&User-Agent=%s" % (url, page_url, httptools.get_user_agent())
+        page_url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url), 'User-Agent': u'{}'.format(httptools.get_user_agent())})
 
     elif v_type == "hls":
 

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
@@ -38,9 +39,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             headers = {"Referer":page_url}
             if "redirect"  in video_url: 
                 url = httptools.downloadpage(video_url, headers=headers, follow_redirects=False, only_headers=True).headers.get("location", "")
-                url += "|Referer=%s" %page_url
+                url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
             else:
-                url = video_url + "|Referer=%s" % ref
+                url = alfa_urlparse.add_url_headers(video_url, {'Referer': u'{}'.format(ref)})
             video_urls.append(["[zplayer] %s" % ext, url, 0, sub])
     else:
         packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
@@ -52,6 +53,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         matches = scrapertools.find_multiple_matches(unpacked, patron)
         for video_url in matches:
             ext = video_url[-4:]
-            video_url += "|Referer=https://v2.zplayer.live/"
+            video_url = alfa_urlparse.add_url_headers(video_url, {'Referer': 'https://v2.zplayer.live/'})
             video_urls.append(["[zplayer] %s" % ext, video_url, 0, sub])
     return video_urls

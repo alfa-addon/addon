@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -63,7 +64,7 @@ def get_video_url(page_url, video_password):
             ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
             for quality, url in matches_m3u8:
                 url =urlparse.urljoin(m3u8_source,url)
-                url += "|Referer=%s/&Origin=%s" % (ref, ref)
+                url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(ref)), 'Origin': u'{}'.format(ref)})
                 video_urls.append(['[bestb] %s' % quality, url])
     else:
         video_urls.append(["[bestb]", m3u8_source])

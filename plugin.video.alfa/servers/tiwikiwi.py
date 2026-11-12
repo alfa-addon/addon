@@ -1,6 +1,7 @@
 # Conector tiwikiwi By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -24,11 +25,11 @@ def test_video_exists(page_url):
     global data, host, server
     
     domain = scrapertools.get_domain_from_url(page_url)
-    host = "https://%s" % domain
+    host = alfa_urlparse.urlunsplit(('https', u'{}'.format(domain), "", "", ""))
     server = domain.split(".")[-2]
     
     kwargs['headers'] = {
-                         'Referer': '%s/' %host,
+                         'Referer': alfa_urlparse.build_url(host, '/'),
                          'Origin': host,
                          # 'Content-Type': 'application/json;charset=UTF-8',
                          # 'Accept-Encoding': 'gzip, deflate, br, zstd',
@@ -69,7 +70,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
-                    url += "|Referer=%s/&Origin=%s" % (host, host)
+                    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                     video_urls.append(['[%s] %s' % (server, quality), url])
         else:
             video_urls.append(['[%s] m3u' %server, m3u8_source])

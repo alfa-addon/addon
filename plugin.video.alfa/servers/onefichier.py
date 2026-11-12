@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from core import urlparse
@@ -43,7 +44,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         logger.info("filename=" + filename)
 
         # Construye la URL final para Kodi
-        location = page_url + "|Cookie=" + cookie
+        location = alfa_urlparse.add_url_headers(page_url, {'Cookie': cookie})
         logger.info("location=" + location)
 
         video_urls = []

@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector redtube By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -26,7 +27,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info()
     video_urls = []
     url = scrapertools.find_single_match(data,'"format"\s*:\s*"mp4",[^\}]*"videoUrl"\s*:\s*"([^"]+)"').replace("\\", "")
-    url = "https://es.redtube.com%s" %url
+    url = alfa_urlparse.urlunsplit(('https', u'es.redtube.com{}'.format(url), "", "", ""))
     data2 = httptools.downloadpage(url).data
     patron  = '"defaultQuality":.*?,"quality":"([^"]+)","videoUrl"\:"([^"]+)"'
     matches = scrapertools.find_multiple_matches(data2, patron)

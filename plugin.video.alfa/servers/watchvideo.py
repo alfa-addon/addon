@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
@@ -25,7 +26,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         media_urls = scrapertools.find_multiple_matches(unpacked, 'file:\s*"([^"]+)"')
         
     for media_url in media_urls:
-        media_url += "|Referer=%s" %page_url
+        media_url = alfa_urlparse.add_url_headers(media_url, {'Referer': u'{}'.format(page_url)})
         if ".png" in media_url:
             continue
         ext = "mp4"

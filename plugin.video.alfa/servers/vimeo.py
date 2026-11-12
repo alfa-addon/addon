@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -21,7 +22,7 @@ def test_video_exists(page_url):
     global data
     
     kwargs['headers'] = {
-                         'Referer': '%s/' %page_url,
+                         'Referer': alfa_urlparse.build_url(page_url, '/'),
                          'Origin': page_url,
                          # 'Content-Type': 'application/json;charset=UTF-8',
                          # 'Accept-Encoding': 'gzip, deflate, br, zstd',
@@ -61,11 +62,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
             for quality, url in matches_m3u8:
                 url =urlparse.urljoin(m3u8_source,url)
-                url += "|Referer=%s/&Origin=%s" % (host, host)
+                url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                 video_urls.append(['[vimeo] %sp' % quality, url])
             video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     else:
-        m3u8_source += "|Referer=%s/&Origin=%s" % (host, host)
+        m3u8_source = alfa_urlparse.add_url_headers(m3u8_source, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
         video_urls.append(['[vimeo] m3u', m3u8_source])
     return video_urls
 

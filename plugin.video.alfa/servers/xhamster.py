@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -19,7 +20,7 @@ def test_video_exists(page_url):
     global data
     
     kwargs['headers'] = {
-                     'Referer': '%s/' % host,
+                     'Referer': alfa_urlparse.build_url(host, '/'),
                      'Origin': host,
                     }
     
@@ -55,7 +56,7 @@ def get_video_url(page_url, video_password):
             matches_m3u8 = re.compile('#EXT-X-STREAM-INF.*?RESOLUTION=\d+x(\d*)[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
             for quality, url in matches_m3u8:
                 url =urlparse.urljoin(vid,url)
-                url += "|Referer=%s/&Origin=%s" % (host, host)
+                url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                 video_urls.append(['[xhamster] %s' % quality, url])
     
     elif vid:
@@ -74,12 +75,12 @@ def get_video_url(page_url, video_password):
             matches = scrapertools.find_multiple_matches(data, patron)
             for quality, url in matches:
                 url = url.replace("/","/")
-                url += "|Referer=%s/&Origin=%s" % (host, host)
+                url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                 video_urls.append(['[xhamster] %s' % quality, url])
         if m3u8_source:
             m3u8_source = m3u8_source.replace("\/", "/")
             kwargs['headers'] = {
-                                 'Referer': '%s/' % host,
+                                 'Referer': alfa_urlparse.build_url(host, '/'),
                                  'Origin': host,
                                 }
             datos = httptools.downloadpage(m3u8_source, **kwargs).data
@@ -90,7 +91,7 @@ def get_video_url(page_url, video_password):
                 matches_m3u8 = re.compile('#EXT-X-STREAM-INF.*?RESOLUTION=\d+x(\d*)[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
-                    url += "|Referer=%s/&Origin=%s" % (host, host)
+                    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                     video_urls.append(['[xhamster] %s' % quality, url])
     
     pornstars = scrapertools.find_single_match(data, "&xprf=([^&]+)&").replace("+", " ").replace("%2C", " & ")

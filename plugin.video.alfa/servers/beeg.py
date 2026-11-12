@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -22,8 +23,8 @@ def get_video_url(page_url, user="", password="", video_password=""):
     video_urls = []
     patron = '"fl_cdn_multi":\s*"([^"]+)"'
     url = scrapertools.find_single_match(data, patron)
-    url = "https://video.externulls.com/%s" %url
-    url += "|Referer=https://beeg.com/"
+    url = alfa_urlparse.build_url('https://video.externulls.com', u'/{}'.format(url))
+    url = alfa_urlparse.add_url_headers(url, {'Referer': 'https://beeg.com/'})
     video_urls.append(['[beeg]', url])
     
     # patron = '"fl_cdn_(\d+)": "([^"]+)"'

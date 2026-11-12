@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -22,7 +23,7 @@ def test_video_exists(page_url):
     global data, host, server
     data = httptools.downloadpage(page_url, **kwargs).data
     domain = scrapertools.get_domain_from_url(page_url)
-    host = "https://%s" % domain
+    host = alfa_urlparse.urlunsplit(('https', u'{}'.format(domain), "", "", ""))
     server = domain.split(".")[-2]
     # server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
     # server = scrapertools.find_single_match(page_url, '//(?:www.|es.|)([A-z0-9-]+).(?:com|net|nl|xxx|cz)')
@@ -92,7 +93,7 @@ def get_video_url(page_url, video_password):
                 headers = httptools.default_headers.copy() 
                
                 if not "xxdbx" in page_url:
-                    url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+                    url = alfa_urlparse.add_url_headers(url, headers, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                     
                 video_urls.append(["[%s] %s" % (server, quality), url])
     

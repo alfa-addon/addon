@@ -3,6 +3,7 @@
 # Conector Uqload By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -20,7 +21,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
     kwargs['headers'] = {
-                         'Referer': '%s/' %host,
+                         'Referer': alfa_urlparse.build_url(host, '/'),
                          'Origin': host,
                          # 'Content-Type': 'application/json;charset=UTF-8',
                          # 'Accept-Encoding': 'gzip, deflate, br, zstd',
@@ -45,6 +46,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     unpacked = jsunpack.unpack(packed)
     patron = 'sources:\[\{file:"([^"]+)"'
     url = scrapertools.find_single_match(unpacked, patron)
-    url += '|Referer=%s' %host
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(host)})
     video_urls.append(["[uqload]", url])
     return video_urls

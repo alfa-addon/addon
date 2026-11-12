@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -49,7 +50,7 @@ def test_video_exists(page_url):
              -17: 'La petición sobrepasa su cuota de transferiencia permitida',
              -18: types + ' temporalmente no disponible, intentelo de nuevo más tarde'
     }
-    api = 'https://g.api.mega.co.nz/cs?id=%d%s' % (seqno, get)
+    api = alfa_urlparse.build_url('https://g.api.mega.co.nz', '/cs', query=[('id', u'{}{}'.format(u'{}'.format('%d' % seqno), u'{}'.format(get)))])
     req1_api = httptools.downloadpage(api, post=json.dumps([post]))
     if isfolder:
         req_api = req1_api.json

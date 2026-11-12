@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector nupload By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import sys
 
 PY3 = False
@@ -47,7 +48,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     # headers = httptools.default_headers.copy()
     # url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host, host)
-    url += "|Referer=%s/&Origin=%s" % (host, host)
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
     
     video_urls.append(['[nupload]', url])
     

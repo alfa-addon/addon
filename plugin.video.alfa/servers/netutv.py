@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 from builtins import chr
 from builtins import range
 
@@ -32,7 +33,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if "hash=" in page_url:
         data = urlparse.unquote(httptools.downloadpage(page_url).data)
         id_video = scrapertools.find_single_match(data, "vid':'([^']+)'")
-        page_url = "http://hqq.watch/player/embed_player.php?vid=%s" % id_video
+        page_url = alfa_urlparse.build_url('http://hqq.watch', '/player/embed_player.php', query=[('vid', u'{}'.format(id_video))])
     else:
         page_url = page_url.replace(
             "/watch_video.php?v=", "/player/embed_player.php?vid="
@@ -52,7 +53,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     alea = str(random.random())[2:]
     data_ip = httptools.downloadpage(
-        "http://hqq.watch/player/ip.php?type=json&rand=%s" % alea
+        alfa_urlparse.build_url('http://hqq.watch', '/player/ip.php', query=[('type', 'json'), ('rand', u'{}'.format(alea))])
     ).data
     # ~ logger.debug(data_ip)
     json_data_ip = jsontools.load(data_ip)
@@ -67,7 +68,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; U; Linux i686; en-US) AppleWebKit/533.4 (KHTML, like Gecko) Chrome/5.0.375.127 Large Screen Safari/533.4 GoogleTV/162671"
     }
-    data = httptools.downloadpage("http://hqq.watch" + url, headers=headers).data
+    data = httptools.downloadpage(alfa_urlparse.urlunsplit(('http', u'hqq.watch{}'.format(url), "", "", "")), headers=headers).data
     # ~ logger.debug(data)
 
     codigo_js = scrapertools.find_multiple_matches(
@@ -110,8 +111,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             server_2 = valor
 
     link_m3u8 = (
-        "http://hqq.watch/player/get_md5.php?ver=2&at=%s&adb=0&b=1&link_1=%s&server_2=%s&vid=%s&ext=%s"
-        % (at, link_1, server_2, vid, ext)
+        alfa_urlparse.build_url('http://hqq.watch', '/player/get_md5.php', query=[('ver', '2'), ('at', u'{}'.format(at)), ('adb', '0'), ('b', '1'), ('link_1', u'{}'.format(link_1)), ('server_2', u'{}'.format(server_2)), ('vid', u'{}'.format(vid)), ('ext', u'{}'.format(ext))])
     )
     # ~ logger.debug(link_m3u8)
 

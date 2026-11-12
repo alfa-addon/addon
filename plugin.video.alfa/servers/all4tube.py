@@ -1,6 +1,7 @@
 # Conector all4tube By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -28,7 +29,7 @@ def test_video_exists(page_url):
     id = scrapertools.find_single_match(page_url, '/e/([a-z0-9]+)')
     logger.debug(id)
     post = {'op': 'embed', 'file_code': id, 'auto': 1, 'referer': ''}
-    post_url = "%sdl" % host
+    post_url = alfa_urlparse.build_url(host, 'dl')
     
     response = httptools.downloadpage(post_url, post=post, **kwargs)
     data = response.data

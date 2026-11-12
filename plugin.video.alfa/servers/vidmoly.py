@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector vidmoly By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -99,7 +100,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         logger.error('Datos NO válidos: %s' % data)
         return [["[vidmoly] Error Captcha", ""]]
 
-    url += "|Referer=%s" % page_url
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
     video_urls.append(['[vidmoly] m3u8 %s' % quality, url])
 
     # mp4_sources = re.compile('\{file:"([^"]+)",label:"([^"]+)"', re.DOTALL).findall(data)

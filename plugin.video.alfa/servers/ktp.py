@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector vipporns By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import json
 import re
 import time
@@ -119,7 +120,7 @@ def test_video_exists(page_url):
     global data, host, license_code
     data = response.data
     
-    host = "https://%s/" % scrapertools.get_domain_from_url(page_url)
+    host = alfa_urlparse.build_url(alfa_urlparse.urlunsplit(('https', u'{}'.format(scrapertools.get_domain_from_url(page_url)), "", "", "")), '/')
     license_code = scrapertools.find_single_match(response.data, 'license_code:\s*(?:\'|")([^\,]+)(?:\'|")')
     
     return True, ""
@@ -168,9 +169,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 quality = "1080p"
             if "?br=" in url:
                 # url += "&rnd=" + str(int(datetime.now().timestamp() * 1000))
-                url += "&rnd=" + str(int(time.time() * 1000))
+                url = alfa_urlparse.append_query(url, [('rnd', str(int(time.time() * 1000)))])
             if not "analdin" in url and not "sunporno" in url and not "theyarehuge" in url:
-                url += "|Referer=%s" % host
+                url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(host)})
             if "sunporno" in url or "theyarehuge" in url:
                 url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, **kwargs).headers.get("location", "")
                 if "theyarehuge" in url:
@@ -194,7 +195,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         if "allclassic.porn" in url:
             url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, **kwargs).headers.get("location", "")
         if not "allclassic.porn":
-            url += "|Referer=%s" % host
+            url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(host)})
         
         video_urls.append(['[ktplayer]', url])
     return video_urls

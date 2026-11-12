@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import jsontools
@@ -45,9 +46,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     # Formar url del video + cookie video_key
     for videos in datos['videos']:
-        media_url = videos['url'] + "|Referer=https://my1.imgsmail.ru/r/video2/uvpv3.swf?75&Cookie=" + cookie_video_key
+        media_url = alfa_urlparse.add_url_headers(videos['url'], {'Referer': 'https://my1.imgsmail.ru/r/video2/uvpv3.swf?75', 'Cookie': cookie_video_key})
         if not media_url.startswith("http"):
-            media_url = "http:" + media_url
+            media_url = alfa_urlparse.urljoin('http:', media_url)
         quality = " %s" % videos['key']
         video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + quality + " [mail.ru]", media_url])
     try:

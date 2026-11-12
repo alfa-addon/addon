@@ -1,4 +1,5 @@
 # s-*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 from core import httptools
 from platformcode import config, logger
 import re
@@ -13,7 +14,7 @@ def test_video_exists(page_url):
     if not video_match:
         return False, "Youtube - Invalid Video ID"
     video_id = video_match.group(1)
-    page_url = "https://inv.perditum.com/api/v1/videos/%s" % video_id
+    page_url = alfa_urlparse.build_url('https://inv.perditum.com', u'/api/v1/videos/{}'.format(video_id))
     data_json = httptools.downloadpage(page_url).json
     if not data_json or data_json.get("error", ""):
         return False, config.get_localized_string(70449) % "Youtube"

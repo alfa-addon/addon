@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -23,7 +24,7 @@ def get_video_url(page_url, video_password):
     vid, hash = re.compile(patron, re.DOTALL).findall(data)[0]
     hash = int_to_base36(int(hash[0:8], 16)) + int_to_base36(int(hash[8:16], 16)) + int_to_base36(
         int(hash[16:24], 16)) + int_to_base36(int(hash[24:32], 16))
-    url = "https://www.eporner.com/xhr/video/%s?hash=%s" % (vid, hash)
+    url = alfa_urlparse.build_url('https://www.eporner.com', u'/xhr/video/{}'.format(vid), query=[('hash', u'{}'.format(hash))])
     jsondata = httptools.downloadpage(url).json
     for source in jsondata["sources"]["mp4"]:
         url = jsondata["sources"]["mp4"][source]["src"]

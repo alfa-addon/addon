@@ -3,6 +3,7 @@
 # Conector Vudeo By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -25,6 +26,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     matches = scrapertools.find_multiple_matches(data.data, patron)
     domain = httptools.obtain_domain(page_url, scheme=True)
     for url in matches:
-        url = '{}|Referer={}/'.format(url, domain)
+        url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(domain))})
         video_urls.append(["[vudeo]", url])
     return video_urls

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -25,7 +26,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    url= "https://www.%s.com/player_config_json/?vid=%s&aid=0&domain_id=0&embed=0&ref=null&check_speed=0" %(server,vid)
+    url= alfa_urlparse.build_url(alfa_urlparse.urlunsplit(('https', u'www.{}.com'.format(server), "", "", "")), '/player_config_json/', query=[('vid', u'{}'.format(vid)), ('aid', '0'), ('domain_id', '0'), ('embed', '0'), ('ref', 'null'), ('check_speed', '0')])
     headers={'Referer': page_url, 'Accept': 'application/json, text/javascript, */*; q=0.01'}
     data = httptools.downloadpage(url, headers=headers, timeout=20).data
     data = scrapertools.find_single_match(data, '"files":(.*?)"quality"')

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from core import urlparse
@@ -48,8 +49,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             data = httptools.downloadpage(page_url).data
         # Si el archivo tiene enlace de streaming se redirige a upstream
         if "Streaming link:" in data:
-            page_url = "http://uptostream.com/iframe/" + scrapertools.find_single_match(page_url,
-                                                                                      'uptobox.com/([a-z0-9]+)')
+            page_url = alfa_urlparse.build_url('http://uptostream.com', u'/iframe/{}'.format(scrapertools.find_single_match(page_url,
+                                                                                      'uptobox.com/([a-z0-9]+)')))
             data = httptools.downloadpage(page_url).data
             video_urls = uptostream(data)
         else:
@@ -66,7 +67,7 @@ def uptostream(data):
     video_id = scrapertools.find_single_match(data,"var videoId\s*=\s*'([^']+)';")
     subtitle = scrapertools.find_single_match(data, "kind='subtitles' src='//([^']+)'")
     if subtitle:
-        subtitle = "http://" + subtitle
+        subtitle = alfa_urlparse.urlunsplit(('http', subtitle, "", "", ""))
     video_urls = []
     api_url = "https://uptostream.com/api/streaming/source/get?token=null&file_code=%s" % video_id
     

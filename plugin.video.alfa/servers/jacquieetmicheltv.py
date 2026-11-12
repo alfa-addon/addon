@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -18,7 +19,7 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     id = scrapertools.find_single_match(page_url, '/([0-9]+)/')
-    url = "https://www.jacquieetmicheltv.net/en/api/video/%s/getplayerurl/" %id
+    url = alfa_urlparse.build_url('https://www.jacquieetmicheltv.net', u'/en/api/video/{}/getplayerurl/'.format(id))
     data = httptools.downloadpage(url).data
     url = scrapertools.find_single_match(data, '"video_settings_url": "([^"]+)"')
     data = httptools.downloadpage(url).data

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -20,7 +21,7 @@ def get_video_url(page_url, video_password):
     video_urls = []
     url = scrapertools.find_single_match(data,'<source (?:id="video_source_\d+" |)src="([^"]+)" type=(?:\'|")video/mp4(?:\'|")')
     host = scrapertools.find_single_match(page_url, '(https://.*?.com)')
-    url += "|Referer=%s" % host
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(host)})
     server = scrapertools.find_single_match(page_url, 'https://(?:www.|)([A-z0-9-]+).com')
     video_urls.append(["[%s]" %server, url])
     return video_urls

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -27,7 +28,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = httptools.downloadpage(url_redirect).data
 
     url = scrapertools.find_single_match(data, '{file:"([^"]+)"')
-    video_url = "%s|Referer=%s" % (url, url_redirect)
+    video_url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(url_redirect)})
     video_urls = [[scrapertools.get_filename_from_url(url)[-4:] + " [youwatch]", video_url]]
 
     for video_url in video_urls:

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -98,7 +99,7 @@ def get_video_url(page_url, video_password):
             for quality, url in matches_m3u8:
                 ## url =urlparse.urljoin(m3u8_source,url)
                 url += "?psch=%s&pkey=%s&playlistType=lowLatency" %(psch[0],psch[1])
-                url += "|Referer=%s/&Origin=%s" % (host, host)
+                url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                 # url += "|Referer=%s/" % host
                 video_urls.append(["[stripchat] %sp" % quality, url])
     

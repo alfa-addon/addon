@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -112,7 +113,7 @@ def authentication():
         client_id = "YTWNFBIJEEBP6"
 
         # Se solicita url y código de verificación para conceder permiso a la app
-        url = "http://api.real-debrid.com/oauth/v2/device/code?client_id=%s&new_credentials=yes" % (client_id)
+        url = alfa_urlparse.build_url('http://api.real-debrid.com', '/oauth/v2/device/code', query=[('client_id', u'{}'.format(client_id)), ('new_credentials', 'yes')])
         data = httptools.downloadpage(url, headers=list(headers.items())).json
         verify_url = data["verification_url"]
         user_code = data["user_code"]
@@ -131,8 +132,7 @@ def authentication():
                 if dialog_auth.iscanceled():
                     return ""
 
-                url = "https://api.real-debrid.com/oauth/v2/device/credentials?client_id=%s&code=%s" \
-                      % (client_id, device_code)
+                url = alfa_urlparse.build_url('https://api.real-debrid.com', '/oauth/v2/device/credentials', query=[('client_id', u'{}'.format(client_id)), ('code', u'{}'.format(device_code))])
                 data = httptools.downloadpage(url, headers=list(headers.items())).json
                 if "client_secret" in data:
                     # Código introducido, salimos del bucle

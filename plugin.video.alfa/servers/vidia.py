@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -34,7 +35,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for video_url in videos:
         extension = scrapertools.get_filename_from_url(video_url)[-4:]
         if extension not in [".vtt", ".srt"]:
-            video_url += '|verifypeer=false'
+            video_url = alfa_urlparse.add_url_headers(video_url, {'verifypeer': 'false'})
             if extension == ".mpd":
                 continue
                 #video_urls.append(["[vidia] %s" % extension, video_url, 0, subtitulo, "mpd"])

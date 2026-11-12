@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector vidfast By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools, jsontools
 from core import scrapertools
@@ -32,7 +33,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     matches = re.compile(patron, re.DOTALL).findall(new_data)
     for res, url in matches:
         url = url.replace("iframes", "index")
-        media_url = url + "|referer=%s" % referer
+        media_url = alfa_urlparse.add_url_headers(url, {'referer': u'{}'.format(referer)})
         video_urls.append(["%s [vidfast]" % (res), media_url])
 
     return video_urls

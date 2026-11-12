@@ -3,6 +3,7 @@
 # Conector ArchiveOrg By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import jsontools
 from core import scrapertools
@@ -27,9 +28,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     ## sobtitles
     subtitle = ""
     for subtitles in json[0]["tracks"]:
-        if subtitles["kind"] == "subtitles":  subtitle = host + subtitles["file"]
+        if subtitles["kind"] == "subtitles":  subtitle = alfa_urlparse.urljoin(host, subtitles["file"])
     ## sources
     for url in json[0]["sources"]:
-        video_urls.append(['%s %s[ArchiveOrg]' %(url["label"], url["type"]), host + url["file"], 0, subtitle])
+        video_urls.append(['%s %s[ArchiveOrg]' %(url["label"], url["type"]), alfa_urlparse.urljoin(host, url["file"]), 0, subtitle])
     video_urls.sort(key=lambda it: int(it[0].split("p ", 1)[0]))
     return video_urls

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import math
 import re
 
@@ -46,7 +47,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     intermediate = scrapertools.find_single_match(media_url, '"\+(.*?)\+"')
     numbers = int(eval( intermediate.replace("a()", str(a)).replace("b()", str(b)).replace("c()", str(c)).replace("d()", str(d)) ))
     url = media_url.replace(cadena, '%s' %(numbers))
-    mediaurl = '%s%s' % (domain, url)
+    mediaurl = alfa_urlparse.urljoin(domain, url)
     extension = "." + mediaurl.split('.')[-1]
     video_urls.append([extension + " [zippyshare]", mediaurl])
     logger.info("url=%s" %video_urls)

@@ -3,6 +3,7 @@
 # Conector Fembed By Alfa Development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -20,7 +21,7 @@ def test_video_exists(page_url):
     
     _id = scrapertools.find_single_match(page_url, "/(?:f|v)/([A-z0-9_-]+)")
     if _id:
-        page_url = 'https://www.fembed.com/api/source/%s' % _id
+        page_url = alfa_urlparse.build_url('https://www.fembed.com', u'/api/source/{}'.format(_id))
     post = "r=&d=feurl.com"
     
     data = httptools.downloadpage(page_url, post=post, **kwargs).json
@@ -52,7 +53,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
             ua = httptools.get_user_agent(quoted=True)
             headers = httptools.default_headers.copy()
             header_str = "&".join(["%s=%s" % (x, y) for x, y in list(headers.items()) if x!='User-Agent'])
-            url["file"] += "|User-Agent=%s&verifypeer=false&%s" % (ua, header_str)
+            url["file"] = alfa_urlparse.add_url_headers(url["file"], alfa_urlparse.Headers.from_string(u'{}'.format(header_str)), {'User-Agent': u'{}'.format(ua), 'verifypeer': 'false'})
         except Exception:
             pass
 

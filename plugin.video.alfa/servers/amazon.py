@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector amazon By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -26,7 +27,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     shareid = data.json["shareId"]
     nodeinfo = data.json["nodeInfo"]["id"]
-    url = "https://www.amazon.com/drive/v1/nodes/%s/children?resourceVersion=V2&ContentType=JSON&limit=200&asset=ALL&tempLink=true&shareId=%s" %(nodeinfo, shareid)
+    url = alfa_urlparse.build_url('https://www.amazon.com', u'/drive/v1/nodes/{}/children'.format(nodeinfo), query=[('resourceVersion', 'V2'), ('ContentType', 'JSON'), ('limit', '200'), ('asset', 'ALL'), ('tempLink', 'true'), ('shareId', u'{}'.format(shareid))])
     json_data = httptools.downloadpage(url).json
     url = json_data["data"][0]["tempLink"]
     video_urls.append(['MP4 [amazon]', url])

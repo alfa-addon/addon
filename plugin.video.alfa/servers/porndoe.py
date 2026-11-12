@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -19,7 +20,7 @@ def get_video_url(page_url, video_password):
     video_urls = []
     data = httptools.downloadpage(page_url).data
     id = scrapertools.find_single_match(data, '"id": "(\d+)"')
-    post = "https://porndoe.com/service/index?device=desktop&page=video&id=%s" %id
+    post = alfa_urlparse.build_url('https://porndoe.com', '/service/index', query=[('device', 'desktop'), ('page', 'video'), ('id', u'{}'.format(id))])
     headers = {"Referer": page_url}
     data = httptools.downloadpage(post, headers=headers).json
     matches = data['payload']['player']['sources']['mp4']

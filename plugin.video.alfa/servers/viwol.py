@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -13,7 +14,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     v_id = scrapertools.find_single_match(page_url, "/e/([A-z0-9]+)")
     base_url = "https://app.viwol.com/api/files/"
-    data = httptools.downloadpage("%s%s" % (base_url, v_id), post={})
+    data = httptools.downloadpage(alfa_urlparse.urljoin(base_url, v_id), post={})
     json_data = data.json
     if data.code == 404:
         return False, "[Viwol] El archivo no existe o ha sido borrado"

@@ -3,6 +3,7 @@
 # Conector anonfile By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -23,7 +24,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     patron = 'download-url.*?href="([^"]+)"'
     match = scrapertools.find_multiple_matches(data, patron)
     for media_url in match:
-        media_url += "|Referer=%s" %page_url
+        media_url = alfa_urlparse.add_url_headers(media_url, {'Referer': u'{}'.format(page_url)})
         title = "mp4 [anonfile]"
         video_urls.append([title, media_url])
     return video_urls

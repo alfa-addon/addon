@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -26,7 +27,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if not media_url:
         media_url = scrapertools.find_single_match(data, 'src:"([^"]+)')
     ext = media_url[-4:]
-    media_url +=  "|verifypeer=false&referer=%s" %page_url
+    media_url = alfa_urlparse.add_url_headers(media_url, {'verifypeer': 'false', 'referer': u'{}'.format(page_url)})
     video_urls = list()
     video_urls.append([ext + " [mp4upload]", media_url])
     return video_urls

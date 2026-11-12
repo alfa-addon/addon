@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -36,7 +37,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     url = scrapertools.find_single_match(data, 'file:\s*"([^"]+)"')
     
     headers = httptools.default_headers.copy() 
-    url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+    url = alfa_urlparse.add_url_headers(url, headers, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
     
     video_urls.append(["[GoodStream] m3u", url])
     return video_urls

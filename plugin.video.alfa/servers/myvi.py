@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from core import urlparse
@@ -22,7 +23,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = []
     enc_url = scrapertools.find_single_match(data, r'CreatePlayer\("v=([^\\]+)\\u0026')
-    url = "https:" + urlparse.unquote(enc_url)
+    url = alfa_urlparse.urljoin('https:', urlparse.unquote(enc_url))
     video_urls.append(['[myvi] video', url])
 
     return video_urls

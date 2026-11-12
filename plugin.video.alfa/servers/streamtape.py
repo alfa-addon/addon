@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector streamtape By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -31,10 +32,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     # https://github.com/kodiondemand/addon/blob/master/servers/streamtape.py
     find_url = scrapertools.find_multiple_matches(data, 'innerHTML = ([^;]+)')[-1]
     possible_url = js2py.eval_js(find_url)
-    url = "https:" + possible_url
+    url = alfa_urlparse.urljoin('https:', possible_url)
     
     url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
 
-    video_urls.append(['MP4 [streamtape]', "{}|{}".format(url, "User-Agent=%s" % httptools.get_user_agent())])
+    video_urls.append(['MP4 [streamtape]', alfa_urlparse.add_url_headers(url, alfa_urlparse.Headers.from_string(u'{}'.format("User-Agent=%s" % httptools.get_user_agent())))])
 
     return video_urls

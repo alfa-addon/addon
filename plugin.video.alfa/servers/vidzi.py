@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
@@ -18,7 +19,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     if not "embed" in page_url:
-        page_url = page_url.replace("http://vidzi.tv/", "http://vidzi.tv/embed-") + ".html"
+        page_url = alfa_urlparse.build_url(alfa_urlparse.append_path_suffix(page_url.replace("http://vidzi.tv/", "http://vidzi.tv/embed-"), '.html'))
 
     data = httptools.downloadpage(page_url).data
     media_urls = scrapertools.find_multiple_matches(data, 'file\s*:\s*"([^"]+)"')

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import os
 import time
 
@@ -51,8 +52,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     cgi_counter = cgi_counter.replace("%0A", "").replace("%22", "")
     playnow = scrapertools.find_single_match(data, 'https://www.flashx.../dl[^"]+')
     # Para obtener el f y el fxfx
-    js_fxfx = "https://www." + scrapertools.find_single_match(data.replace("//", "/"),
-                                                              """(?is)(flashx.../js\w+/c\w+.*?[^(?:'|")]+)""")
+    js_fxfx = alfa_urlparse.urlunsplit(('https', u'www.{}'.format(scrapertools.find_single_match(data.replace("//", "/"),
+                                                              """(?is)(flashx.../js\w+/c\w+.*?[^(?:'|")]+)""")), "", "", ""))
     if len(js_fxfx) > 15:
         data_fxfx = httptools.downloadpage(js_fxfx).data
         mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'", "").replace(" ", "")
