@@ -181,15 +181,7 @@ def init():
         filetools.rmdirtree(
             filetools.join(videolibrary_path, "temp_torrents_Alfa"), silent=True
         )
-        subtitle_path = config.get_kodi_setting("subtitles.custompath")
-        if subtitle_path and filetools.exists(subtitle_path):
-            for file in filetools.listdir(subtitle_path):
-                if not file.endswith(".srt"):
-                    continue
-                file_path = filetools.join(subtitle_path, file)
-                ret = filetools.remove(file_path, silent=True)
-                if not ret:
-                    logger.error("ERROR on REMOVING subtitle: " + file_path)
+        clean_subtitles()
 
         # Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
         verify_Kodi_video_DB()
@@ -253,6 +245,94 @@ def init():
 
         cf_assistant.check_blacklist("ALL", reset=True)
 
+    except Exception:
+        logger.error(traceback.format_exc())
+
+
+def clean_subtitles():
+    """Limpia el temporal al arrancar y retira los subtitulos antiguos una vez."""
+    import os
+    import shutil
+
+    try:
+        if xbmc.Player().isPlaying():
+            return
+
+        temporary = config.get_subtitles_path()
+        # rmtree no sigue enlaces de directorio. Tampoco aceptamos una raiz enlazada.
+        if os.path.normcase(os.path.realpath(temporary)) != os.path.normcase(os.path.abspath(temporary)):
+            raise ValueError("La carpeta temporal de subtitulos es un enlace")
+        shutil.rmtree(temporary)
+
+        if config.get_setting('old_subtitles_cleaned', default=False):
+            return
+
+        protected = [filetools.join(config.get_data_path(), 'subtitles'),
+                     config.get_kodi_setting('subtitles.custompath')]
+        protected += [config.get_setting(name, default='') for name in
+                      ('subtitlepath_folder', 'subtitlepath_keyboard', 'subtitlepath_file')]
+
+        def local_path(path):
+            if not path:
+                return ''
+            path = filetools.translatePath(path)
+            if '://' in path:
+                return ''
+            return os.path.normcase(os.path.realpath(path))
+
+        protected = [local_path(path) for path in protected if path]
+        protected = [path.rstrip('/\\') for path in protected if path]
+
+        def inside(path, parent):
+            return path == parent or path.startswith(parent + os.sep)
+
+        targets = [(filetools.join(config.get_videolibrary_path(), 'subtitles'), True),
+                   (filetools.join(config.get_data_path(), 'temp_subtitles'), False),
+                   (filetools.join(config.get_data_path(), 'subtitulo_areadocu.srt'), False),
+                   (filetools.join(config.get_data_path(), 'sub_flashx.srt'), False)]
+        success = True
+        extensions = ('.srt', '.ass', '.ssa', '.sub', '.vtt', '.smi', '.txt')
+        for target, subtitles_only in targets:
+            try:
+                path = local_path(target)
+                if not path:
+                    logger.info('Subtitulos: limpieza antigua omitida en ruta remota: %s' % target)
+                    continue
+                if any(inside(path, p) or inside(p, path) for p in protected):
+                    continue
+                # Excluir raices enlazadas; os.walk tampoco seguira enlaces interiores.
+                if path != os.path.normcase(os.path.abspath(filetools.translatePath(target))):
+                    continue
+                if not os.path.exists(path):
+                    continue
+                if not subtitles_only:
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                    else:
+                        os.remove(path)
+                    continue
+
+                def walk_error(error):
+                    raise error
+
+                directories = []
+                for folder, dirs, files in os.walk(path, onerror=walk_error, followlinks=False):
+                    dirs[:] = [name for name in dirs if
+                               os.path.normcase(os.path.realpath(os.path.join(folder, name))) ==
+                               os.path.normcase(os.path.abspath(os.path.join(folder, name)))]
+                    directories.append(folder)
+                    for name in files:
+                        filename = os.path.join(folder, name)
+                        if name.lower().endswith(extensions) and not os.path.islink(filename):
+                            os.remove(filename)
+                for folder in reversed(directories):
+                    if not os.listdir(folder):
+                        os.rmdir(folder)
+            except Exception:
+                success = False
+                logger.error(traceback.format_exc())
+        if success:
+            config.set_setting('old_subtitles_cleaned', True)
     except Exception:
         logger.error(traceback.format_exc())
 

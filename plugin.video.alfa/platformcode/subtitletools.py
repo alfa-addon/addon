@@ -15,7 +15,6 @@ from core import jsontools
 from core import scrapertools
 from core import urlparse
 from core.item import Item
-from lib import subtitlecache
 
 import xbmc
 import xbmcgui
@@ -308,7 +307,7 @@ def get_from_subdivx(sub_url, sub_data=None, sub_dir='', item=Item(), sub_url_al
         sub_url_alt = httptools.obtain_domain(sub_url, scheme=True).rstrip('/') + '/descargar.php?id='
         sub_url_alt += scrapertools.find_single_match(sub_url, r'\/(\d+)$')
     if not sub_dir:
-        sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
+        sub_dir = config.get_subtitles_path()
         filetools.mkdir(sub_dir)
 
     if not sub_data:
@@ -353,7 +352,7 @@ def get_from_subscene(sub_url, sub_data=None, sub_dir='', item=Item()):
         sub = False
         host = httptools.obtain_domain(sub_url, scheme=True)
         if not sub_dir:
-            sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
+            sub_dir = config.get_subtitles_path()
         # sub_dir_init = sub_dir
         sub_dir = filetools.join(sub_dir, sub_url.split('/')[-1])
         filetools.mkdir(sub_dir)
@@ -465,7 +464,7 @@ def get_from_subdl(sub_url, sub_data=None, sub_dir='', item=Item()):
     sub_url_alt = 'https://dl.%s/subtitle/' % httptools.obtain_domain(sub_url, scheme=False).rstrip('/')
     sub_url = sub_url.replace("&amp;", "&")
     if not sub_dir:
-        sub_dir = filetools.join(config.get_videolibrary_path(), "subtitles")
+        sub_dir = config.get_subtitles_path()
         filetools.mkdir(sub_dir)
 
     if not sub_data:
@@ -646,9 +645,8 @@ def get_from_opensubtitles(imdb_id, temporada=0, episodio=0, sub_dir='', item=It
     if not sub_name or not zip_url:
         return sub
 
-    owned_dir = ''
     if not sub_dir:
-        sub_dir = owned_dir = subtitlecache.create_session()
+        sub_dir = config.get_subtitles_path()
     if not filetools.exists(sub_dir):
         filetools.mkdir(sub_dir)
     sub_name = filetools.basename(sub_name)
@@ -660,7 +658,6 @@ def get_from_opensubtitles(imdb_id, temporada=0, episodio=0, sub_dir='', item=It
         return sub
 
     fichero_zip = filetools.join(sub_dir, sub_name + '.zip')
-    downloaded = False
 
     try:
         descarga = httptools.downloadpage(zip_url, headers={'User-Agent': 'TemporaryUserAgent'},
@@ -684,7 +681,6 @@ def get_from_opensubtitles(imdb_id, temporada=0, episodio=0, sub_dir='', item=It
         if not filetools.exists(sub):
             logger.error("opensubtitles: tras descomprimir no aparece %s" % sub_name)
             return ''
-        downloaded = True
     except Exception as e:
         logger.error("opensubtitles: fallo la descarga (%s)" % str(e)[:120])
         return ''
@@ -695,11 +691,6 @@ def get_from_opensubtitles(imdb_id, temporada=0, episodio=0, sub_dir='', item=It
                 filetools.remove(fichero_zip, silent=True)
         except Exception:
             pass
-        if owned_dir:
-            if downloaded:
-                subtitlecache.cleanup_after_playback(owned_dir)
-            else:
-                subtitlecache.cleanup(owned_dir)
 
     logger.info("opensubtitles: subtitulo listo (%s)" % sub_name)
 
@@ -749,7 +740,6 @@ def download_subtitles(item):
         subtitles = item.subtitle[:]
     item.subtitle = ''
     subtitles_path = ''
-    downloaded = False
 
     try:
 
@@ -761,7 +751,7 @@ def download_subtitles(item):
                 continue
 
             if not subtitles_path:
-                subtitles_path = subtitlecache.create_session()
+                subtitles_path = config.get_subtitles_path()
             filename = filetools.basename(urlparse.urlparse(subtitle).path) or 'subtitle.srt'
             subtitle_path_name = filetools.join(subtitles_path, filename)
 
@@ -769,7 +759,6 @@ def download_subtitles(item):
                 if service in httptools.obtain_domain(subtitle):
                     data_dl = funtion(subtitle, data_dl, subtitles_path, item)
                     if data_dl:
-                        downloaded = True
                         item.subtitle = data_dl
                         if isinstance(item.subtitle, list):
                             logger.debug(item.subtitle)
@@ -782,15 +771,8 @@ def download_subtitles(item):
             if data_dl and data_dl.sucess and data_dl.data:
                 res = filetools.write(subtitle_path_name, data_dl.data)
                 if res and not item.subtitle:
-                    downloaded = True
                     item.subtitle = subtitle_path_name
     except Exception:
         logger.error(traceback.format_exc())
-
-    if subtitles_path:
-        if downloaded:
-            subtitlecache.cleanup_after_playback(subtitles_path)
-        else:
-            subtitlecache.cleanup(subtitles_path)
 
     return item

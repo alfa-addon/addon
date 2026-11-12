@@ -104,8 +104,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                     try:
                         from core import filetools
                         data = httptools.downloadpage(media_url)
-                        subtitle = os.path.join(config.get_data_path(), 'sub_flashx.srt')
-                        filetools.write(subtitle, data)
+                        subtitle_path = filetools.join(config.get_subtitles_path(), 'sub_flashx.srt')
+                        if data.sucess and data.data and filetools.write(subtitle_path, data.data):
+                            subtitle = subtitle_path
                     except Exception:
                         import traceback
                         logger.info("Error al descargar el subtítulo: " + traceback.format_exc())
