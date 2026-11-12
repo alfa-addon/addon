@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys, base64
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -44,7 +45,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", tipo_action="jnews_module_ajax_jnews_video_block4_view", url = host + "/latest", thumbnail = get_thumb("newest", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", tipo_action="jnews_module_ajax_jnews_video_block4_view", url = alfa_urlparse.build_url(host, '/latest'), thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos", url = host, extra = "Peliculas", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, thumbnail = get_thumb("search", auto = True)))
@@ -85,11 +86,11 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas','latino']:
-            item.url = host + "/latest"
+            item.url = alfa_urlparse.build_url(host, '/latest')
         elif categoria == 'infantiles':
-            item.url = host + '/category/animacion/'
+            item.url = alfa_urlparse.build_url(host, '/category/animacion/')
         elif categoria == 'terror':
-            item.url = host + '/category/torror/'
+            item.url = alfa_urlparse.build_url(host, '/category/torror/')
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -124,7 +125,7 @@ def generos(item):
     matches = scrapertools.find_multiple_matches(bloque, patron)
     
     for url, titulo in matches:
-        if not url.startswith("http"): url = host + url
+        if not url.startswith("http"): url = alfa_urlparse.urljoin(host, url)
         datos = httptools.downloadpage(url, encoding=encoding, canonical=canonical).data
         
         cat = scrapertools.find_single_match(datos, '"include_category":(\d+)')
@@ -158,7 +159,7 @@ def peliculas(item):
             #jnews_module_ajax_jnews_video_block4_view
             #jnews_ajax_live_search
     
-    uuu = "%s?ajax-request=jnews" % host
+    uuu = alfa_urlparse.build_url(host, query='ajax-request=jnews')
     headers = {"accept": "text/html, */*; q=0.01",
                 "accept-language": "es-ES,es;q=0.9",
                 "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -210,7 +211,7 @@ def findvideos(item):
     patron += '(?:data-src=|src=|(?:[\'"]src[\'"]\s*,\s*))[\'"](https?:)?\/\/([^\'"]+)[\'"]'
     matches = scrapertools.find_single_match(data, patron)
     
-    url = "https://%s"  %matches[-1]
+    url = alfa_urlparse.urlunsplit(('https', u'{}'.format(matches[-1]), "", "", ""))
     
     itemlist.append(Item(
                     channel=item.channel,

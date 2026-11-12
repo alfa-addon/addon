@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -107,18 +108,18 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", 
-                         c_type='peliculas', url=host + "peliculas/", thumbnail=get_thumb("channels_movie.png")))
+                         c_type='peliculas', url=alfa_urlparse.build_url(host, 'peliculas/'), thumbnail=get_thumb("channels_movie.png")))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad[/COLOR]", action="section", 
-                         c_type='peliculas', url=host + "peliculas/", thumbnail=get_thumb("channels_movie_hd.png")))
+                         c_type='peliculas', url=alfa_urlparse.build_url(host, 'peliculas/'), thumbnail=get_thumb("channels_movie_hd.png")))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Año[/COLOR]", action="section", 
-                         c_type='peliculas', url=host + "peliculas/", thumbnail=get_thumb("years.png")))
+                         c_type='peliculas', url=alfa_urlparse.build_url(host, 'peliculas/'), thumbnail=get_thumb("years.png")))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Idioma[/COLOR]", action="section", 
-                         c_type='peliculas', url=host + "peliculas/", thumbnail=get_thumb("channels_vos.png")))
+                         c_type='peliculas', url=alfa_urlparse.build_url(host, 'peliculas/'), thumbnail=get_thumb("channels_vos.png")))
 
     itemlist.append(Item(channel=item.channel, title="Series", action="list_all", 
-                         c_type='series', url=host + "series/", thumbnail=get_thumb("channels_tvshow.png")))
+                         c_type='series', url=alfa_urlparse.build_url(host, 'series/'), thumbnail=get_thumb("channels_tvshow.png")))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Año[/COLOR]", action="section", 
-                         c_type='series', url=host + "series/", thumbnail=get_thumb("years.png")))
+                         c_type='series', url=alfa_urlparse.build_url(host, 'series/'), thumbnail=get_thumb("years.png")))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", 
                          c_type='search', thumbnail=get_thumb("search.png")))
@@ -190,8 +191,7 @@ def section_matches(item, matches_int, **AHkwargs):
             language = elem.get('value', '')
             elem_json['language'] = '*%s' % elem_json['title']
 
-        elem_json['url'] = '%ssearch-result/?search_query=&calidad=%s&genero=&dtyear=%s&audio=%s' \
-                            % (host, quality, year, language)
+        elem_json['url'] = alfa_urlparse.build_url(host, 'search-result/', query=[('search_query', ''), ('calidad', u'{}'.format(quality)), ('genero', ''), ('dtyear', u'{}'.format(year)), ('audio', u'{}'.format(language))])
 
         matches.append(elem_json.copy())
 
@@ -374,10 +374,11 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
     
     try:
-        item.url = '%ssearch-result/?search_query=%s&calidad=&genero=&dtyear=&audio=' % (host, texto)
+        item.url = alfa_urlparse.build_url(host, 'search-result/', query=[('search_query', u'{}'.format(_url_query_texto)), ('calidad', ''), ('genero', ''), ('dtyear', ''), ('audio', '')])
 
         if texto:
             item.c_type = "search"
@@ -404,7 +405,7 @@ def newest(categoria, **AHkwargs):
     
     try:
         if categoria in ['peliculas', 'latino', 'torrent']:
-            item.url = host + 'peliculas/'
+            item.url = alfa_urlparse.build_url(host, 'peliculas/')
             item.c_type = "peliculas"
             item.extra = "novedades"
             item.action = "list_all"
@@ -415,7 +416,7 @@ def newest(categoria, **AHkwargs):
         
         if categoria in ['series', 'latino', 'torrent']:
             item.category_new= 'newest'
-            item.url = host + "series/"
+            item.url = alfa_urlparse.build_url(host, 'series/')
             item.c_type = "series"
             item.extra = "novedades"
             item.action = "list_all"

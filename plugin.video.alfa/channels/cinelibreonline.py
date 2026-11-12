@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -42,7 +43,7 @@ def mainlist(item):
     logger.info()
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "search?max-results=%s" %max_result, thumbnail = get_thumb("newest", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = alfa_urlparse.build_url(host, 'search', query=[('max-results', u'{}'.format(max_result))]), thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, thumbnail = get_thumb("search", auto = True)))
@@ -75,9 +76,7 @@ def peliculas(item):
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     url_pagina = scrapertools.find_single_match(data, """blog-pager-older-link.*?href='([^']+)""")
     if url_pagina:
-        mr = scrapertools.find_single_match(url_pagina, "&max-results=\w+")
-        if not url_pagina.endswith("&"): url_pagina += "&"
-        url_pagina = url_pagina.replace(mr,"") + "max-results=%s" %max_result
+        url_pagina = alfa_urlparse.update_query(url_pagina, {'max-results': max_result})
         pagina = "Pagina siguiente"
         itemlist.append(Item(channel = item.channel, action = "peliculas", title = pagina, url = url_pagina))
     return itemlist
@@ -126,7 +125,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas']:
-            item.url = host + "search?max-results=%s" %max_result
+            item.url = alfa_urlparse.build_url(host, 'search', query=[('max-results', u'{}'.format(max_result))])
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -141,8 +140,9 @@ def newest(categoria):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = host + "search?q=" + texto
+    item.url = alfa_urlparse.build_url(host, 'search', query=[('q', _url_query_texto)])
     item.extra = "busca"
     try:
         if texto != '':
@@ -205,5 +205,5 @@ def play(item):
     item.thumbnail = item.contentThumbnail
     if "wikipedia" in item.url:
         data = httptools.downloadpage(item.url, encoding="utf-8").data
-        item.url = "https:" + scrapertools.find_single_match(data, '<source src="([^"]+)')
+        item.url = alfa_urlparse.urljoin('https:', scrapertools.find_single_match(data, '<source src="([^"]+)'))
     return [item]

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import urlparse
@@ -62,8 +63,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas visto" , action="list_all", url=api %(host,"most_viewed")))
     itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=api %(host,"top_rated")))
     itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=api %(host,"longest")))
-    itemlist.append(Item(channel=item.channel, title="Pornstars", action="catalogo", url=host + "pornstars?page=1", extra="Pornstar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "search", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars", action="catalogo", url=alfa_urlparse.build_url(host, 'pornstars', query='page=1'), extra="Pornstar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=alfa_urlparse.build_url(host, 'search'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     return itemlist
@@ -71,8 +72,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%sapi/search?q=%s&sort=newest&cursor=" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'api/search', query=[('q', u'{}'.format(_url_query_texto)), ('sort', 'newest'), ('cursor', '')])
     try:
         return list_all(item)
     except Exception:
@@ -96,7 +98,7 @@ def categorias(item):
         if cantidad:
             cantidad = cantidad.text.replace('videos', '')
             title = "%s (%s)" % (title,cantidad.strip())
-        url = "%sapi/videos?category=%s&sort=newest&cursor=" % (host,id)
+        url = alfa_urlparse.build_url(host, 'api/videos', query=[('category', u'{}'.format(id)), ('sort', 'newest'), ('cursor', '')])
         # url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
@@ -118,7 +120,7 @@ def catalogo(item):
         if cantidad:
             cantidad = cantidad.text.replace('videos', '')
             title = "%s (%s)" % (title,cantidad.strip())
-        url = "%sapi/videos?pornstar=%s&sort=newest&cursor=" % (host,id)
+        url = alfa_urlparse.build_url(host, 'api/videos', query=[('pornstar', u'{}'.format(id)), ('sort', 'newest'), ('cursor', '')])
         # url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
@@ -150,9 +152,9 @@ def list_all(item):
     
     data = httptools.downloadpage(item.url, canonical=canonical).json
     for elem in data['data']:
-        url = "%s%s" %(host, elem['slug'])
+        url = alfa_urlparse.urljoin(host, u'{}'.format(elem['slug']))
         title = elem['title']
-        thumbnail = "%s%s" %(host, elem['thumbnailUrl'])
+        thumbnail = alfa_urlparse.urljoin(host, u'{}'.format(elem['thumbnailUrl']))
         quality = elem['quality']
         video = elem['cdnUrl']
         

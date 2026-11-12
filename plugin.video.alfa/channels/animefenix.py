@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import re
 import traceback
 
@@ -177,7 +178,7 @@ def list_all(item):
                         channel=item.channel,
                         thumbnail=thumb,
                         title="Siguiente página >",
-                        url="%s%s" % (base_url, next_url)
+                        url=alfa_urlparse.urljoin(base_url, next_url)
                         if base_url not in next_url
                         else next_url,
                     )
@@ -376,8 +377,8 @@ def findvideos(item):
         "21": "https://www.burstcloud.co/embed/%s",
         "12": "https://ok.ru/videoembed/%s",
         "17": "https://videobin.co/embed-%s.html",
-        "9": host + "/stream/amz.php?v=%s",
-        "11": host + "/stream/amz.php?v=%s",
+        "9": alfa_urlparse.build_url(host, '/stream/amz.php', query='v=%s'),
+        "11": alfa_urlparse.build_url(host, '/stream/amz.php', query='v=%s'),
         "2": "https://www.fembed.com/v/%s",
         "3": "https://www.mp4upload.com/embed-%s.html",
         "4": "https://sendvid.com/embed/%s",
@@ -406,7 +407,7 @@ def findvideos(item):
             if "fireload" in v_id:
                 url = v_id
                 if not url.startswith("http"):
-                    url = "https://" + url
+                    url = alfa_urlparse.urlunsplit(('https', url, "", "", ""))
             elif srv_id not in servers:
                 srv_data = get_source(url, referer=item.url)
                 url = scrapertools.find_single_match(
@@ -455,8 +456,7 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = alfa_urlparse.update_query(item.url, {'q': texto})
 
     if texto != "":
         try:

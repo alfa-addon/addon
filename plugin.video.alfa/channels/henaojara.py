@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By DieFeM -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -98,10 +99,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host, action='list_all',
                          thumbnail=get_thumb('newest', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'view/category/categorias/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'view/category/categorias/'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'view/category/pelicula/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=alfa_urlparse.build_url(host, 'view/category/pelicula/'), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host, 
@@ -406,8 +407,9 @@ def search(item, texto, **AHkwargs):
 
     try:
         # https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
+        _url_query_texto = texto
         texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = item.url + "?s=" + texto
+        item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
 
         if texto:
             item.c_type = 'search'

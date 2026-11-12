@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import re
 from bs4 import BeautifulSoup
 
@@ -52,10 +53,10 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host +"?p182_catalog=movies&catalog_page=1", action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=alfa_urlparse.build_url(host, query='p182_catalog=movies&catalog_page=1'), action='list_all',
                          thumbnail=get_thumb('movies', auto=True)))
     
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'category/series/', action='list_all', c_type = "tvshow",
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'category/series/'), action='list_all', c_type = "tvshow",
                          thumbnail=get_thumb('tvshows', auto=True)))
     
     itemlist.append(Item(channel=item.channel, title='Categorias', url=host, action='categories',
@@ -239,8 +240,9 @@ def search(item, texto):
     
     try:
         if texto != '':
+            _url_query_texto = str(texto)
             texto = str(texto).replace(" ", "+")
-            item.url = "{0}?s={1}".format(host, texto)
+            item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
             item.c_type = "search"
             return list_all(item)
         else:

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -23,19 +24,20 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?filter=most-viewed"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "?filter=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas metraje" , action="lista", url=host + "?filter=longest"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categorieen/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, query='filter=latest')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, query='filter=most-viewed')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=alfa_urlparse.build_url(host, query='filter=popular')))
+    itemlist.append(Item(channel=item.channel, title="Mas metraje" , action="lista", url=alfa_urlparse.build_url(host, query='filter=longest')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categorieen/')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s?s=%s&filter=latest" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto)), ('filter', 'latest')])
     try:
         return lista(item)
     except Exception:
@@ -48,7 +50,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Borsten" , action="lista", url=host + "/?s=borsten&filter=latest",
+    itemlist.append(Item(channel=item.channel, title="Borsten" , action="lista", url=alfa_urlparse.build_url(host, '/', query='s=borsten&filter=latest'),
                                 thumbnail = "https://images.sextube.nl/output/1670347e76ec08d7713496749c2a4068/poster.jpg"))
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='video-block-cat')

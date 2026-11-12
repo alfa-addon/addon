@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -24,10 +25,10 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "videos/most-viewed/"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "videos/longues/"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "filles/"))
-    itemlist.append(Item(channel=item.channel, title="Series" , action="catalogo", url=host + "series.html"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'videos/most-viewed/')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=alfa_urlparse.build_url(host, 'videos/longues/')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=alfa_urlparse.build_url(host, 'filles/')))
+    itemlist.append(Item(channel=item.channel, title="Series" , action="catalogo", url=alfa_urlparse.build_url(host, 'series.html')))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -35,8 +36,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s?search=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, query=[('search', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:

@@ -4,6 +4,7 @@
 # -*- By the Alfa Develop Group -*-
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -89,16 +90,16 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=host + 'peliculas', 
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=alfa_urlparse.build_url(host, 'peliculas'),
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por Géneros[/COLOR]', action='section', url=host, 
                          thumbnail=get_thumb('genres', auto=True), c_type='peliculas', extra='Géneros'))
 
-    itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Estrenos[/COLOR]', action='list_all', url=host + 'estrenos', 
+    itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Estrenos[/COLOR]', action='list_all', url=alfa_urlparse.build_url(host, 'estrenos'),
                          thumbnail=get_thumb('newest', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Series', action='list_all', url=host + 'series', 
+    itemlist.append(Item(channel=item.channel, title='Series', action='list_all', url=alfa_urlparse.build_url(host, 'series'),
                          thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host, 
@@ -279,9 +280,10 @@ def search(item, texto, **AHkwargs):
     #findS = {'find': [{'tag': ['meta'], 'name': ['csrf-token'], '@ARG': 'content'}]}
     #token = AlfaChannel.parse_finds_dict(soup, findS)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
     #item.url += "suggest?que=%s&_token=%s" % (texto, token)
-    item.url += "suggest?que=%s" % (texto)
+    item.url = alfa_urlparse.build_url(item.url, 'suggest', query=[('que', u'{}'.format(_url_query_texto))])
 
     try:
         if texto:
@@ -304,11 +306,11 @@ def newest(categoria, **AHkwargs):
     item = Item()
     try:
         if categoria in ['peliculas', 'latino']:
-            item.url = host + 'peliculas'
+            item.url = alfa_urlparse.build_url(host, 'peliculas')
         elif categoria == 'infantiles':
-            item.url = host + 'genero/animacion/'
+            item.url = alfa_urlparse.build_url(host, 'genero/animacion/')
         elif categoria == 'terror':
-            item.url = host + 'genero/terror/'
+            item.url = alfa_urlparse.build_url(host, 'genero/terror/')
         itemlist = list_all(item)
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()

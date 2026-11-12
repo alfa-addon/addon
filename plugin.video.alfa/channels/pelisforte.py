@@ -4,6 +4,7 @@
 # -*- By the Alfa Develop Group -*-
 
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import urlparse
@@ -52,34 +53,34 @@ def mainlist(item):
 
 
     itemlist.append(Item(channel=item.channel, title="Novedades", action="list_all",
-                         url=host + "pelicula",
+                         url=alfa_urlparse.build_url(host, 'pelicula'),
                          thumbnail=get_thumb("newest", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Castellano", action="list_all",
-                         url=host + "pelis/idiomas/castellano", extra = "CAST",
+                         url=alfa_urlparse.build_url(host, 'pelis/idiomas/castellano'), extra = "CAST",
                          thumbnail=get_thumb("cast", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Latino", action="list_all",
-                         url=host + "pelis/idiomas/espanol-latino", extra = "LAT",
+                         url=alfa_urlparse.build_url(host, 'pelis/idiomas/espanol-latino'), extra = "LAT",
                          thumbnail=get_thumb("lat", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all",
-                         url=host + "pelis/idiomas/subtituladas-p02", extra = "VOSE",
+                         url=alfa_urlparse.build_url(host, 'pelis/idiomas/subtituladas-p02'), extra = "VOSE",
                          thumbnail=get_thumb("vose", auto=True)))
 
     # itemlist.append(Item(channel=item.channel, title="Sagas", action="section", url=host + "pelicula",
                          # thumbnail=get_thumb("genres", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host + "pelicula",
+    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=alfa_urlparse.build_url(host, 'pelicula'),
                          thumbnail=get_thumb("genres", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Alfabetico", action="alphabet", url=host + "pelicula",
+    itemlist.append(Item(channel=item.channel, title="Alfabetico", action="alphabet", url=alfa_urlparse.build_url(host, 'pelicula'),
                          thumbnail=get_thumb('year', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Años", action="alphabet", url=host + "pelicula",
+    itemlist.append(Item(channel=item.channel, title="Años", action="alphabet", url=alfa_urlparse.build_url(host, 'pelicula'),
                          thumbnail=get_thumb('year', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, query='s='),
                          thumbnail=get_thumb("search", auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -219,7 +220,7 @@ def play(item):
     
     # if "vgfplay" not in url and "listeamed" not in url and "bf0skv" not in url:
     if "okhd" in url:
-        url += "|Referer=%s" %item.url
+        url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(item.url)})
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
@@ -229,7 +230,7 @@ def search(item, texto):
     logger.info()
     try:
         texto = texto.replace(" ", "%20")
-        item.url = "%s/page/1?s=%s" % (host, texto)
+        item.url = alfa_urlparse.build_url(host, '/page/1', query=[('s', u'{}'.format(texto))])
         if texto != "":
             return list_all(item)
         else:
@@ -247,15 +248,15 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas']:
-            item.url = host + "pelicula"
+            item.url = alfa_urlparse.build_url(host, 'pelicula')
         elif categoria == 'latino':
-            item.url = host + "pelis/idiomas/espanol-latino"
+            item.url = alfa_urlparse.build_url(host, 'pelis/idiomas/espanol-latino')
         elif categoria == 'castellano':
-            item.url = host + "pelis/idiomas/castellano"
+            item.url = alfa_urlparse.build_url(host, 'pelis/idiomas/castellano')
         elif categoria == 'infantiles':
-            item.url = host + 'peliculas/animacion-p04'
+            item.url = alfa_urlparse.build_url(host, 'peliculas/animacion-p04')
         elif categoria == 'terror':
-            item.url = host + 'peliculas/terror'
+            item.url = alfa_urlparse.build_url(host, 'peliculas/terror')
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()

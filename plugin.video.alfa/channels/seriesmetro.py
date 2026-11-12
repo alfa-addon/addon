@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -56,7 +57,7 @@ def mainlist(item):
     itemlist =[]
 
     itemlist.append(Item(channel=item.channel, title="Últimas Series",
-                         action="list_all", url=host+'series/',
+                         action="list_all", url=alfa_urlparse.build_url(host, 'series/'),
                          thumbnail=get_thumb('last', auto=True)))
     
     '''itemlist.append(Item(channel=item.channel, title="Últimos Capitulos",
@@ -73,7 +74,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section",
                          thumbnail=get_thumb('alphabet', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, query='s='),
                          thumbnail=get_thumb('search', auto=True)))
 
     itemlist.append(Item(channel=item.channel,action="setting_channel", title="Configurar canal...",
@@ -112,7 +113,7 @@ def section(item):
         
         for w in words:
             title = w
-            url = '%sletter/%s' % (host, w.replace('#', '0-9'))
+            url = alfa_urlparse.build_url(host, u'letter/{}'.format(w.replace('#', '0-9')))
             
             itemlist.append(Item(channel=item.channel, title=title,
                                  url=url, action='list_all'))
@@ -179,7 +180,7 @@ def new_episodes(item):
         ep_title = elem.find("h2", class_="entry-title").text
         url = elem.find("a", class_="lnk-blk")['href']
         #TODO usarlo de filtro en tmdb
-        thumb = 'https:'+elem.img['src'].replace('/w185', '/original')
+        thumb = alfa_urlparse.urljoin('https:', elem.img['src'].replace('/w185', '/original'))
         title = stitle
         if full_title and not unify:
             title = '%s [COLOR aquamarine][I]%s[/I][/COLOR]' % (stitle, ep_title)
@@ -228,7 +229,7 @@ def seasons(item):
             infoLabels['season'] = int(elem.text)
         except Exception:
             infoLabels['season'] = 1
-        url = '{}wp-admin/admin-ajax.php'.format(host)
+        url = alfa_urlparse.build_url(host, 'wp-admin/admin-ajax.php')
 
         itemlist.append(Item(channel=item.channel, title=title, url=url,
                              action='episodesxseason', infoLabels=infoLabels, 
@@ -310,7 +311,7 @@ def episodesxseason(item):
 def search(item, text):
     logger.info()
 
-    item.url = item.url + text
+    item.url = alfa_urlparse.update_query(item.url, {'s': text})
     if text != '':
         return list_all(item)
 
@@ -337,7 +338,7 @@ def findvideos(item):
         server = servers.get(srv, srv)
 
         language = IDIOMAS.get(lang, lang)
-        link = '%s?trembed=%s&trid=%s&trtype=2' % (host, ide, term_id)
+        link = alfa_urlparse.build_url(host, query=[('trembed', u'{}'.format(ide)), ('trid', u'{}'.format(term_id)), ('trtype', '2')])
         
         soup = create_soup(link)
         

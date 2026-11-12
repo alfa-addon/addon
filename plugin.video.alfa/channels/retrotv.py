@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -92,16 +93,16 @@ def mainlist(item):
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, title="Todas las Series", action="list_all", c_type='series', 
-                         url=host + "lista-de-series/", thumbnail=get_thumb("all", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'lista-de-series/'), thumbnail=get_thumb("all", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Animación", action="list_all", c_type='series', 
-                         url=host + "category/animacion/", thumbnail=get_thumb("animacion", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'category/animacion/'), thumbnail=get_thumb("animacion", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Live Action", action="list_all", c_type='series', 
-                         url=host + "category/liveaction/", thumbnail=get_thumb("tvshows", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'category/liveaction/'), thumbnail=get_thumb("tvshows", auto=True)))
     
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", c_type='peliculas', 
-                         url=host + "peliculas/", thumbnail=get_thumb("movies", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'peliculas/'), thumbnail=get_thumb("movies", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Géneros", action="section", url=host, c_type='series', 
                          thumbnail=get_thumb("genres", auto=True)))
@@ -133,7 +134,7 @@ def alfabetico(item):
     for letra in ['0-9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
                   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
 
-        itemlist.append(item.clone(action="list_all", title=letra, url=host + 'letter/%s/' % letra.lower()))
+        itemlist.append(item.clone(action="list_all", title=letra, url=alfa_urlparse.build_url(host, u'letter/{}/'.format(letra.lower()))))
 
     return itemlist
 
@@ -292,7 +293,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 trtype = 1 if item.contentType == 'movie' else '2'
                 if 'trid' not in elem_json['url']:
                     trid = scrapertools.find_single_match(elem_json['url'], '\?p=(\d+)')
-                    elem_json['url'] = '%s?trembed=0&trid=%s&trtype=%s' % (host, trid, trtype)
+                    elem_json['url'] = alfa_urlparse.build_url(host, query=[('trembed', '0'), ('trid', u'{}'.format(trid)), ('trtype', u'{}'.format(trtype))])
                 else:
                     elem_json['url'] = re.sub("amp;|#038;", "", elem_json['url'])
                 
@@ -414,10 +415,11 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
 
         if texto:
-            item.url += "?s=" + texto
+            item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
             item.c_type = 'search'
             item.texto = texto
             return list_all(item)

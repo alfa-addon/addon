@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -73,7 +74,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="list_all", 
-                         url=host + 'peliculas/',
+                         url=alfa_urlparse.build_url(host, 'peliculas/'),
                          thumbnail=get_thumb("movies", auto=True)))
     
     # itemlist.append(Item(channel=item.channel, title="Más Vistas", action="list_all", 
@@ -85,7 +86,7 @@ def mainlist(item):
                          # thumbnail=get_thumb("more voted", auto=True)))
     
     itemlist.append(Item(channel=item.channel, title="Series", action="list_all", 
-                         url=host + 'series/',
+                         url=alfa_urlparse.build_url(host, 'series/'),
                          thumbnail=get_thumb("tvshows", auto=True)))
     
     itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host,
@@ -94,7 +95,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Por Año", action="section", url=host,
                          thumbnail=get_thumb("year", auto=True), type=1))
     
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, query='s='),
                          thumbnail=get_thumb("search", auto=True)))
     
     itemlist.append(Item(channel=item.channel,
@@ -317,9 +318,8 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     try:
-        texto = texto.replace(" ", "+")
         if texto != '':
-            item.url += texto
+            item.url = alfa_urlparse.update_query(item.url, {'s': texto})
             return list_all(item)
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla

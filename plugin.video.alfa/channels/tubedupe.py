@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -23,37 +24,38 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "latest-updates/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "top-rated/"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "most-popular/"))
-    itemlist.append(Item(channel=item.channel, title="Modelos" , action="categorias", url=host + "models/?sort_by=model_viewed"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels/?sort_by=cs_viewed"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/?sort_by=title"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'latest-updates/')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=alfa_urlparse.build_url(host, 'top-rated/')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'most-popular/')))
+    itemlist.append(Item(channel=item.channel, title="Modelos" , action="categorias", url=alfa_urlparse.build_url(host, 'models/', query='sort_by=model_viewed')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(host, 'channels/', query='sort_by=cs_viewed')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories/', query='sort_by=title')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host))
 
     itemlist.append(Item(channel=item.channel, title=""))
 
-    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=host +"gay"))
-    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=host + "shemale"))
+    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=alfa_urlparse.build_url(host, 'gay')))
+    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=alfa_urlparse.build_url(host, 'shemale')))
     return itemlist
 
 
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=item.url +"/latest/"))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=item.url + "/most-viewed/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=item.url + "/top-rated/"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=item.url + "-channels/?sort_by=cs_viewed"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=item.url + "-categories/?sort_by=title"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url + "/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=alfa_urlparse.build_url(item.url, '/latest/')))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=alfa_urlparse.build_url(item.url, '/most-viewed/')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=alfa_urlparse.build_url(item.url, '/top-rated/')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(alfa_urlparse.append_path_suffix(item.url, '-channels/'), query='sort_by=cs_viewed')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(alfa_urlparse.append_path_suffix(item.url, '-categories/'), query='sort_by=title')))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=alfa_urlparse.build_url(item.url, '/')))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/1/?q=%s" % (item.url, texto)
+    item.url = alfa_urlparse.build_url(item.url, 'search/1/', query=[('q', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:

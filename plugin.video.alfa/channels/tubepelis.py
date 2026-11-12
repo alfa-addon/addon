@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -89,11 +90,11 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title='Estrenos', action='list_all', url=host + 'estrenos.html?q=&a=8&page=1', #
+    itemlist.append(Item(channel=item.channel, title='Estrenos', action='list_all', url=alfa_urlparse.build_url(host, 'estrenos.html', query='q=&a=8&page=1'), #
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=host + 'inc/php/buscar.php?q=&a=0&sort=recent&page=1', #
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=alfa_urlparse.build_url(host, 'inc/php/buscar.php', query='q=&a=0&sort=recent&page=1'), #
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
-    itemlist.append(Item(channel=item.channel, title='Mas Vistas', action='list_all', url=host + 'inc/php/buscar.php?q=&a=0&sort=views&page=1', #
+    itemlist.append(Item(channel=item.channel, title='Mas Vistas', action='list_all', url=alfa_urlparse.build_url(host, 'inc/php/buscar.php', query='q=&a=0&sort=views&page=1'), #
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
     itemlist.append(Item(channel=item.channel, title="Géneros", action="section", url=host, 
                          thumbnail=get_thumb('genres', auto=True), extra='generos'))
@@ -128,7 +129,7 @@ def section_matches(item, matches_int, **AHkwargs):
         try:
             url = elem.get("href", '')
             url = scrapertools.find_single_match(url, 'categoria/([a-z-]+)')
-            elem_json['url'] = "%sinc/php/buscar.php?q=%s&a=3&page=1" %(item.url, url)
+            elem_json['url'] = alfa_urlparse.build_url(item.url, 'inc/php/buscar.php', query=[('q', u'{}'.format(url)), ('a', '3'), ('page', '1')])
             elem_json['title'] = elem.get_text(strip=True).replace('folder', '')
                                                                 
             if elem.img: elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
@@ -155,7 +156,7 @@ def anno(item):
     now = datetime.now()
     year = int(now.year)
     while year >= 1937:
-        itemlist.append(item.clone(title="%s" %year, action="list_all", url= "%sbuscar/?q=%s&a=1&page=1" % (item.url,year), c_type='peliculas'))
+        itemlist.append(item.clone(title="%s" %year, action="list_all", url= alfa_urlparse.build_url(item.url, 'buscar/', query=[('q', u'{}'.format(year)), ('a', '1'), ('page', '1')]), c_type='peliculas'))
         year -= 1
     
     return itemlist
@@ -245,8 +246,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = '%sinc/php/buscar.php?q=%s&a=0&sort=recent&page=1' % (item.url, texto)
+        item.url = alfa_urlparse.build_url(item.url, 'inc/php/buscar.php', query=[('q', u'{}'.format(_url_query_texto)), ('a', '0'), ('sort', 'recent'), ('page', '1')])
         
         if texto:
             item.c_type = "search"

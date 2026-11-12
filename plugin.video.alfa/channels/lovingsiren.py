@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -73,20 +74,20 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="list_all", url=host + "page/1/?filter=most-viewed"))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="list_all", url=host + "page/1/?filter=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "page/1/?filter=longest"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=latest')))
+    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="list_all", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=most-viewed')))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="list_all", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=popular')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=longest')))
     # itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/?filter=latest"))
     # itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Bangbros" , action="list_all", url=host + "category/bangbros/page/1"))
-    itemlist.append(Item(channel=item.channel, title="Brazzers" , action="list_all", url=host + "category/brazzers/page/1"))
-    itemlist.append(Item(channel=item.channel, title="Putalocura" , action="list_all", url=host + "category/putalocura/page/1"))
-    itemlist.append(Item(channel=item.channel, title="SexMex" , action="list_all", url=host + "category/sexmex/page/1"))
-    itemlist.append(Item(channel=item.channel, title="MilkyPeru" , action="list_all", url=host + "category/milkyperu/page/1"))
-    itemlist.append(Item(channel=item.channel, title="Onlyfans" , action="list_all", url=host + "category/onlyfans/page/1"))
-    itemlist.append(Item(channel=item.channel, title="18-years-old" , action="list_all", url=host + "category/18-years-old/page/1"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "a/page/1/", extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Bangbros" , action="list_all", url=alfa_urlparse.build_url(host, 'category/bangbros/page/1')))
+    itemlist.append(Item(channel=item.channel, title="Brazzers" , action="list_all", url=alfa_urlparse.build_url(host, 'category/brazzers/page/1')))
+    itemlist.append(Item(channel=item.channel, title="Putalocura" , action="list_all", url=alfa_urlparse.build_url(host, 'category/putalocura/page/1')))
+    itemlist.append(Item(channel=item.channel, title="SexMex" , action="list_all", url=alfa_urlparse.build_url(host, 'category/sexmex/page/1')))
+    itemlist.append(Item(channel=item.channel, title="MilkyPeru" , action="list_all", url=alfa_urlparse.build_url(host, 'category/milkyperu/page/1')))
+    itemlist.append(Item(channel=item.channel, title="Onlyfans" , action="list_all", url=alfa_urlparse.build_url(host, 'category/onlyfans/page/1')))
+    itemlist.append(Item(channel=item.channel, title="18-years-old" , action="list_all", url=alfa_urlparse.build_url(host, 'category/18-years-old/page/1')))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, 'a/page/1/'), extra="PornStar"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     autoplay.show_option(item.channel, itemlist)
@@ -148,7 +149,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%spage/1/?s=%s&filter=latest" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, 'page/1/', query=[('s', texto), ('filter', 'latest')])
     
     try:
         if texto:

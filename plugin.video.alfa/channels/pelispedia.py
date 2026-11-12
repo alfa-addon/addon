@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -90,9 +91,9 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", c_type='peliculas', 
-                         url=host + "cartelera-peliculas/page/1", thumbnail=get_thumb("movies", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'cartelera-peliculas/page/1'), thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(Item(channel=item.channel, title="Series", action="list_all", c_type='series', 
-                         url=host + "cartelera-series/page/1", thumbnail=get_thumb("all", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'cartelera-series/page/1'), thumbnail=get_thumb("all", auto=True)))
     itemlist.append(Item(channel=item.channel, title="Géneros", action="section", url=host, c_type='series', 
                          thumbnail=get_thumb("genres", auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url= host, c_type='search', 
@@ -298,10 +299,11 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
         
         if texto:
-            item.url += "?s=" + texto
+            item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
             item.c_type = 'search'
             item.texto = texto
             return list_all(item)

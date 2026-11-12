@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the BDamian (Based on channels from Alfa Develop Group) -*-
 
+from core import urlparse as alfa_urlparse
 from builtins import map
 import sys
 PY3 = False
@@ -170,15 +171,15 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(Item(channel= item.channel, title="Doramas", action="list_all",
-                         url=host + 'category/doramas-online',
+                         url=alfa_urlparse.build_url(host, 'category/doramas-online'),
                          thumbnail=get_thumb('doramas', auto=True), type='dorama'))
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all",
-                         url=host + 'category/peliculas',
+                         url=alfa_urlparse.build_url(host, 'category/peliculas'),
                          thumbnail=get_thumb('movies', auto=True), type='movie'))
     
     itemlist.append(Item(channel=item.channel, title="Últimos capítulos", action="list_all",
-                         url=host + 'category/ultimos-capitulos-online',
+                         url=alfa_urlparse.build_url(host, 'category/ultimos-capitulos-online'),
                          thumbnail=get_thumb('doramas', auto=True), type='movie'))
 
     itemlist.append(Item(channel=item.channel, title="Por Genero", action="menu_generos",
@@ -186,10 +187,10 @@ def mainlist(item):
                          thumbnail=get_thumb('doramas', auto=True), type='dorama'))
 
     itemlist.append(Item(channel=item.channel, title="Doblado Latino", action="list_all",
-                         url=host + 'category/latino',
+                         url=alfa_urlparse.build_url(host, 'category/latino'),
                          thumbnail=get_thumb('doramas', auto=True), type='dorama'))
 
-    itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search/',
+    itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= alfa_urlparse.build_url(host, 'search/'),
                          thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -343,9 +344,9 @@ def findvideos(item):
             source_regex = 'post\( "(.*?)", { key: \'(.*?)\''
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
             for source_page, source_key in source_matches:
-                base_url = scrapedurl.rsplit('/', 1)[0] + '/'
+                base_url = alfa_urlparse.build_url(scrapedurl.rsplit('/', 1)[0], '/')
                 source_headers["Origin"] = base_url
-                source_url = base_url + source_page
+                source_url = alfa_urlparse.urljoin(base_url, source_page)
                 # logger.info(source_key)
                 token_get = str(int(round(time.time())))
                 token = base64.b64encode(token_get.encode("utf-8"))
@@ -371,9 +372,9 @@ def findvideos(item):
                 source_matches = re.compile(source_regex, re.DOTALL).findall(PLAYER_SRC)
                 # logger.info(source_data)
                 for source_page, source_key in source_matches:
-                    base_url = scrapedurl.rsplit('/', 1)[0] + '/'
+                    base_url = alfa_urlparse.build_url(scrapedurl.rsplit('/', 1)[0], '/')
                     source_headers["Origin"] = base_url
-                    source_url = base_url + source_page
+                    source_url = alfa_urlparse.urljoin(base_url, source_page)
                     # logger.info(source_key)
                     token_get = str(int(round(time.time())))
                     token = base64.b64encode(token_get.encode("utf-8"))
@@ -395,7 +396,7 @@ def findvideos(item):
             source_regex = 'post\( "(.*?)", { acc: "(.*?)"'
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
             for source_page, source_acc in source_matches:
-                source_url = scrapedurl[0:scrapedurl.find("reproducir120.php")] + source_page
+                source_url = alfa_urlparse.urljoin(scrapedurl, source_page)
                 source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
                                                        videoidn + '&tk=' + tokensn, headers=source_headers)
                 if source_result.code == 200:
@@ -416,7 +417,7 @@ def findvideos(item):
             source_regex = 'post\( "(.*?)", { acc: "(.*?)"'
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
             for source_page, source_acc in source_matches:
-                source_url = scrapedurl[0:scrapedurl.find("reproducir14.php")] + source_page
+                source_url = alfa_urlparse.urljoin(scrapedurl, source_page)
                 source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
                                                        videoidn + '&tk=' + tokensn, headers=source_headers)
                 if source_result.code == 200:
@@ -445,8 +446,7 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     itemlist = []
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = alfa_urlparse.build_url(item.url, alfa_urlparse.quote_path(texto))
     item.type = 'search'
     if texto != '':
         try:

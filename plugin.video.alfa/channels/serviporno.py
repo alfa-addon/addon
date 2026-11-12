@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -23,11 +24,11 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="videos", title="Útimos videos", url=host))
-    itemlist.append(Item(channel=item.channel, action="videos", title="Más vistos", url=host + "mas-vistos/"))
-    itemlist.append(Item(channel=item.channel, action="videos", title="Más votados", url=host + "mas-votados/"))
-    itemlist.append(Item(channel=item.channel, action="chicas", title="Chicas", url=host + "pornstars/"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Canal", url=host + "sitios/"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url= host + "categorias/"))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Más vistos", url=alfa_urlparse.build_url(host, 'mas-vistos/')))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Más votados", url=alfa_urlparse.build_url(host, 'mas-votados/')))
+    itemlist.append(Item(channel=item.channel, action="chicas", title="Chicas", url=alfa_urlparse.build_url(host, 'pornstars/')))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Canal", url=alfa_urlparse.build_url(host, 'sitios/')))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url= alfa_urlparse.build_url(host, 'categorias/')))
 
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", last=""))
     return itemlist
@@ -35,8 +36,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = '%ssearch/?q=%s' % (host, texto)
+    item.url = alfa_urlparse.build_url(host, 'search/', query=[('q', u'{}'.format(_url_query_texto))])
     try:
         return videos(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla

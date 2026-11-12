@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -108,27 +109,27 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", 
-                         url=host + movies_sufix, thumbnail=get_thumb("channels_movie.png"), 
+                         url=alfa_urlparse.urljoin(host, movies_sufix), thumbnail=get_thumb("channels_movie.png"),
                          c_type="peliculas", category=categoria))
     itemlist.append(Item(channel=item.channel, title="   -   por Calidad", action="section", 
-                         url=host + movies_sufix, thumbnail=get_thumb("channels_movie_hd.png"), 
+                         url=alfa_urlparse.urljoin(host, movies_sufix), thumbnail=get_thumb("channels_movie_hd.png"),
                          c_type="peliculas", extra="calidades", category=categoria))
     itemlist.append(Item(channel=item.channel, title="   -   por Género", action="section", 
-                         url=host + movies_sufix, thumbnail=get_thumb("genres.png"), 
+                         url=alfa_urlparse.urljoin(host, movies_sufix), thumbnail=get_thumb("genres.png"),
                          c_type="peliculas", extra="generos", category=categoria))
 
     # Buscar películas
     itemlist.append(Item(channel=item.channel, title="Buscar en Películas >>", action="search", 
-                         url=host + movies_sufix, thumbnail=get_thumb("search.png"), c_type="search", 
+                         url=alfa_urlparse.urljoin(host, movies_sufix), thumbnail=get_thumb("search.png"), c_type="search",
                          extra="peliculas", category=categoria))
     
     itemlist.append(Item(channel=item.channel, title="Series", action="list_all", 
-                         url=host + series_sufix, thumbnail=get_thumb("channels_tvshow.png"), 
+                         url=alfa_urlparse.urljoin(host, series_sufix), thumbnail=get_thumb("channels_tvshow.png"),
                          c_type="series", category=categoria))
 
     # Buscar series
     itemlist.append(Item(channel=item.channel, title="Buscar en Series >>", action="search", 
-                         url=host + series_sufix, thumbnail=get_thumb("search.png"), c_type="search", 
+                         url=alfa_urlparse.urljoin(host, series_sufix), thumbnail=get_thumb("search.png"), c_type="search",
                          extra="series", category=categoria))
 
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", 
@@ -383,6 +384,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
     if item.c_type == 'search':
@@ -392,13 +394,13 @@ def search(item, texto, **AHkwargs):
             item.c_type = "peliculas"
     
     if item.c_type == "series":
-        item.url = host + series_sufix
+        item.url = alfa_urlparse.urljoin(host, series_sufix)
     else:
-        item.url = host + movies_sufix
+        item.url = alfa_urlparse.urljoin(host, movies_sufix)
 
     try:
         if texto:
-            item.url = "%s?query=%s" % (item.url, texto)
+            item.url = alfa_urlparse.build_url(item.url, query=[('query', u'{}'.format(_url_query_texto))])
             item.texto = texto
             return list_all(item)
         else:
@@ -427,10 +429,10 @@ def newest(categoria, **AHkwargs):
             item.extra = cat
             if cat == 'peliculas': 
                 item.c_type = 'peliculas'
-                item.url = host + movies_sufix
+                item.url = alfa_urlparse.urljoin(host, movies_sufix)
             if cat == 'series': 
                 item.c_type = 'series'
-                item.url = host + series_sufix
+                item.url = alfa_urlparse.urljoin(host, series_sufix)
 
             item.action = "list_all"
             itemlist = list_all(item)

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -26,7 +27,7 @@ host = canonical['host'] or canonical['host_alt'][0]
 
 timeout = 5
 
-api = "%ss/?mode=async&function=get_block&block_id=list_videos_videos_list_search_result&category_ids=&q=" %host
+api = alfa_urlparse.build_url(host, 's/', query='mode=async&function=get_block&block_id=list_videos_videos_list_search_result&category_ids=&q=')
 
 def mainlist(item):
     logger.info()
@@ -37,7 +38,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas favoritas" , action="lista", url=api +"&sort_by=most_favourited&from_videos=1"))
     itemlist.append(Item(channel=item.channel, title="Mas comentada" , action="lista", url=api +"&sort_by=most_commented&from_videos=1"))
     itemlist.append(Item(channel=item.channel, title="Mas largas" , action="lista", url=api +"&sort_by=duration&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="PornStars" , action="categorias", url=host + "pornstars/?sort_by=model_viewed&from=1"))
+    itemlist.append(Item(channel=item.channel, title="PornStars" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars/', query='sort_by=model_viewed&from=1')))
     # itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -73,7 +74,7 @@ def categorias(item):
         cantidad = elem.find('div', class_='model-info-videos')
         if cantidad:
             title = "%s (%s)" % (title,cantidad.text.strip())
-        url += "?sort_by=post_date&from=1"
+        url = alfa_urlparse.build_url(url, query='sort_by=post_date&from=1')
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot) )

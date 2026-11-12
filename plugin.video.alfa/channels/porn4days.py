@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -37,10 +38,10 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "newest/page1"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "popullar/page1"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "paysitelist"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'newest/page1')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'popullar/page1')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=alfa_urlparse.build_url(host, 'paysitelist')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'tags')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     autoplay.show_option(item.channel, itemlist)
@@ -50,8 +51,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/page1/?s=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'search/page1/', query=[('s', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:

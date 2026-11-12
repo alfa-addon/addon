@@ -2,6 +2,7 @@
 # -*- Channel CineHindi -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -50,7 +51,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Novedades', url=host, action='list_all',
                          thumbnail=get_thumb('newest', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Estrenos', url='%sgenero/estreno/' % (host),
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=alfa_urlparse.build_url(host, 'genero/estreno/'),
                          action='list_all', thumbnail=get_thumb('premieres', auto=True)))
 
     itemlist.append(
@@ -59,7 +60,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Por Año', action='section',
                          thumbnail=get_thumb('year', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, query='s='),
                          thumbnail=get_thumb("search", auto=True),  extra='movie'))
 
     autoplay.show_option(item.channel, itemlist)
@@ -193,8 +194,7 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     try:
-        texto = texto.replace(" ", "+")
-        item.url = item.url + texto
+        item.url = alfa_urlparse.update_query(item.url, {'s': texto})
         if texto != '':
             return list_all(item)
         else:

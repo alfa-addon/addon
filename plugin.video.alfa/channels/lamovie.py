@@ -4,6 +4,7 @@
 # -*- By the Alfa Develop Group -*-
 
 
+from core import urlparse as alfa_urlparse
 import ast
 from core import httptools, servertools, tmdb, urlparse
 from platformcode import logger, config
@@ -41,7 +42,6 @@ def read_api(type = 'movie', filter = "", _id = 0, season = 1, page = 1, terms =
         url_filter = urlparse.urlencode({'filter':"{}"})
         logger.error(str(e))
     
-    url_terms = urlparse.quote_plus(str(terms))
     
     ##### https://allpeliculas.la/wp-api/v1/listing/tax/years
     ##### https://allpeliculas.la/wp-api/v1/listing/tax/genres
@@ -53,14 +53,14 @@ def read_api(type = 'movie', filter = "", _id = 0, season = 1, page = 1, terms =
     ######"https://la.movie/wp-api/v1/listing/movies?filter=%7B%22genres%22%3A%5B8%5D%7D&page=1&orderBy=latest&order=desc&postType=movies&postsPerPage=12"
     
     if type == 'season':
-        url = "{0}wp-api/v1/single/episodes/list?_id={1}&season={2}&page={3}&postsPerPage=15".format(host, _id, season, page)
+        url = alfa_urlparse.build_url(host, 'wp-api/v1/single/episodes/list', query=[('_id', u'{}'.format(_id)), ('season', u'{}'.format(season)), ('page', u'{}'.format(page)), ('postsPerPage', '15')])
     elif type == 'links':
-        url = "{0}wp-api/v1/player?postId={1}&demo=0".format(host, _id)
+        url = alfa_urlparse.build_url(host, 'wp-api/v1/player', query=[('postId', u'{}'.format(_id)), ('demo', '0')])
     elif type == 'search':
-        url = "{0}wp-api/v1/search?{1}&postType=any&q={2}&postsPerPage=26".format(host, url_filter, url_terms)
+        url = alfa_urlparse.update_query(alfa_urlparse.build_url(host, 'wp-api/v1/search', query=url_filter), [('postType', 'any'), ('q', terms), ('postsPerPage', 26)])
     else:
         type = "{0}s".format(type)
-        url = "{0}wp-api/v1/listing/{1}?{2}&page={3}&orderBy=latest&order=desc&postType={1}&postsPerPage=12".format(host, type, url_filter, page)
+        url = alfa_urlparse.update_query(alfa_urlparse.build_url(host, 'wp-api/v1/listing', type, query=url_filter), [('page', page), ('orderBy', 'latest'), ('order', 'desc'), ('postType', type), ('postsPerPage', 12)])
     
     referer = host
     

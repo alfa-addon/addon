@@ -5,6 +5,7 @@
 
 from __future__ import division
 #from builtins import str
+from core import urlparse as alfa_urlparse
 import re
 
 from core.filetools import decode
@@ -156,9 +157,10 @@ def youtube_search(item):
     if item.page != "":
         data = httptools.downloadpage(item.page).data
     else:
+        _url_query_titulo = titulo
         titulo = urlparse.quote(titulo)
         titulo = titulo.replace("%20", "+")
-        data = httptools.downloadpage("https://www.youtube.com/results?sp=EgIQAQ%253D%253D&q=" + titulo).data
+        data = httptools.downloadpage(alfa_urlparse.build_url('https://www.youtube.com', '/results', query=[('sp', 'EgIQAQ%3D%3D'), ('q', _url_query_titulo)])).data
     patron  = 'thumbnails":\[\{"url":"(https://i.ytimg.com/vi[^"]+).*?'
     patron += 'text":"([^"]+).*?'
     patron += 'simpleText":"[^"]+.*?simpleText":"([^"]+).*?'
@@ -203,11 +205,11 @@ def abandomoviez_search(item):
         titulo = decode(item.contentTitle)
         post = urlparse.urlencode({'query': titulo, 'searchby': '1', 'posicion': '1', 'orden': '1',
                                  'anioin': item.year, 'anioout': item.year, 'orderby': '1'})
-        url = "http://www.abandomoviez.net/db/busca_titulo.php?busco2=%s" %item.contentTitle
+        url = alfa_urlparse.build_url('http://www.abandomoviez.net', '/db/busca_titulo.php', query=[('busco2', u'{}'.format(item.contentTitle))])
         item.prefix = "db/"
         data = httptools.downloadpage(url, post=post).data
         if "No hemos encontrado ninguna" in data:
-            url = "http://www.abandomoviez.net/indie/busca_titulo.php?busco2=%s" %item.contentTitle
+            url = alfa_urlparse.build_url('http://www.abandomoviez.net', '/indie/busca_titulo.php', query=[('busco2', u'{}'.format(item.contentTitle))])
             item.prefix = "indie/"
             data = httptools.downloadpage(url, post=post).data
             if isinstance(data, bytes):
@@ -219,19 +221,19 @@ def abandomoviez_search(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     # Si solo hay un resultado busca directamente los trailers, sino lista todos los resultados
     if len(matches) == 1:
-        item.url = urlparse.urljoin("http://www.abandomoviez.net/%s" % item.prefix, matches[0][1])
+        item.url = urlparse.urljoin(alfa_urlparse.build_url('http://www.abandomoviez.net', u'/{}'.format(item.prefix)), matches[0][1])
         item.thumbnail = matches[0][0]
         itemlist = search_links_abando(item)
     elif len(matches) > 1:
         for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
-            scrapedurl = urlparse.urljoin("http://www.abandomoviez.net/%s" % item.prefix, scrapedurl)
+            scrapedurl = urlparse.urljoin(alfa_urlparse.build_url('http://www.abandomoviez.net', u'/{}'.format(item.prefix)), scrapedurl)
             scrapedtitle = scrapertools.htmlclean(scrapedtitle)
             itemlist.append(item.clone(title=scrapedtitle, action="search_links_abando",
                                        url=scrapedurl, thumbnail=scrapedthumbnail, text_color="white"))
 
         next_page = scrapertools.find_single_match(data, '<a href="([^"]+)">Siguiente')
         if next_page != "":
-            next_page = urlparse.urljoin("http://www.abandomoviez.net/%s" % item.prefix, next_page)
+            next_page = urlparse.urljoin(alfa_urlparse.build_url('http://www.abandomoviez.net', u'/{}'.format(item.prefix)), next_page)
             itemlist.append(item.clone(title=config.get_localized_string(70502), action="abandomoviez_search", page=next_page, thumbnail="",
                                        text_color=""))
 
@@ -270,7 +272,7 @@ def search_links_abando(item):
             if trailer_url != "":
                 trailer_url = trailer_url.replace("embed/", "watch?v=")
                 code = scrapertools.find_single_match(trailer_url, 'v=([A-z0-9\-_]+)')
-                thumbnail = "https://img.youtube.com/vi/%s/0.jpg" % code
+                thumbnail = alfa_urlparse.build_url('https://img.youtube.com', u'/vi/{}/0.jpg'.format(code))
                 itemlist.append(item.clone(title="Trailer  [youtube]", url=trailer_url, server="youtube",
                                            thumbnail=thumbnail, action="play", text_color="white"))
         else:
@@ -279,7 +281,7 @@ def search_links_abando(item):
                     idioma = " (ESP)"
                 else:
                     idioma = " (V.O)"
-                scrapedurl = urlparse.urljoin("http://www.abandomoviez.net/%s" % item.prefix, scrapedurl)
+                scrapedurl = urlparse.urljoin(alfa_urlparse.build_url('http://www.abandomoviez.net', u'/{}'.format(item.prefix)), scrapedurl)
                 scrapedtitle = scrapertools.htmlclean(scrapedtitle) + idioma + "  [youtube]"
                 if item.contextual:
                     i += 1
@@ -290,7 +292,7 @@ def search_links_abando(item):
                 trailer_url = scrapertools.find_single_match(data_trailer, 'iframe.*?src="([^"]+)"')
                 trailer_url = trailer_url.replace("embed/", "watch?v=")
                 code = scrapertools.find_single_match(trailer_url, 'v=([A-z0-9\-_]+)')
-                thumbnail = "https://img.youtube.com/vi/%s/0.jpg" % code
+                thumbnail = alfa_urlparse.build_url('https://img.youtube.com', u'/vi/{}/0.jpg'.format(code))
                 itemlist.append(item.clone(title=scrapedtitle, url=trailer_url, server="youtube", action="play",
                                            thumbnail=thumbnail, text_color="white"))
         if item.contextual:
@@ -318,7 +320,7 @@ def filmaffinity_search(item):
     else:
         params = urlparse.urlencode([('stext', item.contentTitle), ('stype%5B%5D', 'title'), ('country', ''),
                                    ('genre', ''), ('fromyear', item.year), ('toyear', item.year)])
-        url = "http://www.filmaffinity.com/es/advsearch.php?%s" % params
+        url = alfa_urlparse.build_url('http://www.filmaffinity.com', 'es/advsearch.php', query=params)
         data = httptools.downloadpage(url).data
     data = re.sub(r"\n|\r|\t", "", data)
 
@@ -330,16 +332,16 @@ def filmaffinity_search(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     # Si solo hay un resultado, busca directamente los trailers, sino lista todos los resultados
     if len(matches) == 1:
-        item.url = "http://www.filmaffinity.com/es/evideos.php?movie_id=%s" % matches[0][1]
+        item.url = alfa_urlparse.build_url('http://www.filmaffinity.com', '/es/evideos.php', query=[('movie_id', u'{}'.format(matches[0][1]))])
         item.thumbnail = matches[0][0]
         if not item.thumbnail.startswith("http"):
-            item.thumbnail = "http://www.filmaffinity.com" + item.thumbnail
+            item.thumbnail = alfa_urlparse.urlunsplit(('http', u'www.filmaffinity.com{}'.format(item.thumbnail), "", "", ""))
         itemlist = search_links_filmaff(item)
     elif len(matches) > 1:
         for scrapedthumbnail, id, scrapedtitle in matches:
             if not scrapedthumbnail.startswith("http"):
-                scrapedthumbnail = "http://www.filmaffinity.com" + scrapedthumbnail
-            scrapedurl = "http://www.filmaffinity.com/es/evideos.php?movie_id=%s" % id
+                scrapedthumbnail = alfa_urlparse.urlunsplit(('http', u'www.filmaffinity.com{}'.format(scrapedthumbnail), "", "", ""))
+            scrapedurl = alfa_urlparse.build_url('http://www.filmaffinity.com', '/es/evideos.php', query=[('movie_id', u'{}'.format(id))])
             if isinstance(scrapedtitle, bytes):
                 scrapedtitle = scrapedtitle.decode(encoding="utf-8", errors="ignore")
             scrapedtitle = scrapertools.htmlclean(scrapedtitle)
@@ -384,7 +386,7 @@ def search_links_filmaff(item):
             if "youtube" in trailer_url:
                 server = "youtube"
                 code = scrapertools.find_single_match(trailer_url, 'v=([A-z0-9\-_]+)')
-                thumbnail = "https://img.youtube.com/vi/%s/0.jpg" % code
+                thumbnail = alfa_urlparse.build_url('https://img.youtube.com', u'/vi/{}/0.jpg'.format(code))
             else:
                 server = ""
                 thumbnail = item.thumbnail

@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -100,15 +101,15 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=host + movie_path, 
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=alfa_urlparse.urljoin(host, movie_path),
                          thumbnail=get_thumb('channels_movie.png'), c_type='peliculas'))
     itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]por Género[/COLOR]',  action='section', 
                          url=host, thumbnail=get_thumb('genres.png'), extra='generos'))
 
-    itemlist.append(Item(channel=item.channel, title='Series',  action='list_all', url=host + tv_path, 
+    itemlist.append(Item(channel=item.channel, title='Series',  action='list_all', url=alfa_urlparse.urljoin(host, tv_path),
                          thumbnail=get_thumb('channels_tvshow.png'), c_type='series'))
     itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Últimos Episodios[/COLOR]',  action='list_all', 
-                         url=host + 'episodes', thumbnail=get_thumb('search_tvshow.png'), c_type='episodios'))
+                         url=alfa_urlparse.build_url(host, 'episodes'), thumbnail=get_thumb('search_tvshow.png'), c_type='episodios'))
 
     itemlist.append(Item(channel=item.channel, title='Productoras',  action='sub_menu', url=host, 
                          thumbnail=get_thumb('search_star.png'), extra='productoras'))
@@ -142,16 +143,16 @@ def sub_menu(item):
     itemlist = list()
 
     if item.extra in ['productoras']:
-        itemlist.append(Item(channel=item.channel, title='Marvel', url=host + 'genre/marvel/', action='list_all',
+        itemlist.append(Item(channel=item.channel, title='Marvel', url=alfa_urlparse.build_url(host, 'genre/marvel/'), action='list_all',
                              thumbnail=get_thumb('search_star.png'), c_type=item.c_type, extra='generos'))
 
-        itemlist.append(Item(channel=item.channel, title='D.C', url=host + 'genre/d-c/', action='list_all',
+        itemlist.append(Item(channel=item.channel, title='D.C', url=alfa_urlparse.build_url(host, 'genre/d-c/'), action='list_all',
                              thumbnail=get_thumb('search_star.png'), c_type=item.c_type, extra='generos'))
 
-        itemlist.append(Item(channel=item.channel, title='StarWars', url=host + 'genre/starwars/', action='list_all',
+        itemlist.append(Item(channel=item.channel, title='StarWars', url=alfa_urlparse.build_url(host, 'genre/starwars/'), action='list_all',
                              thumbnail=get_thumb('search_star.png'), c_type=item.c_type, extra='generos'))
 
-        itemlist.append(Item(channel=item.channel, title='Netflix', url=host + 'genre/netflix/', action='list_all',
+        itemlist.append(Item(channel=item.channel, title='Netflix', url=alfa_urlparse.build_url(host, 'genre/netflix/'), action='list_all',
                              thumbnail=get_thumb('search_star.png'), c_type=item.c_type, extra='generos'))
 
     return itemlist
@@ -350,11 +351,12 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
     try:
         if texto:
-            item.url = "%s/?s=%s" % (host, texto)
+            item.url = alfa_urlparse.build_url(host, '/', query=[('s', u'{}'.format(_url_query_texto))])
             item.texto = texto
             item.c_type = 'search'
             return list_all(item)

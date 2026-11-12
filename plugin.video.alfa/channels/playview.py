@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -95,7 +96,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Series', action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Buscar...', action='search', url=host + 'search/',
+    itemlist.append(Item(channel=item.channel, title='Buscar...', action='search', url=alfa_urlparse.build_url(host, 'search/'),
                          thumbnail=get_thumb('search', auto=True), c_type='search'))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
@@ -111,29 +112,29 @@ def sub_menu(item):
     itemlist = list()
 
     if item.c_type == 'peliculas':
-        itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=host + 'peliculas-online', 
+        itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=alfa_urlparse.build_url(host, 'peliculas-online'),
                              thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-        itemlist.append(Item(channel=item.channel, title='Ultimas', action='list_all', url=host + 'estrenos-%s' % date.year, 
+        itemlist.append(Item(channel=item.channel, title='Ultimas', action='list_all', url=alfa_urlparse.build_url(host, u'estrenos-{}'.format(date.year)),
                              thumbnail=get_thumb('last', auto=True), c_type=item.c_type))
 
-        itemlist.append(Item(channel=item.channel, title='Próximamente', action='list_all', url=host + 'proximamente', 
+        itemlist.append(Item(channel=item.channel, title='Próximamente', action='list_all', url=alfa_urlparse.build_url(host, 'proximamente'),
                              thumbnail=get_thumb('newest', auto=True), c_type=item.c_type))
 
         itemlist.append(Item(channel=item.channel, title='Generos', action='section', url=host, 
                              thumbnail=get_thumb('genres', auto=True), c_type=item.c_type))
 
     else:
-        itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=host + 'series-online',
+        itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=alfa_urlparse.build_url(host, 'series-online'),
                              thumbnail=get_thumb('tvshows', auto=True), c_type=item.c_type))
 
-        itemlist.append(Item(channel=item.channel, title='Series Animadas', action='list_all', url=host + 'series-animadas-online',
+        itemlist.append(Item(channel=item.channel, title='Series Animadas', action='list_all', url=alfa_urlparse.build_url(host, 'series-animadas-online'),
                              thumbnail=get_thumb('animacion', auto=True), c_type=item.c_type))
 
-        itemlist.append(Item(channel=item.channel, title='Anime', action='list_all', url=host + 'anime-online',
+        itemlist.append(Item(channel=item.channel, title='Anime', action='list_all', url=alfa_urlparse.build_url(host, 'anime-online'),
                              thumbnail=get_thumb('anime', auto=True), c_type=item.c_type))
 
-        itemlist.append(Item(channel=item.channel, title='Doramas', action='list_all', url=host + 'dramas-online',
+        itemlist.append(Item(channel=item.channel, title='Doramas', action='list_all', url=alfa_urlparse.build_url(host, 'dramas-online'),
                              thumbnail=get_thumb('doramas', auto=True), c_type=item.c_type))
 
     return itemlist
@@ -206,10 +207,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['year'] = info[1] if item.c_type == 'peliculas' else info[0]
 
             if elem_json['url'].endswith('ver-temporadas-completas-de/'):
-                elem_json['url'] ="%sver-temporadas-completas-de/%s" % (host, elem_json['title'].lower().replace(' ', '-'))
+                elem_json['url'] =alfa_urlparse.build_url(host, u'ver-temporadas-completas-de/{}'.format(elem_json['title'].lower().replace(' ', '-')))
             elif elem.find("div", class_="info-series"):
                 season_path = re.sub("-temp-\d+", "", scrapertools.find_single_match(elem_json['url'], "%s(.+)" % host))
-                elem_json['url'] = "%sver-temporadas-completas-de/%s" % (host, season_path)
+                elem_json['url'] = alfa_urlparse.build_url(host, u'ver-temporadas-completas-de/{}'.format(season_path))
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -324,7 +325,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
                 elem_json['title'] = '%s'
 
-                elem_json['url'] = host + canonical['channel']
+                elem_json['url'] = alfa_urlparse.urljoin(host, canonical['channel'])
                 
                 elem_json['post'] = {"set": item.post["set"], "action": "Step3", 
                                      "id": elem.find("button", class_="btn-link").get("data-id", ""), 
@@ -382,8 +383,7 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
-        texto = texto.replace(" ", "+")
-        item.url = item.url + texto
+        item.url = alfa_urlparse.build_url(item.url, alfa_urlparse.quote_path(texto))
 
         if texto != '':
             item.c_type = 'search'
@@ -408,11 +408,11 @@ def newest(categoria, **AHkwargs):
     
     try:
         if categoria == 'peliculas':
-            item.url = host + 'peliculas-online'
+            item.url = alfa_urlparse.build_url(host, 'peliculas-online')
         elif categoria == 'infantiles':
-            item.url = host + 'peliculas-online/animacion'
+            item.url = alfa_urlparse.build_url(host, 'peliculas-online/animacion')
         elif categoria == 'terror':
-            item.url = host + 'peliculas-online/terror'
+            item.url = alfa_urlparse.build_url(host, 'peliculas-online/terror')
 
         itemlist = list_all(item)
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:

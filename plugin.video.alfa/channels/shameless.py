@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -22,17 +23,18 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "search/?sort_by=post_date&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="categorias", url=host + "models/?&sort_by=model_id&from=1"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/?sort_by=category_id&from=1"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'search/', query='sort_by=post_date&from_videos=1')))
+    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="categorias", url=alfa_urlparse.build_url(host, 'models/', query='&sort_by=model_id&from=1')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories/', query='sort_by=category_id&from=1')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/?q=%s&from_videos=1" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, 'search/', query=[('q', u'{}'.format(_url_query_texto)), ('from_videos', '1')])
     try:
         return lista(item)
     except Exception:
@@ -80,7 +82,7 @@ def lista(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedtime in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" %(scrapedtime, scrapedtitle)
-        thumbnail = scrapedthumbnail + "|Referer=%s" %host
+        thumbnail = alfa_urlparse.add_url_headers(scrapedthumbnail, {'Referer': u'{}'.format(host)})
         plot = ""
         action = "play"
         if logger.info() is False:

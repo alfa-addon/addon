@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import re
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
@@ -101,10 +102,10 @@ def list_all(item):
     
     for elem in matches:
         link = elem.find('h3', class_="film-name").a
-        url = host.rstrip('/') + link["href"]
+        url = alfa_urlparse.urljoin(host, link["href"])
         if str(link["href"]).startswith('/anime/'):
             url = url.replace('/anime/', '/ver/')
-            url += '-episodio-1'
+            url = alfa_urlparse.build_url(alfa_urlparse.append_path_suffix(url, '-episodio-1'))
         title = link.getText(strip=True)
         thumb = elem.find('img', class_="film-poster-img")["data-src"]
         plot = elem.select_one('div.film-detail > div.description').getText(strip=True)
@@ -156,11 +157,7 @@ def list_all(item):
         if next_page:
             next_page_url = next_page['href']
             if not next_page_url.startswith('http'):
-                next_page_url = "{}{}/{}".format(
-                    host.rstrip('/'),
-                    get_url_folder(item.url),
-                    next_page_url
-                )
+                next_page_url = alfa_urlparse.build_url(host, get_url_folder(item.url), next_page_url)
             itemlist.append(
                 item.clone(
                     title = "Siguiente página",
@@ -189,7 +186,7 @@ def section(item):
             itemlist.append(
                 item.clone(
                     title=title, 
-                    url=host+url,
+                    url=alfa_urlparse.urljoin(host, url),
                     action="list_all",
                     plot="{} > {}".format(item.title, title)
                 )
@@ -212,7 +209,7 @@ def episodios(item):
     infoLabels = item.infoLabels
 
     for link in match.find_all("a"):
-        url = host.rstrip('/') + link["href"]
+        url = alfa_urlparse.urljoin(host, link["href"])
         epi_num = link.div.getText(strip=True)
         infoLabels['season'], infoLabels['episode'] = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, item.contentSeason, int(epi_num or 1))
         
@@ -275,8 +272,9 @@ def search(item, texto):
     logger.info()
     try:
         if texto != '':
+            _url_query_texto = texto
             texto = texto.replace(" ", "+")
-            item.url = host.rstrip('/') + '/search?keyword=' + texto
+            item.url = alfa_urlparse.build_url(host.rstrip('/'), '/search', query=[('keyword', _url_query_texto)])
             return list_all(item)
         else:
             return []
@@ -291,7 +289,7 @@ def newest(categoria):
     itemlist = []
     item = Item()
     if categoria == 'anime':
-        item.url = host.rstrip('/') + '/ultimo-episodios'
+        item.url = alfa_urlparse.build_url(host.rstrip('/'), '/ultimo-episodios')
         itemlist = list_all(item)
     return itemlist
 

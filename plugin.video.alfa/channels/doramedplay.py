@@ -3,6 +3,7 @@
 # -*- BASED ON: Channel DramasJC -*-
 # -*- Created for Alfa-addon -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -59,19 +60,19 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
-    itemlist.append(Item(channel=item.channel, title="Doramas Subtitulados", action="list_all", url=host_sub+'tvshows/',
+    itemlist.append(Item(channel=item.channel, title="Doramas Subtitulados", action="list_all", url=alfa_urlparse.build_url(host_sub, 'tvshows/'),
                          c_type='series', thumbnail=get_thumb('tvshows', auto=True), language=['VOSE']))
 
-    itemlist.append(Item(channel=item.channel, title="Películas Subtituladas", action="list_all", url=host_sub+'movies/',
+    itemlist.append(Item(channel=item.channel, title="Películas Subtituladas", action="list_all", url=alfa_urlparse.build_url(host_sub, 'movies/'),
                          c_type='peliculas', thumbnail=get_thumb('movies', auto=True), language=['VOSE']))
 
     itemlist.append(Item(channel=item.channel, title="Buscar Subtitulados...", action="search", url=host_sub,
                                thumbnail=get_thumb('search', auto=True), language=['VOSE']))
 
-    itemlist.append(Item(channel=item.channel, title="Doramas Español", action="list_all", url=host_esp+'tvshows/',
+    itemlist.append(Item(channel=item.channel, title="Doramas Español", action="list_all", url=alfa_urlparse.build_url(host_esp, 'tvshows/'),
                          c_type='series', thumbnail=get_thumb('tvshows', auto=True), language=['LAT']))
 
-    itemlist.append(Item(channel=item.channel, title="Películas Español", action="list_all", url=host_esp+'movies/',
+    itemlist.append(Item(channel=item.channel, title="Películas Español", action="list_all", url=alfa_urlparse.build_url(host_esp, 'movies/'),
                          c_type='peliculas', thumbnail=get_thumb('movies', auto=True), language=['LAT']))
 
     itemlist.append(Item(channel=item.channel, title="Alfabético Español", action="alfabetico", url=host_esp,
@@ -104,7 +105,7 @@ def alfabetico(item):
     logger.info()
 
     itemlist = []
-    url = host_esp + 'wp-json/dooplay/glossary/?term=%s&nonce=506f86d0fc&type=all'
+    url = alfa_urlparse.build_url(host_esp, 'wp-json/dooplay/glossary/', query='term=%s&nonce=506f86d0fc&type=all')
     AlfaChannel.host = AlfaChannel_class.host = host_sub if host_sub in item.url else host_esp
 
     for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
@@ -181,8 +182,9 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = item.url + '?s=' + texto
+    item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
 
     try:
         if texto:

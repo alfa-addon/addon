@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import re
 import base64
 
@@ -68,7 +69,7 @@ def mainlist(item):
             title="Ultimas",
             action="list_all",
             thumbnail=get_thumb("last", auto=True),
-            url=host + "/animes?estado[]=2&order=created",
+            url=alfa_urlparse.build_url(host, '/animes', query='estado[]=2&order=created'),
         )
     )
 
@@ -78,7 +79,7 @@ def mainlist(item):
             title="Todas",
             action="list_all",
             thumbnail=get_thumb("all", auto=True),
-            url=host + "/animes",
+            url=alfa_urlparse.build_url(host, '/animes'),
         )
     )
 
@@ -88,7 +89,7 @@ def mainlist(item):
             title="Anime",
             action="list_all",
             thumbnail=get_thumb("anime", auto=True),
-            url=host + "/animes?tipo[]=1&order=created",
+            url=alfa_urlparse.build_url(host, '/animes', query='tipo[]=1&order=created'),
         )
     )
 
@@ -98,7 +99,7 @@ def mainlist(item):
             title="Donghua",
             action="list_all",
             thumbnail=get_thumb("anime", auto=True),
-            url=host + "/animes?tipo[]=9&order=created",
+            url=alfa_urlparse.build_url(host, '/animes', query='tipo[]=9&order=created'),
         )
     )
 
@@ -108,7 +109,7 @@ def mainlist(item):
             title="Películas",
             action="list_all",
             thumbnail=get_thumb("movies", auto=True),
-            url=host + "/animes?tipo[]=3&order=created",
+            url=alfa_urlparse.build_url(host, '/animes', query='tipo[]=3&order=created'),
         )
     )
 
@@ -118,7 +119,7 @@ def mainlist(item):
             title="OVAs",
             action="list_all",
             thumbnail=get_thumb("anime", auto=True),
-            url=host + "/animes?tipo[]=2&order=created",
+            url=alfa_urlparse.build_url(host, '/animes', query='tipo[]=2&order=created'),
         )
     )
 
@@ -128,7 +129,7 @@ def mainlist(item):
             title="ONAs",
             action="list_all",
             thumbnail=get_thumb("anime", auto=True),
-            url=host + "/animes?tipo[]=6&order=created",
+            url=alfa_urlparse.build_url(host, '/animes', query='tipo[]=6&order=created'),
         )
     )
 
@@ -138,7 +139,7 @@ def mainlist(item):
             title="Especiales",
             action="list_all",
             thumbnail=get_thumb("anime", auto=True),
-            url=host + "/animes?tipo[]=4&order=created",
+            url=alfa_urlparse.build_url(host, '/animes', query='tipo[]=4&order=created'),
         )
     )
 
@@ -148,7 +149,7 @@ def mainlist(item):
             title="Latino",
             action="list_all",
             thumbnail=get_thumb("latino", auto=True),
-            url=host + "/animes?q=latino",
+            url=alfa_urlparse.build_url(host, '/animes', query='q=latino'),
         )
     )
     
@@ -158,7 +159,7 @@ def mainlist(item):
             title="Castellano",
             action="list_all",
             thumbnail=get_thumb("cast", auto=True),
-            url=host + "/animes?genre[]=42&order=created",
+            url=alfa_urlparse.build_url(host, '/animes', query='genre[]=42&order=created'),
         )
     )
 
@@ -168,7 +169,7 @@ def mainlist(item):
             title="Año",
             action="section",
             thumbnail=get_thumb("year", auto=True),
-            url=host + "/animes",
+            url=alfa_urlparse.build_url(host, '/animes'),
             section="yearDropdown",
         )
     )
@@ -179,7 +180,7 @@ def mainlist(item):
             title="Generos",
             action="section",
             thumbnail=get_thumb("genres", auto=True),
-            url=host + "/animes",
+            url=alfa_urlparse.build_url(host, '/animes'),
             section="genreDropdown",
         )
     )
@@ -250,7 +251,7 @@ def new_episodes(item):
             epi = 1
         
         title = "%sx%s - %s" % (season, epi, c_title)
-        thumb = host + elem.find("img")["src"]
+        thumb = alfa_urlparse.urljoin(host, elem.find("img")["src"])
 
         itemlist.append(
             Item(
@@ -290,7 +291,7 @@ def list_all(item):
             "",
             title,
         ).strip()
-        thumb = host + elem.find("img")["src"]
+        thumb = alfa_urlparse.urljoin(host, elem.find("img")["src"])
 
         
         info = elem.a.span
@@ -303,7 +304,7 @@ def list_all(item):
             # https://ww3.monoschinos3.com/anime/4593/black-clover-mahou-tei-no-ken
             # https://ww3.monoschinos3.com/ver/4593/black-clover-mahou-tei-no-ken/episodio-1
             if "/anime/" in url:
-                url = url.replace('/anime/', '/ver/') + '/episodio-1'
+                url = alfa_urlparse.build_url(url.replace('/anime/', '/ver/'), '/episodio-1')
             itemlist.append(
                 Item(
                     channel=item.channel,
@@ -367,7 +368,7 @@ def section(item):
     matches = zip(matches1, matches2)
 
     for elem in matches:
-        url = host + "/animes?%s=%s&order=created" % (elem[0]["name"], elem[0]["value"])
+        url = alfa_urlparse.build_url(host, '/animes', query=[(u'{}'.format(elem[0]["name"]), u'{}'.format(elem[0]["value"])), ('order', 'created')])
         title = elem[1].text
 
         itemlist.append(
@@ -435,8 +436,9 @@ def search(item, texto):
 
     try:
         if texto != "":
+            _url_query_texto = texto
             texto = texto.replace(" ", "+")
-            item.url = item.url + "/animes?q=" + texto
+            item.url = alfa_urlparse.build_url(item.url, '/animes', query=[('q', _url_query_texto)])
             return list_all(item)
         else:
             return []
@@ -559,7 +561,7 @@ def episodesxfolder(item):
 
     for cap in matches[item.init : item.fin]:
         scrapedurl = cap["href"]
-        thumb = host + cap.div.img["src"]
+        thumb = alfa_urlparse.urljoin(host, cap.div.img["src"])
         episode = cap.h2.getText(strip=True).split('\n')[1].strip()
         try:
             season, episode = renumbertools.numbered_for_trakt(

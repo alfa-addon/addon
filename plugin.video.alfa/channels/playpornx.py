@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -46,9 +47,9 @@ def mainlist(item):
     # itemlist.append(Item(channel=item.channel, title="Mas visto" , action="lista", url=host + "?filter=most-viewed"))
     # itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "?filter=popular"))
     # itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="lista", url=host + "?filter=longest"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "pornstars/"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "studios/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "genres/"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars/')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=alfa_urlparse.build_url(host, 'studios/')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'genres/')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host ))
 
     autoplay.show_option(item.channel, itemlist)
@@ -59,20 +60,21 @@ def mainlist(item):
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=item.url + "?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=item.url + "?filter=most-viewed"))
-    itemlist.append(Item(channel=item.channel, title="Mas valorados" , action="lista", url=item.url + "?filter=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="lista", url=item.url + "?filter=longest"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=item.url + "pornstars/"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=item.url + "studios/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "genres/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(item.url, query='filter=latest')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(item.url, query='filter=most-viewed')))
+    itemlist.append(Item(channel=item.channel, title="Mas valorados" , action="lista", url=alfa_urlparse.build_url(item.url, query='filter=popular')))
+    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="lista", url=alfa_urlparse.build_url(item.url, query='filter=longest')))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=alfa_urlparse.build_url(item.url, 'pornstars/')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(item.url, 'studios/')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'genres/')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url))
     return itemlist
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s?s=%s&filter=latest" % (item.url,texto)
+    item.url = alfa_urlparse.build_url(item.url, query=[('s', u'{}'.format(_url_query_texto)), ('filter', 'latest')])
     try:
         return lista(item)
     except Exception:

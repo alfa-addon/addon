@@ -2,6 +2,7 @@
 # -*- Channel SoloLatino -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Development Group -*-
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -81,17 +82,17 @@ def mainlist(item):
     
     itemlist = list()
     
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host + "peliculas",
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=alfa_urlparse.build_url(host, 'peliculas'),
                          thumbnail=get_thumb('movies', auto=True), type="pelicula"))
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'series', action='sub_menu',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'series'), action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
-    itemlist.append(Item(channel=item.channel, title='Anime', url=host + 'animes', action='sub_menu',
+    itemlist.append(Item(channel=item.channel, title='Anime', url=alfa_urlparse.build_url(host, 'animes'), action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
-    itemlist.append(Item(channel=item.channel, title='Doramas', url=host + 'doramas', action='sub_menu',
+    itemlist.append(Item(channel=item.channel, title='Doramas', url=alfa_urlparse.build_url(host, 'doramas'), action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(Item(channel=item.channel, title='Plataformas', url=host, action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + 'buscar?q=',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, 'buscar', query='q='),
                          thumbnail=get_thumb("search", auto=True)))
     
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
@@ -120,7 +121,7 @@ def sub_menu(item):
     itemlist.append(Item(channel=item.channel, title='Todas', url=item.url, action='list_all',
                          thumbnail=get_thumb('all', auto=True)))
     
-    itemlist.append(Item(channel=item.channel, title='Popular', url=item.url + '?genero=&año=0&nota=0&sort=popular', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Popular', url=alfa_urlparse.build_url(item.url, query='genero=&año=0&nota=0&sort=popular'), action='list_all',
                          thumbnail=get_thumb('all', auto=True)))    
     
     itemlist.append(Item(channel=item.channel, title='Generos', url=item.url, action='section',
@@ -340,8 +341,7 @@ def search(item, texto):
     logger.info()
     
     try:
-        texto = texto.replace(" ", "+")
-        item.url = item.url + texto
+        item.url = alfa_urlparse.update_query(item.url, {'q': texto})
         
         if texto != '':
             return list_all(item)

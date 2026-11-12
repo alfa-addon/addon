@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -69,10 +70,10 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title="Nuevos", action="list_all", url=host + "?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="list_all", url=host + "?filter=longest"))
-    itemlist.append(Item(channel = item.channel, title="Pornstar", action="section", url=host + "actors/", extra="PornStar"))
-    itemlist.append(Item(channel = item.channel, title="Canal", action="section", url=host + "categories/", extra="Canal"))
+    itemlist.append(Item(channel = item.channel, title="Nuevos", action="list_all", url=alfa_urlparse.build_url(host, query='filter=latest')))
+    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="list_all", url=alfa_urlparse.build_url(host, query='filter=longest')))
+    itemlist.append(Item(channel = item.channel, title="Pornstar", action="section", url=alfa_urlparse.build_url(host, 'actors/'), extra="PornStar"))
+    itemlist.append(Item(channel = item.channel, title="Canal", action="section", url=alfa_urlparse.build_url(host, 'categories/'), extra="Canal"))
     itemlist.append(Item(channel = item.channel, title="Categorias", action="section", url=host , extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -117,7 +118,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%s?s=%s&filter=latest" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, query=[('s', texto), ('filter', 'latest')])
     
     try:
         if texto:

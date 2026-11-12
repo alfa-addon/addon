@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -104,22 +105,22 @@ def mainlist(item):
 
     itemlist.append(
         Item(channel=item.channel, action="section", title=" - [COLOR paleturquoise]Listado [A-Z][/COLOR]",
-            url=host+"lista.php?or=abc", thumbnail=get_thumb("alphabet", auto=True), c_type="series",
+            url=alfa_urlparse.build_url(host, 'lista.php', query='or=abc'), thumbnail=get_thumb("alphabet", auto=True), c_type="series",
             plot=plot, extra='Alfabético'))
 
     itemlist.append(
         Item(channel=item.channel, action="list_all", title="Series más Recientes",
-            url=host+"lista.php?or=rel", thumbnail=get_thumb("news", auto=True), c_type="series",
+            url=alfa_urlparse.build_url(host, 'lista.php', query='or=rel'), thumbnail=get_thumb("news", auto=True), c_type="series",
             plot=plot))
 
     itemlist.append(
         Item(channel=item.channel, action="list_all", title="Series más Populares",
-            url=host+"lista.php?or=mas", thumbnail=get_thumb("popular", auto=True), c_type="series",
+            url=alfa_urlparse.build_url(host, 'lista.php', query='or=mas'), thumbnail=get_thumb("popular", auto=True), c_type="series",
             plot=plot))
 
     itemlist.append(
         Item(channel=item.channel, action="list_all", title="Series Live Action",
-            url=host+"liveaction", thumbnail=get_thumb("tvshow", auto=True), c_type="series",
+            url=alfa_urlparse.build_url(host, 'liveaction'), thumbnail=get_thumb("tvshow", auto=True), c_type="series",
             plot="Series LiveAction de los 90s y 2000", extra='LiveAction'))
     
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
@@ -485,7 +486,7 @@ def search(item, texto, **AHkwargs):
     try:
         if texto:
             texto = texto.replace(" ", "+")
-            item.url = '%sb.php/' %  (host)
+            item.url = alfa_urlparse.build_url(host, 'b.php/')
             item.post = "k=" + texto
 
             item.c_type = "search"

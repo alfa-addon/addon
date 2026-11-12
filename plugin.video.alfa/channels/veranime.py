@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -104,13 +105,13 @@ def mainlist(item):
 
     itemlist = list()
     
-    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host + 'episodio/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=alfa_urlparse.build_url(host, 'episodio/'), action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
     
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'online/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'online/'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
     
-    itemlist.append(Item(channel=item.channel, title='Peliculas', url=host + 'pelicula/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Peliculas', url=alfa_urlparse.build_url(host, 'pelicula/'), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title='Categorías',  action='sub_menu', url=host, 
@@ -133,28 +134,28 @@ def sub_menu(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Más Vistas', url=host + "tendencias/", action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Más Vistas', url=alfa_urlparse.build_url(host, 'tendencias/'), action='list_all',
                          thumbnail=get_thumb('more watched', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Mejor Valoradas', url=host + "ratings/", action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Mejor Valoradas', url=alfa_urlparse.build_url(host, 'ratings/'), action='list_all',
                          thumbnail=get_thumb('more voted', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Live Action', url=host + 'genero/live-action/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Live Action', url=alfa_urlparse.build_url(host, 'genero/live-action/'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Sin Censura', url=host + "genero/sin-censura/", action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Sin Censura', url=alfa_urlparse.build_url(host, 'genero/sin-censura/'), action='list_all',
                          thumbnail=get_thumb('adults', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Latino', url=host + "genero/audio-latino/", action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Latino', url=alfa_urlparse.build_url(host, 'genero/audio-latino/'), action='list_all',
                          thumbnail=get_thumb('lat', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Castellano', url=host + "genero/anime-castellano/", action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Castellano', url=alfa_urlparse.build_url(host, 'genero/anime-castellano/'), action='list_all',
                          thumbnail=get_thumb('cast', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Blu-Ray/DVD', url=host + "genero/blu-ray-dvd/", action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Blu-Ray/DVD', url=alfa_urlparse.build_url(host, 'genero/blu-ray-dvd/'), action='list_all',
                          thumbnail=get_thumb('quality', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Año', url=host + "release/", action='section',
+    itemlist.append(Item(channel=item.channel, title='Año', url=alfa_urlparse.build_url(host, 'release/'), action='section',
                          thumbnail=get_thumb('year', auto=True), extra='Año'))
 
     return itemlist
@@ -345,8 +346,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                     elem_json['url'] = players.find("iframe").get("src", "")
 
                 else:
-                    doo_url = "{}wp-json/dooplayer/v1/post/{}?type={}&source={}".format(
-                               host, elem.get("data-post", ""), elem.get("data-type", ""), elem.get("data-nume", ""))
+                    doo_url = alfa_urlparse.build_url(host, u'wp-json/dooplayer/v1/post/{}'.format(elem.get("data-post", "")), query=[('type', u'{}'.format(elem.get("data-type", ""))), ('source', u'{}'.format(elem.get("data-nume", "")))])
 
                     data = AlfaChannel.create_soup(doo_url, json=True, soup=False, **kwargs)
 
@@ -422,8 +422,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
+        _url_query_texto = texto
         texto = AlfaChannel.do_quote(texto, '', plus=True)
-        item.url = "{}search/?s={}".format(host, texto)
+        item.url = alfa_urlparse.build_url(host, 'search/', query=[('s', u'{}'.format(_url_query_texto))])
 
         if texto:
             item.c_type = 'search'

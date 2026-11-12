@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from platformcode import config, logger, platformtools
 from core import scrapertools
 from core import servertools
@@ -50,8 +51,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s/?s=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, '/', query=[('s', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:
@@ -127,7 +129,7 @@ def lista(item):
         thumbnail = elem.img['src']
         if "svg" in thumbnail:
             thumbnail = elem.img['data-src']
-        thumbnail += "|Referer=%s" %host
+        thumbnail = alfa_urlparse.add_url_headers(thumbnail, {'Referer': u'{}'.format(host)})
         plot = ""
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import time
 from channelselector import get_thumb
 from modules import autoplay
@@ -60,7 +61,7 @@ def mainlist(item):
             channel = item.channel,
             action = "list_all",
             title = "     Estrenos",
-            url = host + "estrenos",
+            url = alfa_urlparse.build_url(host, 'estrenos'),
             thumbnail = get_thumb('newest', auto=True)
         )
     )
@@ -69,7 +70,7 @@ def mainlist(item):
             channel = item.channel,
             action = "list_all",
             title = "     Ultimas",
-            url = host + "peliculas-mas-vistas",
+            url = alfa_urlparse.build_url(host, 'peliculas-mas-vistas'),
             thumbnail = get_thumb('newest', auto=True)
         )
     )
@@ -78,7 +79,7 @@ def mainlist(item):
             channel = item.channel,
             action="list_all",
             title = "     Películas",
-            url = host + "peliculas",
+            url = alfa_urlparse.build_url(host, 'peliculas'),
             thumbnail = get_thumb('movie', auto=True)
         )
     )
@@ -102,7 +103,7 @@ def mainlist(item):
             channel = item.channel,
             action = "last_episodes",
             title = "     Ultimos episodios",
-            url = host + "serie",
+            url = alfa_urlparse.build_url(host, 'serie'),
             thumbnail = get_thumb('tvshow', auto=True)
         )
     )
@@ -111,7 +112,7 @@ def mainlist(item):
             channel = item.channel,
             action = "last_tvshows",
             title = "     Ultimas series",
-            url = host + "serie",
+            url = alfa_urlparse.build_url(host, 'serie'),
             type_tvshow = "tabserie-1",
             thumbnail = get_thumb('tvshow', auto=True)
         )
@@ -121,7 +122,7 @@ def mainlist(item):
             channel = item.channel,
             action = "last_tvshows",
             title = "     Mas vistas",
-            url = host + "serie",
+            url = alfa_urlparse.build_url(host, 'serie'),
             type_tvshow = "tabserie-4",
             thumbnail = get_thumb('tvshow', auto=True)
         )
@@ -170,7 +171,7 @@ def last_episodes(item):
                 action = "findvideos",
                 channel = item.channel,
                 infoLabels = infoLabels,
-                thumbnail = "https://" + scrapedthumbnail,
+                thumbnail = alfa_urlparse.urlunsplit(('https', scrapedthumbnail, "", "", "")),
                 title = scrapedtitle.strip() + " %s" %scrapeddate,
                 url = urlparse.urljoin(host, scrapedurl),
             )
@@ -188,7 +189,7 @@ def last_tvshows(item):
     url = item.url
     item.page = item.page or 1
     if not item.extra:
-        url += "?page=%s" %item.page
+        url = alfa_urlparse.build_url(url, query=[('page', u'{}'.format(item.page))])
 
     data = httptools.downloadpage(url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'id="%s".*?</ul>' %item.type_tvshow)
@@ -204,7 +205,7 @@ def last_tvshows(item):
                 channel = item.channel,
                 contentSerieName = scrapedtitle.strip(),
                 contentType = 'tvshow', 
-                thumbnail = "https://" + scrapedthumbnail,
+                thumbnail = alfa_urlparse.urlunsplit(('https', scrapedthumbnail, "", "", "")),
                 title = scrapedtitle,
                 url = urlparse.urljoin(host, scrapedurl)
             )
@@ -334,8 +335,9 @@ def episodesxseasons(item):
 def search(item, texto):
     logger.info()
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = host + "search.html?keyword=" + texto
+    item.url = alfa_urlparse.build_url(host, 'search.html', query=[('keyword', _url_query_texto)])
     item.extra = "busca"
 
     if texto != '':
@@ -357,7 +359,7 @@ def list_all(item):
     url = item.url
     item.page = item.page or 1
     if not item.extra:
-        url += "?page=%s" %item.page
+        url = alfa_urlparse.build_url(url, query=[('page', u'{}'.format(item.page))])
 
     data = httptools.downloadpage(url, encoding=encoding, canonical=canonical).data
     patron  = '(?is)TPost C.*?<a href="([^"]+)'
@@ -376,7 +378,7 @@ def list_all(item):
                     channel = item.channel,
                     contentSerieName = scrapedtitle.strip(),
                     contentType = 'tvshow', 
-                    thumbnail = "https://" + scrapedthumbnail,
+                    thumbnail = alfa_urlparse.urlunsplit(('https', scrapedthumbnail, "", "", "")),
                     title = scrapedtitle,
                     url = urlparse.urljoin(host, scrapedurl),
                 )
@@ -389,7 +391,7 @@ def list_all(item):
                     channel = item.channel,
                     contentType = "movie",
                     contentTitle = scrapedtitle.strip(),
-                    thumbnail = "https://" + scrapedthumbnail,
+                    thumbnail = alfa_urlparse.urlunsplit(('https', scrapedthumbnail, "", "", "")),
                     title = scrapedtitle,
                     url = urlparse.urljoin(host, scrapedurl),
                 )
@@ -432,7 +434,7 @@ def findvideos(item):
             if  "pelisplay" in scrapedurl:
                 continue  # Son los mismos server que los que muestra la web
             if not scrapedurl.startswith("http"):
-                scrapedurl = "https:" + scrapedurl
+                scrapedurl = alfa_urlparse.urljoin('https:', scrapedurl)
             if "hydrax" in scrapedurl:
                 continue
             # if "pelisplay" in scrapedurl:             # Da los mismos server que los que muestra lña web
@@ -511,11 +513,11 @@ def play(item):
         v = scrapertools.find_single_match(item.url, 'v=(\w+)')
         post = "slug=%s&dataType=mp4"  %v
         data = httptools.downloadpage("https://ping.iamcdn.net/", post = post).data
-        data = httptools.downloadpage("https://geoip.redirect-ads.com/?v=%s" %v, headers={"Referer" : item.url}).data
+        data = httptools.downloadpage(alfa_urlparse.build_url('https://geoip.redirect-ads.com', '/', query=[('v', u'{}'.format(v))]), headers={"Referer" : item.url}).data
         
     if "damedamehoy" in item.url:
         item.url, id = item.url.split("#")
-        new_url = "https://damedamehoy.xyz/details.php?v=%s" % id
+        new_url = alfa_urlparse.build_url('https://damedamehoy.xyz', '/details.php', query=[('v', u'{}'.format(id))])
         v_data = httptools.downloadpage(new_url).json
         item.url = v_data["file"]
         item.server = "directo"
@@ -531,10 +533,10 @@ def play(item):
         dominio = urlparse.urlparse(item.url)[1]
         id = scrapertools.find_single_match(item.url, 'id=(\w+)')
         tiempo = int(time.time())
-        item.url = "https://" + dominio + "/playlist/" + id + "/%s.m3u8" %tiempo
+        item.url = alfa_urlparse.build_url(alfa_urlparse.urlunsplit(('https', dominio, "", "", "")), u'/playlist/{}/{}.m3u8'.format(id, tiempo))
         data = httptools.downloadpage(item.url).data
         url = scrapertools.find_single_match(data, '/hls/\w+/\w+') + "?v=%s" %tiempo
-        item.url = "https://" + dominio + url
+        item.url = alfa_urlparse.urlunsplit(('https', u'{}{}'.format(dominio, url), "", "", ""))
         data = httptools.downloadpage(url).data
         item.server = "oprem"
         return ([item])
@@ -553,13 +555,13 @@ def newest(categoria):
 
     try:
         if categoria in ['peliculas','latino']:
-            item.url = host + "estrenos"
+            item.url = alfa_urlparse.build_url(host, 'estrenos')
 
         elif categoria == 'infantiles':
-            item.url = host + 'category/animacion/'
+            item.url = alfa_urlparse.build_url(host, 'category/animacion/')
 
         elif categoria == 'terror':
-            item.url = host + 'category/torror/'
+            item.url = alfa_urlparse.build_url(host, 'category/torror/')
 
         itemlist = list_all(item)
 

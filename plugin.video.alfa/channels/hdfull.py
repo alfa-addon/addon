@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -470,7 +471,7 @@ def section(item):
         for letra in ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
                       'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
             
-            itemlist.append(item.clone(action="list_all", title=letra, url=item.url + letra.replace('#', '9')))
+            itemlist.append(item.clone(action="list_all", title=letra, url=alfa_urlparse.build_url(item.url, letra.replace('#', '9'))))
 
         return itemlist
 
@@ -592,7 +593,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 if not elem.get('permalink', '') and not elem.get('perma', ''): continue
                 elem_json['url'] = AlfaChannel.urljoin(host, '%s' % path + (elem.get('permalink', '') or elem.get('perma', '')))
                 if elem_json['mediatype'] == 'episode':
-                    elem_json['url'] += '/temporada-%s/episodio-%s' % (elem.get('season', '1'), elem.get('episode', '00').zfill(2))
+                    elem_json['url'] = alfa_urlparse.build_url(elem_json['url'], u'/temporada-{}/episodio-{}'.format(elem.get('season', '1'), elem.get('episode', '00').zfill(2)))
                 elem_json['info'] = {elem.get('id', '0'): elem.get('id', '0')}
 
             elif item.extra in ['episodios']:
@@ -625,7 +626,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
                 if not elem.get('permalink', '') and not elem.get('perma', ''): continue
                 elem_json['url'] = AlfaChannel.urljoin(host, '%s' % path + (elem.get('permalink', '') or elem.get('perma', '')))
-                elem_json['url'] += '/temporada-%s/episodio-%s' % (elem.get('season', '1'), elem.get('episode', '00').zfill(2))
+                elem_json['url'] = alfa_urlparse.build_url(elem_json['url'], u'/temporada-{}/episodio-{}'.format(elem.get('season', '1'), elem.get('episode', '00').zfill(2)))
                 elem_json['info'] = {elem.get('id', '0'): elem.get('show', {}).get('id', '0')}
 
                 if elem_json['url']:
@@ -842,7 +843,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
             if not elem.get('permalink', '') and not elem.get('perma', ''): continue
             elem_json['url'] = AlfaChannel.urljoin(host, '%s' % path + (elem.get('permalink', '') or elem.get('perma', '')))
-            elem_json['url'] += '/temporada-%s/episodio-%s' % (elem.get('season', '1'), elem.get('episode', '00').zfill(2))
+            elem_json['url'] = alfa_urlparse.build_url(elem_json['url'], u'/temporada-{}/episodio-{}'.format(elem.get('season', '1'), elem.get('episode', '00').zfill(2)))
             elem_json['info'] = {elem.get('id', '0'): sid}
 
         except Exception:
@@ -1033,7 +1034,7 @@ def search(item, texto, **AHkwargs):
         texto = texto.replace(" ", "+")
 
         if not item.post:
-            item.url = item.url + "buscar"
+            item.url = alfa_urlparse.build_url(item.url, 'buscar')
             item.post = '__csrf_magic=%s&menu=search&query=%s' % (sid, texto)
         else:
             item.post = item.post + texto
@@ -1749,7 +1750,7 @@ def find_hidden_seasons(item, matches, sid):
             data = agrupa_datos(url, post=post, json=True, force_check=False, force_login=False, alfa_s=True)
 
             if data and isinstance(data, list):
-                matches.append({'url': url_season + (str(high_season) if high_json_season > 0 else ''), 'info': {sid: sid}, 
+                matches.append({'url': alfa_urlparse.append_path_suffix(url_season, str(high_season) if high_json_season > 0 else ''), 'info': {sid: sid},
                                 'title': item.contentSerieName or item.contentTitle, 'season': high_season})
                 if high_season > tmdb_season: item.infoLabels['number_of_seasons'] = high_season
 

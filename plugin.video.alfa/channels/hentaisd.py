@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -34,10 +35,10 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, action="lista", title="Estrenos", url=host + "/hentai/estrenos/"))
-    itemlist.append(Item(channel=item.channel, action="series", title="Todos", url=host + "/hentai/"))
-    itemlist.append(Item(channel=item.channel, action="series", title="Sin Censura", url=host + "/hentai/sin-censura/"))
-    itemlist.append(Item(channel=item.channel, action="generos", title="Por géneros", url=host + "/hentai/generos/"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Estrenos", url=alfa_urlparse.build_url(host, '/hentai/estrenos/')))
+    itemlist.append(Item(channel=item.channel, action="series", title="Todos", url=alfa_urlparse.build_url(host, '/hentai/')))
+    itemlist.append(Item(channel=item.channel, action="series", title="Sin Censura", url=alfa_urlparse.build_url(host, '/hentai/sin-censura/')))
+    itemlist.append(Item(channel=item.channel, action="generos", title="Por géneros", url=alfa_urlparse.build_url(host, '/hentai/generos/')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
@@ -47,8 +48,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s/buscar/?t=%s" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, '/buscar/', query=[('t', u'{}'.format(_url_query_texto))])
     try:
         return series(item)
     except Exception:

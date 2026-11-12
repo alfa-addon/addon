@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -77,17 +78,17 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevo" , action="list_all", url=host + "recent/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=host + "viewed/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="list_all", url=host + "rated/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Popular" , action="list_all", url=host + "popular/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Favorito" , action="list_all", url=host + "favorited/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Comentado" , action="list_all", url=host + "discussed/"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "longest/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Descargas" , action="list_all", url=host + "downloaded/"))
-    itemlist.append(Item(channel=item.channel, title="Escenas en Peliculas" , action="section", url=host + "movies/", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "models/", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevo" , action="list_all", url=alfa_urlparse.build_url(host, 'recent/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=alfa_urlparse.build_url(host, 'viewed/')))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="list_all", url=alfa_urlparse.build_url(host, 'rated/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Popular" , action="list_all", url=alfa_urlparse.build_url(host, 'popular/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Favorito" , action="list_all", url=alfa_urlparse.build_url(host, 'favorited/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Comentado" , action="list_all", url=alfa_urlparse.build_url(host, 'discussed/')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(host, 'longest/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Descargas" , action="list_all", url=alfa_urlparse.build_url(host, 'downloaded/')))
+    itemlist.append(Item(channel=item.channel, title="Escenas en Peliculas" , action="section", url=alfa_urlparse.build_url(host, 'movies/'), extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, 'models/'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -118,7 +119,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/video/?s=%s&o=recent&page=1" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, 'search/video/', query=[('s', texto), ('o', 'recent'), ('page', '1')])
     
     try:
         if texto:

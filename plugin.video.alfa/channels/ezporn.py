@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -103,16 +104,16 @@ def submenu(item):
     AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
 
 
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=item.url + "search/?sort_by=post_date&from_videos=1", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=item.url + "search/?sort_by=video_viewed_month&from_videos=1", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorada" , action="list_all", url=item.url + "search/?sort_by=rating_month&from_videos=1", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas Favoritas" , action="list_all", url=item.url + "search/?sort_by=most_favourited&from_videos=1", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas Comentadas" , action="list_all", url=item.url + "search/?sort_by=most_commented&from_videos=1", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=item.url + "search/?sort_by=duration&from_videos=1", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/', query='sort_by=post_date&from_videos=1'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/', query='sort_by=video_viewed_month&from_videos=1'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorada" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/', query='sort_by=rating_month&from_videos=1'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Favoritas" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/', query='sort_by=most_favourited&from_videos=1'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Comentadas" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/', query='sort_by=most_commented&from_videos=1'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/', query='sort_by=duration&from_videos=1'), chanel=item.chanel))
     if "4wank" in item.url or "crazyporn" in item.url or "cremz" in item.url or "momzr" in item.url or "xxam" in item.url or "faptor" in item.url:
-        itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=item.url + "sites/?sort_by=total_videos&from=1", extra="Canal", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=item.url + "models/?sort_by=total_videos&from=1", extra="PornStar", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url + "categories/", extra="Categorias", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(item.url, 'sites/', query='sort_by=total_videos&from=1'), extra="Canal", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(item.url, 'models/', query='sort_by=total_videos&from=1'), extra="PornStar", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(item.url, 'categories/'), extra="Categorias", chanel=item.chanel))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url, chanel=item.chanel))
     
     return itemlist
@@ -186,7 +187,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/?q=%s&sort_by=post_date&from_videos=1" % (item.url, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(item.url, 'search/', query=[('q', texto), ('sort_by', 'post_date'), ('from_videos', '1')])
     
     try:
         if texto:

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import re
 import base64
 from bs4 import BeautifulSoup
@@ -58,13 +59,13 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Generos', url=host, action='section',
                          thumbnail=get_thumb('genres', auto=True)))
     
-    itemlist.append(Item(channel=item.channel, title='Estrenos', url=host + 'peliculas-de-estreno/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=alfa_urlparse.build_url(host, 'peliculas-de-estreno/'), action='list_all',
                          thumbnail=get_thumb('premieres', auto=True)))
         
-    itemlist.append(Item(channel=item.channel, title='Novedades', url=host + 'novedades/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Novedades', url=alfa_urlparse.build_url(host, 'novedades/'), action='list_all',
                          thumbnail=get_thumb('newest', auto=True)))
     
-    itemlist.append(Item(channel=item.channel, title='Recomendadas', url=host + 'peliculas-recomendadas/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Recomendadas', url=alfa_urlparse.build_url(host, 'peliculas-recomendadas/'), action='list_all',
                          thumbnail=get_thumb('recomended', auto=True)))
     
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
@@ -216,7 +217,7 @@ def findvideos(item):
         post = {"action": "doo_player_ajax", "post": elem["data-post"], "nume": elem["data-nume"],
                 "type": elem["data-type"]}
         headers = {"Referer": item.url}
-        doo_url = "%swp-admin/admin-ajax.php" % host
+        doo_url = alfa_urlparse.build_url(host, 'wp-admin/admin-ajax.php')
 
         response = httptools.downloadpage(doo_url, timeout=TIMEOUT, post=post, 
                                           headers=headers, canonical=canonical, 
@@ -274,8 +275,9 @@ def search(item, texto):
     
     try:
         if texto != '':
+            _url_query_texto = str(texto)
             texto = str(texto).replace(" ", "+")
-            item.url = "{0}?s={1}".format(host, texto)
+            item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
             item.c_type = "search"
             return list_all(item)
         else:
@@ -291,7 +293,7 @@ def newest(categoria):
         if categoria in ['peliculas']:
             item = Item()
             item.c_type = 'peliculas'
-            item.url = "{0}peliculas-de-estreno/".format(host)
+            item.url = alfa_urlparse.build_url(host, 'peliculas-de-estreno/')
             itemlist = list_all(item)
             if len(itemlist) > 0 and '>>' in itemlist[-1].title:
                 itemlist.pop()

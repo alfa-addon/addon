@@ -4,6 +4,7 @@
 # -*- By the Alfa Develop Group -*-
 #------------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import urlparse
@@ -55,11 +56,11 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?page=1&sort=views" ))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "?page=1&sort=rating" ))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "api/table-list?type=producers", extra="producer" ))
-    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="categorias", url=host + "api/table-list?type=actors", extra="actor" ))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "api/table-list?type=categories", extra="category" ))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, query='page=1&sort=views') ))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=alfa_urlparse.build_url(host, query='page=1&sort=rating') ))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(host, 'api/table-list', query='type=producers'), extra="producer" ))
+    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="categorias", url=alfa_urlparse.build_url(host, 'api/table-list', query='type=actors'), extra="actor" ))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'api/table-list', query='type=categories'), extra="category" ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     autoplay.show_option(item.channel, itemlist)
@@ -69,8 +70,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s?search=%s&page=1" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, query=[('search', u'{}'.format(_url_query_texto)), ('page', '1')])
     try:
         return lista(item)
     except Exception:
@@ -104,9 +106,9 @@ def categorias(item):
         title = elem['%s' %item.extra] 
         slug = title.replace(" ", "-")
         if "producer" in item.extra:
-            url = "%s?studio=%s&page=1" %(host,slug)
+            url = alfa_urlparse.build_url(host, query=[('studio', u'{}'.format(slug)), ('page', '1')])
         else:
-            url = "%s?%s=%s&page=1" %(host,item.extra,slug)
+            url = alfa_urlparse.build_url(host, query=[(u'{}'.format(item.extra), u'{}'.format(slug)), ('page', '1')])
         if elem['thumbs_urls']:
             thumbnail = elem['thumbs_urls'][-1]
         else:
@@ -168,7 +170,7 @@ def lista(item):
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     
     if not "page=" in item.url:
-        item.url = "%s?page=1" %host
+        item.url = alfa_urlparse.build_url(host, query='page=1')
     next_page = soup.find_all('a', tabindex='-1')
     if next_page:
         next_page = next_page[-1]['href']

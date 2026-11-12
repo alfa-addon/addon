@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -57,19 +58,19 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Peliculas', url=host + 'peliculas/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Peliculas', url=alfa_urlparse.build_url(host, 'peliculas/'), action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'series/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'series/'), action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type='series'))
 
     itemlist.append(Item(channel=item.channel, title='Sagas', action='section', url=host,
                          thumbnail=get_thumb('genres', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Infantil', url=host + 'genero/infantiles/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Infantil', url=alfa_urlparse.build_url(host, 'genero/infantiles/'), action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Tendencia', url=host + 'tendencias/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Tendencia', url=alfa_urlparse.build_url(host, 'tendencias/'), action='list_all',
                          thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -192,8 +193,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = host + '?s=' + texto
+        item.url = alfa_urlparse.build_url(host, query=[('s', _url_query_texto)])
 
         if texto:
             item.c_type = "search"

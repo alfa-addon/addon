@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -77,13 +78,13 @@ def mainlist(item):
     logger.info()
     itemlist = []
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "latest-updates/1/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistos" , action="list_all", url=host + "most-popular/month/1/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="list_all", url=host + "top-rated/month/1/"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "sites/1/", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "models/total-videos/?gender_id=0", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Actores" , action="section", url=host + "models/total-videos/?gender_id=1", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, 'latest-updates/1/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistos" , action="list_all", url=alfa_urlparse.build_url(host, 'most-popular/month/1/')))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="list_all", url=alfa_urlparse.build_url(host, 'top-rated/month/1/')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(host, 'sites/1/'), extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, 'models/total-videos/', query='gender_id=0'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Actores" , action="section", url=alfa_urlparse.build_url(host, 'models/total-videos/', query='gender_id=1'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     return itemlist
@@ -120,7 +121,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/%s/latest-updates/" % (host, texto.replace(" ", "-"))
+    item.url = alfa_urlparse.build_url(host, u'search/{}/latest-updates/'.format(texto.replace(" ", "-")))
     
     try:
         if texto:

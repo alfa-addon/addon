@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -412,7 +413,7 @@ def play(item):
                                            follow_redirects=False, hide_infobox=True, **kwargs)
 
         if response.code in AlfaChannel.REDIRECTION_CODES:
-            item.url = '%s|Referer=%s' % (response.headers.get('location', ''), AlfaChannel.obtain_domain(item.url, scheme=True))
+            item.url = alfa_urlparse.add_url_headers(response.headers.get('location', ''), {'Referer': u'{}'.format(AlfaChannel.obtain_domain(item.url, scheme=True))})
 
     return [item]
 
@@ -432,7 +433,7 @@ def search(item, texto, **AHkwargs):
     busq = '?s=%s' if channel in [clone_channels[2]] else 'buscar/?buscar=%s'
     
     try:
-        item.url = host + busq % texto
+        item.url = alfa_urlparse.urljoin(host, busq % texto)
         item.extra = 'search'
 
         if texto:
@@ -464,9 +465,9 @@ def newest(categoria, **AHkwargs):
     
     try:
         if categoria in ['peliculas', 'latino', 'torrent']:
-            item.url = host + "peliculas/"
+            item.url = alfa_urlparse.build_url(host, 'peliculas/')
             if channel in [clone_channels[0]]:
-                item.url = host + "Descargar-peliculas-completas%s/" % sufix
+                item.url = alfa_urlparse.build_url(host, u'Descargar-peliculas-completas{}/'.format(sufix))
             item.c_type = 'peliculas'
             item.extra = categoria
             item.extra2 = "novedades"
@@ -478,7 +479,7 @@ def newest(categoria, **AHkwargs):
         
         if categoria in ['series', 'anime']:
             item.category_new = "newest"
-            item.url = host + ("series/" if categoria not in ['anime'] else "animes/")
+            item.url = alfa_urlparse.urljoin(host, "series/" if categoria not in ['anime'] else "animes/")
             item.c_type = 'series'
             item.extra = categoria
             item.extra2 = "novedades"

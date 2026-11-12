@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -135,33 +136,32 @@ def sub_menu(item):
 
     if item.c_type == 'peliculas':
         itemlist.append(Item(channel=item.channel, title="[B]Buscar...[/B]", action="search", 
-                         url=host + '?api=search&mode=movie&page=1&q=', thumbnail=get_thumb("search.png"), c_type="search", 
+                         url=alfa_urlparse.build_url(host, query='api=search&mode=movie&page=1&q='), thumbnail=get_thumb("search.png"), c_type="search",
                          category=categoria, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title="Explorar Películas", 
-                             action="list_all", url=item.url + "?api=popular&mode=movie&page=1&sort=primary_release_date.desc", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='api=popular&mode=movie&page=1&sort=primary_release_date.desc'),
                              thumbnail=get_thumb('popular.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
     if item.c_type == 'series':
         itemlist.append(Item(channel=item.channel, title="[B]Buscar...[/B]", action="search", 
-                         url=host + '?api=search&mode=tv&page=1&q=', thumbnail=get_thumb("search.png"), c_type="search", 
+                         url=alfa_urlparse.build_url(host, query='api=search&mode=tv&page=1&q='), thumbnail=get_thumb("search.png"), c_type="search",
                          category=categoria, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title="Explorar Series", 
-                             action="list_all", url=item.url + "?api=popular&mode=tv&page=1&sort=primary_release_date.desc", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='api=popular&mode=tv&page=1&sort=primary_release_date.desc'),
                              thumbnail=get_thumb('tvshows', auto=True), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]%s por Rating[/COLOR]" % item.c_type.title(), 
-                         action="list_all", url=item.url + '?api=top_rated&mode=%s&page=1&sort=primary_release_date.desc' % item.c_path, 
+                         action="list_all", url=alfa_urlparse.build_url(item.url, query=[('api', 'top_rated'), ('mode', u'{}'.format(item.c_path)), ('page', '1'), ('sort', 'primary_release_date.desc')]),
                          thumbnail=get_thumb('top_rated.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]%s por Tendencia[/COLOR]" % item.c_type.title(), 
-                         action="list_all", url=item.url + '?api=trending&mode=%s&page=1&sort=primary_release_date.desc&time=week' % item.c_path, 
+                         action="list_all", url=alfa_urlparse.build_url(item.url, query=[('api', 'trending'), ('mode', u'{}'.format(item.c_path)), ('page', '1'), ('sort', 'primary_release_date.desc'), ('time', 'week')]),
                          thumbnail=get_thumb('news.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]%s en Proyección[/COLOR]" % item.c_type.title(), 
-                         action="list_all", url=item.url + '?api=%s&mode=%s&page=1&sort=primary_release_date.desc' \
-                         % ('now_playing' if item.c_path in ['movie'] else 'on_the_air', item.c_path), 
+                         action="list_all", url=alfa_urlparse.build_url(item.url, query=[('api', u'{}'.format('now_playing' if item.c_path in ['movie'] else 'on_the_air')), ('mode', u'{}'.format(item.c_path)), ('page', '1'), ('sort', 'primary_release_date.desc')]),
                          thumbnail=get_thumb('now_playing.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]%s por Género[/COLOR]" % item.c_type.title(), 
@@ -169,7 +169,7 @@ def sub_menu(item):
                          thumbnail=get_thumb('genres.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]%s por Año[/COLOR]" % item.c_type.title(), 
-                         action="section", url=item.url + '?api=discover&mode=%s&page=1&sort=primary_release_date.desc&genre=0&year=' % item.c_path,  
+                         action="section", url=alfa_urlparse.build_url(item.url, query=[('api', 'discover'), ('mode', u'{}'.format(item.c_path)), ('page', '1'), ('sort', 'primary_release_date.desc'), ('genre', '0'), ('year', '')]),
                          extra='Año', thumbnail=get_thumb('years.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]%s por Idiomas[/COLOR]" % item.c_type.title(), 

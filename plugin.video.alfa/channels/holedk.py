@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from modules import autoplay
@@ -44,8 +45,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%sindex.php?s=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'index.php', query=[('s', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:
@@ -142,31 +144,31 @@ def findvideos(item):
         ser = scrapertools.find_single_match(text, '(\w+)\(')
         id = scrapertools.find_single_match(text, '\w+\("([^"]+)"')
         if "doo" in ser:
-            url = "https://dood.to/e/%s" % id
+            url = alfa_urlparse.build_url('https://dood.to', u'/e/{}'.format(id))
             # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "tape" in ser:
-            url = "https://streamtape.com/e/%s" % id
+            url = alfa_urlparse.build_url('https://streamtape.com', u'/e/{}'.format(id))
             # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "voe" in ser:
-            url = "https://voe.sx/e/%s" % id
+            url = alfa_urlparse.build_url('https://voe.sx', u'/e/{}'.format(id))
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "moon" in ser:
-            url = "https://filemoon.to/e/%s" % id
+            url = alfa_urlparse.build_url('https://filemoon.to', u'/e/{}'.format(id))
             # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "gua" in ser:
-            url = "https://listeamed.net/e/%s" % id
+            url = alfa_urlparse.build_url('https://listeamed.net', u'/e/{}'.format(id))
             # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "mix" in ser:
-            url = "https://mixdrop.is/e/%s" % id
+            url = alfa_urlparse.build_url('https://mixdrop.is', u'/e/{}'.format(id))
             # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "lulu" in ser:
-            url = "https://lulustream.com/e/%s" % id
+            url = alfa_urlparse.build_url('https://lulustream.com', u'/e/{}'.format(id))
             # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "ntu" in ser:
-            url = "https://hqq.to/e/%s" % id
+            url = alfa_urlparse.build_url('https://hqq.to', u'/e/{}'.format(id))
             # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "vyd" in ser:
-            url = "https://holedk.easyvidplayer.com/#%s" % id
+            url = alfa_urlparse.build_url('https://holedk.easyvidplayer.com', '/', fragment=u'{}'.format(id))
             # itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "kra" in ser:
             continue

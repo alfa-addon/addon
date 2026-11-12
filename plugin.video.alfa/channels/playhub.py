@@ -43,7 +43,7 @@ def read_api(path = '/', query = {}):
         q.update(query)
     query_string = urlparse.urlencode(q)
 
-    url = "https://api.playhublite.com/api/v2{}?{}".format(path, query_string)
+    url = alfa_urlparse.build_url('https://api.playhublite.com/api/v2', path, query=query_string)
     logger.info(url, True)
     referer = host
 

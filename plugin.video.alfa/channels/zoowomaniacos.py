@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -152,7 +153,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
         elem_json['quality'] = '*'
         elem_json['info'] = {'v_id': elem.get("a1", "0")}
         elem_json['plot'] = elem.get("a100", "")
-        elem_json['thumbnail'] = "%swp/wp-content/uploads/%s" % (host, elem.get("a8", ""))
+        elem_json['thumbnail'] = alfa_urlparse.build_url(host, u'wp/wp-content/uploads/{}'.format(elem.get("a8", "")))
         if ('tmdb' in elem_json['thumbnail'] or 'imdb' in elem_json['thumbnail']) and '=http' in elem_json['thumbnail']:
             elem_json['thumbnail'] = scrapertools.find_single_match(AlfaChannel.do_unquote(elem_json['thumbnail']), '=(.*?)[&|$]')
         elem_json['year'] = elem.get("a4", "-")
@@ -170,7 +171,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 def findvideos(item):
     logger.info()
 
-    base_url = "https://proyectox.yoyatengoabuela.com/testplayer.php?id=%s" % item.info.get('v_id', '0')
+    base_url = alfa_urlparse.build_url('https://proyectox.yoyatengoabuela.com', '/testplayer.php', query=[('id', u'{}'.format(item.info.get('v_id', '0')))])
     
     return AlfaChannel.get_video_options(item, base_url, matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -93,12 +94,12 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", 
-                         url=host + "movies/", c_type='peliculas', thumbnail=get_thumb("movies", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'movies/'), c_type='peliculas', thumbnail=get_thumb("movies", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Novelas", action="list_all", 
-                         url=host + "novelas-completas/", c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'novelas-completas/'), c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Nuevos Episodios[/COLOR]" , action="list_all", 
-                         url= host + "episodes/", c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
+                         url= alfa_urlparse.build_url(host, 'episodes/'), c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Países[/COLOR]" , action="section", 
                          url= host, c_type='series', thumbnail=get_thumb('country', auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Años[/COLOR]" , action="section", 
@@ -353,7 +354,7 @@ def search(item, texto, **AHkwargs):
 
     try:
         texto = texto.replace(" ", "+")
-        item.url = '%ssearch/%s/' %  (host, texto)
+        item.url = alfa_urlparse.build_url(host, u'search/{}/'.format(texto))
 
         if texto:
             item.c_type = "search"

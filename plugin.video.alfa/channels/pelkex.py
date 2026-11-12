@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -46,7 +47,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="list_all", url=host,
                          thumbnail=get_thumb('movies', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Series", action="list_all", url=host + "/series",
+    itemlist.append(Item(channel=item.channel, title="Series", action="list_all", url=alfa_urlparse.build_url(host, '/series'),
                          thumbnail=get_thumb('tvshows', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section",
@@ -55,7 +56,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Años", action="section", thumbnail=get_thumb('year', auto=True)))
 
 
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + '?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=alfa_urlparse.build_url(host, query='s='),
                          thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -130,7 +131,7 @@ def section(item):
     for elem in matches:
         url = elem.a["href"]
         if not url.startswith("http"):
-            url = host + url
+            url = alfa_urlparse.urljoin(host, url)
         title = elem.a.text
         itemlist.append(Item(channel=item.channel, title=title, url=url, action=action, section=item.section))
     if item.title == "Generos":
@@ -209,7 +210,7 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, title="Torrent", url=url, server="torrent", action="play",
                              language="LAT", infoLabels=item.infoLabels))
     else:
-        url = "%s?play" %item.url
+        url = alfa_urlparse.build_url(item.url, query='play')
         soup = create_soup(url)
         matches = soup.find('ul', class_='server-list').find_all('li')
         for elem in matches:
@@ -217,11 +218,11 @@ def findvideos(item):
             enc_url = elem.a['data-id']
             url = base64.b64decode(enc_url).decode('utf-8')
             if "Trailer" in elem.a.text:
-                url = "https://www.youtube.com/watch?v=%s" %enc_url
+                url = alfa_urlparse.build_url('https://www.youtube.com', '/watch', query=[('v', u'{}'.format(enc_url))])
             itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play",
                                  language="LAT", infoLabels=item.infoLabels))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-        url = "%s?download" %item.url
+        url = alfa_urlparse.build_url(item.url, query='download')
         soup = create_soup(url)
         url = soup.tbody.find('td').a['href']
         itemlist.append(Item(channel=item.channel, title="Torrent", url=url, server="torrent", action="play",
@@ -243,8 +244,7 @@ def search(item, texto):
     logger.info()
 
     try:
-        texto = texto.replace(" ", "+")
-        item.url = item.url + texto
+        item.url = alfa_urlparse.update_query(item.url, {'s': texto})
 
         if texto != '':
             return list_all(item)
@@ -267,9 +267,9 @@ def newest(categoria):
         if categoria in ['peliculas', 'latino', 'torrent']:
             item.url = host
         elif categoria == 'infantiles':
-            item.url = host + 'category/infantil'
+            item.url = alfa_urlparse.build_url(host, 'category/infantil')
         elif categoria == 'terror':
-            item.url = host + 'category/terror'
+            item.url = alfa_urlparse.build_url(host, 'category/terror')
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()

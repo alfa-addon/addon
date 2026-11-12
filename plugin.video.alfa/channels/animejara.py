@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys, math
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -115,25 +116,25 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host+home_page, action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=alfa_urlparse.urljoin(host, home_page), action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='new_episodes'))
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host+home_page, action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=alfa_urlparse.urljoin(host, home_page), action='list_all',
                          thumbnail=get_thumb('newest', auto=True), c_type='newest'))
     
-    itemlist.append(Item(channel=item.channel, title='Series En Emision', url=host + 'catalogo?paged=1&tipo=serie&estado=Emision', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series En Emision', url=alfa_urlparse.build_url(host, 'catalogo', query='paged=1&tipo=serie&estado=Emision'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
     
-    itemlist.append(Item(channel=item.channel, title='Series Finalizadas', url=host + 'catalogo?paged=1&tipo=serie&estado=Finalizado', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series Finalizadas', url=alfa_urlparse.build_url(host, 'catalogo', query='paged=1&tipo=serie&estado=Finalizado'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'catalogo?paged=1&tipo=pelicula', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=alfa_urlparse.build_url(host, 'catalogo', query='paged=1&tipo=pelicula'), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Generos',  action='section', url=host + 'catalogo', 
+    itemlist.append(Item(channel=item.channel, title='Generos',  action='section', url=alfa_urlparse.build_url(host, 'catalogo'),
                          thumbnail=get_thumb('genres', auto=True), extra='genre'))
     
-    itemlist.append(Item(channel=item.channel, title='Años',  action='section', url=host + 'catalogo', 
+    itemlist.append(Item(channel=item.channel, title='Años',  action='section', url=alfa_urlparse.build_url(host, 'catalogo'),
                          thumbnail=get_thumb('year', auto=True), extra='year'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -345,7 +346,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json = {}
             elem_json['season'] = season
             elem_json['episode'] = int(episodio['numero_episodio'])
-            elem_json['url'] = 'https://animejara.com/episode/%s-%sx%s/' % (ANIME_SLUG, elem_json['season'], elem_json['episode'])
+            elem_json['url'] = alfa_urlparse.build_url('https://animejara.com', u'/episode/{}-{}x{}/'.format(ANIME_SLUG, elem_json['season'], elem_json['episode']))
             elem_json['title'] = 'Episodio %sx%s' % (elem_json['season'], elem_json['episode'])
             elem_json['language'] = [get_lang_from_str(lang) for lang in episodio.get('idiomas', [])]
             elem_json['quality'] = 'HD'
@@ -418,8 +419,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
+        _url_query_texto = texto
         texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = item.url + "catalogo/?q=" + texto
+        item.url = alfa_urlparse.build_url(item.url, 'catalogo/', query=[('q', _url_query_texto)])
 
         if texto:
             item.c_type = 'search'
@@ -448,7 +450,7 @@ def newest(categoria, **AHkwargs):
 
     try:
         if categoria in ['anime']:
-            item.url = host+home_page
+            item.url = alfa_urlparse.urljoin(host, home_page)
             item.c_type = 'new_episodes'
             item.extra = "novedades"
             item.action = "list_all"

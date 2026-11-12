@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -95,21 +96,21 @@ def submenu(item):
     AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
     
     if "josporn" in item.chanel:
-        itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=item.url + "latest-updates/page/1/", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=item.url + "most-popular/page/1/?sort=2", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=item.url + "top-rated/page/1/?sort=2", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url + "categories/", extra="Categorias", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'latest-updates/page/1/'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'most-popular/page/1/', query='sort=2'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'top-rated/page/1/', query='sort=2'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(item.url, 'categories/'), extra="Categorias", chanel=item.chanel))
     if "pornohd" in item.chanel:
-        itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=item.url + "new-update/page-2/", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=item.url + "most-popular/page-1/?sort=2", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=item.url + "the-best/page-1/?sort=2", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="PornStar" , action="section", url=item.url + "best-models/?sort=2", extra="PornStar", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url + "categories/", extra="Categorias", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'new-update/page-2/'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'most-popular/page-1/', query='sort=2'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'the-best/page-1/', query='sort=2'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="PornStar" , action="section", url=alfa_urlparse.build_url(item.url, 'best-models/', query='sort=2'), extra="PornStar", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(item.url, 'categories/'), extra="Categorias", chanel=item.chanel))
     if "xhdporno" in item.chanel:
         itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=item.url, chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=item.url + "pop/page-1/?sort=2", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=item.url + "reting/page-1/?sort=2", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="PornStar" , action="section", url=item.url + "porno-models/?sort=2", extra="PornStar", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'pop/page-1/', query='sort=2'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'reting/page-1/', query='sort=2'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="PornStar" , action="section", url=alfa_urlparse.build_url(item.url, 'porno-models/', query='sort=2'), extra="PornStar", chanel=item.chanel))
         itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url, extra="Categorias", chanel=item.chanel))
     
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url, chanel=item.chanel))
@@ -190,7 +191,7 @@ def play(item):
         matches = soup.find('ul', id='down_spisok').find_all('div')
         for elem in matches:
             c = elem['data-c'].split(";")
-            url = "https://v%s.cdnde.com/x%s/upload%s/%s/JOPORN_NET_%s_%s.mp4" %(c[2],c[2],c[3],c[0],c[0],c[1])
+            url = alfa_urlparse.build_url(alfa_urlparse.urlunsplit(('https', u'v{}.cdnde.com'.format(c[2]), "", "", "")), u'/x{}/upload{}/{}/JOPORN_NET_{}_{}.mp4'.format(c[2], c[3], c[0], c[0], c[1]))
             quality = c[1]
             itemlist.append(['.mp4 %s' %quality, url])
             itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
@@ -201,7 +202,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/%s/page-1/" % (item.url, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(item.url, u'search/{}/page-1/'.format(texto.replace(" ", "+")))
     
     try:
         if texto:

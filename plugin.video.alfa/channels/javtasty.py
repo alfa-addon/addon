@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 from core.item import Item
 from core import servertools
 from core import httptools
@@ -21,10 +22,10 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="lista", title="Nuevos Vídeos", url=host + "latest-updates/"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor Valorados", url=host + "top-rated/"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Más Vistos", url=host + "most-popular/"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=host + "categories/"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Nuevos Vídeos", url=alfa_urlparse.build_url(host, 'latest-updates/')))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor Valorados", url=alfa_urlparse.build_url(host, 'top-rated/')))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Más Vistos", url=alfa_urlparse.build_url(host, 'most-popular/')))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=alfa_urlparse.build_url(host, 'categories/')))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search"))
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
     return itemlist
@@ -39,7 +40,7 @@ def configuracion(item):
 
 def search(item, texto):
     logger.info()
-    item.url = "%ssearch/%s/" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, u'search/{}/'.format(texto))
     item.extra = texto
     try:
         return lista(item)

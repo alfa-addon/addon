@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -74,7 +75,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Por Año", action="year",
                              thumbnail=get_thumb("year", auto=True) ))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, query='s='),
                          thumbnail=get_thumb("search", auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -88,7 +89,7 @@ def sub_menu(item):
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, title="Novedades", action="list_all", 
-                         url=host + item.title.lower() + '/',
+                         url=alfa_urlparse.build_url(host, u'{}/'.format(item.title.lower())),
                          thumbnail=get_thumb("newest", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host,
@@ -104,7 +105,7 @@ def list_all(item):
     itemlist = list()
 
     if item.type:
-        item.url += '?type=%s' % item.type
+        item.url = alfa_urlparse.build_url(item.url, query=[('type', u'{}'.format(item.type))])
     soup = create_soup(item.url)
     matches = soup.find("div", id="movies-a")
 
@@ -182,7 +183,7 @@ def year(item):
 
     for year in year_list:
         year = str(year)
-        url = '%srelease/%s/' % (host, year)
+        url = alfa_urlparse.build_url(host, u'release/{}/'.format(year))
             
         itemlist.append(Item(channel=item.channel, title=year, url=url,
                                  action="list_all"))
@@ -209,12 +210,12 @@ def section(item):
             logger.error(soup)
 
     elif item.title == "Alfabetico":
-        url = '%sletter/0-9/?tr_post_type=%s' % (host, item.type)
+        url = alfa_urlparse.build_url(host, 'letter/0-9/', query=[('tr_post_type', u'{}'.format(item.type))])
         itemlist.append(Item(channel=item.channel, title='#', action="alpha_list",
                                  url=url, type=item.type))
 
         for l in string.ascii_uppercase:
-            url = '%sletter/%s/?tr_post_type=%s' % (host, l.lower(), item.type)
+            url = alfa_urlparse.build_url(host, u'letter/{}/'.format(l.lower()), query=[('tr_post_type', u'{}'.format(item.type))])
             title = l
             itemlist.append(Item(channel=item.channel, title=title, action="alpha_list",
                                  url=url, type=item.type))
@@ -324,7 +325,7 @@ def episodesxseason(item):
     itemlist = list()
     infoLabels = item.infoLabels
     season = infoLabels["season"]
-    url= "%swp-admin/admin-ajax.php" % host
+    url= alfa_urlparse.build_url(host, 'wp-admin/admin-ajax.php')
     post = {'action': 'action_select_season', 'season': season, 'post': item.id}
     
     soup = create_soup(url, post=post).find_all('article')
@@ -479,7 +480,7 @@ def play(item):
     url = create_soup(item.url).find("div", class_="Video").iframe["src"]
     if 'Gdri.php' in url:
         url = scrapertools.find_single_match(url, 'v=([A-z0-9-_=]+)')
-        url = 'https://drive.google.com/file/d/%s/preview' % url
+        url = alfa_urlparse.build_url('https://drive.google.com', u'/file/d/{}/preview'.format(url))
     
     itemlist.append(item.clone(url=url, server=""))
     itemlist = servertools.get_servers_itemlist(itemlist)

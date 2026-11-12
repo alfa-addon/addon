@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By DieFeM -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -99,13 +100,13 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host, action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
 
-    itemlist.append(Item(channel=item.channel, title='Nuevos Donghuas', url=host + 'donghua/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Nuevos Donghuas', url=alfa_urlparse.build_url(host, 'donghua/'), action='list_all',
                          thumbnail=get_thumb('newest', auto=True), c_type='newest'))
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'genero/donghua/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'genero/donghua/'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'peliculas/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=alfa_urlparse.build_url(host, 'peliculas/'), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     # itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host, 
@@ -353,8 +354,9 @@ def search(item, texto, **AHkwargs):
 
     try:
         # https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
+        _url_query_texto = texto
         texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = item.url + "?s=" + texto
+        item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
 
         if texto:
             item.c_type = 'search'
@@ -416,14 +418,14 @@ def check_embed_url(embed_url):
         return ''
     if not embed_url.startswith('https'):
         if embed_url.startswith('//'):
-            embed_url = 'https:' + embed_url
+            embed_url = alfa_urlparse.urljoin('https:', embed_url)
         else:
             embed_soup = AlfaChannel.do_soup(embed_url)
             if embed_soup:
                 if embed_soup.iframe:
                     embed_url = embed_soup.iframe.get('src', '')
                     if embed_url.startswith('//'):
-                        embed_url = 'https:' + embed_url
+                        embed_url = alfa_urlparse.urljoin('https:', embed_url)
                 else:
                     # logger.info('Embed Soup: ' + str(embed_soup), True)
                     embed_url = ''

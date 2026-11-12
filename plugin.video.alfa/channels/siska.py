@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -35,9 +36,9 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "best_xvideos.php?views=month"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "chanells.php"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "category.php"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'best_xvideos.php', query='views=month')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=alfa_urlparse.build_url(host, 'chanells.php')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'category.php')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
@@ -47,8 +48,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch.php?s=%s&search=search" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, 'search.php', query=[('s', u'{}'.format(_url_query_texto)), ('search', 'search')])
     try:
         return lista(item)
     except Exception:

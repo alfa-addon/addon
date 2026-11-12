@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 
@@ -27,17 +28,18 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Mas vista" , action="lista", url=host + "top"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "girls"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories"))
+    itemlist.append(Item(channel=item.channel, title="Mas vista" , action="lista", url=alfa_urlparse.build_url(host, 'top')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=alfa_urlparse.build_url(host, 'girls')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s?q=%s" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, query=[('q', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:

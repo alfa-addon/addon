@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -23,19 +24,20 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "newest"))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "straight/popular7"))
-    itemlist.append(Item(channel=item.channel, title="HD" , action="lista", url=host + "channel30/hd"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "partners"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "channels"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=alfa_urlparse.build_url(host, 'newest')))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=alfa_urlparse.build_url(host, 'straight/popular7')))
+    itemlist.append(Item(channel=item.channel, title="HD" , action="lista", url=alfa_urlparse.build_url(host, 'channel30/hd')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=alfa_urlparse.build_url(host, 'partners')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'channels')))
     # itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch?query=%s" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, 'search', query=[('query', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:

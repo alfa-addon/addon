@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -93,10 +94,10 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host+'peliculas', 
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=alfa_urlparse.build_url(host, 'peliculas'),
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu', url=host+'series', 
+    itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu', url=alfa_urlparse.build_url(host, 'series'),
                          thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -117,20 +118,20 @@ def sub_menu(item):
     itemlist.append(Item(channel=item.channel, title='Últimas', url=item.url, action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Estrenos', url=item.url+'/estrenos', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=alfa_urlparse.build_url(item.url, '/estrenos'), action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Tendencias Semana', url=item.url+'/top-semanal', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Tendencias Semana', url=alfa_urlparse.build_url(item.url, '/top-semanal'), action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Tendencias Día', url=item.url+'/top-hoy', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Tendencias Día', url=alfa_urlparse.build_url(item.url, '/top-hoy'), action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
     
     if item.c_type == 'peliculas':
         itemlist.append(Item(channel=item.channel, title='Generos', action='section', url=host,
                              thumbnail=get_thumb('genres', auto=True), c_type=item.c_type))
     else:
-        itemlist.append(Item(channel=item.channel, title='Episodios', action='list_all', url=host+'episodios',
+        itemlist.append(Item(channel=item.channel, title='Episodios', action='list_all', url=alfa_urlparse.build_url(host, 'episodios'),
                              thumbnail=get_thumb('episodes', auto=True), c_type='episodios'))
 
     return itemlist
@@ -319,7 +320,7 @@ def play(item):
         itemlist = []
 
     if item.server.lower() == "zplayer":
-        item.url += "|referer=%s" % host
+        item.url = alfa_urlparse.add_url_headers(item.url, {'referer': host})
         
         itemlist = [item]
     
@@ -338,8 +339,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = item.url + 'search?q=' + texto
+        item.url = alfa_urlparse.build_url(item.url, 'search', query=[('q', _url_query_texto)])
 
         if texto:
             item.c_type = 'search'
@@ -362,7 +364,7 @@ def newest(categoria, **AHkwargs):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = host + 'archives/movies'
+            item.url = alfa_urlparse.build_url(host, 'archives/movies')
 
         itemlist = list_all(item)
 

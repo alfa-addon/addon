@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -146,7 +147,7 @@ def findvideos(item):
     paste = scrapertools.find_single_match(data, 'https://gpaste.us/([a-zA-Z0-9]+)')
     if paste:
         try:
-            new_data = httptools.downloadpage('https://gpaste.us/'+paste).data
+            new_data = httptools.downloadpage(alfa_urlparse.build_url('https://gpaste.us', u'/{}'.format(paste))).data
             bloq = scrapertools.find_single_match(new_data, 'id="input_text">(.*?)</div>')
             matches = bloq.split('<br>')
             for url in matches:

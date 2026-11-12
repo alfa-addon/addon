@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -71,13 +72,13 @@ def mainlist(item):
     logger.info()
     itemlist = []
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "most-recent/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistos" , action="list_all", url=host + "most-viewed/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "top-rated/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Comentado" , action="list_all", url=host + "most-discussed/"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "longest/"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="section", url=host + "models/rating/page1.html", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "channels/", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, 'most-recent/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistos" , action="list_all", url=alfa_urlparse.build_url(host, 'most-viewed/')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(host, 'top-rated/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Comentado" , action="list_all", url=alfa_urlparse.build_url(host, 'most-discussed/')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(host, 'longest/')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="section", url=alfa_urlparse.build_url(host, 'models/rating/page1.html'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'channels/'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     return itemlist
@@ -114,7 +115,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/%s/newest/page1.html" % (host, texto.replace(" ", "-"))
+    item.url = alfa_urlparse.build_url(host, u'search/{}/newest/page1.html'.format(texto.replace(" ", "-")))
     
     try:
         if texto:

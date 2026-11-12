@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -192,7 +193,7 @@ def submenu(item):
 
         if item.c_type == "episodios":                                          # Añadimos Series VOSE que está fuera del menú principal
             itemlist.append(Item(channel=item.channel, title="Series VOSE", action="list_all", quality='HDTV', 
-                             url=host + "series-vose/", thumbnail=get_thumb("channels_vos.png"), 
+                             url=alfa_urlparse.build_url(host, 'series-vose/'), thumbnail=get_thumb("channels_vos.png"),
                              c_type=item.c_type, category=categoria))
 
     return itemlist
@@ -321,11 +322,12 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
     try:
         if texto:
-            item.url = host + "?s=%s&x=0&y=0" % texto
+            item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto)), ('x', '0'), ('y', '0')])
             item.c_type = "search"
             item.texto = texto
             return list_all(item)
@@ -349,7 +351,7 @@ def newest(categoria, **AHkwargs):
     
     try:
         if categoria == 'peliculas':
-            item.url = host + '/estrenos-/'
+            item.url = alfa_urlparse.build_url(host, '/estrenos-/')
             item.extra = "peliculas"
             item.category_new= 'newest'
 

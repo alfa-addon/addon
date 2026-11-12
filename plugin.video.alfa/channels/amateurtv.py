@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -79,7 +80,7 @@ def mainlist(item):
     itemlist.append(Item(channel = item.channel,title="Parejas" , action="list_all", url=url_api %(host, 'genre=["c"]')))
     itemlist.append(Item(channel = item.channel,title="Hombres" , action="list_all", url=url_api %(host, 'genre=["m"]')))
     itemlist.append(Item(channel = item.channel,title="Trans" , action="list_all", url=url_api %(host, 'genre=["t"]')))
-    itemlist.append(Item(channel = item.channel,title="Categorias" , action="section", url=host + "/v3/tag/list"))
+    itemlist.append(Item(channel = item.channel,title="Categorias" , action="section", url=alfa_urlparse.build_url(host, '/v3/tag/list')))
     
     return itemlist
 
@@ -102,7 +103,7 @@ def section_matches(item, matches_int, **AHkwargs):
         elem_json = {}
         try:
             elem_json['title'] = elem.get('tag', '')
-            elem_json['url'] = '%sv3/readmodel/cache/sectioncamlist?genre=["w","m","c","t"]&tag=%s' % (host, elem_json['title'])
+            elem_json['url'] = alfa_urlparse.build_url(host, 'v3/readmodel/cache/sectioncamlist', query=[('genre', '["w","m","c","t"]'), ('tag', u'{}'.format(elem_json['title']))])
             elem_json['thumbnail'] = ''
             elem_json['cantidad'] = elem.get('count', '')
         except Exception:
@@ -139,7 +140,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             age = elem.get('ages', '')[0]
             country  = elem.get('countryName', '')
             
-            elem_json['url'] = "%sv3/readmodel/show/%s/es" %(host, name)
+            elem_json['url'] = alfa_urlparse.build_url(host, u'v3/readmodel/show/{}/es'.format(name))
             elem_json['title'] = "%s [%s] %s" %(name, age, country)
             elem_json['thumbnail'] = elem.get('capture', '') if elem.get('capture', []) else ''
             elem_json['quality'] = 'HD' if elem.get('hd') else ''

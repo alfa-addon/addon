@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -50,41 +51,41 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Ultimas",
                                action="list_all",
                                thumbnail=get_thumb('last', auto=True),
-                               url=host + 'emision'))
+                               url=alfa_urlparse.build_url(host, 'emision')))
 
     itemlist.append(Item(channel=item.channel, title="Todas",
                                action="list_all",
                                thumbnail=get_thumb('all', auto=True),
-                               url=host + 'animes'))
+                               url=alfa_urlparse.build_url(host, 'animes')))
 
     itemlist.append(Item(channel=item.channel, title="Anime",
                               action="list_all",
                               thumbnail=get_thumb('anime', auto=True),
-                              url=host + 'categoria/anime'))
+                              url=alfa_urlparse.build_url(host, 'categoria/anime')))
 
     itemlist.append(Item(channel=item.channel, title="Películas",
                          action="list_all",
                          thumbnail=get_thumb('movies', auto=True),
-                         url=host + 'categoria/pelicula'))
+                         url=alfa_urlparse.build_url(host, 'categoria/pelicula')))
 
     itemlist.append(Item(channel=item.channel, title="OVAs",
                               action="list_all",
                               thumbnail='',
-                              url=host + 'categoria/ova'))
+                              url=alfa_urlparse.build_url(host, 'categoria/ova')))
 
     itemlist.append(Item(channel=item.channel, title="ONAs",
                               action="list_all",
                               thumbnail='',
-                              url=host + 'categoria/ona'))
+                              url=alfa_urlparse.build_url(host, 'categoria/ona')))
 
     itemlist.append(Item(channel=item.channel, title="Especiales",
                               action="list_all",
                               thumbnail='',
-                              url=host + 'categoria/especial'))
+                              url=alfa_urlparse.build_url(host, 'categoria/especial')))
 
     itemlist.append(Item(channel=item.channel, title="Buscar",
                                action="search",
-                               url=host + 'search?q=',
+                               url=alfa_urlparse.build_url(host, 'search', query='q='),
                                thumbnail=get_thumb('search', auto=True),
                                fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
                                ))
@@ -158,8 +159,7 @@ def list_all(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = alfa_urlparse.update_query(item.url, {'q': texto})
     try:
         if texto != '':
             return list_all(item)
@@ -213,7 +213,7 @@ def episodios(item):
             infoLabels['episode'] = episode
         else:
             title = item.contentTitle
-        url = '%sver/%s-capitulo-%s' % (host, anime_info[0], episode)
+        url = alfa_urlparse.build_url(host, u'ver/{}-capitulo-{}'.format(anime_info[0], episode))
 
         itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.contentSerieName, url=url,
                              action='findvideos', language=lang, infoLabels=infoLabels))

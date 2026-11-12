@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -40,11 +41,11 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?order=newest"))
-    itemlist.append(Item(channel=item.channel, title="Mas valorados" , action="lista", url=host + "?order=rating_month"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?order=views_month"))
-    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "?order=comments_month"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, query='order=newest')))
+    itemlist.append(Item(channel=item.channel, title="Mas valorados" , action="lista", url=alfa_urlparse.build_url(host, query='order=rating_month')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, query='order=views_month')))
+    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=alfa_urlparse.build_url(host, query='order=comments_month')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     autoplay.show_option(item.channel, itemlist)
@@ -54,8 +55,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s?s=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:

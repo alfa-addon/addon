@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -23,9 +24,9 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas", action="lista", url=host + "newest-clips/1.html"))
-    itemlist.append(Item(channel=item.channel, title="Popular", action="lista", url=host + "most-popular/1.html"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=host + "top-rated-week/1.html"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas", action="lista", url=alfa_urlparse.build_url(host, 'newest-clips/1.html')))
+    itemlist.append(Item(channel=item.channel, title="Popular", action="lista", url=alfa_urlparse.build_url(host, 'most-popular/1.html')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=alfa_urlparse.build_url(host, 'top-rated-week/1.html')))
     itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -34,7 +35,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/recent_%s-1.html" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, u'search/recent_{}-1.html'.format(texto))
     try:
         return lista(item)
     except Exception:

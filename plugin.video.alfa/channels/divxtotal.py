@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -212,7 +213,7 @@ def section(item):
         for letra in ['0', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
                       'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
 
-            itemlist.append(item.clone(action="list_all", title=letra, url=item.url + '?s=letra-%s' % letra.lower()))
+            itemlist.append(item.clone(action="list_all", title=letra, url=alfa_urlparse.build_url(item.url, query=[('s', u'letra-{}'.format(u'{}'.format(letra.lower())))])))
 
         return itemlist
 
@@ -473,9 +474,10 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
-    item.url = host + '?s=%s' % texto
+    item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
 
     try:
         if texto:
@@ -507,8 +509,8 @@ def newest(categoria, **AHkwargs):
             if cat != categoria: continue
                 
             item.c_type = cat
-            if cat == 'peliculas': item.url = host + movies_sufix
-            if cat == 'series': item.url = host + series_sufix
+            if cat == 'peliculas': item.url = alfa_urlparse.urljoin(host, movies_sufix)
+            if cat == 'series': item.url = alfa_urlparse.urljoin(host, series_sufix)
 
             item.extra = "novedades"
             item.action = "list_all"

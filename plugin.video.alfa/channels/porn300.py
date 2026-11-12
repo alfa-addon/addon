@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -22,33 +23,34 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "?page=1"))  # "en_US/ajax/page/list_videos/?page=1"
-    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="lista", url=host + "most-viewed/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "top-rated/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "pornstars/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/?page=1"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=alfa_urlparse.build_url(host, query='page=1')))  # "en_US/ajax/page/list_videos/?page=1"
+    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="lista", url=alfa_urlparse.build_url(host, 'most-viewed/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=alfa_urlparse.build_url(host, 'top-rated/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(host, 'channels/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories/', query='page=1')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host))
     itemlist.append(Item(channel=item.channel, title="---------"))
-    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=host + "gay/"))
+    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=alfa_urlparse.build_url(host, 'gay/')))
     return itemlist
 
 
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=item.url + "?page=1"))  # "en_US/ajax/page/list_videos/?page=1"
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=item.url + "channels/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=item.url + "pornstars/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=item.url + "categories/?page=1"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=alfa_urlparse.build_url(item.url, query='page=1')))  # "en_US/ajax/page/list_videos/?page=1"
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(item.url, 'channels/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=alfa_urlparse.build_url(item.url, 'pornstars/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(item.url, 'categories/', query='page=1')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/?q=%s&page=1" % (item.url, texto)
+    item.url = alfa_urlparse.build_url(item.url, 'search/', query=[('q', u'{}'.format(_url_query_texto)), ('page', '1')])
     try:
         return lista(item)
     except Exception:
@@ -89,7 +91,7 @@ def categorias(item):
             scrapedurl = scrapedurl.replace("channel/", "producer/")
             scrapedurl = "/en_US/ajax/page/show_%s?page=1" %scrapedurl
         else:
-            scrapedurl = "%s%s?page=1" %( host,scrapedurl)
+            scrapedurl = alfa_urlparse.update_query(alfa_urlparse.urljoin(host, scrapedurl), page=1)
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
                               fanart=thumbnail, thumbnail=thumbnail, plot=scrapedplot) )

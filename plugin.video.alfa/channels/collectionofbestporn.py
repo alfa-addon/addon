@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -32,13 +33,13 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "most-recent"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "most-viewed/week"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "top-rated/week"))
-    itemlist.append(item.clone(title="Mas metraje" , action="lista", url=host + "longest/week"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "pornstars/?plikes=1"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'most-recent')))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'most-viewed/week')))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=alfa_urlparse.build_url(host, 'top-rated/week')))
+    itemlist.append(item.clone(title="Mas metraje" , action="lista", url=alfa_urlparse.build_url(host, 'longest/week')))
+    itemlist.append(item.clone(title="PornStar" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars/', query='plikes=1')))
 
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "channels/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'channels/')))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -46,7 +47,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%ssearch/%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, u'search/{}'.format(texto))
     try:
         return lista(item)
     except Exception:

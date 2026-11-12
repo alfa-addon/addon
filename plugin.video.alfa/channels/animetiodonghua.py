@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By DieFeM -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -323,8 +324,9 @@ def search(item, texto, **AHkwargs):
 
     try:
         # https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
+        _url_query_texto = texto
         texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = item.url + "?s=" + texto
+        item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
 
         if texto:
             item.c_type = 'search'
@@ -380,7 +382,7 @@ def check_embed_url(base64_iframe):
         if iframe_soup.iframe:
             url = iframe_soup.iframe.get('src', '')
             if url.startswith('//'):
-                url = 'https:' + embed_url
+                url = alfa_urlparse.urljoin('https:', embed_url)
         else:
             # logger.info('Soup: ' + str(iframe_soup), True)
             url = ''

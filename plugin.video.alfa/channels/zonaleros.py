@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -61,7 +62,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + 'search?q=',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, 'search', query='q='),
                          thumbnail=get_thumb("search", auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -75,9 +76,9 @@ def sub_menu(item):
     itemlist = list()
 
     if item.title == "Peliculas":
-        url = host + "peliculazl-free"
+        url = alfa_urlparse.build_url(host, 'peliculazl-free')
     elif item.title == "Series":
-        url = host + "series"
+        url = alfa_urlparse.build_url(host, 'series')
 
     itemlist.append(Item(channel=item.channel, title='Ultimas', url=url, action='list_all',
                          thumbnail=get_thumb('last', auto=True)))
@@ -111,7 +112,7 @@ def section(item):
     logger.info()
 
     itemlist = list()
-    soup = create_soup(host + "peliculazl-free")
+    soup = create_soup(alfa_urlparse.build_url(host, 'peliculazl-free'))
 
     if item.title == "Generos":
         matches = soup.find("select", id="genre_select").find_all("option")
@@ -255,7 +256,7 @@ def findvideos(item):
     itemlist = list()
 
     if "episode" not in item.url:
-        base_url = "%sapi/calidades" % host
+        base_url = alfa_urlparse.build_url(host, 'api/calidades')
         soup = create_soup(item.url)
         tk = soup.find("meta", attrs={"name": "csrf-token"}).get("content", "")
         id_list = soup.find_all("span", id=re.compile("value-"))
@@ -272,7 +273,7 @@ def findvideos(item):
 
     for url in url_list:
         if not url.startswith("http"):
-            url = unquote(base64.b64decode(codecs.decode(url, "rot13")).decode('utf-8'))
+            url = alfa_urlparse.unquote(base64.b64decode(codecs.decode(url, "rot13")).decode('utf-8'))
         if "fembed" in url:
             srv = "Fembed"
         else:
@@ -312,8 +313,7 @@ def play(item):
 def search(item, texto):
     logger.info()
     try:
-        texto = texto.replace(" ", "+")
-        item.url = item.url + texto
+        item.url = alfa_urlparse.update_query(item.url, {'q': texto})
         item.type = "search"
         if texto != '':
             return list_all(item)
@@ -331,11 +331,11 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas', 'latino']:
-            item.url = host + "peliculazl-free"
+            item.url = alfa_urlparse.build_url(host, 'peliculazl-free')
         elif categoria == 'infantiles':
-            item.url = host + 'peliculas/genero/animacion'
+            item.url = alfa_urlparse.build_url(host, 'peliculas/genero/animacion')
         elif categoria == 'terror':
-            item.url = host + 'peliculas/genero/terror'
+            item.url = alfa_urlparse.build_url(host, 'peliculas/genero/terror')
 
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':

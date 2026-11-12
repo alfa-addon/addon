@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -68,11 +69,11 @@ def mainlist(item):
     logger.info()
     itemlist = []
     
-    itemlist.append(Item(channel = item.channel, title="Nuevos" , action="list_all", url=host + "?filter=latest"))
-    itemlist.append(Item(channel = item.channel, title="Mas vistos" , action="list_all", url=host + "?filter=most-viewed"))
-    itemlist.append(Item(channel = item.channel, title="Mejor valorado" , action="list_all", url=host + "?filter=popular"))
-    itemlist.append(Item(channel = item.channel, title="Mas metraje" , action="list_all", url=host + "?filter=longest"))
-    itemlist.append(Item(channel = item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
+    itemlist.append(Item(channel = item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, query='filter=latest')))
+    itemlist.append(Item(channel = item.channel, title="Mas vistos" , action="list_all", url=alfa_urlparse.build_url(host, query='filter=most-viewed')))
+    itemlist.append(Item(channel = item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(host, query='filter=popular')))
+    itemlist.append(Item(channel = item.channel, title="Mas metraje" , action="list_all", url=alfa_urlparse.build_url(host, query='filter=longest')))
+    itemlist.append(Item(channel = item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/'), extra="Categorias"))
     itemlist.append(Item(channel = item.channel, title="Buscar", action="search"))
     
     return itemlist
@@ -105,7 +106,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/%s/" % (host, texto.replace(" ", "-"))
+    item.url = alfa_urlparse.build_url(host, u'search/{}/'.format(texto.replace(" ", "-")))
     
     try:
         if texto:

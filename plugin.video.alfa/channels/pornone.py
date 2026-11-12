@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -70,22 +71,22 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Hetero" , action="submenu", url=host, pornstars = True))
-    itemlist.append(Item(channel=item.channel, title="Female" , action="submenu", url=host + "female/"))
-    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=host + "shemale/"))
-    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=host + "gay/"))
+    itemlist.append(Item(channel=item.channel, title="Female" , action="submenu", url=alfa_urlparse.build_url(host, 'female/')))
+    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=alfa_urlparse.build_url(host, 'shemale/')))
+    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=alfa_urlparse.build_url(host, 'gay/')))
     return itemlist
 
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=item.url + "newest/"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=item.url + "views/month/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=item.url + "rating/month/"))
-    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="list_all", url=item.url + "comments/month/"))
-    itemlist.append(Item(channel=item.channel, title="Mas metraje" , action="list_all", url=item.url + "longest/month/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'newest/')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'views/month/')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'rating/month/')))
+    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'comments/month/')))
+    itemlist.append(Item(channel=item.channel, title="Mas metraje" , action="list_all", url=alfa_urlparse.build_url(item.url, 'longest/month/')))
     if item.pornstars: 
-        itemlist.append(Item(channel=item.channel, title="PornStar" , action="section", url=host + "pornstars/", extra="PornStar"))
-        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url + "categories/", extra="Categorias"))
+        itemlist.append(Item(channel=item.channel, title="PornStar" , action="section", url=alfa_urlparse.build_url(host, 'pornstars/'), extra="PornStar"))
+        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(item.url, 'categories/'), extra="Categorias"))
         itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url))
     return itemlist
 
@@ -205,7 +206,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/newest/?query=%s" % (item.url, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(item.url, 'search/newest/', query=[('query', texto)])
     
     try:
         if texto:

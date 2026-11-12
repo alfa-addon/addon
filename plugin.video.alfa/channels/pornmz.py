@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -26,21 +27,22 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "?filter=latest"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "?filter=most-viewed"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "?filter=popular"))
-    itemlist.append(item.clone(title="Mas metraje" , action="lista", url=host + "?filter=longest"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "actors"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, query='filter=latest')))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, query='filter=most-viewed')))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=alfa_urlparse.build_url(host, query='filter=popular')))
+    itemlist.append(item.clone(title="Mas metraje" , action="lista", url=alfa_urlparse.build_url(host, query='filter=longest')))
+    itemlist.append(item.clone(title="PornStar" , action="categorias", url=alfa_urlparse.build_url(host, 'actors')))
     itemlist.append(item.clone(title="Canal" , action="canal", url=host))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categories"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories')))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s?s=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:

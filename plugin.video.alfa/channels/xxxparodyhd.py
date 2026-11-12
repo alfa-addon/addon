@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -32,9 +33,9 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "movies/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="lista", url=host + "most-viewed/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valoradas" , action="lista", url=host + "most-rating/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=alfa_urlparse.build_url(host, 'movies/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="lista", url=alfa_urlparse.build_url(host, 'most-viewed/')))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valoradas" , action="lista", url=alfa_urlparse.build_url(host, 'most-rating/')))
     itemlist.append(Item(channel=item.channel, title="Year" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
@@ -48,7 +49,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, u'search/{}'.format(texto))
     try:
         return lista(item)
     except Exception:

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -70,8 +71,8 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="list_all", url=host + "category/full-movie/"))
-    itemlist.append(Item(channel=item.channel, title="Videos" , action="list_all", url=host + "category/clips/"))
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="list_all", url=alfa_urlparse.build_url(host, 'category/full-movie/')))
+    itemlist.append(Item(channel=item.channel, title="Videos" , action="list_all", url=alfa_urlparse.build_url(host, 'category/clips/')))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host, extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
@@ -167,7 +168,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%s?s=%s" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, query=[('s', texto)])
     
     try:
         if texto:

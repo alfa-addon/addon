@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from modules import autoplay
@@ -81,8 +82,9 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     if texto != "":
+        _url_query_texto = texto
         texto = urlparse.quote(texto)
-        item.url = "%s?s=%s" % (host, texto)
+        item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
 
     try:
         return list_all(item)

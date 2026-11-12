@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -29,13 +30,13 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Estrenos", action="peliculas",
-                         url= host +"peliculas-de-estreno/lista-de-peliculas-online-parte-1/", viewmode="movie",
+                         url= alfa_urlparse.build_url(host, 'peliculas-de-estreno/lista-de-peliculas-online-parte-1/'), viewmode="movie",
                          thumbnail=get_thumb('premieres', auto=True), first=0))
     itemlist.append(
-        Item(channel=item.channel, title="Generos", action="generos", url= host + "generos/lista-de-generos/",
+        Item(channel=item.channel, title="Generos", action="generos", url= alfa_urlparse.build_url(host, 'generos/lista-de-generos/'),
              thumbnail=get_thumb('genres', auto=True),))
     itemlist.append(Item(channel=item.channel, title="Recomendadas", action="peliculas",
-                         url= host + "peliculas/lista-de-peliculas-recomendadas/", viewmode="movie",
+                         url= alfa_urlparse.build_url(host, 'peliculas/lista-de-peliculas-recomendadas/'), viewmode="movie",
                          thumbnail=get_thumb('recomended', auto=True), first=0))
     itemlist.append(Item(channel = item.channel, action = ""))
     itemlist.append(
@@ -49,7 +50,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     data = httptools.downloadpage(host, canonical=canonical).data
     cxv = scrapertools.find_single_match(data, 'cx" value="([^"]+)"')
-    data = httptools.downloadpage("https://cse.google.es/cse.js?hpg=1&cx=%s" %cxv).data
+    data = httptools.downloadpage(alfa_urlparse.build_url('https://cse.google.es', '/cse.js', query=[('hpg', '1'), ('cx', u'{}'.format(cxv))])).data
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
     cse_token = scrapertools.find_single_match(data, 'cse_token": "([^"]+)"')
@@ -111,7 +112,7 @@ def generos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for genero, scrapedurl in matches:
         title = scrapertools.htmlclean(genero)
-        if not item.url.startswith("http"): scrapedurl = item.url + scrapedurl
+        if not item.url.startswith("http"): scrapedurl = alfa_urlparse.urljoin(item.url, scrapedurl)
         itemlist.append(Item(channel = item.channel,
                              action = 'peliculas',
                              title = title,
@@ -145,7 +146,7 @@ def peliculas(item):
             language.append(lang)
         title = scrapedtitle + " " + plot
         if not scrapedurl.startswith("http"):
-            scrapedurl = item.url + scrapedurl
+            scrapedurl = alfa_urlparse.urljoin(item.url, scrapedurl)
         year = scrapertools.find_single_match(scrapedurl, "\-(\d{4})\-")
         contentTitle = scrapedtitle.replace(scrapertools.find_single_match('\[.+', scrapedtitle),"")
         itemlist.append(Item(action = 'findvideos',

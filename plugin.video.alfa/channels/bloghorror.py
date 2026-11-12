@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -36,7 +37,7 @@ canonical = {
 host = canonical['host'] or canonical['host_alt'][0]
 channel = canonical['channel']
 categoria = channel.capitalize()
-fanart = host + 'wp-content/uploads/2015/04/bloghorror-2017-x.jpg'
+fanart = alfa_urlparse.build_url(host, 'wp-content/uploads/2015/04/bloghorror-2017-x.jpg')
 
 timeout = 5
 kwargs = {}
@@ -103,10 +104,10 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title="Todas", action="list_all", c_type='peliculas', 
-                         url=host+'category/terror-3', thumbnail=get_thumb('all', auto=True)))
+                         url=alfa_urlparse.build_url(host, 'category/terror-3'), thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title="Asiaticas", action="list_all", c_type='peliculas', 
-                         url=host+'category/asiatico1', thumbnail=get_thumb('asiaticas', auto=True)))
+                         url=alfa_urlparse.build_url(host, 'category/asiatico1'), thumbnail=get_thumb('asiaticas', auto=True)))
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title = 'Buscar', action="search", c_type='search', 
                          url=host, pages=3, thumbnail=get_thumb('search', auto=True)))
@@ -208,8 +209,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = item.url + '?s=' + texto
+        item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
 
         if texto:
             item.c_type = 'peliculas'

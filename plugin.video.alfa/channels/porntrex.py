@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -25,20 +26,20 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="lista", title="Nuevos Vídeos", url=host + "latest-updates/"))
-    itemlist.append(item.clone(action="lista", title="Mejor Valorados", url=host + "top-rated/"))
-    itemlist.append(item.clone(action="lista", title="Más Vistos", url=host + "most-popular/"))
-    itemlist.append(item.clone(action="categorias", title="Modelos", url=host + "models/?sort_by=avg_videos_popularity"))
-    itemlist.append(item.clone(action="categorias", title="Canal", url=host + "channels/"))
-    itemlist.append(item.clone(action="categorias", title="Listas", url=host + "playlists/"))
-    itemlist.append(item.clone(action="categorias", title="Categorías", url=host + "categories/?sort_by=title"))
+    itemlist.append(item.clone(action="lista", title="Nuevos Vídeos", url=alfa_urlparse.build_url(host, 'latest-updates/')))
+    itemlist.append(item.clone(action="lista", title="Mejor Valorados", url=alfa_urlparse.build_url(host, 'top-rated/')))
+    itemlist.append(item.clone(action="lista", title="Más Vistos", url=alfa_urlparse.build_url(host, 'most-popular/')))
+    itemlist.append(item.clone(action="categorias", title="Modelos", url=alfa_urlparse.build_url(host, 'models/', query='sort_by=avg_videos_popularity')))
+    itemlist.append(item.clone(action="categorias", title="Canal", url=alfa_urlparse.build_url(host, 'channels/')))
+    itemlist.append(item.clone(action="categorias", title="Listas", url=alfa_urlparse.build_url(host, 'playlists/')))
+    itemlist.append(item.clone(action="categorias", title="Categorías", url=alfa_urlparse.build_url(host, 'categories/', query='sort_by=title')))
     itemlist.append(item.clone(title="Buscar...", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-    item.url = "%ssearch/%s/latest-updates/" % (host, texto.replace(" ", "-"))
+    item.url = alfa_urlparse.build_url(host, u'search/{}/latest-updates/'.format(texto.replace(" ", "-")))
     item.extra = texto
     try:
         return lista(item)
@@ -68,7 +69,7 @@ def categorias(item):
         if not scrapedthumbnail.startswith("https"):
             scrapedthumbnail = "https:%s" % scrapedthumbnail
             scrapedthumbnail = scrapedthumbnail.replace(" " , "%20")
-        scrapedthumbnail += "|Referer=%s" % host
+        scrapedthumbnail = alfa_urlparse.add_url_headers(scrapedthumbnail, {'Referer': u'{}'.format(host)})
         if videos:
             scrapedtitle = "%s  (%s)" % (scrapedtitle, videos)
         itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -129,7 +130,7 @@ def lista(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle, quality, duration in matches:
         if not scrapedthumbnail.startswith("https"):
             scrapedthumbnail = "https:%s" % scrapedthumbnail
-        scrapedthumbnail += "|Referer=%s" % host
+        scrapedthumbnail = alfa_urlparse.add_url_headers(scrapedthumbnail, {'Referer': u'{}'.format(host)})
         scrapedtitle = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (duration, quality, scrapedtitle)
         plot = ""
         action = "play"

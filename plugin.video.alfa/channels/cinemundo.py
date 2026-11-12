@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -87,15 +88,15 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + movie_path, action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=alfa_urlparse.urljoin(host, movie_path), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='movies'))
 
     # consultas_page.php es una página que tiene menos contenido que las demas, pero sirve para hacer búsquedas por género y año
     # por lo que hace menos consultas a la base de datos, carga más rápido y es más liviana para el servidor
-    itemlist.append(Item(channel=item.channel, title='Películas por Género',  action='section', url=host + 'consultas_page.php', 
+    itemlist.append(Item(channel=item.channel, title='Películas por Género',  action='section', url=alfa_urlparse.build_url(host, 'consultas_page.php'),
                          thumbnail=get_thumb('genres', auto=True), extra='generos', c_type='movies'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas por Año',  action='section', url=host + 'consultas_page.php', 
+    itemlist.append(Item(channel=item.channel, title='Películas por Año',  action='section', url=alfa_urlparse.build_url(host, 'consultas_page.php'),
                          thumbnail=get_thumb('year', auto=True), extra='year', c_type='movies'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -120,7 +121,7 @@ def section(item):
 
 def make_search_url(texto):
     texto = base64.b64encode(str(texto).encode('utf8')).decode('utf8')
-    return "{}find_page.php?str={}".format(host, texto)
+    return alfa_urlparse.build_url(host, 'find_page.php', query=[('str', u'{}'.format(texto))])
 
 
 def make_url(url):
@@ -128,7 +129,7 @@ def make_url(url):
     if 'single.php?ID=' in url:
         url = url.replace('single.php?ID=', 'video_maximizado.php?id_post=')
     if not url.startswith('http'):
-        url = host + url
+        url = alfa_urlparse.urljoin(host, url)
     return url
 
 

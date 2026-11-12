@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -33,13 +34,13 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/peliculas/1"))
-    itemlist.append(Item(channel=item.channel, title="Peliculas Categorias" , action="categorias", url=host+ "/peliculas/1"))
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=alfa_urlparse.build_url(host, '/peliculas/1')))
+    itemlist.append(Item(channel=item.channel, title="Peliculas Categorias" , action="categorias", url=alfa_urlparse.build_url(host, '/peliculas/1')))
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "escenas-ultimos-videos/"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "escenas-mas-visitados/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'escenas-ultimos-videos/')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'escenas-mas-visitados/')))
     # itemlist.append(Item(channel=item.channel, title="Mas Antiguos" , action="lista", url=host + "escenas-videos-antiguos/"))
-    itemlist.append(Item(channel=item.channel, title="Mas descargados" , action="lista", url=host + "escenas-mas-descargados/"))
+    itemlist.append(Item(channel=item.channel, title="Mas descargados" , action="lista", url=alfa_urlparse.build_url(host, 'escenas-mas-descargados/')))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
@@ -69,7 +70,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%sbuscar-%s.html" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, u'buscar-{}.html'.format(texto))
     try:
         return lista(item)
     except Exception:

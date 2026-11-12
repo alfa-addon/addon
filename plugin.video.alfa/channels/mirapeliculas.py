@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import re
 
 from modules import autoplay
@@ -47,13 +48,13 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(item.clone(title="Series", action="lista_all", url= host + "series/", language=[]))
+    itemlist.append(item.clone(title="Series", action="lista_all", url= alfa_urlparse.build_url(host, 'series/'), language=[]))
     
-    itemlist.append(item.clone(title="Peliculas", action="lista_all", url= host + "page/1", language=[]))
-    itemlist.append(item.clone(title="Novedades", action="lista_all", url= host + "ver/estrenos/", language=[]))
-    itemlist.append(item.clone(title="Castellano", action="lista_all", url= host + "ver/castellano/", language=['CAST']))
-    itemlist.append(item.clone(title="Latino", action="lista_all", url= host + "ver/latino/", language=['LAT']))
-    itemlist.append(item.clone(title="Subtituladas", action="lista_all", url= host + "ver/subtituladas/", language=['VOSE']))
+    itemlist.append(item.clone(title="Peliculas", action="lista_all", url= alfa_urlparse.build_url(host, 'page/1'), language=[]))
+    itemlist.append(item.clone(title="Novedades", action="lista_all", url= alfa_urlparse.build_url(host, 'ver/estrenos/'), language=[]))
+    itemlist.append(item.clone(title="Castellano", action="lista_all", url= alfa_urlparse.build_url(host, 'ver/castellano/'), language=['CAST']))
+    itemlist.append(item.clone(title="Latino", action="lista_all", url= alfa_urlparse.build_url(host, 'ver/latino/'), language=['LAT']))
+    itemlist.append(item.clone(title="Subtituladas", action="lista_all", url= alfa_urlparse.build_url(host, 'ver/subtituladas/'), language=['VOSE']))
     itemlist.append(item.clone(title="Categorias", action="categorias", url= host, language=[]))
     itemlist.append(item.clone(title="Buscar", action="search", language=[]))
     
@@ -75,8 +76,9 @@ def configuracion(item):
 def search(item, texto):
     logger.info()
     
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = host + "buscar/?q=%s" % texto
+    item.url = alfa_urlparse.build_url(host, 'buscar/', query=[('q', u'{}'.format(_url_query_texto))])
     
     try:
         return lista(item)

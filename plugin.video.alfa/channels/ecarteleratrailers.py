@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import scrapertools
@@ -23,7 +24,7 @@ def mainlist(item):
     itemlist = []
 
     if item.url == "":
-        item.url = host + 'videos/'
+        item.url = alfa_urlparse.build_url(host, 'videos/')
 
     # ------------------------------------------------------
     # Descarga la página

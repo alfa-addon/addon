@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 from core.item import Item
 from core import httptools
 from core import servertools
@@ -22,10 +23,10 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, action="lista", title="Nuevos Vídeos", url=host + "search/videos/_empty_/"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor Valorados", url=host + "search/videos/_empty_/", extra="rt"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Solo HD", url=host + "search/videos/hd", calidad="1"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=host + "categories"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Nuevos Vídeos", url=alfa_urlparse.build_url(host, 'search/videos/_empty_/')))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor Valorados", url=alfa_urlparse.build_url(host, 'search/videos/_empty_/'), extra="rt"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Solo HD", url=alfa_urlparse.build_url(host, 'search/videos/hd'), calidad="1"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=alfa_urlparse.build_url(host, 'categories')))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search"))
     return itemlist
 
@@ -33,7 +34,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
-    item.url = "%ssearch/videos/%s" %(host,texto)
+    item.url = alfa_urlparse.build_url(host, u'search/videos/{}'.format(texto))
     item.extra = "buscar"
     return lista(item)
 

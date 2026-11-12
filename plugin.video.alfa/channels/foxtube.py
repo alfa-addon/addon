@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -27,11 +28,11 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Ultimos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "/video/top/"))
-    itemlist.append(Item(channel=item.channel, title="Mas largos" , action="lista", url=host + "/video/long/"))
-    itemlist.append(Item(channel=item.channel, title="Recomendados" , action="lista", url=host + "/video/recommended/"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + 'pornstars-search/'))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + 'channels/'))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=alfa_urlparse.build_url(host, '/video/top/')))
+    itemlist.append(Item(channel=item.channel, title="Mas largos" , action="lista", url=alfa_urlparse.build_url(host, '/video/long/')))
+    itemlist.append(Item(channel=item.channel, title="Recomendados" , action="lista", url=alfa_urlparse.build_url(host, '/video/recommended/')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=alfa_urlparse.build_url(host, 'pornstars-search/')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=alfa_urlparse.build_url(host, 'channels/')))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -40,7 +41,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%stags/%s" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, u'tags/{}'.format(texto))
     try:
         return lista(item)
     except Exception:
@@ -64,7 +65,7 @@ def catalogo(item):
             cantidad = cantidad.text.strip().replace(" Videos", "").replace(" videos", "")
             title = "%s (%s)" %(title,cantidad)
         url = urlparse.urljoin(item.url,url)
-        thumbnail += "|referer=%s" %host
+        thumbnail = alfa_urlparse.add_url_headers(thumbnail, {'referer': u'{}'.format(host)})
         plot = ""
         if "channels" in item.url:
             action = "canal"
@@ -87,7 +88,7 @@ def canal(item):
     soup = create_soup(item.url)
     item.id = soup.find('div', class_='scmt')['data-obj']
     item.canal = scrapertools.find_single_match(item.url, 'channels/([A-z-]+)')
-    item.url = "%susers/get/%s/videos/1/" % (host,id)
+    item.url = alfa_urlparse.build_url(host, u'users/get/{}/videos/1/'.format(id))
     return lista(item)
 
 
@@ -142,7 +143,7 @@ def lista(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] [COLOR cyan]%s[/COLOR] %s" % (time,canal,title)
         url = urlparse.urljoin(item.url,url)
-        thumbnail += "|referer=%s" %host
+        thumbnail = alfa_urlparse.add_url_headers(thumbnail, {'referer': u'{}'.format(host)})
         plot = ""
         action = "play"
         if logger.info() is False:

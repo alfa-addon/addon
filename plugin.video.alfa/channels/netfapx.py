@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -24,19 +25,20 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?orderby=newest"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?orderby=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "?orderby="))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "pornstar/?orderby=popular"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, query='orderby=newest')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, query='orderby=popular')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=alfa_urlparse.build_url(host, query='orderby=')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=alfa_urlparse.build_url(host, 'pornstar/', query='orderby=popular')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories/')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s?s=%s" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:
@@ -133,7 +135,7 @@ def findvideos(item):
     itemlist = []
     
     post = {'action': 'get_video_url', 'idpost': item.id}
-    post_url = "%swp-admin/admin-ajax.php" % host
+    post_url = alfa_urlparse.build_url(host, 'wp-admin/admin-ajax.php')
     url = httptools.downloadpage(post_url, post=post).data
     
     itemlist.append(Item(channel=item.channel, action="play", title = "Direto", url=url))
@@ -156,7 +158,7 @@ def play(item):
     
     
     post = {'action': 'get_video_url', 'idpost': item.id}
-    post_url = "%swp-admin/admin-ajax.php" % host
+    post_url = alfa_urlparse.build_url(host, 'wp-admin/admin-ajax.php')
     url = httptools.downloadpage(post_url, post=post).data
     itemlist.append(Item(channel=item.channel, action="play", timeout=30, url=url, contentTitle=item.contentTitle))
     return itemlist

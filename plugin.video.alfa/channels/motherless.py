@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -23,10 +24,10 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host +"videos/recent"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "videos/viewed"))
-    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="lista", url=host + "videos/popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "videos/commented"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'videos/recent')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'videos/viewed')))
+    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="lista", url=alfa_urlparse.build_url(host, 'videos/popular')))
+    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=alfa_urlparse.build_url(host, 'videos/commented')))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -34,8 +35,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/videos?term=%s&size=0&range=0&sort=date" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, 'search/videos', query=[('term', u'{}'.format(_url_query_texto)), ('size', '0'), ('range', '0'), ('sort', 'date')])
     try:
         return lista(item)
     except Exception:

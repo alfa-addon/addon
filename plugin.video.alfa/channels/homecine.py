@@ -4,6 +4,7 @@
 # -*- By the Alfa Develop Group -*-
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -98,7 +99,7 @@ def mainlist(item):
                          action="list_all",
                          thumbnail=get_thumb('movies', auto=True),
                          c_type='peliculas', 
-                         url='%s%s' % (host, 'peliculas-nuevas')
+                         url=alfa_urlparse.urljoin(host, u'{}'.format('peliculas-nuevas'))
                          )
                     )
     
@@ -107,7 +108,7 @@ def mainlist(item):
                          action="section",
                          thumbnail=get_thumb('genres', auto=True),
                          c_type='peliculas', 
-                         url='%s%s' % (host, 'peliculas-nuevas/')
+                         url=alfa_urlparse.urljoin(host, u'{}'.format('peliculas-nuevas/'))
                          )
                     )
     itemlist.append(Item(channel=item.channel,
@@ -115,7 +116,7 @@ def mainlist(item):
                          action="list_all",
                          thumbnail=get_thumb('tvshows', auto=True),
                          c_type='series', 
-                         url='%s%s'% (host, 'series/')
+                         url=alfa_urlparse.urljoin(host, u'{}'.format('series/'))
                          )
                     )
     itemlist.append(Item(channel=item.channel,
@@ -123,7 +124,7 @@ def mainlist(item):
                          action="section",
                          thumbnail=get_thumb('genres', auto=True),
                          c_type='series', 
-                         url='%s%s'% (host, 'series/')
+                         url=alfa_urlparse.urljoin(host, u'{}'.format('series/'))
                          )
                     )
     
@@ -183,9 +184,9 @@ def section_matches(item, matches_int, **AHkwargs):
             url = url.split('/genre/')
             id = url[-1]
             if "series" in item.c_type:
-                elem_json['url'] = "%spage/1?ptype=tvshows&tax_category[]=%s" %(item.url, id)
+                elem_json['url'] = alfa_urlparse.build_url(item.url, 'page/1', query=[('ptype', 'tvshows'), ('tax_category[]', u'{}'.format(id))])
             else:
-                elem_json['url'] = "%spage/1?ptype=post&tax_category[]=%s" %(item.url, id)
+                elem_json['url'] = alfa_urlparse.build_url(item.url, 'page/1', query=[('ptype', 'post'), ('tax_category[]', u'{}'.format(id))])
         
         except Exception:
             logger.error(elem)
@@ -207,7 +208,7 @@ def anno(item):
     now = datetime.now()
     year = int(now.year)
     while year >= 1922:
-        itemlist.append(item.clone(title="%s" %year, action="list_all", url= "%srelease-year/%s" % (item.url,year)))
+        itemlist.append(item.clone(title="%s" %year, action="list_all", url= alfa_urlparse.build_url(item.url, u'release-year/{}'.format(year))))
         year -= 1
     
     return itemlist
@@ -386,8 +387,9 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = item.url + '?s=' + texto
+    item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
     
     try:
         if texto:

@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -92,21 +93,21 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host + 'ultimoscapitulos.php?page_no=1', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=alfa_urlparse.build_url(host, 'ultimoscapitulos.php', query='page_no=1'), action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
 
-    itemlist.append(Item(channel=item.channel, title='Doramas', url=host + 'doramas.php?page_no=1', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Doramas', url=alfa_urlparse.build_url(host, 'doramas.php', query='page_no=1'), action='list_all',
                          thumbnail=get_thumb('doramas', auto=True), c_type='series')) 
 
     itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por Países[/COLOR]', action='section', 
-                         url=host + 'searchBy.php?page_no=1', extra='Países', 
+                         url=alfa_urlparse.build_url(host, 'searchBy.php', query='page_no=1'), extra='Países',
                          thumbnail=get_thumb('country', auto=True), c_type='series'))
 
     itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por Años[/COLOR]', action='section', 
-                         url=host + 'searchBy.php?page_no=1', extra='Años', 
+                         url=alfa_urlparse.build_url(host, 'searchBy.php', query='page_no=1'), extra='Años',
                          thumbnail=get_thumb('year', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Peliculas', url=host + 'peliculas.php?page_no=1', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Peliculas', url=alfa_urlparse.build_url(host, 'peliculas.php', query='page_no=1'), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -297,7 +298,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
     soup = AHkwargs.get('soup', {})
     if not 'contentChapters' in str(soup):
-        soup_movie = AlfaChannel.create_soup(host + 'library/functions.php', post={'action': 'getMoviesDoramas'}, 
+        soup_movie = AlfaChannel.create_soup(alfa_urlparse.build_url(host, 'library/functions.php'), post={'action': 'getMoviesDoramas'},
                                              headers={'Referer': item.url}, alfa_s=True)
         finds_out = dict([('find', [{'tag': ['body']}]), 
                           ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'response|DEFAULT'}])])
@@ -345,7 +346,7 @@ def search(item, texto, **AHkwargs):
 
     try:
         texto = texto.replace(" ", "+")
-        item.url = host + 'library/functions.php'
+        item.url = alfa_urlparse.build_url(host, 'library/functions.php')
         item.post = {'action': 'searchByTerm', 'term': texto}
 
         if texto:

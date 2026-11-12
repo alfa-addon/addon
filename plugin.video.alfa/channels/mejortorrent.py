@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -156,46 +157,46 @@ def sub_menu(item):
     itemlist = list()
 
     if item.c_type in ['peliculas', 'series']:
-        itemlist.append(Item(channel=item.channel, title='Estrenos', url=host + 'torrents', action='list_all',
+        itemlist.append(Item(channel=item.channel, title='Estrenos', url=alfa_urlparse.build_url(host, 'torrents'), action='list_all',
                              thumbnail=get_thumb('news.png'), c_type=item.c_type, extra='Estrenos'))
 
     if item.c_type == 'peliculas':
         for url_sufix in ['', '-hd', '-4k']:
             itemlist.append(Item(channel=item.channel, title='Películas %s' % url_sufix.replace('-', '').upper(), 
-                                 url=item.url + 'peliculas%s' % url_sufix, action='list_all',
+                                 url=alfa_urlparse.build_url(item.url, u'peliculas{}'.format(url_sufix)), action='list_all',
                                  thumbnail=get_thumb('channels_movie%s.png' % url_sufix.replace('-', '_')), c_type=item.c_type))
             if not url_sufix:
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]por Género[/COLOR]', action='section', 
-                                     url=item.url + 'peliculas%s' % url_sufix, 
+                                     url=alfa_urlparse.build_url(item.url, u'peliculas{}'.format(url_sufix)),
                                      thumbnail=get_thumb('genres.png'), c_type=item.c_type, extra='genre'))
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]por Año[/COLOR]', action='section', 
-                                     url=item.url + 'peliculas%s' % url_sufix,
+                                     url=alfa_urlparse.build_url(item.url, u'peliculas{}'.format(url_sufix)),
                                      thumbnail=get_thumb('years.png'), c_type=item.c_type, extra='year'))
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]por Calidad[/COLOR]', action='section', 
-                                     url=item.url + 'peliculas%s' % url_sufix,
+                                     url=alfa_urlparse.build_url(item.url, u'peliculas{}'.format(url_sufix)),
                                      thumbnail=get_thumb('search_star.png'), c_type=item.c_type, extra='quality'))
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]por A-Z[/COLOR]', action='section', 
-                                     url=item.url + 'peliculas%s' % url_sufix,
+                                     url=alfa_urlparse.build_url(item.url, u'peliculas{}'.format(url_sufix)),
                                      thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, extra='letter'))
 
     elif item.c_type == 'series':
         for url_sufix in ['', '-hd']:
             itemlist.append(Item(channel=item.channel, title='Series %s' % url_sufix.replace('-', '').upper(), 
-                                 url=item.url + 'series%s' % url_sufix, action='list_all',
+                                 url=alfa_urlparse.build_url(item.url, u'series{}'.format(url_sufix)), action='list_all',
                                  thumbnail=get_thumb('channels_tvshow%s.png' % url_sufix.replace('-', '_')), c_type=item.c_type))
             if not url_sufix:
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]por A-Z[/COLOR]', action='section', 
-                                     url=item.url + 'series%s' % url_sufix,
+                                     url=alfa_urlparse.build_url(item.url, u'series{}'.format(url_sufix)),
                                      thumbnail=get_thumb('channels_tvshow_az.png'), c_type=item.c_type, extra='letter'))
 
     else:
         for url_sufix in ['']:
             itemlist.append(Item(channel=item.channel, title='Documentales %s' % url_sufix.replace('-', '').upper(), 
-                                 url=item.url + 'documentales%s' % url_sufix, action='list_all',
+                                 url=alfa_urlparse.build_url(item.url, u'documentales{}'.format(url_sufix)), action='list_all',
                                  thumbnail=get_thumb('channels_documentary.png'), c_type=item.c_type))
             if not url_sufix:
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]por A-Z[/COLOR]', action='section', 
-                                     url=item.url + 'documentales%s' % url_sufix,
+                                     url=alfa_urlparse.build_url(item.url, u'documentales{}'.format(url_sufix)),
                                      thumbnail=get_thumb('channels_documentary.png'), c_type=item.c_type, extra='letter'))
 
     return itemlist
@@ -209,7 +210,7 @@ def section(item):
     if item.extra in ['genre', 'year', 'quality']:
         findS['categories'] = dict([('find', [{'tag': ['select'], 'id': [item.extra]}]), 
                                     ('find_all', [{'tag': ['option']}])])
-        findS['url_replace'] = [[host, '%s%s/%s/' % (host, item.url.split('/')[-1], item.extra)]]
+        findS['url_replace'] = [[host, alfa_urlparse.build_url(host, u'{}/{}/'.format(item.url.split('/')[-1], item.extra))]]
 
     elif item.extra == 'letter':
         itemlist = []
@@ -217,7 +218,7 @@ def section(item):
         for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
                       'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
 
-            itemlist.append(item.clone(action="list_all", title=letra, url=item.url + '/%s/%s' % (item.extra, letra.lower())))
+            itemlist.append(item.clone(action="list_all", title=letra, url=alfa_urlparse.build_url(item.url, u'/{}/{}'.format(item.extra, letra.lower()))))
 
         return itemlist
 
@@ -453,11 +454,12 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
     try:
         if texto:
-            item.url = "%sbusqueda?q=%s" % (host, texto)
+            item.url = alfa_urlparse.build_url(host, 'busqueda', query=[('q', u'{}'.format(_url_query_texto))])
             item.texto = texto
             item.c_type = 'search'
             return list_all(item)

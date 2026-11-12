@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -287,9 +288,10 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
         if texto:
-            item.url += "?s=" + texto
+            item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
             item.c_type = 'peliculas'
             item.texto = texto
             return list_all(item)
@@ -311,13 +313,13 @@ def newest(categoria, **AHkwargs):
         if categoria in ['peliculas']:
             item.url = host
         elif categoria == 'latino':
-            item.url = host + "idioma/latino/"
+            item.url = alfa_urlparse.build_url(host, 'idioma/latino/')
         elif categoria == 'castellano':
-            item.url = host + "idioma/castellano"
+            item.url = alfa_urlparse.build_url(host, 'idioma/castellano')
         elif categoria == 'infantiles':
-            item.url = host + 'animacion'
+            item.url = alfa_urlparse.build_url(host, 'animacion')
         elif categoria == 'terror':
-            item.url = host + 'terror'
+            item.url = alfa_urlparse.build_url(host, 'terror')
         
         item.c_type = "movies"
         itemlist = list_all(item)
