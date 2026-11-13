@@ -66,10 +66,9 @@ def categorias(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, videos in matches:
         scrapedurl = urlparse.urljoin(host, scrapedurl)
-        if not scrapedthumbnail.startswith("https"):
-            scrapedthumbnail = "https:%s" % scrapedthumbnail
-            scrapedthumbnail = scrapedthumbnail.replace(" " , "%20")
-        scrapedthumbnail = alfa_urlparse.add_url_headers(scrapedthumbnail, {'Referer': u'{}'.format(host)})
+        scrapedthumbnail = urlparse.urljoin(item.url, scrapedthumbnail.replace(" ", "%20"))
+        if urlparse.urlsplit(scrapedthumbnail).scheme in ('http', 'https'):
+            scrapedthumbnail = alfa_urlparse.add_url_headers(scrapedthumbnail, {'Referer': host})
         if videos:
             scrapedtitle = "%s  (%s)" % (scrapedtitle, videos)
         itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -128,9 +127,9 @@ def lista(item):
     patron += '</i>([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, quality, duration in matches:
-        if not scrapedthumbnail.startswith("https"):
-            scrapedthumbnail = "https:%s" % scrapedthumbnail
-        scrapedthumbnail = alfa_urlparse.add_url_headers(scrapedthumbnail, {'Referer': u'{}'.format(host)})
+        scrapedthumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
+        if urlparse.urlsplit(scrapedthumbnail).scheme in ('http', 'https'):
+            scrapedthumbnail = alfa_urlparse.add_url_headers(scrapedthumbnail, {'Referer': host})
         scrapedtitle = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (duration, quality, scrapedtitle)
         plot = ""
         action = "play"

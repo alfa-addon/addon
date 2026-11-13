@@ -142,7 +142,8 @@ def section_matches(item, matches_int, **AHkwargs):
             if elem.find(string=re.compile(r"(?i)videos|movies")):
                 elem_json['cantidad'] = elem.find(string=re.compile(r"(?i)videos|movies")).strip()
             if item.extra == "Categorias":
-                elem_json['url'] = alfa_urlparse.build_url(elem_json['url'], query='sorting=newest')
+                elem_json['url'] = alfa_urlparse.update_query(
+                    alfa_urlparse.urljoin(item.url, elem_json['url']), sorting='newest')
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())

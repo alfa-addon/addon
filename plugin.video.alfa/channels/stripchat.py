@@ -102,7 +102,8 @@ def lista(item):
             # url = "https://edge-hls.doppiocdn.com/hls/%s/master/%s.m3u8" %(id, id)
         url = alfa_urlparse.build_url('https://stripchat.com', u'/api/front/v1/broadcasts/{}'.format(name))
         # url = "https://edge-hls.doppiocdn.net/hls/%s/master/%s_auto.m3u8?playlistType=lowLatency" %(id, id)
-        url = alfa_urlparse.add_url_headers(url, alfa_urlparse.Headers.from_string(u'{}'.format(ref)))
+        # Resolver payload: API URL|playlist URL, not Kodi HTTP headers.
+        url = u'|'.join((url, ref))
         plot = ""
         action = "play"
         if logger.info() is False:

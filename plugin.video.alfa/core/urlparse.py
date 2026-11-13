@@ -749,7 +749,10 @@ def build_page_url(url, reference):
     """Apply a channel's relative pagination path/query to its listing URL."""
     result = AlfaURL(url)
     result._http()
-    parts = urlsplit(_text(reference))
+    reference = _text(reference)
+    if reference.startswith("&"):
+        reference = "?" + reference[1:]
+    parts = urlsplit(reference)
     if parts.scheme or parts.netloc:
         raise ValueError("Pagination patterns must be relative")
     if parts.path:
@@ -759,6 +762,39 @@ def build_page_url(url, reference):
     if parts.fragment:
         result._parts = result._parts._replace(fragment=parts.fragment)
         result._changed = True
+    return result.to_string()
+
+
+def update_page_url(url, patterns, page, fallback=True):
+    """Apply legacy page patterns without confusing query delimiters and paths."""
+    result = AlfaURL(url)
+    result._http()
+    patterns = list(patterns)
+    if not patterns:
+        raise ValueError("At least one pagination pattern is required")
+    matched = False
+    for pattern, template in patterns:
+        reference = _text(template) % _TEXT(page)
+        if reference.startswith(("?", "&")):
+            query = result.query.to_string()
+            if re.search(pattern, "?" + query) or re.search(pattern, "&" + query):
+                result.query.update(QueryParams.from_string(reference[1:]))
+                matched = True
+        else:
+            if re.search(pattern, result.path) or re.search(pattern, result.path.rstrip("/")):
+                path = result.path.rstrip("/")
+                if not re.search(pattern, path):
+                    path = result.path
+                path = re.sub(pattern, reference, path)
+                result._parts = result._parts._replace(path=path)
+                result._changed = True
+                matched = True
+            query = result.query.to_string()
+            if re.search(pattern, query):
+                result.set_query(re.sub(pattern, reference, query))
+                matched = True
+    if not matched and fallback:
+        return build_page_url(url, _text(patterns[0][1]) % _TEXT(page))
     return result.to_string()
 
 

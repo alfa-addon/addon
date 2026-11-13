@@ -814,10 +814,10 @@ class AlfaChannelHelper:
                         if finds_controls['force_find_last_page'][2] == 'post': 
                             url_page = post
                             url_page_control = 'post'
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if url_page_control == 'url':
-                            item.url = re.sub(rgx_org, rgx_des % str(item.curr_page), url_page.rstrip('/')).replace('//?', '/?')
-                        else:
+                    if url_page_control == 'url':
+                        item.url = urlparse.update_page_url(item.url, finds_next_page_rgx, item.curr_page)
+                    else:
+                        for rgx_org, rgx_des in finds_next_page_rgx:
                             item.post = re.sub(rgx_org, rgx_des % str(item.curr_page), post.rstrip('/')).replace('//?', '/?')
 
                 else:
@@ -1766,9 +1766,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     if self.DEBUG: logger.debug('self.URL: %s / %s' % (next_page_url, self.url))
                     self.next_page_url = next_page_url = item.url = self.url
                     self.url = ''
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if not scrapertools.find_single_match(item.url, rgx_org): continue
-                        item.url = re.sub(rgx_org, rgx_des % str(self.curr_page), item.url.rstrip('/')).replace('//?', '/?')
+                    item.url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page, fallback=False)
                 if soup:
                     AHkwargs['soup'] = self.response.soup or self.response.json or self.response.data
                     self.curr_page += 1
@@ -1866,16 +1864,15 @@ class DictionaryAllChannel(AlfaChannelHelper):
                         if finds_controls['force_find_last_page'][2] == 'post': 
                             url_page = post
                             url_page_control = 'post'
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if scrapertools.find_single_match(url_page, rgx_org): break
+                    if url_page_control == 'url':
+                        next_page_url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page)
                     else:
-                        item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
-                    next_page_url = item.url
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if url_page_control == 'url':
-                            if not scrapertools.find_single_match(next_page_url, rgx_org): continue
-                            next_page_url = re.sub(rgx_org, rgx_des % str(self.curr_page), next_page_url.rstrip('/')).replace('//?', '/?')
+                        for rgx_org, rgx_des in finds_next_page_rgx:
+                            if scrapertools.find_single_match(url_page, rgx_org): break
                         else:
+                            item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
+                        next_page_url = item.url
+                        for rgx_org, rgx_des in finds_next_page_rgx:
                             if not scrapertools.find_single_match(post, rgx_org): continue
                             post = re.sub(rgx_org, rgx_des % str(self.curr_page), post.rstrip('/')).replace('//?', '/?')
 
@@ -1898,12 +1895,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                            and isinstance(finds_controls['force_find_last_page'][1], int):
                         if self.last_page >= finds_controls['force_find_last_page'][0]:
                             url = next_page_url
-                            for rgx_org, rgx_des in finds_next_page_rgx:
-                                if url_page_control == 'url':
-                                    if not scrapertools.find_single_match(url, rgx_org): continue
-                                    url = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
-                                                 url.rstrip('/')).replace('//?', '/?')
-                                else:
+                            if url_page_control == 'url':
+                                url = urlparse.update_page_url(url, finds_next_page_rgx,
+                                                               finds_controls['force_find_last_page'][1], fallback=False)
+                            else:
+                                for rgx_org, rgx_des in finds_next_page_rgx:
                                     if not scrapertools.find_single_match(post_alt, rgx_org): continue
                                     post_alt = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
                                                       post_alt.rstrip('/')).replace('//?', '/?')
@@ -3782,9 +3778,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                     if self.DEBUG: logger.debug('self.URL: %s / %s' % (next_page_url, self.url))
                     self.next_page_url = next_page_url = item.url = self.url
                     self.url = ''
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if not scrapertools.find_single_match(item.url, rgx_org): continue
-                        item.url = re.sub(rgx_org, rgx_des % str(self.curr_page), item.url.rstrip('/')).replace('//?', '/?')
+                    item.url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page, fallback=False)
                 if soup:
                     AHkwargs['soup'] = self.response.soup or self.response.json or self.response.data
                     self.curr_page += 1
@@ -3948,16 +3942,15 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                         if finds_controls['force_find_last_page'][2] == 'post': 
                             url_page = post
                             url_page_control = 'post'
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if scrapertools.find_single_match(url_page, rgx_org): break
+                    if url_page_control == 'url':
+                        next_page_url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page)
                     else:
-                        item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
-                    next_page_url = item.url
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if url_page_control == 'url':
-                            if not scrapertools.find_single_match(next_page_url, rgx_org): continue
-                            next_page_url = re.sub(rgx_org, rgx_des % str(self.curr_page), next_page_url.rstrip('/')).replace('//?', '/?')
+                        for rgx_org, rgx_des in finds_next_page_rgx:
+                            if scrapertools.find_single_match(url_page, rgx_org): break
                         else:
+                            item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
+                        next_page_url = item.url
+                        for rgx_org, rgx_des in finds_next_page_rgx:
                             if not scrapertools.find_single_match(post, rgx_org): continue
                             post = re.sub(rgx_org, rgx_des % str(self.curr_page), post.rstrip('/')).replace('//?', '/?')
 
@@ -3980,12 +3973,11 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                            and isinstance(finds_controls['force_find_last_page'][1], int):
                         if self.last_page >= finds_controls['force_find_last_page'][0]:
                             url = next_page_url
-                            for rgx_org, rgx_des in finds_next_page_rgx:
-                                if url_page_control == 'url':
-                                    if not scrapertools.find_single_match(url, rgx_org): continue
-                                    url = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
-                                                 url.rstrip('/')).replace('//?', '/?')
-                                else:
+                            if url_page_control == 'url':
+                                url = urlparse.update_page_url(url, finds_next_page_rgx,
+                                                               finds_controls['force_find_last_page'][1], fallback=False)
+                            else:
+                                for rgx_org, rgx_des in finds_next_page_rgx:
                                     if not scrapertools.find_single_match(post_alt, rgx_org): continue
                                     post_alt = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
                                                       post_alt.rstrip('/')).replace('//?', '/?')
@@ -4411,16 +4403,15 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                         if finds_controls['force_find_last_page'][2] == 'post': 
                             url_page = post
                             url_page_control = 'post'
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if scrapertools.find_single_match(url_page, rgx_org): break
+                    if url_page_control == 'url':
+                        next_page_url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page)
                     else:
-                        item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
-                    next_page_url = item.url
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if url_page_control == 'url':
-                            if not scrapertools.find_single_match(next_page_url, rgx_org): continue
-                            next_page_url = re.sub(rgx_org, rgx_des % str(self.curr_page), next_page_url.rstrip('/')).replace('//?', '/?')
+                        for rgx_org, rgx_des in finds_next_page_rgx:
+                            if scrapertools.find_single_match(url_page, rgx_org): break
                         else:
+                            item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
+                        next_page_url = item.url
+                        for rgx_org, rgx_des in finds_next_page_rgx:
                             if not scrapertools.find_single_match(post, rgx_org): continue
                             post = re.sub(rgx_org, rgx_des % str(self.curr_page), post.rstrip('/')).replace('//?', '/?')
 
@@ -4442,10 +4433,8 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                            and isinstance(finds_controls['force_find_last_page'][1], int):
                         if self.last_page >= finds_controls['force_find_last_page'][0]:
                             url = next_page_url
-                            for rgx_org, rgx_des in finds_next_page_rgx:
-                                if not scrapertools.find_single_match(url, rgx_org): continue
-                                url = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
-                                             url.rstrip('/')).replace('//?', '/?')
+                            url = urlparse.update_page_url(url, finds_next_page_rgx,
+                                                           finds_controls['force_find_last_page'][1], fallback=False)
                             soup_last_page = self.create_soup(url, item=item, hide_infobox=True, **kwargs)
                             self.last_page = int(self.parse_finds_dict(soup_last_page, finds_last_page, next_page=True, 
                                                                   c_type=item.c_type).lstrip('#'))

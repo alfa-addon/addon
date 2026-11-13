@@ -88,12 +88,12 @@ def categorias(item):
             cantidad = cantidad.text.strip().replace(" Videos", "").replace(" videos", "")
             title = "%s (%s)" % (title, cantidad)
         url = url.replace("channel-profile", "channel-profile-videos")
-        if "categories" in item.url:
-            url = alfa_urlparse.build_url(url, query='sort=release')
-        else:
-            url = alfa_urlparse.build_url(url, query='sort=date-down')
         url = url.replace("https://letsdoeit.com", "")
-        url = urlparse.urljoin(item.url,url)
+        url = urlparse.urljoin(item.url, url)
+        if "categories" in item.url:
+            url = alfa_urlparse.update_query(url, sort='release')
+        else:
+            url = alfa_urlparse.update_query(url, sort='date-down')
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = soup.find('a', class_='pager-next')

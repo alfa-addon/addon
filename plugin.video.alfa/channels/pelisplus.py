@@ -215,8 +215,8 @@ def section(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.a.text.strip()
+        url = urlparse.urljoin(item.url, url)
         url = alfa_urlparse.build_url(url, u'/{}'.format(item.type))
-        url = urlparse.urljoin(item.url,url)
         itemlist.append(Item(channel=item.channel, url=url, title=title, action='list_all', type=item.type))
     
     return itemlist

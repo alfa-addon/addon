@@ -29,7 +29,7 @@ debug = config.get_setting('debug_report', default=False)
 
 canonical = {
              'channel': 'hacktorrent',
-             'host': config.get_setting("current_host", 'hacktorrent', default='').rstrip('/')+'/',
+             'host': config.get_setting("current_host", 'hacktorrent', default='').rstrip('/'),
              'host_alt': ["https://hacktorrent.to/"],
              'host_black_list': ["https://hacktorrent.men/"],
              'set_tls': True, 'set_tls_min': True, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
@@ -37,7 +37,7 @@ canonical = {
              'CF': False, 'CF_test': False, 'alfa_s': True, 'renumbertools': False, 
              'data_js': ''
             }
-host = canonical['host'] or canonical['host_alt'][0]
+host = (canonical['host'] or canonical['host_alt'][0]).rstrip('/') + '/'
 channel = canonical['channel']
 categoria = channel.capitalize()
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)     # Actualización sólo últ. Temporada?

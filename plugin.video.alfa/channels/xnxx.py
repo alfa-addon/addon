@@ -106,6 +106,7 @@ def catalogo(item):
     patron += '>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url,thumbnail,scrapedtitle,cantidad in matches:
+        url = urlparse.urljoin(host, url)
         if "/shemale" in url:
             url = url.replace("/shemale", "/videos/new/shemale/0")
         elif "/gay" in url:
