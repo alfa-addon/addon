@@ -1,6 +1,7 @@
 # Conector fireload By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -34,7 +35,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     url = scrapertools.find_single_match(data, '"dlink":\s*"([^"]+)"')
     url = url.replace("%3D", "=")
-    url += "|Referer=%s" % page_url
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
     
     video_urls.append(['[fireload]',url])
     return video_urls

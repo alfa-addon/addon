@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -167,7 +168,7 @@ def submenu(item):
             title = elem.a.get_text(strip=True).title()
             url = AlfaChannel.urljoin(host, elem.a.get('href', ''))
             thumb = "channels_%s_hd.png" % contentType if not genres else 'genres.png'
-        except:
+        except Exception:
             title = elem.get('title', '').replace('Series y peliculas torrent ', '').title()
             url = AlfaChannel.urljoin(host, elem.get('href', ''))
             thumb = "channels_vos.png"
@@ -192,7 +193,7 @@ def submenu(item):
 
         if item.c_type == "episodios":                                          # Añadimos Series VOSE que está fuera del menú principal
             itemlist.append(Item(channel=item.channel, title="Series VOSE", action="list_all", quality='HDTV', 
-                             url=host + "series-vose/", thumbnail=get_thumb("channels_vos.png"), 
+                             url=alfa_urlparse.build_url(host, 'series-vose/'), thumbnail=get_thumb("channels_vos.png"),
                              c_type=item.c_type, category=categoria))
 
     return itemlist
@@ -228,7 +229,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                                                                                 .a.get("title", ""), '(?i)\s+(\d{1,2})\s*.\s*(\d{1,3})')
                     elem_json['season'] =  int(elem_json['season'])
                     elem_json['episode'] =  int(elem_json['episode'])
-                except:
+                except Exception:
                     logger.error(elem)
                     elem_json['season'] =  1
                     elem_json['episode'] =  1
@@ -239,7 +240,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['quality'] = '*%s' % (item.quality or elem.find('span', id=False)\
                                             .get_text(strip=True).replace('---', '') or item.extra)
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -298,7 +299,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['language'] = item.language
                 elem_json['torrent_info'] = ''
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
@@ -321,11 +322,12 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
     try:
         if texto:
-            item.url = host + "?s=%s&x=0&y=0" % texto
+            item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto)), ('x', '0'), ('y', '0')])
             item.c_type = "search"
             item.texto = texto
             return list_all(item)
@@ -333,7 +335,7 @@ def search(item, texto, **AHkwargs):
             return []
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -349,7 +351,7 @@ def newest(categoria, **AHkwargs):
     
     try:
         if categoria == 'peliculas':
-            item.url = host + '/estrenos-/'
+            item.url = alfa_urlparse.build_url(host, '/estrenos-/')
             item.extra = "peliculas"
             item.category_new= 'newest'
 
@@ -360,7 +362,7 @@ def newest(categoria, **AHkwargs):
                 itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

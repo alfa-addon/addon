@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -26,7 +27,7 @@ canonical = {
              'host': config.get_setting("current_host", 'grantorrent', default=''), 
              'host_alt': ["https://grantorrent.zip/"], 
              'host_black_list': ["https://www3.grantorrent.lol/", "https://www2.grantorrent.lol/", "https://www1.grantorrent.lol/", 
-                                 "https://grantorrent.mov/", "https://www4.grantorrent.wf/", "https://www3.grantorrent.wf/"
+                                 "https://grantorrent.mov/", "https://www4.grantorrent.wf/", "https://www3.grantorrent.wf/",
                                  "https://www1.grantorrent.wf/", "https://www1.grantorrent.pm/", 
                                  'https://grantorrent.bz/', 'https://grantorrent.fi/', 'https://grantorrent.si/', 
                                  'https://grantorrent.re/', 'https://grantorrent.ac/', 'https://grantorrent.ch/'], 
@@ -108,27 +109,27 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", 
-                         url=host + movies_sufix, thumbnail=get_thumb("channels_movie.png"), 
+                         url=alfa_urlparse.urljoin(host, movies_sufix), thumbnail=get_thumb("channels_movie.png"),
                          c_type="peliculas", category=categoria))
     itemlist.append(Item(channel=item.channel, title="   -   por Calidad", action="section", 
-                         url=host + movies_sufix, thumbnail=get_thumb("channels_movie_hd.png"), 
+                         url=alfa_urlparse.urljoin(host, movies_sufix), thumbnail=get_thumb("channels_movie_hd.png"),
                          c_type="peliculas", extra="calidades", category=categoria))
     itemlist.append(Item(channel=item.channel, title="   -   por Género", action="section", 
-                         url=host + movies_sufix, thumbnail=get_thumb("genres.png"), 
+                         url=alfa_urlparse.urljoin(host, movies_sufix), thumbnail=get_thumb("genres.png"),
                          c_type="peliculas", extra="generos", category=categoria))
 
     # Buscar películas
     itemlist.append(Item(channel=item.channel, title="Buscar en Películas >>", action="search", 
-                         url=host + movies_sufix, thumbnail=get_thumb("search.png"), c_type="search", 
+                         url=alfa_urlparse.urljoin(host, movies_sufix), thumbnail=get_thumb("search.png"), c_type="search",
                          extra="peliculas", category=categoria))
     
     itemlist.append(Item(channel=item.channel, title="Series", action="list_all", 
-                         url=host + series_sufix, thumbnail=get_thumb("channels_tvshow.png"), 
+                         url=alfa_urlparse.urljoin(host, series_sufix), thumbnail=get_thumb("channels_tvshow.png"),
                          c_type="series", category=categoria))
 
     # Buscar series
     itemlist.append(Item(channel=item.channel, title="Buscar en Series >>", action="search", 
-                         url=host + series_sufix, thumbnail=get_thumb("search.png"), c_type="search", 
+                         url=alfa_urlparse.urljoin(host, series_sufix), thumbnail=get_thumb("search.png"), c_type="search",
                          extra="series", category=categoria))
 
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", 
@@ -192,7 +193,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['quality'] = '*%s' % elem.find('div', class_='bg-opacity-85').span.get_text(strip=True) \
                                            if elem.find('div', class_='bg-opacity-85 text-neutral-100 rounded-t-xl '\
                                            'text-xs font-medium px-2 py-2 text-center') else '*'
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -264,7 +265,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                     if elem_json['season'] != item.contentSeason: break
                     if scrapertools.find_single_match(sxe, r'(?i)\d+x\d+-(\d+)'):
                         elem_json['title'] = 'al %s' % scrapertools.find_single_match(sxe, r'(?i)\d+x\d+-(\d+)')
-                except:
+                except Exception:
                     logger.error(td)
                     logger.error(traceback.format_exc())
                     break
@@ -353,7 +354,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
                 elem_json['server'] = 'torrent'
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
@@ -383,6 +384,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
     if item.c_type == 'search':
@@ -392,18 +394,18 @@ def search(item, texto, **AHkwargs):
             item.c_type = "peliculas"
     
     if item.c_type == "series":
-        item.url = host + series_sufix
+        item.url = alfa_urlparse.urljoin(host, series_sufix)
     else:
-        item.url = host + movies_sufix
+        item.url = alfa_urlparse.urljoin(host, movies_sufix)
 
     try:
         if texto:
-            item.url = "%s?query=%s" % (item.url, texto)
+            item.url = alfa_urlparse.build_url(item.url, query=[('query', u'{}'.format(_url_query_texto))])
             item.texto = texto
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []
@@ -427,10 +429,10 @@ def newest(categoria, **AHkwargs):
             item.extra = cat
             if cat == 'peliculas': 
                 item.c_type = 'peliculas'
-                item.url = host + movies_sufix
+                item.url = alfa_urlparse.urljoin(host, movies_sufix)
             if cat == 'series': 
                 item.c_type = 'series'
-                item.url = host + series_sufix
+                item.url = alfa_urlparse.urljoin(host, series_sufix)
 
             item.action = "list_all"
             itemlist = list_all(item)
@@ -439,7 +441,7 @@ def newest(categoria, **AHkwargs):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []

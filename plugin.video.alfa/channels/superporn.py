@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -74,12 +75,12 @@ def mainlist(item):
     logger.info()
     itemlist = []
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "videos/latest/1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Popular" , action="list_all", url=host + "videos/popular/1"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "videos/1"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "series/?page=1", extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, 'videos/latest/1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Popular" , action="list_all", url=alfa_urlparse.build_url(host, 'videos/popular/1')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(host, 'videos/1')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(host, 'series/', query='page=1'), extra="Canal"))
     # itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "pornstars/?page=1", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/1", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/1'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     return itemlist
@@ -125,7 +126,7 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     # item.url = "%ssearch?order=latest&q=%s" % (host, texto.replace(" ", "+"))
-    item.url = "%ses/buscar?order=latest&q=%s" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, 'es/buscar', query=[('order', 'latest'), ('q', texto)])
     
     try:
         if texto:
@@ -136,7 +137,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

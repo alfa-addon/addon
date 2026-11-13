@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys, re
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -46,22 +47,22 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos Capítulos", url=host+ 'lista-episodios', 
+    itemlist.append(Item(channel=item.channel, title="Nuevos Capítulos", url=alfa_urlparse.build_url(host, 'lista-episodios'),
                         action="list_all", thumbnail=get_thumb('new episodes', auto=True), neweps=True))
 
-    itemlist.append(Item(channel=item.channel, title="Emision", url=host + 'lista-donghuas-emision',
+    itemlist.append(Item(channel=item.channel, title="Emision", url=alfa_urlparse.build_url(host, 'lista-donghuas-emision'),
                          action="list_all", thumbnail=get_thumb('on air', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Finalizadas", url=host+ 'lista-donghuas-finalizados',
+    itemlist.append(Item(channel=item.channel, title="Finalizadas", url=alfa_urlparse.build_url(host, 'lista-donghuas-finalizados'),
                          action="list_all", thumbnail=get_thumb('anime', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Todas", url=host+'lista-donghuas',
+    itemlist.append(Item(channel=item.channel, title="Todas", url=alfa_urlparse.build_url(host, 'lista-donghuas'),
                         action="list_all", thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", url=host, action="genres",
                         thumbnail=get_thumb('genres', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", url=host + 'busquedas/', action="search",
+    itemlist.append(Item(channel=item.channel, title="Buscar...", url=alfa_urlparse.build_url(host, 'busquedas/'), action="search",
                          thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -89,7 +90,7 @@ def genres(item):
 
     soup = create_soup(item.url)
     for elem in soup.find_all("div", class_="col-xs-6 p-0"):
-        url = host+elem.a["href"]
+        url = alfa_urlparse.urljoin(host, elem.a["href"])
         title = elem.a.text.strip()
         itemlist.append(Item(channel=item.channel, title=title, url=url,
                              action='list_all'))
@@ -110,9 +111,9 @@ def list_all(item):
 
     for elem in soup.find_all("div", class_=re.compile("item col-lg-\d col-md-\d col-xs")):
         
-        url = host+elem.a["href"]
+        url = alfa_urlparse.urljoin(host, elem.a["href"])
         title = elem.h5.text.strip()
-        thumb = host+elem.img["src"]
+        thumb = alfa_urlparse.urljoin(host, elem.img["src"])
         typo = elem.a.find('div', class_="img fit-1").text.strip()
         views = elem.label.text.strip()
         
@@ -124,7 +125,7 @@ def list_all(item):
         filtro_tmdb = list({"original_language": 'zh'}.items())
         
         if typo.lower() == 'película':
-            url = url.replace('/donghua/', 'ver/') + '/1'
+            url = alfa_urlparse.build_url(url.replace('/donghua/', 'ver/'), '/1')
             itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                                 thumbnail=thumb, contentTitle=title, plot=typo, typo=typo,
                                 views=views, infoLabels={'filtro':filtro_tmdb}))
@@ -148,10 +149,10 @@ def list_all(item):
             url_next_page = ''
         else:
             url_next_page = url_next_page["href"]
-    except:
+    except Exception:
         return itemlist
 
-    url_next_page = host + url_next_page
+    url_next_page = alfa_urlparse.urljoin(host, url_next_page)
 
     if url_next_page:
         itemlist.append(Item(channel=item.channel, title="Siguiente >>",
@@ -172,17 +173,17 @@ def episodios(item):
     ep_list = soup.find("ul", class_="donghua-list")
     try:
         plot = soup.find("p", class_="text-justify fc-dark").text
-    except:
+    except Exception:
         plot = ""
     try:
         state = soup.find("span", class_="badge bg-success")
-    except:
+    except Exception:
         state = ''
 
 
     for elem in ep_list.find_all("a"):
         
-        url = host+elem["href"]
+        url = alfa_urlparse.urljoin(host, elem["href"])
 
         if not first_url and state:
             first_url = url
@@ -214,7 +215,7 @@ def episodios(item):
                              plot=plot, thumbnail=item.thumbnail,
                             action='findvideos', infoLabels=infoLabels,
                             context=item.contex))
-        except:
+        except Exception:
             pass
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -243,7 +244,7 @@ def findvideos(item):
             #logger.error(unpack)
             url = scrapertools.find_single_match(unpack, 'file(?:"|):"([^"]+)')
             if not url.startswith('http'):
-                url = 'http:'+url
+                url = alfa_urlparse.urljoin('http:', url)
 
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, language=IDIOMAS['vose'],
                              infoLabels=item.infoLabels))
@@ -254,28 +255,28 @@ def findvideos(item):
         slugs = scrapertools.find_multiple_matches(unpack, '"slug":"([^"]+)')
         if slugs:
             for slug in slugs:
-                url = '%sapi_donghua.php?slug=%s' %(host, slug)
+                url = alfa_urlparse.build_url(host, 'api_donghua.php', query=[('slug', u'{}'.format(slug))])
                 try:
                     data = httptools.downloadpage(url, headers={'Referer': item.url}).json[0]
-                except:
+                except Exception:
                     
                     time.sleep(1)
                     data = httptools.downloadpage(url, headers={'Referer': item.url}).json[0]
 
                 #logger.error(data)
                 if data.get('url',''):
-                    url = 'https://www.dailymotion.com/video/'+base64.b64decode(data['url']).decode('utf-8')
+                    url = alfa_urlparse.build_url('https://www.dailymotion.com', u'/video/{}'.format(base64.b64decode(data['url']).decode('utf-8')))
                 elif data.get('source', ''):
                     url = data['source'][0].get('file','')
                     if not url.startswith('http'):
-                        url = 'http:'+url
+                        url = alfa_urlparse.urljoin('http:', url)
 
                 itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, language=IDIOMAS['vose'],
                                  infoLabels=item.infoLabels))
         else:
             url = scrapertools.find_single_match(unpack, 'file(?:"|):"([^"]+)')
             if not url.startswith('http'):
-                url = 'http:'+url
+                url = alfa_urlparse.urljoin('http:', url)
             item.url = url
             item.action = "play"
             item.skip = get_skip_time(item.contentSerieName, item)
@@ -315,8 +316,7 @@ def play(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = alfa_urlparse.build_url(item.url, alfa_urlparse.quote_path(texto))
     if texto != '':
         return list_all(item)
     else:

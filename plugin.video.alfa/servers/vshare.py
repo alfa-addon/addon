@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -38,10 +39,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             logger.debug(strResult)
             videoSources = re.findall("<source[\s]+src=[\"'](?P<url>[^\"']+)[^>]+label=[\"'](?P<label>[^\"']+)", strResult)
             for url, label in videoSources:
-                url += "|Referer=%s" %page_url
+                url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
                 video_urls.append([label, url])
             video_urls.sort(key=lambda i: int(i[0].replace("p","")))
-    except:
+    except Exception:
         url = scrapertools.find_single_match(data,'<source src="([^"]+)')
         video_urls.append(["MP4", url])
     return video_urls

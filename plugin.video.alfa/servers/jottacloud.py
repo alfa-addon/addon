@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector jottacloud By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -27,7 +28,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = []
     url = scrapertools.find_single_match(data,'<form action="([^"]+)"')
-    url = "https://www.jottacloud.com%s" %url
+    url = alfa_urlparse.urlunsplit(('https', u'www.jottacloud.com{}'.format(url), "", "", ""))
     video_urls.append(['MP4 [jottacloud]', url])
     return video_urls
 

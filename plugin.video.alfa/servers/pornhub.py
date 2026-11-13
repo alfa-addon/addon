@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector pornhub By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 import time
 from core import httptools
@@ -60,7 +61,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
             if 'hls' in type and "validfrom=" in url and "urlset" not in url:
                 headers = httptools.default_headers.copy() 
                 # url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
-                url += "|Referer=%s/&Origin=%s" % (host,host)
+                url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                 video_urls.append(["[pornhub] m3u %s" % quality, url])
             # elif "urlset" in url:
                 # video = url

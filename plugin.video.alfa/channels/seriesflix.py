@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -96,10 +97,10 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="FINDVIDEOS", action="findvideos", url=host + "episodio/fbi-international-zyba-1x1/",
+    itemlist.append(Item(channel=item.channel, title="FINDVIDEOS", action="findvideos", url=alfa_urlparse.build_url(host, 'episodio/fbi-international-zyba-1x1/'),
                          thumbnail=get_thumb("last", auto=True), c_type='series', first=0))
     
-    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host + "series-online/",
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=alfa_urlparse.build_url(host, 'series-online/'),
                          thumbnail=get_thumb("last", auto=True), c_type='series', first=0))
 
     itemlist.append(Item(channel=item.channel, title="Productoras", action="section", url=host, 
@@ -135,7 +136,7 @@ def section(item):
         for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
                       'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
 
-            itemlist.append(item.clone(action="list_all", title=letra, url=host + 'letras/%s/' % letra.lower()))
+            itemlist.append(item.clone(action="list_all", title=letra, url=alfa_urlparse.build_url(host, u'letras/{}/'.format(letra.lower()))))
 
         return itemlist
 
@@ -168,7 +169,7 @@ def section_matches(item, matches_int, **AHkwargs):
         #logger.error(elem)
 
         elem_json['title'] = elem.get_text(strip=True)
-        elem_json['url'] = '%s?s=filter&years[]=%s' % (host, elem_json['title'])
+        elem_json['url'] = alfa_urlparse.build_url(host, query=[('s', 'filter'), ('years[]', u'{}'.format(elem_json['title']))])
 
         matches.append(elem_json.copy())
 
@@ -228,7 +229,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 if not scrapertools.find_single_match(elem.find('span', class_="Qlty").get_text(strip=True), '(\d{4})'):
                     elem_json['quality'] = '*%s' % elem.find('span', class_="Qlty").get_text(strip=True)
             
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -282,11 +283,11 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['title'] = item.contentSerieName
             try:
                 elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
-            except:
+            except Exception:
                 elem_json['episode'] = 1
             elem_json['season'] = item.contentSeason
             elem_json['thumbnail'] = elem.img.get('src', '')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -331,7 +332,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             # logger.debug(elem_json['server'] + " @@@@ " + elem_json['language'])
             # logger.debug(elem_json['url'])
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -382,9 +383,10 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
         if texto:
-            item.url += "?s=" + texto
+            item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
             item.first = 0
             item.c_type='search'
             item.texto = texto
@@ -392,7 +394,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

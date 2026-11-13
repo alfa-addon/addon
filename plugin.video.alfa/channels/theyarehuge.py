@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -23,9 +24,9 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "latest-updates/"))
-    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="lista", url=host + "popular.porn-video/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "porn-video.tags/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'latest-updates/')))
+    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="lista", url=alfa_urlparse.build_url(host, 'popular.porn-video/')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'porn-video.tags/')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -33,7 +34,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%ssearch/%s/" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, u'search/{}/'.format(texto))
     try:
         return lista(item)
     except Exception:

@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector Emturbovid By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import urlparse
@@ -40,7 +41,7 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     server = httptools.obtain_domain(page_url)
-    host = "https://%s" % server
+    host = alfa_urlparse.urlunsplit(('https', u'{}'.format(server), "", "", ""))
     headers = httptools.default_headers.copy()
     headers = "|{0}&Referer={1}/&Origin={1}".format(urlparse.urlencode(headers), host)
     patron = 'data-hash\s*=\s*"([^")]+)"'

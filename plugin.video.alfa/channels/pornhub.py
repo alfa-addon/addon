@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -73,27 +74,27 @@ def mainlist(item):
     itemlist = []
     plot = ''
     
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Novedades", url="%svideo?o=cm" % host, 
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Novedades", url=alfa_urlparse.build_url(host, 'video', query='o=cm'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Recientes", url="%svideo" % host, 
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Recientes", url=alfa_urlparse.build_url(host, 'video'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Mas visto", url="%svideo?o=mv" % host, 
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Mas visto", url=alfa_urlparse.build_url(host, 'video', query='o=mv'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Mejor valorado", url="%svideo?o=tr" % host,
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Mejor valorado", url=alfa_urlparse.build_url(host, 'video', query='o=tr'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Recomendado", url="%srecommended" % host,
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Recomendado", url=alfa_urlparse.build_url(host, 'recommended'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Caliente", url="%svideo?o=ht" % host,
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Caliente", url=alfa_urlparse.build_url(host, 'video', query='o=ht'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Mas largo", url="%svideo?o=lg" % host,
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Mas largo", url=alfa_urlparse.build_url(host, 'video', query='o=lg'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Castellano", url="%slanguage/spanish" % host,
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Castellano", url=alfa_urlparse.build_url(host, 'language/spanish'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, action="section", title="Canal", url="%schannels?o=tr" % host,
+    itemlist.append(Item(channel=item.channel, action="section", title="Canal", url=alfa_urlparse.build_url(host, 'channels', query='o=tr'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot, extra="Canal"))
-    itemlist.append(Item(channel=item.channel, action="section", title="PornStar", url="%spornstars?o=t" % host,
+    itemlist.append(Item(channel=item.channel, action="section", title="PornStar", url=alfa_urlparse.build_url(host, 'pornstars', query='o=t'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot, extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, action="section", title="Categorias", url="%scategories" % host,
+    itemlist.append(Item(channel=item.channel, action="section", title="Categorias", url=alfa_urlparse.build_url(host, 'categories'),
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot, extra="Categorias"))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url=host, 
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
@@ -131,8 +132,8 @@ def section_matches(item, matches_int, **AHkwargs):
                 if not "\d+" in elem_json['cantidad']:
                     elem_json['cantidad'] = elem_json['cantidad'].parent.text.strip()
             if item.extra == 'PornStar':
-               elem_json['url'] += "/videos"
-        except:
+               elem_json['url'] = alfa_urlparse.build_url(elem_json['url'], '/videos')
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -172,7 +173,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['thumbnail'] = elem.img.get('data-original', '') \
                                      or elem.img.get('data-mediumthumb', '') \
                                      or elem.img.get('src', '')
-            elem_json['thumbnail'] += "|Referer=%s" %host
+            elem_json['thumbnail'] = alfa_urlparse.add_url_headers(elem_json['thumbnail'], {'Referer': u'{}'.format(host)})
             elem_json['stime'] = elem.find(class_='duration').get_text(strip=True) if elem.find(class_='duration') else ''
             if elem.find('span', class_='views'):
                 elem_json['views'] = elem.find('span', class_='views').get_text(strip=True)
@@ -186,7 +187,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['star'] = data.a.get_text(strip=True)
 
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -240,7 +241,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
-    item.url = "%svideo/search?search=%s&o=mr" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, 'video/search', query=[('search', texto), ('o', 'mr')])
 
     try:
         if texto:
@@ -251,7 +252,7 @@ def search(item, texto, **AHkwargs):
             return []
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -212,7 +213,7 @@ def section(item):
         for letra in ['0', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
                       'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
 
-            itemlist.append(item.clone(action="list_all", title=letra, url=item.url + '?s=letra-%s' % letra.lower()))
+            itemlist.append(item.clone(action="list_all", title=letra, url=alfa_urlparse.build_url(item.url, query=[('s', u'letra-{}'.format(u'{}'.format(letra.lower())))])))
 
         return itemlist
 
@@ -274,7 +275,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
             elem_json['quality'] = elem_json.get('quality', '') or 'HDTV' if tv_path in elem_json.get('url', '') else ''
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -343,7 +344,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                         elem_json['season'] = int(season or 1)
                         elem_json['episode'] = int(episode or 1)
                         if elem_json['season'] != item.contentSeason: break
-                    except:
+                    except Exception:
                         logger.error(td)
                         logger.error(traceback.format_exc())
                         break
@@ -450,7 +451,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                     if '.php?u=http' in elem_json.get('url', ''):
                         elem_json['url'] = elem_json['url'].replace(host[:-1], '')
 
-                except:
+                except Exception:
                     logger.error(tr)
                     logger.error(traceback.format_exc())
 
@@ -473,9 +474,10 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
-    item.url = host + '?s=%s' % texto
+    item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
 
     try:
         if texto:
@@ -484,7 +486,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         logger.error(traceback.format_exc())
@@ -507,8 +509,8 @@ def newest(categoria, **AHkwargs):
             if cat != categoria: continue
                 
             item.c_type = cat
-            if cat == 'peliculas': item.url = host + movies_sufix
-            if cat == 'series': item.url = host + series_sufix
+            if cat == 'peliculas': item.url = alfa_urlparse.urljoin(host, movies_sufix)
+            if cat == 'series': item.url = alfa_urlparse.urljoin(host, series_sufix)
 
             item.extra = "novedades"
             item.action = "list_all"
@@ -517,7 +519,7 @@ def newest(categoria, **AHkwargs):
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
 
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

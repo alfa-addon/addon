@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -55,7 +56,7 @@ def submenu(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%ssearch/%s/" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, u'search/{}/'.format(texto))
     try:
         return lista(item)
     except Exception:
@@ -71,7 +72,7 @@ def categorias(item):
     data = httptools.downloadpage(item.url, canonical=canonical).json
     for elem in data['all_tags']:
         title = elem
-        url = "%sapi/ts/roomlist/room-list/?enable_recommendations=false&genders=%s&hashtags=%s&limit=90&offset=0" %(host, item.type, elem)
+        url = alfa_urlparse.build_url(host, 'api/ts/roomlist/room-list/', query=[('enable_recommendations', 'false'), ('genders', u'{}'.format(item.type)), ('hashtags', u'{}'.format(elem)), ('limit', '90'), ('offset', '0')])
         thumbnail = ""
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,

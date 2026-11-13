@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -23,20 +24,21 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "new/?d=all&period=all"))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "popular/?d=all&period=all"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "toprated/?d=all&period=month"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "channels?page=1"))
-    itemlist.append(item.clone(title="PornStars" , action="categorias", url=host + "pornstars?page=1"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categories/"))
+    itemlist.append(item.clone(title="Nuevas" , action="lista", url=alfa_urlparse.build_url(host, 'new/', query='d=all&period=all')))
+    itemlist.append(item.clone(title="Popular" , action="lista", url=alfa_urlparse.build_url(host, 'popular/', query='d=all&period=all')))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=alfa_urlparse.build_url(host, 'toprated/', query='d=all&period=month')))
+    itemlist.append(item.clone(title="Canal" , action="catalogo", url=alfa_urlparse.build_url(host, 'channels', query='page=1')))
+    itemlist.append(item.clone(title="PornStars" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars', query='page=1')))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories/')))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch.php?what=%s&&sb=date" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, 'search.php', query=[('what', u'{}'.format(_url_query_texto)), ('sb', 'date')])
     try:
         return lista(item)
     except Exception:
@@ -88,7 +90,7 @@ def categorias(item):
         if not scrapedurl.startswith("https"):
             scrapedurl = "https:%s" % scrapedurl
         if "profile" not in scrapedurl:
-            scrapedurl += "/most-recent/?hd=0&d=all"
+            scrapedurl = alfa_urlparse.build_url(scrapedurl, '/most-recent/', query='hd=0&d=all')
         scrapedtitle = "%s (%s)" % (scrapedtitle,cantidad)
         itemlist.append(item.clone(action="lista", title=scrapedtitle , url=scrapedurl ,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
@@ -111,7 +113,7 @@ def lista(item):
     patron += 'max-quality">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion,quality in matches:
-        url = "https://player.tnaflix.com/video/%s" %scrapedurl
+        url = alfa_urlparse.build_url('https://player.tnaflix.com', u'/video/{}'.format(scrapedurl))
         title = "[COLOR yellow]%s[/COLOR] %s" % (duracion, scrapedtitle)
         if quality:
             quality= scrapertools.find_single_match(quality, '>(\d+p)<')

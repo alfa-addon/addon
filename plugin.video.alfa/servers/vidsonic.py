@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import base64
 import json
 import sys
@@ -76,8 +77,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         #   - una RUTA relativa (los mp4):      /uploads/<id>.mp4
         # Con la relativa, Kodi no puede reproducir nada: se hace absoluta contra el host del conector.
         if not url.startswith('http'):
-            url = host.rstrip('/') + '/' + url.lstrip('/')
-        video_urls.append(["[vidsonic]", "%s|Referer=%s" % (url, page_url)])
+            url = alfa_urlparse.build_url(host.rstrip('/'), u'/{}'.format(url.lstrip('/')))
+        video_urls.append(["[vidsonic]", alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})])
 
     return video_urls
 

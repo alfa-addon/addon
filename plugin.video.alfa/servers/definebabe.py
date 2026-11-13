@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -19,7 +20,7 @@ def get_video_url(page_url, video_password):
     video_urls = []
     res = ['480', '720']
     for quality in res:
-        url = "https://www.definebabe.com/player/get_video.php?q=%sp" %quality
+        url = alfa_urlparse.build_url('https://www.definebabe.com', '/player/get_video.php', query=[('q', u'{}p'.format(u'{}'.format(quality)))])
         response = httptools.downloadpage(url, follow_redirects=False, referer=page_url)
         redir = response.headers.get("location", '')
         video_urls.append(["[definebabe] %s" %quality, redir])

@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By DieFeM -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -106,19 +107,19 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host, action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
 
-    itemlist.append(Item(channel=item.channel, title='Estrenos', url=host + 'animes?page=1&estado[]=2&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=alfa_urlparse.build_url(host, 'animes', query='page=1&estado[]=2&order=updated'), action='list_all',
                          thumbnail=get_thumb('premieres', auto=True), extra='estrenos'))
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'animes?page=1&tipo[]=1&tipo[]=7&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'animes', query='page=1&tipo[]=1&tipo[]=7&order=updated'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'animes?page=1&tipo[]=3&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=alfa_urlparse.build_url(host, 'animes', query='page=1&tipo[]=3&order=updated'), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Ovas', url=host + 'animes?page=1&tipo[]=2&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Ovas', url=alfa_urlparse.build_url(host, 'animes', query='page=1&tipo[]=2&order=updated'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host + 'animes?page=1', 
+    itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=alfa_urlparse.build_url(host, 'animes', query='page=1'),
                          thumbnail=get_thumb('categories', auto=True), extra='categorías'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -150,7 +151,7 @@ def section_matches(item, matches_int, **AHkwargs):
         # logger.error(elem)
         elem_json = {}
         elem_json['title'] = elem.get_text(strip=True)
-        elem_json['url'] = '%sanimes?page=1&genre[]=%s&order=updated' % (host, elem.get('value', ''))
+        elem_json['url'] = alfa_urlparse.build_url(host, 'animes', query=[('page', '1'), ('genre[]', u'{}'.format(elem.get('value', ''))), ('order', 'updated')])
         matches.append(elem_json.copy())
     
     return matches
@@ -306,8 +307,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['title'] = 'Episodio %s' % episode
             elem_json['season'] = titleSeason
             elem_json['episode'] = episode
-            elem_json['url'] = "%s/%s" % (item.url, url)
-            elem_json['thumbnail'] = '%sstorage/%s' % (host, thumbnail)
+            elem_json['url'] = alfa_urlparse.build_url(item.url, u'/{}'.format(url))
+            elem_json['thumbnail'] = alfa_urlparse.build_url(host, u'storage/{}'.format(thumbnail))
             if next_episode_air_date:
                 elem_json['next_episode_air_date'] = next_episode_air_date
         except Exception:
@@ -377,8 +378,9 @@ def search(item, texto, **AHkwargs):
 
     try:
         # https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
+        _url_query_texto = texto
         texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = host + 'animes?page=1&q=' + texto
+        item.url = alfa_urlparse.build_url(host, 'animes', query=[('page', '1'), ('q', _url_query_texto)])
 
         if texto:
             item.c_type = 'search'

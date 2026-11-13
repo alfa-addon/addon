@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import sys
 
 import re
@@ -63,7 +64,7 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-api = "%sapi/v1/channel/" %host
+api = alfa_urlparse.build_url(host, 'api/v1/channel/')
 
 def mainlist(item):
     logger.info()
@@ -87,7 +88,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
-    item.url = "%sapi/v1/search/%s?loader=searchPage" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, u'api/v1/search/{}'.format(texto), query='loader=searchPage')
     try:
         return lista(item)
     except Exception:
@@ -138,13 +139,13 @@ def lista(item):
                 # new_item.season_num = elem['primary_video']['season_num']
                 # https://yaske.ru/api/v1/titles/39?loader=titlePage
             # new_item.url = "%sapi/v1/titles/%s/seasons/" %(host, new_item.id)
-            new_item.url = "%sapi/v1/titles/%s?loader=titlePage" %(host, new_item.id)
+            new_item.url = alfa_urlparse.build_url(host, u'api/v1/titles/{}'.format(new_item.id), query='loader=titlePage')
             new_item.action = "seasons"
             new_item.contentSerieName = title
         else:
             if elem.get('primary_video', ''):
                 vid = elem['primary_video']['id']
-                new_item.url = "%sapi/v1/watch/%s" %(host, vid)
+                new_item.url = alfa_urlparse.build_url(host, u'api/v1/watch/{}'.format(vid))
             else:
                 new_item.id = elem['id']
             new_item.action = "findvideos"
@@ -171,19 +172,19 @@ def seasons(item):
     
     infoLabels = item.infoLabels
     
-    url = "%sapi/v1/titles/%s?loader=titlePage" %(host, item.id)
+    url = alfa_urlparse.build_url(host, u'api/v1/titles/{}'.format(item.id), query='loader=titlePage')
     data = httptools.downloadpage(url, referer=host, canonical=canonical).json
     
     try:
         item.season_num = data['title']['primary_video']['season_num']# if data['title'].get('primary_video', '') else data['seasons']['total']
-    except:
+    except Exception:
         item.season_num = data['seasons']['total']
     
     total = int(item.season_num)
     te = 1
     while te <= total:
         season = te
-        url = "%sapi/v1/titles/%s/seasons/%s?loader=seasonPage" %(host, item.id, season)
+        url = alfa_urlparse.build_url(host, u'api/v1/titles/{}/seasons/{}'.format(item.id, season), query='loader=seasonPage')
         te +=1
         if int(season) < 10:
             season = "0%s" %season
@@ -212,7 +213,7 @@ def episodesxseasons(item):
     for elem in data['data']:
         if elem['primary_video']:
             vid = elem['primary_video']['id']
-            url = "%sapi/v1/watch/%s" %(host, vid)
+            url = alfa_urlparse.build_url(host, u'api/v1/watch/{}'.format(vid))
             cap =  elem['primary_video']['episode_num']
             if int(cap) < 10:
                 cap = "0%s" % cap
@@ -248,11 +249,11 @@ def findvideos(item):
     itemlist = []
     
     if not item.url:
-        url = "%sapi/v1/titles/%s?loader=titlePage" %(host, item.id)
+        url = alfa_urlparse.build_url(host, u'api/v1/titles/{}'.format(item.id), query='loader=titlePage')
         data = httptools.downloadpage(url, referer=host, canonical=canonical).json
         if data['title'].get('primary_video',''):
             vid = data['title']['primary_video']['id']
-            item.url = "%sapi/v1/watch/%s" %(host, vid)
+            item.url = alfa_urlparse.build_url(host, u'api/v1/watch/{}'.format(vid))
     if item.url:
         data = httptools.downloadpage(item.url, referer=host, canonical=canonical).json
     series = ""

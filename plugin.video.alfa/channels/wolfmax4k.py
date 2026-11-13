@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -97,12 +98,12 @@ finds = {'find': {'find_all': [{'tag': ['article'], 'class': ['wolf-card']}]},
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
                       'host_torrent': host_torrent, 'duplicates': [], 'btdigg_service': True},
          'timeout': timeout,
-         'btdigg_cfg': [{'url': host + 'peliculas?pagina=1&calidad=DVDRip', 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path}, 
-                        {'url': host + 'peliculas?pagina=1&calidad=BluRay-1080p', 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path}, 
-                        {'url': host + 'peliculas?pagina=1&calidad=4K', 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path},
-                        {'url': host + 'series?pagina=1&calidad=HDTV-720p', 'c_type': 'series', 'cnt_tot': 3, 'tv_path': tv_path},
+         'btdigg_cfg': [{'url': alfa_urlparse.build_url(host, 'peliculas', query='pagina=1&calidad=DVDRip'), 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path},
+                        {'url': alfa_urlparse.build_url(host, 'peliculas', query='pagina=1&calidad=BluRay-1080p'), 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path},
+                        {'url': alfa_urlparse.build_url(host, 'peliculas', query='pagina=1&calidad=4K'), 'c_type': 'peliculas', 'cnt_tot': 1, 'movie_path': movie_path},
+                        {'url': alfa_urlparse.build_url(host, 'series', query='pagina=1&calidad=HDTV-720p'), 'c_type': 'series', 'cnt_tot': 3, 'tv_path': tv_path},
                         {'url': host, 'c_type': 'search_token', 'find': {'find_all': [{'tag': ['article'], 'class': ['wolf-card']}]}}, 
-                        {'url': host_search + 'buscar?pagina=1&q=%s&Buscar=Buscar', 
+                        {'url': alfa_urlparse.build_url(host_search, 'buscar', query='pagina=1&q=%s&Buscar=Buscar'),
                                    'c_type': 'search', 'cnt_tot': 3, 'movie_path': movie_path, 'tv_path': tv_path, 
                                    'find': {'find_all': [{'tag': ['article'], 'class': ['wolf-card']}]}}]}
 
@@ -120,19 +121,19 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", c_type='peliculas', c_path=movie_path, 
-                    url=host + 'peliculas', thumbnail=get_thumb("channels_movie.png"), contentPlot=plot))
+                    url=alfa_urlparse.build_url(host, 'peliculas'), thumbnail=get_thumb("channels_movie.png"), contentPlot=plot))
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Series", c_type='series', c_path=tv_path, 
-                    url=host + 'series', thumbnail=get_thumb("channels_tvshow.png"), contentPlot=plot))
+                    url=alfa_urlparse.build_url(host, 'series'), thumbnail=get_thumb("channels_tvshow.png"), contentPlot=plot))
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Documentales", c_type='documentales', c_path=docu_path, 
-                    url=host + 'documentales', thumbnail=get_thumb("channels_documentary.png"), contentPlot=plot))
+                    url=alfa_urlparse.build_url(host, 'documentales'), thumbnail=get_thumb("channels_documentary.png"), contentPlot=plot))
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Animaciones", c_type='animaciones', c_path=anime_path, 
-                    url=host + 'animaciones', thumbnail=get_thumb("channels_anime.png"), contentPlot=plot))
+                    url=alfa_urlparse.build_url(host, 'animaciones'), thumbnail=get_thumb("channels_anime.png"), contentPlot=plot))
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Telenovelas", c_type='telenovelas', c_path=tele_path, 
-                    url=host + 'telenovelas', thumbnail=get_thumb("channels_latino.png"), contentPlot=plot))
+                    url=alfa_urlparse.build_url(host, 'telenovelas'), thumbnail=get_thumb("channels_latino.png"), contentPlot=plot))
 
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", c_type='search', 
                     url=host_search, thumbnail=get_thumb("search.png")))
@@ -170,7 +171,7 @@ def submenu(item):
                              thumbnail=get_thumb("channels_movie.png"), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Estrenos[/COLOR]", 
-                             action="list_all", url=item.url + '?dias=2&pagina=1', 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='dias=2&pagina=1'),
                              thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Géneros[/COLOR]", 
@@ -195,27 +196,27 @@ def submenu(item):
 
     elif item.c_type == 'series':
         itemlist.append(Item(channel=item.channel, title="Todas las Series", 
-                             action="list_all", url=item.url + '?pagina=1', 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='pagina=1'),
                              thumbnail=get_thumb('channels_tvshow.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Últimos Episodios[/COLOR]", 
-                             action="list_all", url=item.url + '?pagina=1', extra = "episodios", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='pagina=1'), extra = "episodios",
                              thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: HDTV[/COLOR]", 
-                             action="list_all", url=item.url + '?calidad=HDTV&pagina=1', extra = "calidad", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='calidad=HDTV&pagina=1'), extra = "calidad",
                              thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
                              
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: HDTV 720p[/COLOR]", 
-                             action="list_all", url=item.url + '?calidad=HDTV-720p&pagina=1', extra = "calidad", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='calidad=HDTV-720p&pagina=1'), extra = "calidad",
                              thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: WEB-DL 1080p[/COLOR]", 
-                             action="list_all", url=item.url + '?calidad=HDTV-1080p&pagina=1', extra = "calidad", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='calidad=HDTV-1080p&pagina=1'), extra = "calidad",
                              thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]por Calidad: 4K[/COLOR]", 
-                             action="list_all", url=item.url + '?calidad=4K&pagina=1', extra = "calidad", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='calidad=4K&pagina=1'), extra = "calidad",
                              thumbnail=get_thumb('quality', auto=True), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Añadidas últimos Días[/COLOR]", 
@@ -228,11 +229,11 @@ def submenu(item):
 
     elif item.c_type == 'documentales':
         itemlist.append(Item(channel=item.channel, title="Todas los Documentales", 
-                             action="list_all", url=item.url + '?pagina=1', 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='pagina=1'),
                              thumbnail=get_thumb('channels_documentary.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Últimos Episodios[/COLOR]", 
-                             action="list_all", url=item.url + '?pagina=1', extra = "episodios", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='pagina=1'), extra = "episodios",
                              thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Añadidos últimos Días[/COLOR]", 
@@ -245,11 +246,11 @@ def submenu(item):
 
     elif item.c_type == 'animaciones':
         itemlist.append(Item(channel=item.channel, title="Todas las Animaciones", 
-                             action="list_all", url=item.url + '?pagina=1', 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='pagina=1'),
                              thumbnail=get_thumb('channels_anime.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Últimos Episodios[/COLOR]", 
-                             action="list_all", url=item.url + '?pagina=1', extra = "episodios", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='pagina=1'), extra = "episodios",
                              thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Añadidas últimos Días[/COLOR]", 
@@ -262,11 +263,11 @@ def submenu(item):
 
     elif item.c_type == 'telenovelas':
         itemlist.append(Item(channel=item.channel, title="Todas las Telenovelas", 
-                             action="list_all", url=item.url + '?pagina=1', 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='pagina=1'),
                              thumbnail=get_thumb('channels_latino.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Últimos Episodios[/COLOR]", 
-                             action="list_all", url=item.url + '?pagina=1', extra = "episodios", 
+                             action="list_all", url=alfa_urlparse.build_url(item.url, query='pagina=1'), extra = "episodios",
                              thumbnail=get_thumb('on_the_air.png'), c_type=item.c_type, c_path=item.c_path, contentPlot=item.plot))
 
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Añadidas últimos Días[/COLOR]", 
@@ -300,7 +301,7 @@ def section(item):
         for letra in ['0-9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 
                       'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
 
-            itemlist.append(item.clone(action="list_all", title=letra, url=item.url + '?letra=%s&&pagina=1' % letra))
+            itemlist.append(item.clone(action="list_all", title=letra, url=alfa_urlparse.build_url(item.url, query=[('letra', u'{}'.format(letra)), ('pagina', '1')])))
 
         return itemlist
 
@@ -308,7 +309,7 @@ def section(item):
         from platformcode.platformtools import dialog_numeric
         
         dias = dialog_numeric(0, "Introduzca el nº de Días de antiguedad", default="")
-        item.url += '?dias=%s&pagina=1' % dias
+        item.url = alfa_urlparse.build_url(item.url, query=[('dias', u'{}'.format(dias)), ('pagina', '1')])
 
         return list_all(item)
 
@@ -316,7 +317,7 @@ def section(item):
         from platformcode.platformtools import dialog_numeric
         
         year = dialog_numeric(0, "Introduzca el Año de búsqueda", default="")
-        item.url += '?anyo_desde=%s&anyo_hasta=%s&pagina=1' % (year, year)
+        item.url = alfa_urlparse.build_url(item.url, query=[('anyo_desde', u'{}'.format(year)), ('anyo_hasta', u'{}'.format(year)), ('pagina', '1')])
 
         return list_all(item)
 
@@ -334,7 +335,7 @@ def section_matches(item, matches_int, **AHkwargs):
         elem_json = {}
         #logger.error(elem)
 
-        elem_json['url'] = '%s?%s=%s&pagina=1' % (item.url, item.extra, elem['value'])
+        elem_json['url'] = alfa_urlparse.build_url(item.url, query=[(u'{}'.format(item.extra), u'{}'.format(elem['value'])), ('pagina', '1')])
         elem_json['title'] = elem['value']
         elem_json['c_type'] = item.c_type
 
@@ -519,7 +520,7 @@ def seasons_matches(item, matches_int, **AHkwargs):
             elem_json['quality'] = AlfaChannel.find_quality(elem_json, item)
             if elem_json['quality'] != item.quality: continue
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -586,7 +587,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
             elem_json['size'] = episode_json['size'] = elem.find('span', class_='wolf-episode-size').get_text(strip=True)
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -678,7 +679,7 @@ def search(item, texto, **AHkwargs):
             item.c_type = "search"
             item.texto = texto
             #item.url = host_search + 'buscar?pagina=1&q=%s&Buscar=Buscar' % texto
-            item.url = host_search + 'buscar/%s' % texto
+            item.url = alfa_urlparse.build_url(host_search, u'buscar/{}'.format(texto))
             return list_all(item)
         else:
             return []
@@ -705,7 +706,7 @@ def newest(categoria, **AHkwargs):
     
     try:
         if categoria in ['peliculas', 'torrent', '4k']:
-            item.url = host + 'peliculas?pagina=1&calidad=4K' if categoria == '4k' else host + 'peliculas?pagina=1'
+            item.url = alfa_urlparse.build_url(host, 'peliculas', query='pagina=1&calidad=4K') if categoria == '4k' else alfa_urlparse.build_url(host, 'peliculas', query='pagina=1')
             item.c_type = "peliculas"
 
             itemlist = list_all(item)

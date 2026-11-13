@@ -2,6 +2,7 @@
 # -*- Channel Pelisplus -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
+from core import urlparse as alfa_urlparse
 import re
 
 from modules import autoplay
@@ -55,16 +56,16 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url=host + "peliculas",
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url=alfa_urlparse.build_url(host, 'peliculas'),
                          type="peliculas",
                          thumbnail=get_thumb('movies', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu", url=host + "series", 
+    itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu", url=alfa_urlparse.build_url(host, 'series'),
                          type="series",
                          thumbnail=get_thumb('tvshows', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Anime", action="sub_menu", url=host + "animes",
+    itemlist.append(Item(channel=item.channel, title="Anime", action="sub_menu", url=alfa_urlparse.build_url(host, 'animes'),
                          type="animes",
                          thumbnail=get_thumb('anime', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Doramas", action="list_all", url=host + "generos/dorama",
+    itemlist.append(Item(channel=item.channel, title="Doramas", action="list_all", url=alfa_urlparse.build_url(host, 'generos/dorama'),
                          content="serie", 
                          thumbnail=get_thumb('doramas', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search",
@@ -80,9 +81,9 @@ def sub_menu(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=item.url,
                          thumbnail=get_thumb('all', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Estrenos", action="list_all", url=item.url + "/estrenos",
+    itemlist.append(Item(channel=item.channel, title="Estrenos", action="list_all", url=alfa_urlparse.build_url(item.url, '/estrenos'),
                          thumbnail=get_thumb('all', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Populares", action="list_all", url=item.url + "/populares",
+    itemlist.append(Item(channel=item.channel, title="Populares", action="list_all", url=alfa_urlparse.build_url(item.url, '/populares'),
                          thumbnail=get_thumb('all', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Año", action="section", url=host,
                          type=item.type,
@@ -214,8 +215,8 @@ def section(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.a.text.strip()
-        url += "/%s" %item.type
-        url = urlparse.urljoin(item.url,url)
+        url = urlparse.urljoin(item.url, url)
+        url = alfa_urlparse.build_url(url, u'/{}'.format(item.type))
         itemlist.append(Item(channel=item.channel, url=url, title=title, action='list_all', type=item.type))
     
     return itemlist
@@ -280,11 +281,12 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch?s=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'search', query=[('s', u'{}'.format(_url_query_texto))])
     try:
         return list_all(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

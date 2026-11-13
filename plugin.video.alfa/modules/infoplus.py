@@ -67,7 +67,7 @@ def start(item, recomendaciones=[], from_window=False):
     try:
         mainWindow.append(principal_window)
         principal_window.doModal()
-    except:
+    except Exception:
         return
 
 
@@ -133,7 +133,7 @@ class main(xbmcgui.WindowDialog):
                     rating = "[COLOR yellow][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
                 else:
                     rating = "[COLOR crimson][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
-            except:
+            except Exception:
                 rating = "[COLOR crimson][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
 
             self.dialog.update(40,
@@ -209,7 +209,7 @@ class main(xbmcgui.WindowDialog):
                     pl.add(song)
                     self.player = xbmc.Player()
                     self.player.play(pl)
-            except:
+            except Exception:
                 import traceback
                 logger.error(traceback.format_exc())
 
@@ -231,7 +231,7 @@ class main(xbmcgui.WindowDialog):
                     self.infoLabels["fanart"] = \
                         self.images.get("showbackground", self.images.get("hdclearart", self.images.get("clearart")))[
                             0].get("url")
-            except:
+            except Exception:
                 self.infoLabels["fanart"] = 'http://i.imgur.com/XuXGXjN.jpg'
                 import traceback
                 logger.error(traceback.format_exc())
@@ -265,7 +265,7 @@ class main(xbmcgui.WindowDialog):
                     self.infoLabels["thumbnail"] = self.images.get("hdtvlogo", self.images.get("clearlogo", ))[0].get(
                         "url")
                 self.infoLabels["thumbnail"] = self.infoLabels["thumbnail"].replace(" ", "%20")
-            except:
+            except Exception:
                 self.infoLabels["thumbnail"] = 'http://i.imgur.com/8K5f4Uo.png'
                 import traceback
                 logger.error(traceback.format_exc())
@@ -402,7 +402,7 @@ class main(xbmcgui.WindowDialog):
 
         try:
             self.plot.autoScroll(11000, 6000, 30000)
-        except:
+        except Exception:
             xbmc.executebuiltin(
                 config.get_localized_string(70500))
         self.plot.setText(dhe(self.infoLabels.get("plot", "")))
@@ -575,7 +575,7 @@ class main(xbmcgui.WindowDialog):
                     if self.getFocusId() == boton.getId() and self.btn_right:
                         self.focus = len(self.botones) - 1
                         xbmc.executebuiltin('SendClick(%s)' % self.btn_right.getId())
-                except:
+                except Exception:
                     pass
 
         if action == 104 or action == 5:
@@ -584,7 +584,7 @@ class main(xbmcgui.WindowDialog):
                     if self.getFocusId() == boton.getId() and self.btn_left:
                         self.setFocus(self.btn_left)
                         xbmc.executebuiltin('SendClick(%s)' % self.btn_left.getId())
-                except:
+                except Exception:
                     pass
 
     def onControl(self, control):
@@ -616,7 +616,7 @@ class main(xbmcgui.WindowDialog):
                     itemlist = channel.search(self.item.clone(), self.infoLabels.get("title"))
                     if not itemlist and self.infoLabels.get("originaltitle"):
                         itemlist = channel.search(self.item.clone(), self.infoLabels.get("originaltitle", ""))
-                except:
+                except Exception:
                     import traceback
                     logger.error(traceback.format_exc())
             else:
@@ -692,7 +692,7 @@ class main(xbmcgui.WindowDialog):
                     self.focus = len(self.botones) - 1
                     self.setFocus(self.btn_right)
                 xbmc.sleep(300)
-            except:
+            except Exception:
                 pass
         elif control.getId() == self.btn_left.getId():
             try:
@@ -743,7 +743,7 @@ class main(xbmcgui.WindowDialog):
                     self.btn_left.setVisible(False)
                     self.focus = -1
                     xbmc.executebuiltin('Action(Left)')
-            except:
+            except Exception:
                 pass
         else:
             for boton, peli, id, poster2 in self.idps:
@@ -783,7 +783,7 @@ class related(xbmcgui.WindowDialog):
                 rating = "[COLOR fuchsia][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
             else:
                 rating = "[COLOR crimson][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
-        except:
+        except Exception:
             rating = "[COLOR crimson][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
 
         images = fanartv(self.item, self.infoLabels)
@@ -796,7 +796,7 @@ class related(xbmcgui.WindowDialog):
                 else:
                     self.infoLabels["fanart"] = \
                         images.get("showbackground", images.get("hdclearart", images.get("clearart")))[0].get("url")
-            except:
+            except Exception:
                 import traceback
                 logger.error(traceback.format_exc())
 
@@ -808,7 +808,7 @@ class related(xbmcgui.WindowDialog):
                     0].get("url")
             else:
                 self.infoLabels["thumbnail"] = images.get("hdtvlogo", images.get("tvthumb"))[0].get("url")
-        except:
+        except Exception:
             import traceback
             logger.error(traceback.format_exc())
 
@@ -846,7 +846,7 @@ class related(xbmcgui.WindowDialog):
 
         try:
             self.info_peli.autoScroll(7000, 6000, 30000)
-        except:
+        except Exception:
             xbmc.executebuiltin(
                 config.get_localized_string(70500))
         self.info_peli.setText(self.info)
@@ -1052,7 +1052,7 @@ class related(xbmcgui.WindowDialog):
                     self.img_dir.setAnimations(
                     [('conditional', 'effect=fade start=0 end=100 delay=3200 time=700  condition=true ',),
                      ('WindowClose', 'effect=rotate end=-2000   time=700 condition=true',)])
-        except:
+        except Exception:
             pass
 
         self.botones = []
@@ -1158,7 +1158,7 @@ class related(xbmcgui.WindowDialog):
                 try:
                     window.close()
                     del window
-                except:
+                except Exception:
                     pass
             mainWindow[-1].close()
             xbmc.sleep(200)
@@ -1179,7 +1179,7 @@ class related(xbmcgui.WindowDialog):
                     itemlist = channel.search(self.item.clone(), self.infoLabels.get("title"))
                     if not itemlist and self.infoLabels.get("originaltitle"):
                         itemlist = channel.search(self.item.clone(), self.infoLabels.get("originaltitle", ""))
-                except:
+                except Exception:
                     import traceback
                     logger.error(traceback.format_exc())
 
@@ -1237,7 +1237,7 @@ class Busqueda(xbmcgui.WindowXMLDialog):
             self.getControl(5).setNavigation(self.control_list, self.control_list, self.control_list, self.control_list)
             self.getControl(3).setEnabled(0)
             self.getControl(3).setVisible(0)
-        except:
+        except Exception:
             pass
         if self.item.contentType != "movie":
             self.getControl(1).setLabel(config.get_localized_string(60493))
@@ -1290,7 +1290,7 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
             self.getControl(5).setNavigation(self.control_list, self.control_list, self.control_list, self.control_list)
             self.getControl(3).setEnabled(0)
             self.getControl(3).setVisible(0)
-        except:
+        except Exception:
             pass
 
         self.getControl(1).setLabel(config.get_localized_string(60498))
@@ -1343,7 +1343,7 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
                     inicio = time.time()
                     try:
                         retorna = platformtools.play_video(item)
-                    except:
+                    except Exception:
                         retorna = True
                     xbmc.sleep(1500)
                     if not retorna and xbmc.Player().isPlaying():
@@ -1351,7 +1351,7 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
                         for window in borrar:
                             try:
                                 window.close()
-                            except:
+                            except Exception:
                                 pass
                         while True:
                             xbmc.sleep(1000)
@@ -1371,7 +1371,7 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
                         try:
                             window.close()
                             del window
-                        except:
+                        except Exception:
                             pass
                     platformtools.play_video(item)
 
@@ -1384,7 +1384,7 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
                     SearchWindows.append(window)
                     self.close()
                     window.doModal()
-                except:
+                except Exception:
                     pass
 
         elif (action == ACTION_SELECT_ITEM or action == 100) and self.getFocusId() == 5:
@@ -1416,7 +1416,7 @@ class Actores(xbmcgui.WindowXMLDialog):
             self.getControl(5).setNavigation(self.control_list, self.control_list, self.control_list, self.control_list)
             self.getControl(3).setEnabled(0)
             self.getControl(3).setVisible(0)
-        except:
+        except Exception:
             pass
         self.getControl(1).setLabel(config.get_localized_string(60501))
         self.getControl(5).setLabel(config.get_localized_string(60495))
@@ -1443,7 +1443,7 @@ class Actores(xbmcgui.WindowXMLDialog):
             try:
                 name = "[COLOR salmon]%s[/COLOR]  [COLOR papayawhip](%s)[/COLOR]" % (actor["name"], actor["character"])
                 job = "actor"
-            except:
+            except Exception:
                 job = "Director"
                 name = "[COLOR salmon]%s[/COLOR]  [COLOR gold](%s)[/COLOR]" % (actor["name"], job)
             image = "https://image.tmdb.org/t/p/original"
@@ -1454,7 +1454,7 @@ class Actores(xbmcgui.WindowXMLDialog):
             item = xbmcgui.ListItem(name)
             try:
                 item.setArt({"thumb": image})
-            except:
+            except Exception:
                 item.setThumbnailImage(image)
             item.setProperty("id_actor", str(actor["id"]))
             item.setProperty("name_info", name_info)
@@ -1547,7 +1547,7 @@ class ActorInfo(xbmcgui.WindowDialog):
              ('WindowClose', 'effect=slide end=-2000% time=1000 condition=true',)])
         try:
             self.info_actor.autoScroll(7000, 6000, 30000)
-        except:
+        except Exception:
             xbmc.executebuiltin(
                 config.get_localized_string(70500))
         self.info_actor.setText(
@@ -1772,7 +1772,7 @@ class ActorInfo(xbmcgui.WindowDialog):
                     if self.getFocusId() == boton.getId() and self.btn_right:
                         self.focus = len(self.botones) - 1
                         xbmc.executebuiltin('SendClick(%s)' % self.btn_right.getId())
-                except:
+                except Exception:
                     pass
 
         if action == 104 or action == 5:
@@ -1781,7 +1781,7 @@ class ActorInfo(xbmcgui.WindowDialog):
                     if self.getFocusId() == boton.getId() and self.btn_left:
                         self.setFocus(self.btn_left)
                         xbmc.executebuiltin('SendClick(%s)' % self.btn_left.getId())
-                except:
+                except Exception:
                     pass
 
     def onControl(self, control):
@@ -1835,7 +1835,7 @@ class ActorInfo(xbmcgui.WindowDialog):
                     self.setFocus(self.btn_right)
 
                 xbmc.sleep(300)
-        except:
+        except Exception:
             pass
         try:
             if control.getId() == self.btn_left.getId():
@@ -1881,7 +1881,7 @@ class ActorInfo(xbmcgui.WindowDialog):
 
                 if self.mas_pelis == 8:
                     self.btn_left.setVisible(False)
-        except:
+        except Exception:
             pass
 
         for boton, peli, id, poster2 in self.idps:
@@ -2033,7 +2033,7 @@ class images(xbmcgui.WindowDialog):
                     if self.getFocusId() == image.getId() and self.btn_right:
                         self.focus = len(self.botones) - 1
                         xbmc.executebuiltin('SendClick(%s)' % self.btn_right.getId())
-                except:
+                except Exception:
                     pass
 
         if action == 104 or action == 5:
@@ -2042,7 +2042,7 @@ class images(xbmcgui.WindowDialog):
                     if self.getFocusId() == image.getId() and self.btn_left:
                         self.focus = 0
                         xbmc.executebuiltin('SendClick(%s)' % self.btn_left.getId())
-                except:
+                except Exception:
                     pass
 
     def onControl(self, control):
@@ -2081,7 +2081,7 @@ class images(xbmcgui.WindowDialog):
                 self.focus = -1
                 xbmc.executebuiltin('Action(Right)')
                 xbmc.sleep(300)
-        except:
+        except Exception:
             pass
 
         try:
@@ -2123,7 +2123,7 @@ class images(xbmcgui.WindowDialog):
                     self.setFocus(self.botones[1])
                 else:
                     self.setFocus(self.btn_left)
-        except:
+        except Exception:
             pass
 
         for boton, url in self.urls:
@@ -2174,7 +2174,7 @@ class Trailer(xbmcgui.WindowXMLDialog):
                     self.video_url = self.windows[-1].result
                     if not self.video_url:
                         break
-                except:
+                except Exception:
                     break
 
     def onAction(self, action):
@@ -2242,7 +2242,7 @@ def get_filmaf(item, infoLabels):
                     rating_filma = "[COLOR yellow][B]%s[/B][/COLOR]" % rating
                 else:
                     rating_filma = "[COLOR crimson][B]%s[/B][/COLOR]" % rating
-            except:
+            except Exception:
                 import traceback
                 logger.error(traceback.format_exc())
                 rating_filma = "[COLOR crimson][B]%s[/B][/COLOR]" % rating
@@ -2295,10 +2295,10 @@ def get_fonts(skin):
         from core import filetools
         try:
             data_font = filetools.read(filetools.join('special://skin/1080i', 'Font.xml'), "r")
-        except:
+        except Exception:
             try:
                 data_font = filetools.read(filetools.join('special://skin/720p', 'Font.xml'), "r")
-            except:
+            except Exception:
                 pass
 
     if data_font:
@@ -2331,7 +2331,7 @@ def get_fonts(skin):
                 elif size > 30 and size <= 33:
                     fonts["30"] = name.lower()
                     break
-        except:
+        except Exception:
             pass
     if not fonts:
         fonts = {"10": "font10", "12": "font12", "16": "font16", "24": "font24", "30": "font30"}

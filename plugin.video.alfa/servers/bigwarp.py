@@ -1,6 +1,7 @@
 # Conector bigwarp By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -27,7 +28,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         sources = 'sources\:\s*\[\{(?:file|src):"([^"]+)"'
         matches = re.compile(sources, re.DOTALL).findall(data)
         for url in matches:
-            url += "|Referer=%s" %page_url
+            url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
             video_urls.append(['[bigwarp] mp4', url])
     except Exception:
         logger.debug(data)

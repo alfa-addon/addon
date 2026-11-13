@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -23,18 +24,19 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "en/newest"))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "en/straight/popular1"))
-    itemlist.append(Item(channel=item.channel, title="Tendencia" , action="lista", url=host + "en/straight/trending"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "en/channels/alphabetically"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=alfa_urlparse.build_url(host, 'en/newest')))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=alfa_urlparse.build_url(host, 'en/straight/popular1')))
+    itemlist.append(Item(channel=item.channel, title="Tendencia" , action="lista", url=alfa_urlparse.build_url(host, 'en/straight/trending')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'en/channels/alphabetically')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%sen/search?query=%s/" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, 'en/search', query=[('query', u'{}/'.format(u'{}'.format(_url_query_texto)))])
     try:
         return lista(item)
     except Exception:

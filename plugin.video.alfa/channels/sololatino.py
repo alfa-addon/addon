@@ -2,6 +2,7 @@
 # -*- Channel SoloLatino -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Development Group -*-
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -81,17 +82,17 @@ def mainlist(item):
     
     itemlist = list()
     
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host + "peliculas",
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=alfa_urlparse.build_url(host, 'peliculas'),
                          thumbnail=get_thumb('movies', auto=True), type="pelicula"))
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'series', action='sub_menu',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'series'), action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
-    itemlist.append(Item(channel=item.channel, title='Anime', url=host + 'animes', action='sub_menu',
+    itemlist.append(Item(channel=item.channel, title='Anime', url=alfa_urlparse.build_url(host, 'animes'), action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
-    itemlist.append(Item(channel=item.channel, title='Doramas', url=host + 'doramas', action='sub_menu',
+    itemlist.append(Item(channel=item.channel, title='Doramas', url=alfa_urlparse.build_url(host, 'doramas'), action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(Item(channel=item.channel, title='Plataformas', url=host, action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + 'buscar?q=',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, 'buscar', query='q='),
                          thumbnail=get_thumb("search", auto=True)))
     
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
@@ -120,7 +121,7 @@ def sub_menu(item):
     itemlist.append(Item(channel=item.channel, title='Todas', url=item.url, action='list_all',
                          thumbnail=get_thumb('all', auto=True)))
     
-    itemlist.append(Item(channel=item.channel, title='Popular', url=item.url + '?genero=&año=0&nota=0&sort=popular', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Popular', url=alfa_urlparse.build_url(item.url, query='genero=&año=0&nota=0&sort=popular'), action='list_all',
                          thumbnail=get_thumb('all', auto=True)))    
     
     itemlist.append(Item(channel=item.channel, title='Generos', url=item.url, action='section',
@@ -201,7 +202,7 @@ def list_all(item):
         # soup = create_soup(host)
         # logger.debug(soup)
         soup = create_soup(item.url)
-    except:
+    except Exception:
         return itemlist
     # logger.debug(soup)
     matches = soup.find("div", class_="movies-grid").find_all("div", class_='card') #id=re.compile(r"^post-\d+")
@@ -212,7 +213,7 @@ def list_all(item):
         thumb = elem.img["src"]
         try:
             year = elem.find('span', class_='card__year').text.strip()
-        except:
+        except Exception:
             year = '-'
         
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
@@ -224,7 +225,7 @@ def list_all(item):
                 new_item.contentEpisodeNumber = int(episode)
                 title = re.sub('\:\s*\d+.\d+', '', title)
                 new_item.title = '%sx%s - %s' % (new_item.contentSeason, str(new_item.contentEpisodeNumber).zfill(2), title)
-            except:
+            except Exception:
                 new_item.contentSeason = 1
                 new_item.contentEpisodeNumber = 0
             new_item.contentSerieName = title
@@ -246,7 +247,7 @@ def list_all(item):
     
     try:
         url_next_page = soup.find("a", rel="next")["href"]
-    except:
+    except Exception:
         return itemlist
     
     if url_next_page and len(matches) > 16:
@@ -264,7 +265,7 @@ def seasons(item):
         soup = create_soup(item.url).find("select", id="season-select")
         
         matches = soup.find_all("option")
-    except:
+    except Exception:
         return itemlist
     
     infoLabels = item.infoLabels
@@ -272,7 +273,7 @@ def seasons(item):
     for elem in matches:
         try:
             season = int(elem["value"])
-        except:
+        except Exception:
             season = 1
         title = "Temporada %s" % season
         infoLabels["season"] = season
@@ -313,7 +314,7 @@ def episodesxseasons(item):
         # soup = create_soup(host)
         soup = create_soup(item.url).find("div", attrs={"data-season-panel": season})
         matches = soup.find_all("a")
-    except:
+    except Exception:
         return itemlist
     
     for elem in matches:
@@ -340,15 +341,14 @@ def search(item, texto):
     logger.info()
     
     try:
-        texto = texto.replace(" ", "+")
-        item.url = item.url + texto
+        item.url = alfa_urlparse.update_query(item.url, {'q': texto})
         
         if texto != '':
             return list_all(item)
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

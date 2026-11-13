@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -36,7 +37,7 @@ canonical = {
 host = canonical['host'] or canonical['host_alt'][0]
 channel = canonical['channel']
 categoria = channel.capitalize()
-fanart = host + 'wp-content/uploads/2015/04/bloghorror-2017-x.jpg'
+fanart = alfa_urlparse.build_url(host, 'wp-content/uploads/2015/04/bloghorror-2017-x.jpg')
 
 timeout = 5
 kwargs = {}
@@ -103,10 +104,10 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title="Todas", action="list_all", c_type='peliculas', 
-                         url=host+'category/terror-3', thumbnail=get_thumb('all', auto=True)))
+                         url=alfa_urlparse.build_url(host, 'category/terror-3'), thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title="Asiaticas", action="list_all", c_type='peliculas', 
-                         url=host+'category/asiatico1', thumbnail=get_thumb('asiaticas', auto=True)))
+                         url=alfa_urlparse.build_url(host, 'category/asiatico1'), thumbnail=get_thumb('asiaticas', auto=True)))
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title = 'Buscar', action="search", c_type='search', 
                          url=host, pages=3, thumbnail=get_thumb('search', auto=True)))
@@ -144,7 +145,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             cat = elem.find("a", class_="covernews-categories").get("alt", "")
             if cat in ["View all posts in Las Mejores Peliculas de Terror", "View all posts in Editoriales"]:
                 continue
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -184,7 +185,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['server'] = 'torrent' if 'magnet' in elem_json['url'] or ',torrent' in elem_json['url'] else 'directo'
             if '1fichier' in elem_json['url']: elem_json['server'] = 'onefichier'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
@@ -208,8 +209,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = item.url + '?s=' + texto
+        item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
 
         if texto:
             item.c_type = 'peliculas'
@@ -218,7 +220,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
         # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -240,7 +242,7 @@ def newest(categoria, **AHkwargs):
         itemlist = list_all(item)
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

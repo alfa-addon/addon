@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import config, logger
@@ -26,8 +27,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     univid = scrapertools.find_single_match(data_cookie, '.vimple.ru.*?(UniversalUserID\t[a-f0-9]+)') \
         .replace('\t', '=')
 
-    media_url += "|User-Agent=Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0" \
-                 "&Cookie=%s; %s" % (cfduid, univid)
+    media_url = alfa_urlparse.add_url_headers(media_url, {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0', 'Cookie': u'{}; {}'.format(u'{}'.format(cfduid), u'{}'.format(univid))})
 
     video_urls = []
     video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [vimple.ru]", media_url])

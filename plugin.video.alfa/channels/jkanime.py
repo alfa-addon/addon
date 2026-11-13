@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
+from core import urlparse as alfa_urlparse
 from builtins import range
 import sys
 import re
@@ -43,8 +44,8 @@ def mainlist(item):
     logger.info()
     itemlist = list()
     itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("new episodes", auto=True),action="ultimos_episodios", title="Últimos Episodios", url=host))
-    itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("tvshows", auto=True), action="list_all", title="Directorio (Todos)", url=host+'directorio'))
-    itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("categories", auto=True), action="categories", title="Directorio (Filtrado)", url=host+'directorio', viewType="–"))
+    itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("tvshows", auto=True), action="list_all", title="Directorio (Todos)", url=alfa_urlparse.build_url(host, 'directorio')))
+    itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("categories", auto=True), action="categories", title="Directorio (Filtrado)", url=alfa_urlparse.build_url(host, 'directorio'), viewType="–"))
     itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("search", auto=True),action="search", title="Buscar"))
     return itemlist
 
@@ -170,7 +171,7 @@ def filter_by_selection(item, soup='', clearUrl=False):
     itemlist = []
     
     if soup == '':
-        soup = httptools.downloadpage(host + "directorio", canonical=canonical, soup=True).soup
+        soup = httptools.downloadpage(alfa_urlparse.build_url(host, 'directorio'), canonical=canonical, soup=True).soup
     
     select = soup.find('select', attrs={'name':item.param})
     if select:
@@ -181,7 +182,7 @@ def filter_by_selection(item, soup='', clearUrl=False):
             url = "%s=%s" % (item.param, value)
             title = option.text
             if not clearUrl:
-                url = '{}directorio?{}'.format(host, url)
+                url = alfa_urlparse.build_url(host, 'directorio', query=url)
             itemlist.append(
                 Item(
                     action = "list_all",
@@ -197,7 +198,7 @@ def filter_by_selection(item, soup='', clearUrl=False):
 def set_adv_filter(item):
     logger.info()
     
-    soup = httptools.downloadpage(host + "directorio", canonical=canonical, soup=True).soup
+    soup = httptools.downloadpage(alfa_urlparse.build_url(host, 'directorio'), canonical=canonical, soup=True).soup
     
     filtros = {'filtro','genero','letra','demografia','categoria','tipo','estado','fecha','temporada','orden'}
     valores = []
@@ -212,7 +213,7 @@ def set_adv_filter(item):
             valores.append(items[result].url)
 
     query = "&".join(valores)
-    filtered_url = '%sdirectorio?%s' % (host, query)
+    filtered_url = alfa_urlparse.build_url(host, 'directorio', query=query)
     
     filteritem = Item(
         channel =  item.channel,
@@ -295,7 +296,7 @@ def search(item, texto):
     logger.info()
     if texto != "":
         texto = urlparse.quote_plus(texto)
-        item.url = host + "buscar/%s" % texto
+        item.url = alfa_urlparse.build_url(host, u'buscar/{}'.format(texto))
         try:
             return search_results(item)
         # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -392,7 +393,7 @@ def episodios(item):
     kwargs['post'] = "_token=%s" % token
     kwargs['canonical'] = canonical
     
-    epidodes_api_url = "https://jkanime.net/ajax/episodes/%s/%s" % (scrapedid, 1)
+    epidodes_api_url = alfa_urlparse.build_url('https://jkanime.net', u'/ajax/episodes/{}/{}'.format(scrapedid, 1))
     
     data_json = httptools.downloadpage(epidodes_api_url, **kwargs).json
 
@@ -402,7 +403,7 @@ def episodios(item):
     
     if 1 != last:
         for pag in range(2, last+1):
-            epidodes_api_url = "https://jkanime.net/ajax/episodes/%s/%s" % (scrapedid, pag)
+            epidodes_api_url = alfa_urlparse.build_url('https://jkanime.net', u'/ajax/episodes/{}/{}'.format(scrapedid, pag))
             nextpage = httptools.downloadpage(epidodes_api_url, **kwargs).json
             episodes += nextpage['data']
     
@@ -411,7 +412,7 @@ def episodios(item):
         infoLabels["season"] = item.contentSeason
         infoLabels["episode"] = int(episode['number'])
         title = "%sx%s - %s" % (infoLabels["season"], infoLabels["episode"], episode['title'])
-        url = item.url + "%s/" % episode['number']
+        url = alfa_urlparse.build_url(item.url, str(episode['number']), trailing_slash=True)
         itemlist.append(item.clone(action="findvideos", infoLabels=infoLabels, title=title, url=url))
         
     if len(itemlist) == 0:

@@ -185,11 +185,20 @@ class HTTPWebSocketsHandler(SimpleHTTPRequestHandler):
                 #Terminate BaseHTTPRequestHandler.handle() loop:
                 self.close_connection = 1
                 #send close and ignore exceptions. An error may already have occurred.
+                close_handled = False
                 try:
                     self._send_close()
-                except:
+                    close_handled = True
+                except Exception:
                     pass
-                self.on_ws_closed()
+                    close_handled = True
+                finally:
+                    failed = not close_handled
+                    try:
+                        self.on_ws_closed()
+                    except Exception:
+                        if not failed:
+                            raise
             else:
                 self.log_message("_ws_close websocket in closed state. Ignore.")
                 pass
@@ -204,11 +213,20 @@ class HTTPWebSocketsHandler(SimpleHTTPRequestHandler):
             self.connected = False
             #Terminate BaseHTTPRequestHandler.handle() loop:
             self.close_connection = 1
+            close_handled = False
             try:
                 self._send_close()
-            except:
+                close_handled = True
+            except Exception:
                 pass
-            self.on_ws_closed()
+                close_handled = True
+            finally:
+                failed = not close_handled
+                try:
+                    self.on_ws_closed()
+                except Exception:
+                    if not failed:
+                        raise
         # ping
         elif self.opcode == self._opcode_ping:
             _send_message(self._opcode_pong, message)

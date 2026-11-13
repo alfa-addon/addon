@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -71,10 +72,10 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=host + "page/1/?filter=most-viewed"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "page/1/?filter=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "page/1/?filter=longest"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=latest')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=most-viewed')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=popular')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=longest')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -150,7 +151,7 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     # item.url = "%sbuscar/?q=%s&sort_by=video_viewed&from_videos=1" % (host, texto.replace(" ", "+"))
-    item.url = "%s?s=%s&filter=latest" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, query=[('s', texto), ('filter', 'latest')])
     
     try:
         if texto:
@@ -161,7 +162,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

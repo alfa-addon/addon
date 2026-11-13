@@ -3,6 +3,7 @@
 # Conector Solidfiles By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -21,6 +22,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     media_url = scrapertools.find_single_match(response.data,'streamUrl":"([^"]+)')
-    media_url += '|verifypeer=false'
+    media_url = alfa_urlparse.add_url_headers(media_url, {'verifypeer': 'false'})
     video_urls.append(["MP4", media_url])
     return video_urls

@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector DoodStream By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 import time
 import js2py
@@ -64,7 +65,7 @@ def test_video_exists(page_url):
         redir = response.headers.get("location", '')
         if redir:
             if not redir.startswith("http"):
-                redir = "%s%s" % (host, redir)
+                redir = alfa_urlparse.urljoin(host, u'{}'.format(redir))
             page_url = redir
             test_video_exists(page_url)
     elif response.code != 200:
@@ -74,7 +75,7 @@ def test_video_exists(page_url):
     # Si la página contiene un iframe con el enlace del video, se extrae el enlace y se redirige a él.
     if '/d/' in page_url and scrapertools.find_single_match(response.data, ' <iframe src="([^"]+)"'):
         url = scrapertools.find_single_match(response.data, ' <iframe src="([^"]+)"')
-        redir = "%s%s" %(host,url)
+        redir = alfa_urlparse.urljoin(host, u'{}'.format(url))
         response = httptools.downloadpage(redir, **kwargs)
 
     # Si la página contiene el texto "Video not found", se considera que el video no existe.
@@ -128,7 +129,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     base_url = scrapertools.find_single_match(data, r"\$.get\('(/pass[^']+)'")
 
     # Concatenamos el enlace base con el enlace del host.
-    url = "%s%s" % (host, base_url)
+    url = alfa_urlparse.urljoin(host, u'{}'.format(base_url))
     # logger.error("url=%s" % url)
 
     # Generamos headers con Referer (basado en la url de redireccion).

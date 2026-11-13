@@ -100,7 +100,7 @@ class fileserver(Controller):
             mime_type = mime.guess_type(file)
             try:
                 mim = mime_type[0]
-            except:
+            except Exception:
                 mim = ""
             f = open(file, "rb")
             self.handler.send_response(200)

@@ -337,7 +337,7 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
                                             include_adult=include_adult)
 
                     __leer_datos(otmdb_global)
-                except:
+                except Exception:
                     logger.debug(traceback.format_exc(1))
 
             if lock and lock.locked():
@@ -451,7 +451,7 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
                             # realizar otra busqueda para ampliar la informacion
                             otmdb = Tmdb(id_Tmdb=otmdb.result.get("id"), tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
                                          include_adult=include_adult)
-            except:
+            except Exception:
                 logger.debug(traceback.format_exc(1))
             
             if lock and lock.locked():
@@ -593,7 +593,7 @@ class ResultDictDefault(dict):
     def __getitem__(self, key):
         try:
             return super(ResultDictDefault, self).__getitem__(key)
-        except:
+        except Exception:
             return self.__missing__(key)
 
     def __missing__(self, key):
@@ -909,7 +909,7 @@ class Tmdb(object):
 
                 for i in lista_generos:
                     cls.dic_generos[idioma][tipo][str(i["id"])] = i["name"]
-            except:
+            except Exception:
                 logger.error("Error generando diccionarios")
                 import traceback
                 logger.error(traceback.format_exc())
@@ -1129,7 +1129,7 @@ class Tmdb(object):
                         
                         if cr >= num_result:
                             return res
-                except:
+                except Exception:
                     continue
 
         return res
@@ -1156,7 +1156,7 @@ class Tmdb(object):
             for i in origen.get("genre_ids"):
                 try:
                     genre_list.append(Tmdb.dic_generos[self.busqueda_idioma][self.busqueda_tipo][str(i)])
-                except:
+                except Exception:
                     pass
 
         elif "genre" in origen or "genres" in origen:
@@ -1347,7 +1347,7 @@ class Tmdb(object):
                 if not isinstance(self.temporada[numtemporada], dict):
                     self.temporada[numtemporada] = ast.literal_eval(self.temporada[numtemporada].decode('utf-8'))
 
-            except:
+            except Exception:
                 logger.error("No se ha podido obtener la temporada")
                 self.temporada[numtemporada] = {"status_code": 15, "status_message": "Failed"}
                 self.temporada[numtemporada] = {"episodes": {}}
@@ -1562,7 +1562,7 @@ class Tmdb(object):
                 try:
                     for v_alt in v:                             #It comes as a list (?!)
                         ret_infoLabels['duration'] = int(v_alt) * 60
-                except:
+                except Exception:
                     pass
 
             elif k == 'release_date':

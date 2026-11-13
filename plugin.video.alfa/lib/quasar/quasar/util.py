@@ -32,7 +32,7 @@ def getLocalizedLabel(label):
                 return (translation.decode('utf-8', 'replace') % tuple(parts[1:])).encode('utf-8', 'ignore')
             else:
                 return translation % tuple(parts[1:])
-    except:
+    except Exception:
         return label
 
 def getLocalizedString(stringId):
@@ -41,7 +41,7 @@ def getLocalizedString(stringId):
             return ADDON.getLocalizedString(stringId).encode('utf-8', 'ignore')
         else:
             return ADDON.getLocalizedString(stringId)
-    except:
+    except Exception:
         return stringId
 
 def toUtf8(string):
@@ -81,5 +81,5 @@ def getWindowsShortPath(path):
         ctypes.windll.kernel32.GetShortPathNameW(path, buf, len(buf))
 
         return buf.value
-    except:
+    except Exception:
         return path

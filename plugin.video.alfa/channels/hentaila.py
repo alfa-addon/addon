@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import sys
 import xbmcgui
 
@@ -47,7 +48,7 @@ def mainlist(item):
             fanart = item.fanart,
             title = "Populares",
             thumbnail = get_thumb("more watched", auto=True),
-            url = host + "/catalogo?order=popular"
+            url = alfa_urlparse.build_url(host, '/catalogo', query='order=popular')
         )
     )
     itemlist.append(
@@ -57,7 +58,7 @@ def mainlist(item):
             fanart = item.fanart,
             title = "Destacados de la semana",
             thumbnail = get_thumb("hot", auto=True),
-            url = host + "/catalogo?order=score"
+            url = alfa_urlparse.build_url(host, '/catalogo', query='order=score')
         )
     )
     itemlist.append(
@@ -78,7 +79,7 @@ def mainlist(item):
             fanart = item.fanart,
             title = "Estrenos próximos",
             thumbnail = get_thumb("premieres", auto=True),
-            url = host + "/catalogo?order=latest_released"
+            url = alfa_urlparse.build_url(host, '/catalogo', query='order=latest_released')
         )
     )
     itemlist.append(
@@ -99,7 +100,7 @@ def mainlist(item):
             fanart = item.fanart,
             title = "Todos",
             thumbnail = get_thumb("all", auto=True),
-            url = host + "/catalogo"
+            url = alfa_urlparse.build_url(host, '/catalogo')
         )
     )
     itemlist.append(
@@ -166,7 +167,7 @@ def categories(item):
             plot = "Adiós, píxeles y barras negras 7u7",
             thumbnail = get_thumb("adults", auto=True),
             title = "Sin censura",
-            url = host + "/catalogo?uncensored="
+            url = alfa_urlparse.build_url(host, '/catalogo', query='uncensored=')
         )
     )
     itemlist.append(
@@ -211,7 +212,7 @@ def newest(categoria):
     item.param = ""
     item.thumbnail = get_thumb("newest", auto=True)
     item.title = "Novedades"
-    item.url = host + "/catalogo?order=latest_released"
+    item.url = alfa_urlparse.build_url(host, '/catalogo', query='order=latest_released')
     return list_all(item)
 
 
@@ -231,7 +232,7 @@ def list_all(item):
         infoLabels = {}
         thumb = article.find('img')['src']
         if not thumb.startswith('http'):
-            thumb = host + thumb
+            thumb = alfa_urlparse.urljoin(host, thumb)
         if item.param in ["newepisodes", "episodes"]:
             if item.param == "episodes":
                 contentSerieName = item.contentSerieName
@@ -249,7 +250,7 @@ def list_all(item):
             contentSerieName = article.find('h3', class_='line-clamp-2').string.strip()
             title = contentSerieName
             action = "episodios"
-        url = host + article.find('a', href=True)['href']
+        url = alfa_urlparse.urljoin(host, article.find('a', href=True)['href'])
         itemlist.append(
             Item(
                 action = action,
@@ -269,7 +270,7 @@ def list_all(item):
     if next_page:
         next_page_url = next_page['href']
         if not next_page_url.startswith('http'):
-            next_page_url = host + next_page_url
+            next_page_url = alfa_urlparse.urljoin(host, next_page_url)
         itemlist.append(
             Item(
                 action = "list_all",
@@ -331,8 +332,9 @@ def search(item, texto):
     logger.info()
 
     if texto != '':
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = "%s/catalogo?search=%s" % (host, texto)
+        item.url = alfa_urlparse.build_url(host, '/catalogo', query=[('search', u'{}'.format(_url_query_texto))])
         return list_all(item)
     else:
         return []
@@ -343,7 +345,7 @@ def filter_by_selection(item, clearUrl=False):
     itemlist = []
     if item.param == 'genre':
         # {id:4,name:"Casadas",slug:"casadas"}
-        data = httptools.downloadpage(host + "/catalogo", canonical=canonical).data
+        data = httptools.downloadpage(alfa_urlparse.build_url(host, '/catalogo'), canonical=canonical).data
         pattern = r'\{id:\d+,name:"([^"]+)",slug:"([^"]+)"\}'
         result = scrapertools.find_multiple_matches(data, pattern)
         matches = []
@@ -367,7 +369,7 @@ def filter_by_selection(item, clearUrl=False):
         if clearUrl is True:
             url = url.replace('?', '')
         else:
-            url = '{}/catalogo{}'.format(host, url)
+            url = alfa_urlparse.urljoin(alfa_urlparse.build_url(host, 'catalogo'), url)
         itemlist.append(
             Item(
                 action = "list_all",
@@ -435,7 +437,7 @@ def set_adv_filter(item):
         item.filters['orderby'] = statusstates[result - 1]
 
     if item.filters['genre'] or item.filters['alphabet'] or item.filters['censor'] or item.filters['status'] or item.filters['orderby']:
-        filtered_url = host + '/catalogo'
+        filtered_url = alfa_urlparse.build_url(host, '/catalogo')
         current_filter = ''
         isset_filter = False
         if item.filters['genre'] != '':

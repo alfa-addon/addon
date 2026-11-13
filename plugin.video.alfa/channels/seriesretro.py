@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -58,7 +59,7 @@ def mainlist(item):
             channel = item.channel,
             thumbnail = get_thumb("All", auto=True),
             title = "Todas",
-            url = host + "lista-series/"
+            url = alfa_urlparse.build_url(host, 'lista-series/')
         )
     )
     
@@ -68,7 +69,7 @@ def mainlist(item):
             channel = item.channel,
             thumbnail = get_thumb("animacion", auto=True),
             title = "Animación",
-            url = host + "category/animacion/"
+            url = alfa_urlparse.build_url(host, 'category/animacion/')
         )
     )
     
@@ -377,7 +378,7 @@ def search(item, texto):
     try:
         texto = texto.replace(" ", "+")
         if texto != '':
-            item.url = 'https://seriesretro.com/' + "?s="
+            item.url = alfa_urlparse.build_url('https://seriesretro.com', '/', query='s=')
             item.url += texto
             search_result = list_all(item)
             return search_result

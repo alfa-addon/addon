@@ -3,6 +3,7 @@
 # Conector vidguard By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from platformcode import logger
@@ -55,7 +56,7 @@ def get_video_url(page_url, video_password):
     if not url.startswith('https://'):
         url = re.sub(':/*', '://', url)
     url = sig_decode(url)
-    url += "|Referer=%s" % page_url
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
     video_urls.append(["[vidguard]", url])
     return video_urls
 

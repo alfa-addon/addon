@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -116,22 +117,22 @@ def mainlist(item):
     
     itemlist = list()
     
-    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host + 'episodio/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=alfa_urlparse.build_url(host, 'episodio/'), action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
     
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + tv_path, action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.urljoin(host, tv_path), action='list_all',
                          thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
     
-    itemlist.append(Item(channel=item.channel, title='Peliculas', url=host + movie_path, action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Peliculas', url=alfa_urlparse.urljoin(host, movie_path), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
     
-    itemlist.append(Item(channel=item.channel, title='Castellano', url=host + 'idioma/castellano/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Castellano', url=alfa_urlparse.build_url(host, 'idioma/castellano/'), action='list_all',
                          thumbnail=get_thumb('cast', auto=True), c_type='peliculas', extra="CAST"))
     
-    itemlist.append(Item(channel=item.channel, title='Latino', url=host + 'idioma/latino/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Latino', url=alfa_urlparse.build_url(host, 'idioma/latino/'), action='list_all',
                          thumbnail=get_thumb('latino', auto=True), c_type='peliculas', extra="LAT"))
     
-    itemlist.append(Item(channel=item.channel, title='Subtitulado', url=host + 'idioma/subtitulado/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Subtitulado', url=alfa_urlparse.build_url(host, 'idioma/subtitulado/'), action='list_all',
                          thumbnail=get_thumb('vose', auto=True), c_type='peliculas', extra="VOSE"))
     
     itemlist.append(Item(channel=item.channel, title='Géneros', action='section', url=host,
@@ -368,7 +369,7 @@ def play(item):
     try:
         kwargs['headers'] = {'Referer': item.url}
         kwargs['post'] = {"nombre": item.extra}
-        new_soup = AlfaChannel.create_soup('%swp-content/themes/dooplayorig123/inc/encriptar.php' % host, **kwargs)
+        new_soup = AlfaChannel.create_soup(alfa_urlparse.build_url(host, 'wp-content/themes/dooplayorig123/inc/encriptar.php'), **kwargs)
         
         url = new_soup.iframe["src"]
         itemlist.append(item.clone(url=url, server=""))
@@ -391,8 +392,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     try:
+        _url_query_texto = texto
         texto = AlfaChannel.do_quote(texto, '', plus=True)
-        item.url = item.url + "?s=" + texto
+        item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
         
         if texto:
             item.c_type = 'search'
@@ -423,7 +425,7 @@ def newest(categoria, **AHkwargs):
     
     try:
         if categoria == 'series':
-            item.url = host + 'episodio/'
+            item.url = alfa_urlparse.build_url(host, 'episodio/')
             item.c_type = 'episodios'
             item.action = "list_all"
             itemlist = list_all(item)

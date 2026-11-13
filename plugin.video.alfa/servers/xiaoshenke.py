@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -37,7 +38,7 @@ def get_video_url(page_url, video_password):
     
     # matches = scrapertools.find_multiple_matches(data, 'res.push\((\d+)')
     for quality in matches:
-        url = "https://xiaoshenke.net/vid/%s/%s" %(id, quality)
-        url += "|Referer=%s" %host
+        url = alfa_urlparse.build_url('https://xiaoshenke.net', u'/vid/{}/{}'.format(id, quality))
+        url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(host)})
         video_urls.append(["[xiaoshenke] %sp" % quality, url])
     return video_urls

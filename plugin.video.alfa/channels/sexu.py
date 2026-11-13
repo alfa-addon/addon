@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -24,20 +25,21 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "new"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "engaging"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "all"))
-    itemlist.append(Item(channel=item.channel, title="Mas comentados" , action="lista", url=host + "trending")) 
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories?sort=name"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'new')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'engaging')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=alfa_urlparse.build_url(host, 'all')))
+    itemlist.append(Item(channel=item.channel, title="Mas comentados" , action="lista", url=alfa_urlparse.build_url(host, 'trending')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories', query='sort=name')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch?q=%s&st=upload" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, 'search', query=[('q', u'{}'.format(_url_query_texto)), ('st', 'upload')])
     try:
         return lista(item)
     except Exception:
@@ -61,7 +63,7 @@ def categorias(item):
         if not scrapedthumbnail.startswith("https"):
             thumbnail = "http:%s" % scrapedthumbnail
         url = urlparse.urljoin(host,scrapedurl)
-        url +="?st=upload"
+        url = alfa_urlparse.build_url(url, query='st=upload')
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = scrapertools.find_single_match(data, '<a class="pagination__arrow pagination__arrow--next" href="([^"]+)">')
@@ -100,7 +102,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    url = '%sapi/video-info' %host
+    url = alfa_urlparse.build_url(host, 'api/video-info')
     headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
     data = httptools.downloadpage(url, post=item.url, headers=headers, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
@@ -117,7 +119,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    url = '%sapi/video-info' %host
+    url = alfa_urlparse.build_url(host, 'api/video-info')
     headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
     data = httptools.downloadpage(url, post=item.url, headers=headers, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)

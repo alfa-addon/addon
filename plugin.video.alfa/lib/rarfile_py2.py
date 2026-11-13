@@ -1096,7 +1096,7 @@ class CommonParser(object):
             if h.add_size > 0:
                 try:
                     fd.seek(h.data_offset + h.add_size, 0)
-                except:
+                except Exception:
                     try:
                         logger.error('more_vols: %s, data_offset: %s, add_size: %s.  TOTAL: %s' % \
                                 (str(more_vols), str(h.data_offset), str(h.add_size), \
@@ -1105,7 +1105,7 @@ class CommonParser(object):
 
                         endarc = True
                         fd.seek(0, 2)
-                    except:
+                    except Exception:
                         logger.error(traceback.format_exc(1))
 
     def process_entry(self, fd, item):
@@ -1196,30 +1196,55 @@ class CommonParser(object):
 
         size = inf.compress_size + inf.header_size
         rf = XFile(inf.volume_file, 0)
-        rf.seek(inf.header_offset)
-
-        tmpfd, tmpname = mkstemp(suffix='.rar')
-        tmpf = os.fdopen(tmpfd, "wb")
-
+        tmpfd = tmpname = tmpf = None
+        completed = False
+        written = False
         try:
-            tmpf.write(prefix)
-            while size > 0:
-                if size > BSIZE:
-                    buf = rf.read(BSIZE)
-                else:
-                    buf = rf.read(size)
-                if not buf:
-                    raise BadRarFile('read failed: ' + inf.filename)
-                tmpf.write(buf)
-                size -= len(buf)
-            tmpf.write(suffix)
-            tmpf.close()
-            rf.close()
-        except:
-            rf.close()
-            tmpf.close()
-            os.unlink(tmpname)
-            raise
+            try:
+                rf.seek(inf.header_offset)
+                tmpfd, tmpname = mkstemp(suffix='.rar')
+                tmpf = os.fdopen(tmpfd, "wb")
+                tmpf.write(prefix)
+                while size > 0:
+                    if size > BSIZE:
+                        buf = rf.read(BSIZE)
+                    else:
+                        buf = rf.read(size)
+                    if not buf:
+                        raise BadRarFile('read failed: ' + inf.filename)
+                    tmpf.write(buf)
+                    size -= len(buf)
+                tmpf.write(suffix)
+                written = True
+            finally:
+                failed = not written
+                close_error = None
+                close_handled = False
+                try:
+                    try:
+                        if tmpf is not None:
+                            tmpf.close()
+                        elif tmpfd is not None:
+                            os.close(tmpfd)
+                    except Exception as exc:
+                        if not failed:
+                            close_error = exc
+                    close_handled = True
+                finally:
+                    try:
+                        rf.close()
+                    except Exception as exc:
+                        if not failed and close_handled and close_error is None:
+                            close_error = exc
+                if close_error is not None:
+                    raise close_error
+            completed = True
+        finally:
+            if not completed and tmpname is not None:
+                try:
+                    os.unlink(tmpname)
+                except Exception:
+                    pass  # Preserve the write/close error or cancellation.
 
         return self._open_unrar(tmpname, inf, psw, tmpname)
 
@@ -2953,7 +2978,7 @@ def custom_popen(cmd, classic=False):
                     with open(rar_path, "w") as f:
                         rar_control['pid'] = p.pid
                         json.dump(rar_control, f, indent=4)
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
     
@@ -3017,20 +3042,36 @@ def membuf_tempfile(memfile):
     """Write in-memory file object to real file."""
     memfile.seek(0, 0)
 
-    tmpfd, tmpname = mkstemp(suffix='.rar')
-    tmpf = os.fdopen(tmpfd, "wb")
-
+    tmpfd = tmpname = tmpf = None
+    completed = False
+    written = False
     try:
-        while True:
-            buf = memfile.read(BSIZE)
-            if not buf:
-                break
-            tmpf.write(buf)
-        tmpf.close()
-    except:
-        tmpf.close()
-        os.unlink(tmpname)
-        raise
+        try:
+            tmpfd, tmpname = mkstemp(suffix='.rar')
+            tmpf = os.fdopen(tmpfd, "wb")
+            while True:
+                buf = memfile.read(BSIZE)
+                if not buf:
+                    break
+                tmpf.write(buf)
+            written = True
+        finally:
+            failed = not written
+            try:
+                if tmpf is not None:
+                    tmpf.close()
+                elif tmpfd is not None:
+                    os.close(tmpfd)
+            except Exception:
+                if not failed:
+                    raise
+        completed = True
+    finally:
+        if not completed and tmpname is not None:
+            try:
+                os.unlink(tmpname)
+            except Exception:
+                pass  # Preserve the write/close error or cancellation.
     return tmpname
 
 class XTempFile(object):

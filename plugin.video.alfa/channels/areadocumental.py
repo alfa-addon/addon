@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -35,18 +36,18 @@ def mainlist(item):
     item.text_color = color1
     
     itemlist.append(item.clone(title="Novedades", action="entradas",
-                               url= host + "resultados-reciente.php?buscar=&genero="))
+                               url= alfa_urlparse.build_url(host, 'resultados-reciente.php', query='buscar=&genero=')))
     
     itemlist.append(item.clone(title="Destacados", action="entradas",
-                               url= host + "resultados.php?buscar=&genero="))
+                               url= alfa_urlparse.build_url(host, 'resultados.php', query='buscar=&genero=')))
     
     itemlist.append(item.clone(title="Más Vistos", action="entradas",
-                               url= host + "resultados-visto.php?buscar=&genero="))
+                               url= alfa_urlparse.build_url(host, 'resultados-visto.php', query='buscar=&genero=')))
     
     itemlist.append(item.clone(title="3D", action="entradas",
-                               url= host + "3D.php"))
+                               url= alfa_urlparse.build_url(host, '3D.php')))
     
-    itemlist.append(item.clone(title="Categorías", action="cat", url= host + "index.php"))
+    itemlist.append(item.clone(title="Categorías", action="cat", url= alfa_urlparse.build_url(host, 'index.php')))
     
     itemlist.append(item.clone(title="Ordenados por...", action="indice"))
 
@@ -78,7 +79,7 @@ def configuracion(item):
 def search(item, texto):
     logger.info()
     
-    item.url = host + "resultados/buscar=%s/" % texto
+    item.url = alfa_urlparse.build_url(host, u'resultados/buscar={}/'.format(texto))
     item.action = "entradas"
     
     try:
@@ -99,7 +100,7 @@ def newest(categoria):
     
     try:
         if categoria == "documentales":
-            item.url = host + "resultados-reciente.php?buscar=&genero="
+            item.url = alfa_urlparse.build_url(host, 'resultados-reciente.php', query='buscar=&genero=')
             item.action = "entradas"
             itemlist = entradas(item)
 
@@ -122,9 +123,9 @@ def indice(item):
     itemlist = []
     
     itemlist.append(item.clone(title="Título", action="entradas",
-                               url= host + "resultados-titulo.php?buscar=&genero="))
+                               url= alfa_urlparse.build_url(host, 'resultados-titulo.php', query='buscar=&genero=')))
     itemlist.append(item.clone(title="Año", action="entradas",
-                               url= host + "resultados-anio.php?buscar=&genero="))
+                               url= alfa_urlparse.build_url(host, 'resultados-anio.php', query='buscar=&genero=')))
     return itemlist
 
 

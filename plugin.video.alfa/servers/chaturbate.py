@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -40,6 +41,6 @@ def get_video_url(page_url, video_password):
         datos = json.loads(datos)
     if datos["hls_source"]:
         url = datos["hls_source"]
-        url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host, host)
+        url = alfa_urlparse.add_url_headers(url, headers, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
         video_urls.append(["[chaturbate]", url])
     return video_urls

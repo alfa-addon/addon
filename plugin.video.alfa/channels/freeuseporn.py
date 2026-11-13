@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -73,14 +74,14 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevo" , action="list_all", url=host + "videos?o=mr&page=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=host + "videos?o=mv&t=m&page=1"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="list_all", url=host + "videos?o=tr&t=m&page=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Favorito" , action="list_all", url=host + "videos?o=tf&t=m&page=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Comentado" , action="list_all", url=host + "videos?o=md&t=m&page=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "videos?o=lg&t=m&page=1"))
-    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=host + "videos?o=bw&page=1"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/popular", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevo" , action="list_all", url=alfa_urlparse.build_url(host, 'videos', query='o=mr&page=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=alfa_urlparse.build_url(host, 'videos', query='o=mv&t=m&page=1')))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="list_all", url=alfa_urlparse.build_url(host, 'videos', query='o=tr&t=m&page=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Favorito" , action="list_all", url=alfa_urlparse.build_url(host, 'videos', query='o=tf&t=m&page=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Comentado" , action="list_all", url=alfa_urlparse.build_url(host, 'videos', query='o=md&t=m&page=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(host, 'videos', query='o=lg&t=m&page=1')))
+    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=alfa_urlparse.build_url(host, 'videos', query='o=bw&page=1')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/popular'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -112,7 +113,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/videos/%s?o=mr&page=1" % (host, texto.replace(" ", "-"))
+    item.url = alfa_urlparse.build_url(host, u'search/videos/{}'.format(texto.replace(" ", "-")), query='o=mr&page=1')
     
     try:
         if texto:
@@ -123,7 +124,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

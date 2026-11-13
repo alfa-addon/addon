@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -73,11 +74,11 @@ def mainlist(item):
     itemlist = []
     plot = '[COLOR yellow]Video no corresponde al seleccionado, es aleatorio.[/COLOR]'
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "en/wall-date-1.html", contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=host + "en/wall-main-1.html", contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, title="Mas Valorada" , action="list_all", url=host + "en/wall-note-1.html", contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="list_all", url=host + "en/wall-time-1.html", contentPlot=plot))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "en", extra="Categorias", contentPlot=plot))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, 'en/wall-date-1.html'), contentPlot=plot))
+    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=alfa_urlparse.build_url(host, 'en/wall-main-1.html'), contentPlot=plot))
+    itemlist.append(Item(channel=item.channel, title="Mas Valorada" , action="list_all", url=alfa_urlparse.build_url(host, 'en/wall-note-1.html'), contentPlot=plot))
+    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="list_all", url=alfa_urlparse.build_url(host, 'en/wall-time-1.html'), contentPlot=plot))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'en'), extra="Categorias", contentPlot=plot))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url= host, contentPlot=plot))
     return itemlist
 
@@ -112,7 +113,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['quality'] = elem.find('div', class_=re.compile(r"hd")).get_text(strip=True) if elem.find('div', class_=re.compile(r"hd")) else  ''
             plot = '[COLOR yellow]Video no corresponde al seleccionado, es aleatorio.[/COLOR]'
             elem_json['plot']=plot
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -141,7 +142,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%sen/search-%s-1.html" % (item.url, texto.replace(" ", "-"))
+    item.url = alfa_urlparse.build_url(item.url, u'en/search-{}-1.html'.format(texto.replace(" ", "-")))
     
     try:
         if texto:
@@ -152,7 +153,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

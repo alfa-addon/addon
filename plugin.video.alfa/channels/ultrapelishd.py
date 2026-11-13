@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -57,13 +58,13 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Ultimas', url=host + 'genre/estrenos-hd/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Ultimas', url=alfa_urlparse.build_url(host, 'genre/estrenos-hd/'), action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Todas', url=host + 'pelicula/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Todas', url=alfa_urlparse.build_url(host, 'pelicula/'), action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Netflix', url=host + 'genre/netflix/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Netflix', url=alfa_urlparse.build_url(host, 'genre/netflix/'), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title='Generos', action='section', url=host,
@@ -124,8 +125,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = host + '?s=' + texto
+        item.url = alfa_urlparse.build_url(host, query=[('s', _url_query_texto)])
 
         if texto:
             item.c_type = "search"
@@ -134,7 +136,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -147,15 +149,15 @@ def newest(categoria, **AHkwargs):
     item = Item()
     try:
         if categoria in ['peliculas', 'latino']:
-            item.url = host + 'genre/estrenos-hd/'
+            item.url = alfa_urlparse.build_url(host, 'genre/estrenos-hd/')
         elif categoria == 'infantiles':
-            item.url = host + 'genre/infantil/'
+            item.url = alfa_urlparse.build_url(host, 'genre/infantil/')
         elif categoria == 'terror':
-            item.url = host + 'genre/terror/'
+            item.url = alfa_urlparse.build_url(host, 'genre/terror/')
         itemlist = list_all(item)
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

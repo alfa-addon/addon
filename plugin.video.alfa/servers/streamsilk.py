@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -24,7 +25,7 @@ def get_video_url(page_url, video_password):
     if jsunhunt.detect(data):
         data = jsunhunt.unhunt(data)
         url = scrapertools.find_single_match(data, 'urlPlay\s*=\s*"([^")]+)"').strip()
-        url += "|Referer=%s" % page_url
+        url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
         video_urls.append(["[%s]" %server, url])
     return video_urls
 

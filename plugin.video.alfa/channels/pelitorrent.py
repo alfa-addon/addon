@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -48,8 +49,8 @@ tv_path = "/tvshows"
 language = ['CAST']
 url_replace = []
 
-url_search = '%s%s' % (host, 'wp-json/dooplay/search/')
-url_glossary = '%s%s' % (host, 'wp-json/dooplay/glossary/')
+url_search = alfa_urlparse.urljoin(host, u'{}'.format('wp-json/dooplay/search/'))
+url_glossary = alfa_urlparse.urljoin(host, u'{}'.format('wp-json/dooplay/glossary/'))
 nonce = ''
 
 finds = {'find': dict([('find', [{'tag': ['div'], 'id': ['archive-content']}]), 
@@ -156,24 +157,24 @@ def sub_menu(item):
 
     if item.extra in ['novedades']:
         itemlist.append(Item(channel=item.channel, title='Películas', 
-                             url=host + movie_path.strip('/') + '/', action='list_all',
+                             url=alfa_urlparse.build_url(host, u'{}/'.format(movie_path.strip('/'))), action='list_all',
                              thumbnail=get_thumb('channels_movie.png'), c_type='peliculas', extra=item.extra))
 
         itemlist.append(Item(channel=item.channel, title='Series', 
-                             url=host + 'release/%s/' % year, action='list_all',
+                             url=alfa_urlparse.build_url(host, u'release/{}/'.format(year)), action='list_all',
                              thumbnail=get_thumb('channels_tvshow.png'), c_type='series', extra=item.extra))
 
     if item.c_type in ['peliculas', 'series']:
         itemlist.append(Item(channel=item.channel, title='Todas las %s' % item.c_type.title(), 
-                             url=host + (movie_path.strip('/') if item.c_type=='peliculas' else tv_path.strip('/')) + '/', action='list_all',
+                             url=alfa_urlparse.build_url(host, u'{}/'.format(movie_path.strip('/') if item.c_type=='peliculas' else tv_path.strip('/'))), action='list_all',
                              thumbnail=item.thumbnail, c_type=item.c_type))
 
-        itemlist.append(Item(channel=item.channel, title='Más Valoradas', url=host + 'imdb/', 
+        itemlist.append(Item(channel=item.channel, title='Más Valoradas', url=alfa_urlparse.build_url(host, 'imdb/'),
                              action='list_all', thumbnail=item.thumbnail, c_type=item.c_type, extra='vistas'))
 
         if item.c_type in ['peliculas']:
             itemlist.append(Item(channel=item.channel, title='Clásicas', 
-                                 url=host + 'genre/cine-clasico/', action='list_all',
+                                 url=alfa_urlparse.build_url(host, 'genre/cine-clasico/'), action='list_all',
                                  thumbnail=item.thumbnail, c_type=item.c_type, extra='Género'))
 
         itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por Género[/COLOR]', 
@@ -226,7 +227,7 @@ def section(item):
         c_type = '%s' % (movie_path.strip('/') if item.c_type == 'peliculas' else tv_path.strip('/'))
         if not nonce: get_nonce(item)
         if nonce:
-            url = url_glossary + '?term=%s&nonce=%s&type=%s'
+            url = alfa_urlparse.build_url(url_glossary, query='term=%s&nonce=%s&type=%s')
 
             for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
                           'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
@@ -317,7 +318,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if item.c_type == 'peliculas' and movie_path not in elem_json['url']: continue
             if item.c_type == 'series' and tv_path not in elem_json['url']: continue
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -367,7 +368,7 @@ def seasons_matches(item, matches_int, **AHkwargs):
                     pass_list['%sx%s' % (season, episode)][quality] = passw
                 episode = quality = season = ''
 
-        except:
+        except Exception:
             logger.error(elem)
 
     for elem in matches_int:
@@ -379,7 +380,7 @@ def seasons_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = item.url
             if pass_list: elem_json['password'] = pass_list
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -445,7 +446,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             if pass_list.get('%sx%s' % (elem_json['season'], elem_json['episode'])):
                 elem_json['password'] = pass_list['%sx%s' % (elem_json['season'], elem_json['episode'])]
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -501,7 +502,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 if x == 2:
                     elem_json['language'] = '*%s' % td.get_text(strip=True)
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
@@ -584,17 +585,18 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
     try:
         if texto:
-            item.url = "%s?s=%s" % (host, texto)
+            item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
             item.texto = texto
             item.c_type = 'search'
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []
@@ -614,9 +616,9 @@ def newest(categoria, **AHkwargs):
 
     try:
         if categoria in ['peliculas', 'series', 'torrent', '4k']:
-            if categoria in ['peliculas', 'torrent']: item.url = host + movie_path.strip('/') + '/'
-            if categoria in ['4k']: item.url = host + 'quality/4k-uhdrip/'
-            if categoria in ['series']: item.url = host + 'release/%s/' % year
+            if categoria in ['peliculas', 'torrent']: item.url = alfa_urlparse.build_url(host, u'{}/'.format(movie_path.strip('/')))
+            if categoria in ['4k']: item.url = alfa_urlparse.build_url(host, 'quality/4k-uhdrip/')
+            if categoria in ['series']: item.url = alfa_urlparse.build_url(host, u'release/{}/'.format(year))
             item.c_type = categoria if categoria == 'series' else 'peliculas'
             item.extra = "novedades" if categoria not in ['4k'] else 'Calidad'
             item.action = "list_all"

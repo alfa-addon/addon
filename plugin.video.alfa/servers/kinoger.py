@@ -2,6 +2,7 @@
 # Thanks to ResolveURL for the logic
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import pyaes
 import binascii
 import json
@@ -35,7 +36,7 @@ def _url_api(page_url):
     match = re.search(r'(https?://[^/#?]+)/?#([A-Za-z0-9]+)', page_url or '')
     if match:
         host = match.group(1)
-        return '%s/api/v1/video?id=%s' % (host, match.group(2)), host
+        return alfa_urlparse.build_url(host, '/api/v1/video', query=[('id', u'{}'.format(match.group(2)))]), host
 
     return page_url, (page_url or '').split('/#')[0].rstrip('/')
 
@@ -74,7 +75,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         url = ddata.get('source')
         if url:
             _url, host = _url_api(page_url)
-            url += "|User-Agent={0}&Referer={1}/&Origin={1}".format(httptools.get_user_agent(), host)
+            url = alfa_urlparse.add_url_headers(url, {'User-Agent': u'{}'.format(httptools.get_user_agent()), 'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
             video_urls.append(['[KinoGer] m3u8', url])
     except Exception as e:
         logger.error(e)

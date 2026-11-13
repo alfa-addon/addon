@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -24,12 +25,12 @@ def mainlist(item):
     logger.info()
     itemlist = []
     config.set_setting("url_error", False, "cumlouder")
-    itemlist.append(item.clone(title="Clips", action="lista", url= host + "porn/"))
-    itemlist.append(item.clone(title="Últimos videos", action="lista", url= host + "2/?s=last"))
-    itemlist.append(item.clone(title="Pornstars", action="submenu", url=host + "girls/"))
-    itemlist.append(item.clone(title="Listas", action="categorias", url= host + "series/"))
-    itemlist.append(item.clone(title="Canal", action="submenu", url=host + "channels/"))
-    itemlist.append(item.clone(title="Categorias", action="categorias", url= host + "categories/"))
+    itemlist.append(item.clone(title="Clips", action="lista", url= alfa_urlparse.build_url(host, 'porn/')))
+    itemlist.append(item.clone(title="Últimos videos", action="lista", url= alfa_urlparse.build_url(host, '2/', query='s=last')))
+    itemlist.append(item.clone(title="Pornstars", action="submenu", url=alfa_urlparse.build_url(host, 'girls/')))
+    itemlist.append(item.clone(title="Listas", action="categorias", url= alfa_urlparse.build_url(host, 'series/')))
+    itemlist.append(item.clone(title="Canal", action="submenu", url=alfa_urlparse.build_url(host, 'channels/')))
+    itemlist.append(item.clone(title="Categorias", action="categorias", url= alfa_urlparse.build_url(host, 'categories/')))
     itemlist.append(item.clone(title="Buscar Clips", action="search"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -39,9 +40,9 @@ def search(item, texto):
     logger.info()
     # texto = texto.replace(" ", "+")
     if "Clips" in item.title:
-        item.url = "%ssearch?q=%s" % (host,texto.replace(" ", "+"))
+        item.url = alfa_urlparse.build_url(host, 'search', query=[('q', texto)])
     else:
-        item.url = "%sporn-videos/%s" % (host,texto.replace(" ", "-"))  #?show=cumlouder or all
+        item.url = alfa_urlparse.build_url(host, u'porn-videos/{}'.format(texto.replace(" ", "-")))  #?show=cumlouder or all
     try:
         return lista(item)
     except Exception:
@@ -55,9 +56,9 @@ def submenu(item):
     logger.info()
     itemlist = []
     if "/channels/" in item.url:
-        itemlist.append(item.clone(title="Mas Populares", action="categorias", url=host + "channels/1/"))
+        itemlist.append(item.clone(title="Mas Populares", action="categorias", url=alfa_urlparse.build_url(host, 'channels/1/')))
     else:
-        itemlist.append(item.clone(title="Mas Populares", action="categorias", url=host + "girls/1/"))
+        itemlist.append(item.clone(title="Mas Populares", action="categorias", url=alfa_urlparse.build_url(host, 'girls/1/')))
     for letra in "abcdefghijklmnopqrstuvwxyz":
         itemlist.append(item.clone(title=letra.upper(), url=urlparse.urljoin(item.url, letra), action="categorias"))
     return itemlist

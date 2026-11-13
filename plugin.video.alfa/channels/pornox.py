@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -82,15 +83,15 @@ def mainlist(item):
     logger.info()
     itemlist = []
     
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host +"en/kereses/?sort_by=post_date&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=host + "en/kereses/?sort_by=video_viewed_month&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorada" , action="list_all", url=host + "en/kereses/?sort_by=rating_month&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Favoritas" , action="list_all", url=host + "en/kereses/?sort_by=most_favourited&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Comentadas" , action="list_all", url=host + "en/kereses/?sort_by=most_commented&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=host + "en/kereses/?sort_by=duration&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "en/pornosztarok/?sort_by=total_videos&from=01", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "en/szexcsatorna/?sort_by=total_videos&from=01", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "en/szex-kategoriak/?sort_by=title", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=alfa_urlparse.build_url(host, 'en/kereses/', query='sort_by=post_date&from_videos=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=alfa_urlparse.build_url(host, 'en/kereses/', query='sort_by=video_viewed_month&from_videos=1')))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorada" , action="list_all", url=alfa_urlparse.build_url(host, 'en/kereses/', query='sort_by=rating_month&from_videos=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Favoritas" , action="list_all", url=alfa_urlparse.build_url(host, 'en/kereses/', query='sort_by=most_favourited&from_videos=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Comentadas" , action="list_all", url=alfa_urlparse.build_url(host, 'en/kereses/', query='sort_by=most_commented&from_videos=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=alfa_urlparse.build_url(host, 'en/kereses/', query='sort_by=duration&from_videos=1')))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, 'en/pornosztarok/', query='sort_by=total_videos&from=01'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(host, 'en/szexcsatorna/', query='sort_by=total_videos&from=01'), extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'en/szex-kategoriak/', query='sort_by=title'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -142,7 +143,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             
             
             
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -185,12 +186,12 @@ def play(item):
         url = item.url
     elif soup.video:
         url = soup.video.source['src']
-        url += "|Referer=%s" %host
+        url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(host)})
     else:
         url = soup.iframe['src']
         url = url.replace("embed", "videos").replace('lol', 'tv')
         name = item.url.split("/")[-2]
-        url += "/%s/" %name
+        url = alfa_urlparse.build_url(url, u'/{}/'.format(name))
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
@@ -201,7 +202,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%sen/kereses/?q=%s&sort_by=post_date&from_videos=1" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, 'en/kereses/', query=[('q', texto), ('sort_by', 'post_date'), ('from_videos', '1')])
     
     try:
         if texto:
@@ -212,7 +213,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

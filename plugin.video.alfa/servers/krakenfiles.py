@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 from core import httptools
 from core import scrapertools
@@ -44,7 +45,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         tipo = soup.video.source['type']    # application/x-mpegURL & video/mp4
     matches  = soup.find('source', type=tipo)
     url = matches.get('src', '') 
-    url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host, host)
+    url = alfa_urlparse.add_url_headers(url, headers, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
     video_urls.append(["[krakenfiles]", url])
     
     return video_urls

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -31,18 +32,18 @@ def mainlist(item):
                                category = "", offset=""))
     itemlist.append(Item(channel=item.channel, title="Mas metraje" , action="lista", value="duration", id=1, per="month",
                                category = "", offset=""))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="pornstar", url=host + "pornstars/load_more_pornstars", id=1,
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="pornstar", url=alfa_urlparse.build_url(host, 'pornstars/load_more_pornstars'), id=1,
                                value="popularity", offset=""))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="pornstar", url=host + "studios/load_more_studios", id=1,
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="pornstar", url=alfa_urlparse.build_url(host, 'studios/load_more_studios'), id=1,
                                value="popularity", offset=""))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "video/", id=1))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'video/'), id=1))
     # itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     itemlist.append(Item(channel=item.channel, title="", action="", folder=False))
 
-    itemlist.append(Item(channel=item.channel, title="Amateur" , action="submenu", url=host + "amateur/videos/", id=4))
-    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=host + "transexual/videos/", id=3))
-    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=host + "gay/videos/", id=2))
+    itemlist.append(Item(channel=item.channel, title="Amateur" , action="submenu", url=alfa_urlparse.build_url(host, 'amateur/videos/'), id=4))
+    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=alfa_urlparse.build_url(host, 'transexual/videos/'), id=3))
+    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=alfa_urlparse.build_url(host, 'gay/videos/'), id=2))
     return itemlist
 
 
@@ -60,9 +61,9 @@ def submenu(item):
     itemlist.append(Item(channel=item.channel, title="Mas metraje" , action="lista", value="duration", id=item.id, per="month",
                                category = "", offset=""))
     if item.id !=4:
-        itemlist.append(Item(channel=item.channel, title="PornStar" , action="pornstar", url=host + "pornstars/load_more_pornstars", id=item.id,
+        itemlist.append(Item(channel=item.channel, title="PornStar" , action="pornstar", url=alfa_urlparse.build_url(host, 'pornstars/load_more_pornstars'), id=item.id,
                                    value="popularity", offset=""))
-        itemlist.append(Item(channel=item.channel, title="Canal" , action="pornstar", url=host + "studios/load_more_studios", id=item.id,
+        itemlist.append(Item(channel=item.channel, title="Canal" , action="pornstar", url=alfa_urlparse.build_url(host, 'studios/load_more_studios'), id=item.id,
                                    value="popularity", offset=""))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=item.url, id=item.id))
     return itemlist
@@ -70,8 +71,9 @@ def submenu(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch?q=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'search', query=[('q', u'{}'.format(_url_query_texto))])
     item.texto = texto
     try:
         return lista(item)
@@ -120,10 +122,10 @@ def pornstar(item):
     else:
         offset = item.offset
     if "pornstars" in item.url:
-        posturl = "%spornstars/load_more_pornstars" %host
+        posturl = alfa_urlparse.build_url(host, 'pornstars/load_more_pornstars')
         post = "main_category_id=%s&type=pornstar&name=top_pornstars&filters[filter_type]=%s&offset=%s" % (item.id,item.value,offset)
     else:
-        posturl = "%sstudios/load_more_studios" %host
+        posturl = alfa_urlparse.build_url(host, 'studios/load_more_studios')
         # post = "main_category_id=1&type=studio&name=top_studios&filters[filter_type]=%s&offset=%s" % (item.value,offset)
         post = {'main_category_id': item.id, 'type': 'studio', 'name': 'top_studios', 'filters[filter_type]': item.value, 'quantity': 30, 'offset':offset} 
     soup = create_soup(posturl, post)
@@ -154,7 +156,7 @@ def lista(item):
         offset = 0
     else:
         offset = item.offset
-    posturl = "%sposts/load_more_posts" %host
+    posturl = alfa_urlparse.build_url(host, 'posts/load_more_posts')
     referer = item.id
     
     if "pornstars" in item.url:

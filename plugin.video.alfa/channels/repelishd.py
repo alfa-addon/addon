@@ -3,6 +3,7 @@
 # -*- Created for Rebel-addon -*-
 # -*- By the Rebel Developer -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -52,9 +53,9 @@ def mainlist(item):
     logger.info()
     itemlist = list()
     
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="list_all", url="%s%s/page/1/" % (host, "cine"), thumbnail=get_thumb("movies", auto=True), extra=item.extra))
-    itemlist.append(Item(channel=item.channel, title="Series", action="list_all", url="%s%s/page/1/" % (host, "series"), thumbnail=get_thumb("tvshows", auto=True), extra=item.extra))
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url="%s%s/page/1/" % (host, "peliculas"), thumbnail=get_thumb("genres", auto=True), extra=item.extra))
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="list_all", url=alfa_urlparse.build_url(host, u'{}/page/1/'.format("cine")), thumbnail=get_thumb("movies", auto=True), extra=item.extra))
+    itemlist.append(Item(channel=item.channel, title="Series", action="list_all", url=alfa_urlparse.build_url(host, u'{}/page/1/'.format("series")), thumbnail=get_thumb("tvshows", auto=True), extra=item.extra))
+    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=alfa_urlparse.build_url(host, u'{}/page/1/'.format("peliculas")), thumbnail=get_thumb("genres", auto=True), extra=item.extra))
     itemlist.append(Item(channel=item.channel, title="Años", action="anno", url=host, thumbnail=get_thumb("year", auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host, thumbnail=get_thumb("search", auto=True)))
     
@@ -87,7 +88,7 @@ def list_all(item):
         title = elem.img["alt"]
         try:
             thumb = elem.img["data-src"]
-        except:
+        except Exception:
             thumb = elem.img["src"]
         
         languages = elem.find_all("img", class_="idioma")
@@ -127,7 +128,7 @@ def list_all(item):
             
         if next_page:
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
-    except:
+    except Exception:
         pass
     
     return itemlist
@@ -159,12 +160,12 @@ def anno(item):
     now = datetime.now()
     year = int(now.year)
     while year >= 1980:
-        itemlist.append(item.clone(title="%s" %year, action="list_all", url= "%s%s/page/1/?language=%s&years=%s;%s" % (host, "peliculas", item.extra, year, year)))
+        itemlist.append(item.clone(title="%s" %year, action="list_all", url= alfa_urlparse.build_url(host, u'{}/page/1/'.format("peliculas"), query=[('language', u'{}'.format(item.extra)), ('years', u'{};{}'.format(u'{}'.format(year), u'{}'.format(year)))])))
         year -= 1
-    itemlist.append(item.clone(title="70s", action="list_all", url= "%s%s/page/1/?language=%s&years=1970;1979" % (host, "peliculas", item.extra)))
-    itemlist.append(item.clone(title="60s", action="list_all", url= "%s%s/page/1/?language=%s&years=1960;1969" % (host, "peliculas", item.extra)))
-    itemlist.append(item.clone(title="50s", action="list_all", url= "%s%s/page/1/?language=%s&years=1950;1959" % (host, "peliculas", item.extra)))
-    itemlist.append(item.clone(title="<40s", action="list_all", url= "%s%s/page/1/?language=%s&years=1930;1949" % (host, "peliculas", item.extra)))
+    itemlist.append(item.clone(title="70s", action="list_all", url= alfa_urlparse.build_url(host, u'{}/page/1/'.format("peliculas"), query=[('language', u'{}'.format(item.extra)), ('years', '1970;1979')])))
+    itemlist.append(item.clone(title="60s", action="list_all", url= alfa_urlparse.build_url(host, u'{}/page/1/'.format("peliculas"), query=[('language', u'{}'.format(item.extra)), ('years', '1960;1969')])))
+    itemlist.append(item.clone(title="50s", action="list_all", url= alfa_urlparse.build_url(host, u'{}/page/1/'.format("peliculas"), query=[('language', u'{}'.format(item.extra)), ('years', '1950;1959')])))
+    itemlist.append(item.clone(title="<40s", action="list_all", url= alfa_urlparse.build_url(host, u'{}/page/1/'.format("peliculas"), query=[('language', u'{}'.format(item.extra)), ('years', '1930;1949')])))
     
     return itemlist
 
@@ -277,7 +278,7 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
-    item.url = host + "index.php?do=search&subaction=search&search_start=1&story=" + texto
+    item.url = alfa_urlparse.build_url(host, 'index.php', query=[('do', 'search'), ('subaction', 'search'), ('search_start', '1'), ('story', texto)])
     if texto != '':
         return list_all(item)
     else:

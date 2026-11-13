@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -22,9 +23,9 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Novedades", action="lista", url=host + "most-recent/"))
-    itemlist.append(Item(channel=item.channel, title="Mas visto", action="lista", url=host + "most-viewed/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado", action="lista", url=host + "top-rated/"))
+    itemlist.append(Item(channel=item.channel, title="Novedades", action="lista", url=alfa_urlparse.build_url(host, 'most-recent/')))
+    itemlist.append(Item(channel=item.channel, title="Mas visto", action="lista", url=alfa_urlparse.build_url(host, 'most-viewed/')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado", action="lista", url=alfa_urlparse.build_url(host, 'top-rated/')))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -33,7 +34,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
-    item.url = "%ssearch/%s/" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, u'search/{}/'.format(texto))
     try:
         return lista(item)
     # Se captura la excepciÛn, para no interrumpir al buscador global si un canal falla

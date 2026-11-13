@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -27,7 +28,7 @@ canonical = {
 host = canonical['host'] or canonical['host_alt'][0]
 hosta = "%sapi/front/models?limit=40&offset=0&sortBy=stripRanking&primaryTag=%s&filterGroupTags=[[\"%s\"]]"
     # 'https://stripchat.com/api/external/v4/widget/?limit=100&modelsCountry=&modelsLanguage=&modelsList=&tag=%s'
-cat = "%sapi/front/models/liveTags?limit=40&primaryTag=girls&filterGroupTags=[[]]&sortBy=stripRanking" % host
+cat = alfa_urlparse.build_url(host, 'api/front/models/liveTags', query='limit=40&primaryTag=girls&filterGroupTags=[[]]&sortBy=stripRanking')
        # https://es.stripchat.com/api/front/models/liveTags?primaryTag=girls&uniq=go3bmp2lfs6zi18a
 httptools.downloadpage(host, canonical=canonical).data
 
@@ -46,7 +47,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s/" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, u'/search/{}/'.format(texto))
     try:
         return lista(item)
     except Exception:
@@ -95,13 +96,14 @@ def lista(item):
             title += " [COLOR red]%s[/COLOR]" %quality
         if pais:
             title += " (%s)" %pais
-        thumbnail = "https://img.strpst.com/thumbs/%s/%s_webp" %(thumbnail, id)
+        thumbnail = alfa_urlparse.build_url('https://img.strpst.com', u'/thumbs/{}/{}_webp'.format(thumbnail, id))
         if "_240p" in ref:
             ref = ref.replace("_240p", "")
             # url = "https://edge-hls.doppiocdn.com/hls/%s/master/%s.m3u8" %(id, id)
-        url = "https://stripchat.com/api/front/v1/broadcasts/%s" %name
+        url = alfa_urlparse.build_url('https://stripchat.com', u'/api/front/v1/broadcasts/{}'.format(name))
         # url = "https://edge-hls.doppiocdn.net/hls/%s/master/%s_auto.m3u8?playlistType=lowLatency" %(id, id)
-        url += "|%s" %ref
+        # Resolver payload: API URL|playlist URL, not Kodi HTTP headers.
+        url = u'|'.join((url, ref))
         plot = ""
         action = "play"
         if logger.info() is False:

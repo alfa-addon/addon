@@ -127,7 +127,7 @@ def getInfoLabels():
                 resolved['Mediatype'] = resolved['dbtype']
 
             return resolved
-    except:
+    except Exception:
         log.debug("Could not resolve TMDB item: %s" % tmdb_id)
         return {}
 
@@ -166,7 +166,7 @@ def _json(url):
         try:
             if payload:
                 return json.loads(payload)
-        except:
+        except Exception:
             raise Exception(payload)
 
 
@@ -208,10 +208,10 @@ def run(url_suffix=""):
         list(map(log.error, traceback.format_exc().split("\n")))
         try:
             msg = unicode(e)
-        except:
+        except Exception:
             try:
                 msg = str(e)
-            except:
+            except Exception:
                 msg = repr(e)
         notify(getLocalizedLabel(msg), time=7000)
         return

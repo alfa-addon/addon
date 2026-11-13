@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from modules import autoplay
@@ -29,11 +30,11 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     check = ""
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos", action="lista", url=host + "/blog/all/0.html?fl=other&sm=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos", action="lista", url=host + "/popular/top-viewed.html?p=month"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=host + "/blog/all/0.html?sm=rating"))
-    itemlist.append(Item(channel=item.channel, title="Top", action="lista", url=host + "/popular/top-pop.html"))
-    itemlist.append(Item(channel=item.channel, title="Orgasmic", action="lista", url=host + "/blog/all/0.html?fl=all&sm=orgasmic"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos", action="lista", url=alfa_urlparse.build_url(host, '/blog/all/0.html', query='fl=other&sm=latest')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos", action="lista", url=alfa_urlparse.build_url(host, '/popular/top-viewed.html', query='p=month')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=alfa_urlparse.build_url(host, '/blog/all/0.html', query='sm=rating')))
+    itemlist.append(Item(channel=item.channel, title="Top", action="lista", url=alfa_urlparse.build_url(host, '/popular/top-pop.html')))
+    itemlist.append(Item(channel=item.channel, title="Orgasmic", action="lista", url=alfa_urlparse.build_url(host, '/blog/all/0.html', query='fl=all&sm=orgasmic')))
     itemlist.append(Item(channel=item.channel, title="Sitios", action="catalogo", url=host))
     itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
@@ -48,11 +49,11 @@ def mainlist(item):
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/blog/all/0.html?fl=all&sm=latest"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, '/blog/all/0.html', query='fl=all&sm=latest')))
     # itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="findvideos", url=host + "/blog/all/0.html?fl=all&sm=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/blog/all/0.html?fl=top&sm=latest"))
-    itemlist.append(Item(channel=item.channel, title="Sitios" , action="catalogo", url=host + "?page=0&op"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "?page=0&op"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=alfa_urlparse.build_url(host, '/blog/all/0.html', query='fl=top&sm=latest')))
+    itemlist.append(Item(channel=item.channel, title="Sitios" , action="catalogo", url=alfa_urlparse.build_url(host, query='page=0&op')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, query='page=0&op')))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", op=True))
 
     return itemlist
@@ -61,9 +62,9 @@ def submenu(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = host + "/%s.html?page=0" % texto
+    item.url = alfa_urlparse.build_url(host, u'/{}.html'.format(texto), query='page=0')
     if item.op:
-        item.url += "&op"
+        item.url = alfa_urlparse.append_query(item.url, 'op')
 
     try:
         return lista(item)
@@ -84,10 +85,10 @@ def categorias(item):
         title = elem.find('span', class_='htag_el_tag').text.strip().replace("#", "")
         thumbnail = elem.img['data-src']
         cantidad = elem.find('span', class_='htag_el_count').text.strip()
-        thumbnail = "https:" + thumbnail
+        thumbnail = alfa_urlparse.urljoin('https:', thumbnail)
         url = urlparse.urljoin(item.url,url)
         if "&op" in item.url:
-            url += "?page=0&op"
+            url = alfa_urlparse.build_url(url, query='page=0&op')
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail ) )
     return itemlist
 
@@ -104,7 +105,7 @@ def catalogo(item):
         thumbnail = ""
         url = urlparse.urljoin(item.url,url)
         if "&op" in item.url:
-            url += "?page=0&op"
+            url = alfa_urlparse.build_url(url, query='page=0&op')
             title = "%s (%s)" %(title, cantidad)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail ) )
     return itemlist

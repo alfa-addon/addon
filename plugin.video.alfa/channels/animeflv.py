@@ -4,6 +4,7 @@
 # -*- By the Alfa Development Group -*-
 # -*- Responsible: SistemaRayoXP -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from modules import renumbertools
@@ -53,22 +54,22 @@ def mainlist(item):
                          url=host, thumbnail="https://i.imgur.com/hMu5RR7.png"))
     
     itemlist.append(Item(channel=item.channel, action="listado", title="Animes",
-                         url=host + "browse?order=title", thumbnail='https://i.imgur.com/50lMcjW.png'))
+                         url=alfa_urlparse.build_url(host, 'browse', query='order=title'), thumbnail='https://i.imgur.com/50lMcjW.png'))
     
     itemlist.append(Item(channel=item.channel, action="search_section", title="-  Género",
-                         url=host + "browse", thumbnail='https://i.imgur.com/Xj49Wa7.png',
+                         url=alfa_urlparse.build_url(host, 'browse'), thumbnail='https://i.imgur.com/Xj49Wa7.png',
                          extra="genre"))
     
     itemlist.append(Item(channel=item.channel, action="search_section", title="-  Tipo",
-                         url=host + "browse", thumbnail='https://i.imgur.com/0O5U8Y0.png',
+                         url=alfa_urlparse.build_url(host, 'browse'), thumbnail='https://i.imgur.com/0O5U8Y0.png',
                          extra="type"))
     
     itemlist.append(Item(channel=item.channel, action="search_section", title="-  Año",
-                         url=host + "browse", thumbnail='https://i.imgur.com/XzPIQBj.png',
+                         url=alfa_urlparse.build_url(host, 'browse'), thumbnail='https://i.imgur.com/XzPIQBj.png',
                          extra="year"))
     
     itemlist.append(Item(channel=item.channel, action="search_section", title="-  Estado",
-                         url=host + "browse", thumbnail='https://i.imgur.com/7LKKjSN.png',
+                         url=alfa_urlparse.build_url(host, 'browse'), thumbnail='https://i.imgur.com/7LKKjSN.png',
                          extra="status"))
     
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
@@ -122,13 +123,13 @@ def search(item, texto):
                 _id = e["last_id"]
             else:
                 _id = e["id"]
-            url = "%sanime/%s/%s" % (host, _id, e["slug"])
+            url = alfa_urlparse.build_url(host, u'anime/{}/{}'.format(_id, e["slug"]))
             title = e["title"]
             #if "&#039;" in title:
             #    title = title.replace("&#039;","")
             #if "&deg;" in title:
             #    title = title.replace("&deg;","")
-            thumbnail = "%suploads/animes/covers/%s.jpg" % (host, e["id"])
+            thumbnail = alfa_urlparse.build_url(host, u'uploads/animes/covers/{}.jpg'.format(e["id"]))
             
             new_item = item.clone(action="episodios", title=title, url=url, thumbnail=thumbnail, infoLabels={'year': '-'})
             
@@ -165,7 +166,7 @@ def search_section(item):
     order = 'title'
 
     for _id, title in matches:
-        url = "{}?{}={}&order={}".format(item.url, item.extra, _id, order)
+        url = alfa_urlparse.build_url(item.url, query=[(u'{}'.format(item.extra), u'{}'.format(_id)), ('order', u'{}'.format(order))])
         
         itemlist.append(Item(channel=item.channel, action="listado", title=title, url=url,
                              context=renumbertools.context(item)))
@@ -323,7 +324,7 @@ def episodios(item):
 
     for episode in episodes:
         #url = '{}ver/{}/{}-{}'.format(host, episode[1], info[2], episode[0])
-        url = '{}ver/{}-{}'.format(host, info[2], episode[0])
+        url = alfa_urlparse.build_url(host, u'ver/{}-{}'.format(info[2], episode[0]))
         season = 1
         season, episodeRenumber = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, season, int(episode[0]))
 
@@ -363,7 +364,7 @@ def findvideos(item):
 
     if CLONEHOST in item.url:
         item.url = item.url.replace(CLONEHOST, "")
-        item.url = "{}ver/{}".format(host, item.url)
+        item.url = alfa_urlparse.build_url(host, u'ver/{}'.format(item.url))
     data = get_source(item.url)
 
     videos = scrapertools.find_single_match(data, 'var videos = (.*?);')

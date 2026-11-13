@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -47,25 +48,25 @@ def mainlist(item):
                          thumbnail=get_thumb('new episodes', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Emision",
-                         url=host + 'directorio?type%5B%5D=0&year=1950%2C2020&status=1&sort=recent',
+                         url=alfa_urlparse.build_url(host, 'directorio', query='type%5B%5D=0&year=1950%2C2020&status=1&sort=recent'),
                          action="list_all", thumbnail=get_thumb('on air', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Ultimos", url=host+'directorio', action="list_all",
+    itemlist.append(Item(channel=item.channel, title="Ultimos", url=alfa_urlparse.build_url(host, 'directorio'), action="list_all",
                          thumbnail=get_thumb('last', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas", url=host + 'directorio?type%5B%5D=1',
+    itemlist.append(Item(channel=item.channel, title="Peliculas", url=alfa_urlparse.build_url(host, 'directorio', query='type%5B%5D=1'),
                          c_type="movie", action="list_all", thumbnail=get_thumb('movies', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="OVAs", url=host + 'directorio?type%5B%5D=2',
+    itemlist.append(Item(channel=item.channel, title="OVAs", url=alfa_urlparse.build_url(host, 'directorio', query='type%5B%5D=2'),
                          action="list_all", thumbnail=""))
 
-    itemlist.append(Item(channel=item.channel, title="Especiales", url=host + 'directorio?type%5B%5D=3',
+    itemlist.append(Item(channel=item.channel, title="Especiales", url=alfa_urlparse.build_url(host, 'directorio', query='type%5B%5D=3'),
                          action="list_all", thumbnail=""))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section",
                          thumbnail=get_thumb('genres', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar", url=host + 'directorio?q=', action="search",
+    itemlist.append(Item(channel=item.channel, title="Buscar", url=alfa_urlparse.build_url(host, 'directorio', query='q='), action="search",
                          thumbnail=get_thumb('search', auto=True)))
     
     itemlist = renumbertools.show_option(item.channel, itemlist)
@@ -99,9 +100,9 @@ def new_episodes(item):
     matches = soup.find_all("article", class_="episode")
 
     for elem in matches:
-        url = host + elem.a["href"]
+        url = alfa_urlparse.urljoin(host, elem.a["href"])
         title = elem.h3.text
-        thumb = host + elem.figure.img["src"]
+        thumb = alfa_urlparse.urljoin(host, elem.figure.img["src"])
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                              thumbnail=thumb, contentSerieName=title))
@@ -122,9 +123,9 @@ def list_all(item):
         item.c_type = "tvshow"
 
     for elem in matches:
-        url = host + elem.a["href"]
+        url = alfa_urlparse.urljoin(host, elem.a["href"])
         title = elem.h3.text
-        thumb = host + elem.figure.img["src"]
+        thumb = alfa_urlparse.urljoin(host, elem.figure.img["src"])
         
         new_item = Item(channel=item.channel, title=title, url=url, 
                         action='episodios', thumbnail=thumb, infoLabels={'year': '-'})
@@ -146,10 +147,10 @@ def list_all(item):
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
     try:
-        url_next_page = host + soup.find("a", rel="next")["href"]
+        url_next_page = alfa_urlparse.urljoin(host, soup.find("a", rel="next")["href"])
         if url_next_page and len(itemlist) > 8:
             itemlist.append(item.clone(title="Siguiente >>", url=url_next_page))
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -160,12 +161,12 @@ def section(item):
 
     itemlist = list()
 
-    soup = create_soup(host + "directorio")
+    soup = create_soup(alfa_urlparse.build_url(host, 'directorio'))
     matches = soup.find("select", id="genero").find_all("option")
 
     for elem in matches:
         title = elem.text
-        url = "{0}directorio?genero%5B%5D={1}&year=1950%2C2020&status=2&sort=recent".format(host, elem["value"])
+        url = alfa_urlparse.build_url(host, 'directorio', query=[('genero[]', u'{}'.format(elem["value"])), ('year', '1950,2020'), ('status', '2'), ('sort', 'recent')])
 
         itemlist.append(Item(channel=item.channel, url=url, title=title, action="list_all"))
 
@@ -184,7 +185,7 @@ def episodios(item):
     infoLabels = item.infoLabels
 
     for epi in epi_list[::-1]:
-        url = "%sver/%s-%s" % (host, info[1], epi)
+        url = alfa_urlparse.build_url(host, u'ver/{}-{}'.format(info[1], epi))
         epi_num = epi
         infoLabels['season'], infoLabels['episode'] = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, item.contentSeason, int(epi_num or 1))
         
@@ -242,14 +243,13 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = alfa_urlparse.update_query(item.url, {'q': texto})
     try:
         if texto != '':
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

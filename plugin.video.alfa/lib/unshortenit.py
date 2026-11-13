@@ -7,7 +7,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 try:
     from urllib.parse import urlsplit, urlparse, parse_qs, urljoin, quote_plus
-except:
+except Exception:
     from urlparse import urlsplit, urlparse, parse_qs, urljoin
     from urllib import quote_plus
 

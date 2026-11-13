@@ -3,6 +3,7 @@
 # Conector Gupload By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -25,7 +26,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
     video_urls = []
     
     url = page_url.replace('/e/', '/e/hls/')
-    url += '/720p.m3u8'
+    url = alfa_urlparse.build_url(url, '/720p.m3u8')
     video_urls.append(["[Gupload]", url])
     
     return video_urls

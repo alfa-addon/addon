@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -24,11 +25,11 @@ httptools.downloadpage(host, canonical=canonical).data
 def mainlist(item):
     logger.info()
     itemlist = []
-    all = "%sdirectoryCams?directoryJson=true&online=true&url=true&page=1" %host
-    url1= "%sdirectoryCams?directoryJson=true&online=true&url=true&gender=female&broadcastType=female_group&broadcastType=solo&broadcastType=male_female_group&page=1" %host
-    url2= "%sdirectoryCams?directoryJson=true&online=true&url=true&broadcastType=female_group&broadcastType=male_female_group&page=1" %host
-    url3= "%sdirectoryCams?directoryJson=true&online=true&url=true&gender=male&broadcastType=male_group&broadcastType=solo&page=1" %host
-    url4= "%sdirectoryCams?directoryJson=true&online=true&url=true&gender=shemale&page=1" %host
+    all = alfa_urlparse.build_url(host, 'directoryCams', query='directoryJson=true&online=true&url=true&page=1')
+    url1= alfa_urlparse.build_url(host, 'directoryCams', query='directoryJson=true&online=true&url=true&gender=female&broadcastType=female_group&broadcastType=solo&broadcastType=male_female_group&page=1')
+    url2= alfa_urlparse.build_url(host, 'directoryCams', query='directoryJson=true&online=true&url=true&broadcastType=female_group&broadcastType=male_female_group&page=1')
+    url3= alfa_urlparse.build_url(host, 'directoryCams', query='directoryJson=true&online=true&url=true&gender=male&broadcastType=male_group&broadcastType=solo&page=1')
+    url4= alfa_urlparse.build_url(host, 'directoryCams', query='directoryJson=true&online=true&url=true&gender=shemale&page=1')
 
     itemlist.append(Item(channel = item.channel, title="Trending Cams" , action="lista", url=all))
     itemlist.append(Item(channel = item.channel, title="Females" , action="lista", url=url1))
@@ -42,7 +43,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "")
-    item.url = "%sdirectoryCams?directoryJson=true&online=true&url=true&showTag=%s&page=1" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'directoryCams', query=[('directoryJson', 'true'), ('online', 'true'), ('url', 'true'), ('showTag', u'{}'.format(texto)), ('page', '1')])
     try:
         return lista(item)
     except Exception:

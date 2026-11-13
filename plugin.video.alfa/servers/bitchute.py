@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 from core import httptools
 from platformcode import logger
 # import requests
@@ -33,7 +34,7 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     url = data['media_url']
-    url += "|Referer=%s/" %server
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(server))})
     video_urls.append(["[bitchute]", url])
     return video_urls
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -23,7 +24,7 @@ __channel__=canonical['channel']
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-except:
+except Exception:
     __modo_grafico__ = True
 
 # Configuracion del canal
@@ -44,9 +45,9 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(action="peliculas", title="Novedades", url=host + "archivos/peliculas",
+    itemlist.append(item.clone(action="peliculas", title="Novedades", url=alfa_urlparse.build_url(host, 'archivos/peliculas'),
                                thumbnail=get_thumb('newest', auto=True), text_color=color1,))
-    itemlist.append(item.clone(action="peliculas", title="Estrenos", url=host + "archivos/estrenos",
+    itemlist.append(item.clone(action="peliculas", title="Estrenos", url=alfa_urlparse.build_url(host, 'archivos/estrenos'),
                                thumbnail=get_thumb('premieres', auto=True), text_color=color1))
     itemlist.append(item.clone(action="indices", title="Por Géneros", url=host,
                                thumbnail=get_thumb('genres', auto=True), text_color=color1))
@@ -82,12 +83,12 @@ def configuracion(item):
 def search(item, texto):
     logger.info()
 
-    item.url = "%s?s=%s" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, query=[('s', texto)])
 
     try:
         return peliculas(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -100,9 +101,9 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = host + "archivos/peliculas"
+            item.url = alfa_urlparse.build_url(host, 'archivos/peliculas')
         elif categoria == 'terror':
-            item.url = host + "genero/terror"
+            item.url = alfa_urlparse.build_url(host, 'genero/terror')
         item.action = "peliculas"
         itemlist = peliculas(item)
 
@@ -110,7 +111,7 @@ def newest(categoria):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))
@@ -167,7 +168,7 @@ def indices(item):
 
     for scrapedurl, scrapedtitle in matches:
         if "año" in item.title:
-            scrapedurl = "%sfecha-estreno/%s" % (host, scrapedurl)
+            scrapedurl = alfa_urlparse.build_url(host, u'fecha-estreno/{}'.format(scrapedurl))
         itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
                              thumbnail=item.thumbnail, text_color=color3))
 

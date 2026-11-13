@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -48,7 +49,7 @@ thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
 
 current_lang = ''
 
-site_list = ['', '%s' % host, '%sespana/' % host, 'https://www.cinemaqualidade.im']
+site_list = ['', '%s' % host, alfa_urlparse.build_url(host, 'espana/'), 'https://www.cinemaqualidade.im']
 site = config.get_setting('filter_site', channel=canonical['channel'])
 site_lang = '%s' % site_list[site]
 sufix = ['', '', '?castellano=sp', '']
@@ -117,7 +118,7 @@ def mainlist(item):
     if site > 0:
         item.action = 'submenu'
         item.site_lang = site_lang
-        item.url = host if site == 1 else host+'espana/'
+        item.url = host if site == 1 else alfa_urlparse.build_url(host, 'espana/')
         return submenu(item)
 
     autoplay.init(item.channel, AlfaChannel.list_servers, list_quality)
@@ -132,7 +133,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Castellano",
                          action="submenu",
-                         url=host+'espana/',
+                         url=alfa_urlparse.build_url(host, 'espana/'),
                          site=2, 
                          c_type = 'peliculas', 
                          thumbnail=thumbes))
@@ -186,7 +187,7 @@ def submenu(item):
         itemlist.append(Item(channel=item.channel,
                              title="Estrenos",
                              action="list_all",
-                             url=item.url + "estrenos/",
+                             url=alfa_urlparse.build_url(item.url, 'estrenos/'),
                              site=site, 
                              c_type = 'peliculas', 
                              thumbnail=get_thumb('last', auto=True),
@@ -194,7 +195,7 @@ def submenu(item):
         itemlist.append(Item(channel=item.channel,
                              title="Destacadas",
                              action="list_all",
-                             url=item.url + "peliculas-populares/",
+                             url=alfa_urlparse.build_url(item.url, 'peliculas-populares/'),
                              site=site, 
                              c_type = 'peliculas', 
                              thumbnail=get_thumb('hot', auto=True),
@@ -332,7 +333,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             
             elem_json['language'] = '*CAST' if item.site == 2 else '*LAT'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -390,7 +391,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
             elem_json['quality'] = '*HD'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
@@ -419,7 +420,7 @@ def play(item):
             item.url = AlfaChannel.create_soup(item.url).find("iframe").get("src", "")
 
             itemlist = servertools.get_servers_itemlist([item])
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
     return itemlist
@@ -431,9 +432,10 @@ def search(item, texto, **AHkwargs):
     kwargs = AHkwargs
 
     itemlist = []
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
-    item.url = host + '?s=' + texto
+    item.url = alfa_urlparse.build_url(host, query=[('s', _url_query_texto)])
 
     try:
         if texto != '':
@@ -444,7 +446,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
 
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -463,18 +465,18 @@ def newest(categoria, **AHkwargs):
         if categoria in ['peliculas', 'latino']:
             item.url = host
         elif categoria == 'infantiles':
-            item.url = '%sinfantil/' % host
+            item.url = alfa_urlparse.build_url(host, 'infantil/')
         elif categoria == 'terror':
-            item.url = '%sterror/' % host
+            item.url = alfa_urlparse.build_url(host, 'terror/')
         elif categoria == 'castellano':
-            item.url = '%sespana/' % host
+            item.url = alfa_urlparse.build_url(host, 'espana/')
         itemlist = list_all(item)
 
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []

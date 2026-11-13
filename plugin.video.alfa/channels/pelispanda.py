@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -113,21 +114,21 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", 
-                         url=host + 'wp-json/wpreact/v1/movies?posts_per_page=%s&page=1' % posts_per_page, 
+                         url=alfa_urlparse.build_url(host, 'wp-json/wpreact/v1/movies', query=[('posts_per_page', u'{}'.format(posts_per_page)), ('page', '1')]),
                          thumbnail=thumb_pelis, c_type="peliculas"))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Género[/COLOR]", action="section", 
-                         url=host + 'wp-content/themes/wpreact/assets/js/bundle.js', thumbnail=thumb_genero, 
+                         url=alfa_urlparse.build_url(host, 'wp-content/themes/wpreact/assets/js/bundle.js'), thumbnail=thumb_genero,
                          extra='genero', c_type="peliculas"))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Idiomas[/COLOR]", action="section", 
-                         url=host + 'wp-content/themes/wpreact/assets/js/bundle.js', thumbnail=thumb_calidad, 
+                         url=alfa_urlparse.build_url(host, 'wp-content/themes/wpreact/assets/js/bundle.js'), thumbnail=thumb_calidad,
                          extra='idioma', c_type="peliculas"))
 
     itemlist.append(Item(channel=item.channel, title="Series", action="list_all", 
-                         url=host + 'wp-json/wpreact/v1/series?posts_per_page=%s&page=1' % posts_per_page, 
+                         url=alfa_urlparse.build_url(host, 'wp-json/wpreact/v1/series', query=[('posts_per_page', u'{}'.format(posts_per_page)), ('page', '1')]),
                          thumbnail=thumb_series, c_type="series"))
 
     itemlist.append(Item(channel=item.channel, title="Animes", action="list_all", 
-                         url=host + 'wp-json/wpreact/v1/animes?posts_per_page=%s&page=1' % posts_per_page, 
+                         url=alfa_urlparse.build_url(host, 'wp-json/wpreact/v1/animes', query=[('posts_per_page', u'{}'.format(posts_per_page)), ('page', '1')]),
                          thumbnail=thumb_animes, extra='animes', c_type="series"))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
@@ -177,9 +178,9 @@ def section(item):
 
                 item_local.url = url.strip('/').split('/')[-1]
                 if item.extra in ['genero']:
-                    item_local.url = host + 'wp-json/wpreact/v1/category?category=%s&posts_per_page=%s&page=1' % (item_local.url, posts_per_page)
+                    item_local.url = alfa_urlparse.build_url(host, 'wp-json/wpreact/v1/category', query=[('category', u'{}'.format(item_local.url)), ('posts_per_page', u'{}'.format(posts_per_page)), ('page', '1')])
                 elif item.extra in ['idioma']:
-                    item_local.url = host + 'wp-json/wpreact/v1/movies?posts_per_page=%s&page=1&language=%s' % (posts_per_page, item_local.url)
+                    item_local.url = alfa_urlparse.build_url(host, 'wp-json/wpreact/v1/movies', query=[('posts_per_page', u'{}'.format(posts_per_page)), ('page', '1'), ('language', u'{}'.format(item_local.url))])
                 else:
                     continue
                 
@@ -228,10 +229,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
         try:
             elem_json['mediatype'] = 'movie' if elem.get('type', 'pelicula') == 'pelicula' else 'tvshow'
             elem_json['title'] = elem.get('title', '')
-            elem_json['url'] = '%swp-json/wpreact/v1/%s/%s/' % (host, elem_json['mediatype'] if elem_json['mediatype'] == 'movie' \
+            elem_json['url'] = alfa_urlparse.build_url(host, u'wp-json/wpreact/v1/{}/{}/'.format(elem_json['mediatype'] if elem_json['mediatype'] == 'movie' \
                                                                                              else 'serie' if (item.extra != 'animes' \
                                                                                                 and elem.get('type', '') != 'anime') \
-                                                                                             else 'anime', elem.get('slug', ''))
+                                                                                             else 'anime', elem.get('slug', '')))
             if elem_json['mediatype'] in ['tvshow']: elem_json['url'] = elem_json['url'] + 'related/'
             elem_json['thumbnail'] = elem.get('featured', '')
             elem_json['language'] = '*%s' % elem.get('language', '')
@@ -395,7 +396,7 @@ def play(item):
                                            follow_redirects=False, hide_infobox=True, **kwargs)
 
         if response.code in AlfaChannel.REDIRECTION_CODES:
-            item.url = '%s|Referer=%s' % (response.headers.get('location', ''), AlfaChannel.obtain_domain(item.url, scheme=True))
+            item.url = alfa_urlparse.add_url_headers(response.headers.get('location', ''), {'Referer': u'{}'.format(AlfaChannel.obtain_domain(item.url, scheme=True))})
 
     return [item]
 
@@ -415,7 +416,7 @@ def search(item, texto, **AHkwargs):
     busq = 'wp-json/wpreact/v1/search?query=%s&posts_per_page=%s&page=1' % (texto, posts_per_page)
     
     try:
-        item.url = host + busq
+        item.url = alfa_urlparse.urljoin(host, busq)
         item.extra = 'search'
 
         if texto:
@@ -448,9 +449,9 @@ def newest(categoria, **AHkwargs):
         if categoria in ['peliculas', 'latino', 'torrent']:
             item.category_new = "newest"
             if categoria in ['peliculas', 'torrent']:
-                item.url = host + "wp-json/wpreact/v1/released/"
+                item.url = alfa_urlparse.build_url(host, 'wp-json/wpreact/v1/released/')
             if categoria in ['latino']:
-                item.url = host + "wp-json/wpreact/v1/movies?posts_per_page=%s&page=1&language=latino" % posts_per_page
+                item.url = alfa_urlparse.build_url(host, 'wp-json/wpreact/v1/movies', query=[('posts_per_page', u'{}'.format(posts_per_page)), ('page', '1'), ('language', 'latino')])
             item.c_type = 'peliculas'
             item.extra = categoria
             item.extra2 = "novedades"
@@ -462,7 +463,7 @@ def newest(categoria, **AHkwargs):
         
         if categoria in ['series']:
             item.category_new = "newest"
-            item.url = host + "wp-json/wpreact/v1/%s?posts_per_page=%s&page=1" % (categoria, posts_per_page)
+            item.url = alfa_urlparse.build_url(host, u'wp-json/wpreact/v1/{}'.format(categoria), query=[('posts_per_page', u'{}'.format(posts_per_page)), ('page', '1')])
             item.c_type = 'series'
             item.extra = categoria
             item.extra2 = "novedades"

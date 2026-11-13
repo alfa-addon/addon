@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import urlparse
@@ -31,13 +32,13 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "page/1/?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "page/1/?filter=most-viewed"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "page/1/?filter=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "page/1/?filter=longest"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars/page/1/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=latest')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=most-viewed')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=popular')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=alfa_urlparse.build_url(host, 'page/1/', query='filter=longest')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars/page/1/')))
     # itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "studios/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/page/1/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories/page/1/')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -45,10 +46,10 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%spage/1/?s=%s&filter=latest" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'page/1/', query=[('s', u'{}'.format(texto)), ('filter', 'latest')])
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -76,7 +77,7 @@ def categorias(item):
             title = "%s (%s)" % (title,cantidad.text.strip())
         # url = urlparse.urljoin(item.url,url)
         # thumbnail = urlparse.urljoin(item.url,thumbnail)
-        url += "/page/1/?filter=latest"
+        url = alfa_urlparse.build_url(url, '/page/1/', query='filter=latest')
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )

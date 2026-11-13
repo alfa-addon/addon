@@ -696,7 +696,7 @@ def blocking_error(url, req, proxy_data, **opt):
     data = ""
     if req.content:
         data = req.content[:5000]
-    canonical = opt.get("canonical", {})
+    canonical = urlparse.normalize_canonical(opt.get("canonical", {}))
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
     resp = False
@@ -835,24 +835,24 @@ def canonical_quick_check(url, **opt):
         or "//localhost" in url
     ):
         return url
-    canonical = opt.get("canonical", {})
+    canonical = urlparse.normalize_canonical(opt.get("canonical", {}))
 
     alfa_s = True
     if not canonical.get("alfa_s", alfa_s):
         logger.info(url, force=True)
 
-    url_host = scrapertools.find_single_match(url, patron_host).rstrip("/") + "/"
+    url_host = urlparse.url_domain(url)
     if (
         url_host
         and url_host in canonical.get("host_black_list", [])
         and canonical.get("host_alt", [])
     ):
-        url = url.replace(url_host, canonical["host_alt"][0])
+        url = urlparse.replace_domain(url, canonical["host_alt"][0])
 
     if "btdig" in canonical.get("host", "") and canonical.get("channel", ""):
         if canonical["host"] in url and canonical.get("host_alt", []):
-            url = url.replace(canonical["host"], canonical["host_alt"][0])
-        canonical["host"] = ""
+            url = urlparse.replace_domain(url, canonical["host_alt"][0])
+        canonical["host"] = opt["canonical"]["host"] = ""
         config.set_setting(
             "current_host", canonical["host"], channel=canonical["channel"]
         )
@@ -885,7 +885,7 @@ def canonical_check(url, response, req, **opt):
     if response["data"]:
         data = response["data"][:250000]
 
-    canonical = opt.get("canonical", {})
+    canonical = urlparse.normalize_canonical(opt.get("canonical", {}))
     canonical_new = False
     canonical_new_alt = []
 
@@ -903,7 +903,7 @@ def canonical_check(url, response, req, **opt):
         )
     ):
         config.set_setting("current_host", "", channel=canonical["channel"])
-        canonical["host"] = ""
+        canonical["host"] = opt["canonical"]["host"] = ""
 
     if "btdig" in url:
         return response
@@ -958,9 +958,9 @@ def canonical_check(url, response, req, **opt):
 
     # if not canonical_host and (canonical.get('pattern', '') or canonical.get('pattern_forced', '')):
     #    logger.error('PATRÓN: %s / \nDATOS: %s' % (patterns, data[:3000]))
+    response["canonical"] = urlparse.normalize_domain(response["canonical"])
     if canonical_host:
-        if not canonical_host.endswith("/"):
-            canonical_host += "/"
+        canonical_host = urlparse.normalize_domain(canonical_host)
         response["canonical"] = canonical_host
     if (
         canonical.get("host", "")
@@ -981,7 +981,7 @@ def canonical_check(url, response, req, **opt):
         if response["canonical"] != canonical.get("host", "") and response[
             "canonical"
         ] not in canonical.get("host_black_list", []):
-            if response["canonical"] in url:
+            if response["canonical"] == urlparse.url_domain(url):
                 canonical_new = response["canonical"]
             else:
                 host_list = [str(response["canonical"])]
@@ -1005,10 +1005,13 @@ def canonical_check(url, response, req, **opt):
                 for url_alt in host_list:
                     url_alt_ver = url_alt
                     if canonical.get("host_verification", ""):
-                        if "%" in canonical["host_verification"]:
-                            url_alt_ver = canonical["host_verification"] % url_alt_ver
+                        verification = canonical["host_verification"]
+                        if verification.startswith("%s"):
+                            url_alt_ver = urlparse.urljoin(url_alt + "/", verification[2:])
+                        elif "%" in verification:
+                            url_alt_ver = verification % url_alt_ver
                         else:
-                            url_alt_ver = canonical["host_verification"]
+                            url_alt_ver = verification
 
                     page = downloadpage(
                         url_alt_ver,
@@ -1066,16 +1069,19 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
     logger.info(opt.get("canonical", {}).get("host_alt", []), force=True)
 
     channel = None
-    canonical = opt.get("canonical", {})
+    canonical = urlparse.normalize_canonical(opt.get("canonical", {}))
     if not canonical.get("host_alt", []) or not canonical.get("channel", []):
         return url, response_call
 
     if (
         opt.get("url_save")
-        and opt["url_save"] in canonical["host_alt"]
+        and urlparse.normalize_domain(opt["url_save"]) in canonical["host_alt"]
         and str(req.status_code) != "400"
     ):
-        canonical["host_alt"].remove(opt["url_save"])
+        canonical["host_alt"].remove(urlparse.normalize_domain(opt["url_save"]))
+        source = opt["canonical"]
+        reference = opt.get("_canonical_host_reference") or source.get("host") or (source.get("host_alt") or [""])[0]
+        source["host_alt"] = urlparse.format_channel_canonical(canonical, reference)["host_alt"]
     if str(req.status_code) == "400" and canonical["host_alt"]:
         if not PY3:
             from . import proxytools
@@ -1110,11 +1116,13 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
         logger.error(traceback.format_exc())
 
     for host_b in canonical["host_alt"]:
-        if host_b.rstrip("/") in url:
+        if host_b == urlparse.url_domain(url):
             continue
         host = canonical["host"] = host_b
+        reference = channel.host if channel else opt.get("_canonical_host_reference", opt["canonical"].get("host", ""))
+        opt["canonical"]["host"] = urlparse.format_channel_host(host_b, reference)
 
-        url_final = opt["url_save"] = url.replace(host_a, host.rstrip("/"))
+        url_final = opt["url_save"] = urlparse.replace_domain(url, host)
 
         opt["count_retries_tot"] = 1
         if (
@@ -1149,6 +1157,7 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
             else:
                 host = response.host
                 if channel:
+                    host = response.host = urlparse.format_channel_host(host, channel.host)
                     channel.host = host
             break
     else:
@@ -1166,35 +1175,34 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
 
 
 def reset_canonical(canonical_new, url, response, **opt):
-    canonical = opt.get("canonical", {})
-
-    if not isinstance(response, dict):
-        response.host = canonical_new
-        if not url.startswith("magnet"):
-            response.url_new = url.replace(
-                scrapertools.find_single_match(url, patron_host),
-                canonical_new.rstrip("/"),
-            )
-    else:
-        response["host"] = canonical_new
-        if not url.startswith("magnet"):
-            response["url_new"] = url.replace(
-                scrapertools.find_single_match(url, patron_host),
-                canonical_new.rstrip("/"),
-            )
-    opt["canonical"]["host"] = canonical_new
-    config.set_setting("current_host", canonical_new, channel=canonical["channel"])
-
+    source = opt.get("canonical", {})
+    reference = opt.get("_canonical_host_reference") or source.get("host") or (source.get("host_alt") or [""])[0]
+    channel = None
     try:
         channel = __import__(
-            "channels.%s" % canonical["channel"],
+            "channels.%s" % source["channel"],
             None,
             None,
-            ["channels.%s" % canonical["channel"]],
+            ["channels.%s" % source["channel"]],
         )
-        channel.host = canonical_new
+        reference = getattr(channel, "host", reference)
     except Exception:
         logger.error(traceback.format_exc())
+
+    canonical_new = urlparse.normalize_domain(canonical_new)
+    host = urlparse.format_channel_host(canonical_new, reference)
+    if not isinstance(response, dict):
+        response.host = host
+        if not url.startswith("magnet"):
+            response.url_new = urlparse.replace_domain(url, canonical_new)
+    else:
+        response["host"] = host
+        if not url.startswith("magnet"):
+            response["url_new"] = urlparse.replace_domain(url, canonical_new)
+    source["host"] = host
+    config.set_setting("current_host", host, channel=source["channel"])
+    if channel:
+        channel.host = host
 
     return url, response
 
@@ -1659,7 +1667,7 @@ def downloadpage(url, **opt):
                 req = requests.Response()
                 req.status_code = response_code = str(e)
                 block = blocking_error(url, req, proxy_data, **opt)
-                canonical = opt.get("canonical", {})
+                canonical = urlparse.normalize_canonical(opt.get("canonical", {}))
 
                 if (
                     block
@@ -1667,19 +1675,14 @@ def downloadpage(url, **opt):
                     and opt.get("proxy__test", "") != "retry"
                     and not proxy_data.get("stat", "")
                 ):
-                    url_host = scrapertools.find_single_match(url, patron_host)
-                    url_host = (
-                        url_host + "/"
-                        if url_host and not url_host.endswith("/")
-                        else ""
-                    )
+                    url_host = urlparse.url_domain(url)
                     if (
                         canonical.get("host_alt", [])
                         and canonical.get("host_black_list", [])
                         and url_host != canonical["host_alt"][0]
                         and url_host in canonical["host_black_list"]
                     ):
-                        url_alt = url.replace(url_host, canonical["host_alt"][0])
+                        url_alt = urlparse.replace_domain(url, canonical["host_alt"][0])
                         if not opt.get("alfa_s", False):
                             logger.error(
                                 "Error: %s in url: %s - Reintentando con %s"
@@ -1733,7 +1736,7 @@ def downloadpage(url, **opt):
         if opt.get("history"):
             response["history"].append(opt["history"])
 
-        canonical = opt.get("canonical", {})
+        canonical = urlparse.normalize_canonical(opt.get("canonical", {}))
 
         block = blocking_error(url, req, proxy_data, **opt)
 
@@ -1745,8 +1748,7 @@ def downloadpage(url, **opt):
             and not proxy_data.get("stat", "")
             and response_code not in [404]
         ):
-            url_host = scrapertools.find_single_match(url, patron_host)
-            url_host = url_host + "/" if url_host and not url_host.endswith("/") else ""
+            url_host = urlparse.url_domain(url)
 
             if (
                 canonical.get("host_alt", [])
@@ -1754,7 +1756,7 @@ def downloadpage(url, **opt):
                 and url_host != canonical["host_alt"][0]
                 and url_host in canonical["host_black_list"]
             ):
-                url_alt = url.replace(url_host, canonical["host_alt"][0])
+                url_alt = urlparse.replace_domain(url, canonical["host_alt"][0])
                 if not opt.get("alfa_s", False):
                     logger.error(
                         "Error: %s in url: %s - Reintentando con %s"

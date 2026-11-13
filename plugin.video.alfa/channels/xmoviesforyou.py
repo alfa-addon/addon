@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -76,10 +77,10 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host + "?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "studios?page=1", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "pornstars?page=1", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=alfa_urlparse.build_url(host, query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(host, 'studios', query='page=1'), extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, 'pornstars', query='page=1'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     autoplay.show_option(item.channel, itemlist)
@@ -123,7 +124,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['url'] = elem['href']
             elem_json['server'] = ''
             elem_json['language'] = ''
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
@@ -137,7 +138,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch?q=%s&page=1" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, 'search', query=[('q', texto), ('page', '1')])
     
     try:
         if texto:
@@ -148,7 +149,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

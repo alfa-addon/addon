@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -91,7 +92,7 @@ def mainlist(item):
             channel = item.channel,
             title = "Series de los 80s",
             action = "list_all",
-            url = host + 'media-category/80s/', 
+            url = alfa_urlparse.build_url(host, 'media-category/80s/'),
             fanart = item.fanart,
             c_type='series', 
             thumbnail = get_thumb("year", auto=True)
@@ -102,7 +103,7 @@ def mainlist(item):
             channel = item.channel,
             title = "Series de los 90s",
             action = "list_all",
-            url = host + 'media-category/90s/', 
+            url = alfa_urlparse.build_url(host, 'media-category/90s/'),
             fanart = item.fanart,
             c_type='series', 
             thumbnail = get_thumb("year", auto=True)
@@ -113,7 +114,7 @@ def mainlist(item):
             channel = item.channel,
             title = "Series del 2000",
             action = "list_all",
-            url = host + 'media-category/00s/', 
+            url = alfa_urlparse.build_url(host, 'media-category/00s/'),
             fanart = item.fanart,
             c_type='series', 
             thumbnail = get_thumb("year", auto=True)
@@ -124,7 +125,7 @@ def mainlist(item):
             channel = item.channel,
             title = "Todas las series",
             action = "list_all",
-            url = host + 'series/', 
+            url = alfa_urlparse.build_url(host, 'series/'),
             fanart = item.fanart,
             c_type='series', 
             thumbnail = get_thumb("all", auto=True)
@@ -182,14 +183,14 @@ def seasons(item):
     logger.info()
 
     findS = finds.copy()
-    item.url = item.url.rstrip('/') + '/'
+    item.url = alfa_urlparse.build_url(item.url.rstrip('/'), '/')
 
     soup = AlfaChannel.create_soup(item.url)
 
     url =  soup.find('a', class_='video-play-button-single-aztec', string=re.compile("antigua"))
     url = url['href'] if url else ''
     if url: 
-        item.url = url.rstrip('/') + '/'
+        item.url = alfa_urlparse.build_url(url.rstrip('/'), '/')
         soup = {}
         findS['seasons'] = {'find': [{'tag': ['li'], 'class': ['megalist']}], 'find_all': [['li']]}
 
@@ -256,7 +257,7 @@ def findvideos(item):
 
     findS['controls'].update({'headers': {'Referer': host}})
 
-    item.url = item.url.rstrip('/') + '/' if not item.url.endswith('.html') else item.url
+    item.url = alfa_urlparse.build_url(item.url.rstrip('/'), '/') if not item.url.endswith('.html') else item.url
     if not '/episodio' in item.url:
         findS['findvideos'] = {'find_all': [{'tag': ['div'], 'class': ['post-body entry-content']}]}
 
@@ -297,8 +298,9 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = item.url + '?post_type=video_skrn&search_keyword=' + texto
+        item.url = alfa_urlparse.build_url(item.url, query=[('post_type', 'video_skrn'), ('search_keyword', _url_query_texto)])
         
         if texto:
             item.c_type = 'search'
@@ -308,7 +310,7 @@ def search(item, texto, **AHkwargs):
             return []
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

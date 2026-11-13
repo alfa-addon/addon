@@ -14,7 +14,7 @@ import os
 
 try:
     import xbmcgui
-except:
+except Exception:
     xbmcgui = None
 
 from channelselector import get_thumb
@@ -953,7 +953,7 @@ if xbmcgui:
             try:
                 self.getControl(5).setText(self.text)
                 self.getControl(1).setLabel(self.title)
-            except:
+            except Exception:
                 pass
 
         def onClick(self, control_id):

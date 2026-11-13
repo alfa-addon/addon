@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -69,10 +70,10 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Útimos videos", action="list_all", url= url_api + "/facts/tag?id=27173&limit=48&offset=0"))
-    itemlist.append(Item(channel=item.channel, title="Canal", action="section", url= url_api + "/tag/recommends?type=brand&slug=index", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstar", action="section", url= url_api + "/tag/recommends?type=person&slug=index", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias", action="section", url= url_api + "/tag/recommends?type=other&slug=index", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Útimos videos", action="list_all", url= alfa_urlparse.build_url(url_api, '/facts/tag', query='id=27173&limit=48&offset=0')))
+    itemlist.append(Item(channel=item.channel, title="Canal", action="section", url= alfa_urlparse.build_url(url_api, '/tag/recommends', query='type=brand&slug=index'), extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstar", action="section", url= alfa_urlparse.build_url(url_api, '/tag/recommends', query='type=person&slug=index'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="section", url= alfa_urlparse.build_url(url_api, '/tag/recommends', query='type=other&slug=index'), extra="Categorias"))
     # itemlist.append(item.clone(title="Buscar...", action="search"))
     return itemlist
 
@@ -99,16 +100,16 @@ def section_matches(item, matches_int, **AHkwargs):
             id = elem["id"]
             if elem.get("thumbs", ""):
                 th2 = elem.get("thumbs", "")[-1] #[0]
-                elem_json['thumbnail'] = "https://thumbs.externulls.com/photos/%s/to.webp" %th2.get('id', '')
+                elem_json['thumbnail'] = alfa_urlparse.build_url('https://thumbs.externulls.com', u'/photos/{}/to.webp'.format(th2.get('id', '')))
             
             # if item.extra == 'Canal' and not elem_json['thumbnail']:
                 # continue
             # if item.extra == 'PornStar' and not elem_json['thumbnail']:
                 # continue
             
-            elem_json['url'] = '%s/facts/tag?slug=%s&limit=48&offset=0' % (url_api, elem.get('tg_slug', '') )
+            elem_json['url'] = alfa_urlparse.build_url(url_api, '/facts/tag', query=[('slug', u'{}'.format(elem.get('tg_slug', ''))), ('limit', '48'), ('offset', '0')])
             elem_json['title'] = elem.get('tg_name', '')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -158,11 +159,11 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if stuff.get("sf_story", ""):
                 plot = stuff["sf_story"]
             
-            elem_json['url'] = "%s%s" % (host, id)
+            elem_json['url'] = alfa_urlparse.urljoin(host, u'{}'.format(id))
             elem_json['title'] = title
-            elem_json['thumbnail'] = "https://thumbs.externulls.com/videos/%s/0.webp?size=480x270" %id
+            elem_json['thumbnail'] = alfa_urlparse.build_url('https://thumbs.externulls.com', u'/videos/{}/0.webp'.format(id), query='size=480x270')
             elem_json['stime'] = stime
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -184,7 +185,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%sapi/videos.php?params=259200/%s/latest-updates/60/search..1.all..&s=%s&sort=latest-updates&date=all&type=all&duration=all" % (host,item.orientation, texto.replace(" ", "%20")) 
+    item.url = alfa_urlparse.build_url(host, 'api/videos.php', query=[('params', u'259200/{}/latest-updates/60/search..1.all..'.format(u'{}'.format(item.orientation))), ('s', u'{}'.format(texto)), ('sort', 'latest-updates'), ('date', 'all'), ('type', 'all'), ('duration', 'all')])
     
     try:
         if texto:
@@ -195,7 +196,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

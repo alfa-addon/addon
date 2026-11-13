@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector lulustream By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import sys
 
 import re
@@ -46,7 +47,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         matches = re.compile(sources, re.DOTALL).findall(dec_data)
         for url in matches:
             headers = httptools.default_headers.copy()
-            url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+            url = alfa_urlparse.add_url_headers(url, headers, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
             video_urls.append(['[lulustream] m3u', url])
     except Exception:
         pass

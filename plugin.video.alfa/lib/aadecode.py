@@ -42,7 +42,7 @@ def decode(text, alt=False):
                 x = c
                 subchar += str(eval(x))
                 c = ""
-            except:
+            except Exception:
                 pass
         if subchar != '':
             txt += subchar + "|"
@@ -61,7 +61,7 @@ def toStringCases(txt_result):
             m3 = True
             try:
                 sum_base = "+" + re.search(r".toString...(\d+).", txt_result, re.DOTALL).groups(1)
-            except:
+            except Exception:
                 sum_base = ""
             txt_pre_temp = re.findall(r"..(\d),(\d+).", txt_result, re.DOTALL)
             txt_temp = [(n, b) for b, n in txt_pre_temp]

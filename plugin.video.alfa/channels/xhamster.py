@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from platformcode import config, logger
 from core import scrapertools, httptools
@@ -23,12 +24,12 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="lista", title="Útimos videos", url=host + "newest"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Útimos videos", url=alfa_urlparse.build_url(host, 'newest')))
     itemlist.append(Item(channel=item.channel, action="votados", title="Lo mejor"))
     itemlist.append(Item(channel=item.channel, action="vistos", title="Los mas vistos"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Recomendados", url=host + "videos/recommended"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "channels"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Recomendados", url=alfa_urlparse.build_url(host, 'videos/recommended')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=alfa_urlparse.build_url(host, 'pornstars')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=alfa_urlparse.build_url(host, 'channels')))
     itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=host))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
     return itemlist
@@ -37,7 +38,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/%s?sort=newest" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, u'search/{}'.format(texto), query='sort=newest')
     item.extra = "buscar"
     try:
         return lista(item)
@@ -57,7 +58,7 @@ def categorias(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.text.strip()
-        url += "/newest"
+        url = alfa_urlparse.build_url(url, '/newest')
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url))
     return itemlist
 
@@ -83,7 +84,7 @@ def catalogo(item):
         if cantidad:
             title = "%s (%s)" % (title,cantidad)
         url = urlparse.urljoin(item.url,url)
-        url += "/newest"
+        url = alfa_urlparse.build_url(url, '/newest')
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,

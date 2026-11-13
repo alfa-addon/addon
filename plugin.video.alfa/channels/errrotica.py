@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -24,7 +25,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "sites/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=alfa_urlparse.build_url(host, 'sites/')))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -32,11 +33,12 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/?q=%s" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, 'search/', query=[('q', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

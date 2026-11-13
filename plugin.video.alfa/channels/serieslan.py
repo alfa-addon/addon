@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -104,22 +105,22 @@ def mainlist(item):
 
     itemlist.append(
         Item(channel=item.channel, action="section", title=" - [COLOR paleturquoise]Listado [A-Z][/COLOR]",
-            url=host+"lista.php?or=abc", thumbnail=get_thumb("alphabet", auto=True), c_type="series",
+            url=alfa_urlparse.build_url(host, 'lista.php', query='or=abc'), thumbnail=get_thumb("alphabet", auto=True), c_type="series",
             plot=plot, extra='Alfabético'))
 
     itemlist.append(
         Item(channel=item.channel, action="list_all", title="Series más Recientes",
-            url=host+"lista.php?or=rel", thumbnail=get_thumb("news", auto=True), c_type="series",
+            url=alfa_urlparse.build_url(host, 'lista.php', query='or=rel'), thumbnail=get_thumb("news", auto=True), c_type="series",
             plot=plot))
 
     itemlist.append(
         Item(channel=item.channel, action="list_all", title="Series más Populares",
-            url=host+"lista.php?or=mas", thumbnail=get_thumb("popular", auto=True), c_type="series",
+            url=alfa_urlparse.build_url(host, 'lista.php', query='or=mas'), thumbnail=get_thumb("popular", auto=True), c_type="series",
             plot=plot))
 
     itemlist.append(
         Item(channel=item.channel, action="list_all", title="Series Live Action",
-            url=host+"liveaction", thumbnail=get_thumb("tvshow", auto=True), c_type="series",
+            url=alfa_urlparse.build_url(host, 'liveaction'), thumbnail=get_thumb("tvshow", auto=True), c_type="series",
             plot="Series LiveAction de los 90s y 2000", extra='LiveAction'))
     
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
@@ -193,7 +194,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['context'] = renumbertools.context(item)
             elem_json['context'].extend(autoplay.context)
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -235,7 +236,7 @@ def seasons_matches(item, matches_int, **AHkwargs):
                                             [int(s) for s in elem_json['title'] if s.isdigit()][0]
             elem_json['season'] = int(elem_json['season'])
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -314,7 +315,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
                                                         item.contentSerieName, item.contentSeason, int(title[1]))
             elem_json['title'] = title[2]                                     
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -373,7 +374,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             for zanga, val in matches_alt:
                 js = js.replace('var %s = document.getElementById("%s");' % (zanga, zanga), "")
                 js = js.replace('%s.getAttribute("val")' % zanga, '"%s"' % val)
-        except:
+        except Exception:
             pass
 
         js = re.sub('(document\[.*?)=', 'prem=', js)
@@ -383,7 +384,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
         try:
             result = runJavascript.runJs().runJsString(js, True)
-        except:
+        except Exception:
             logger.error('MATCHES vacías: %s' % matches_alt)
             result = ''
 
@@ -485,7 +486,7 @@ def search(item, texto, **AHkwargs):
     try:
         if texto:
             texto = texto.replace(" ", "+")
-            item.url = '%sb.php/' %  (host)
+            item.url = alfa_urlparse.build_url(host, 'b.php/')
             item.post = "k=" + texto
 
             item.c_type = "search"
@@ -494,7 +495,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

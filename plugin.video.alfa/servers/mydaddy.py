@@ -3,6 +3,7 @@
 # Conector mydaddy By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -13,7 +14,7 @@ kwargs = {'set_tls': None, 'set_tls_min': False, 'retries_cloudflare': 6, 'ignor
 host = 'https://mydaddy.cc' #'https://myxstudio.top'
 
 kwargs['headers'] = {
-                     'Referer': '%s/' %host,
+                     'Referer': alfa_urlparse.build_url(host, '/'),
                      'Origin': host,
                      # 'Content-Type': 'application/json;charset=UTF-8',
                      # 'Accept-Encoding': 'gzip, deflate, br, zstd',
@@ -50,7 +51,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for url,quality in matches:
         if not url.startswith("https"):
             url = "https:%s" % url
-        url += "|Referer=%s/&Origin=%s" % (host, host)
+        url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
         video_urls.append(["[mydaddy] %s" % quality, url])
     return video_urls
 

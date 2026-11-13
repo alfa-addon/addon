@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -17,7 +18,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global host, server, data
     domain = scrapertools.get_domain_from_url(page_url)
-    host = "https://%s" % domain
+    host = alfa_urlparse.urlunsplit(('https', u'{}'.format(domain), "", "", ""))
     server = domain.split(".")[-2]
    
     if "send" in server:
@@ -51,7 +52,7 @@ def get_video_url(page_url, video_password):
                 url = "http:%s" % url
             
             url = urlparse.unquote(url)
-            url += "|Referer=%s" % page_url
+            url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
             video_urls.append(["[%s] mp4" %(server), url])
         return video_urls
 
@@ -97,7 +98,7 @@ def get_video_url(page_url, video_password):
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
                     # url += "|Referer=%s" % host
-                    url += "|Referer=%s/&Origin=%s" % (host, host)
+                    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                     video_urls.append(['[%s] %s' % (server,quality), url])
         else:
             # response = httptools.downloadpage(url, referer=host, **kwargs)
@@ -105,7 +106,7 @@ def get_video_url(page_url, video_password):
                 # url = httptools.downloadpage(url, follow_redirects=False).headers["location"]
             headers = httptools.default_headers.copy() 
             # if not "sexpester" in host:
-            url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host,host)
+            url = alfa_urlparse.add_url_headers(url, headers, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                 # url += "|Referer=%s/&Origin=%s" % (host, host)
             video_urls.append(["[%s] mp4" %(server), url])
     return video_urls

@@ -88,13 +88,13 @@ class GibberishAES(object):
             b = []
 
             try: c.append(_chars.index(string[i:i + 1]))
-            except: c.append(-1)
+            except Exception: c.append(-1)
             try: c.append(_chars.index(string[i + 1:i + 2]))
-            except: c.append(-1)
+            except Exception: c.append(-1)
             try: c.append(_chars.index(string[i + 2:i + 3]))
-            except: c.append(-1)
+            except Exception: c.append(-1)
             try: c.append(_chars.index(string[i + 3:i + 4]))
-            except: c.append(-1)
+            except Exception: c.append(-1)
 
             b.append((c[0] << 2) | (c[1] >> 4))
             b.append(((c[1] & 15) << 4) | (c[2] >> 2))

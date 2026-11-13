@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -27,7 +28,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for calidad, url in matches:
         url = url.replace("\/", "/")
         host = "https://vkvideo.ru/"
-        url += ".mp4"
+        url = alfa_urlparse.build_url(alfa_urlparse.append_path_suffix(url, '.mp4'))
         video_urls.append(["[vk] %sp" %calidad, url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -40,11 +41,11 @@ def mainlist(item):
     
     httptools.downloadpage(host, canonical=canonical, timeout=timeout).data
     
-    itemlist.append(item.clone(title="Mujeres" , action="lista", url=host + "api/v1/browse/react/?gender-hide=c,m,t&p=1"))
-    itemlist.append(item.clone(title="Hombres" , action="lista", url=host + "api/v1/browse/react/?gender-hide=c,f,t&p=1"))
-    itemlist.append(item.clone(title="Couples" , action="lista", url=host + "api/v1/browse/react/?gender-hide=f,m,t&p=1"))
-    itemlist.append(item.clone(title="Trans" , action="lista", url=host + "api/v1/browse/react/?gender-hide=c,m,F&p=1"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "api/v1/tags/index?page=1"))
+    itemlist.append(item.clone(title="Mujeres" , action="lista", url=alfa_urlparse.build_url(host, 'api/v1/browse/react/', query='gender-hide=c,m,t&p=1')))
+    itemlist.append(item.clone(title="Hombres" , action="lista", url=alfa_urlparse.build_url(host, 'api/v1/browse/react/', query='gender-hide=c,f,t&p=1')))
+    itemlist.append(item.clone(title="Couples" , action="lista", url=alfa_urlparse.build_url(host, 'api/v1/browse/react/', query='gender-hide=f,m,t&p=1')))
+    itemlist.append(item.clone(title="Trans" , action="lista", url=alfa_urlparse.build_url(host, 'api/v1/browse/react/', query='gender-hide=c,m,F&p=1')))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'api/v1/tags/index', query='page=1')))
     
     return itemlist
 
@@ -52,10 +53,10 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
-    item.url = "%sapi/v1/browse/react/search/%s?p=1" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, u'api/v1/browse/react/search/{}'.format(texto), query='p=1')
     try:
         return lista(item)
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
@@ -72,7 +73,7 @@ def categorias(item):
         cantidad = elem['tag_count']
         title = "%s (%s)" %(name, cantidad)
         thumbnail = ""
-        url = "%sapi/v1/browse/react/girls/tag/%s-cams?p=1" % (host,name)
+        url = alfa_urlparse.build_url(host, u'api/v1/browse/react/girls/tag/{}-cams'.format(name), query='p=1')
         plot = "[COLOR yellow]%s[/COLOR]" %name
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
@@ -95,7 +96,7 @@ def lista(item):
         is_on = elem['status']
         thumbnail = elem['thumbUrl']
         username = "guest_22596"
-        url = "%sapi/v1/video/vtoken/%s?username=%s" % (host,title,username)
+        url = alfa_urlparse.build_url(host, u'api/v1/video/vtoken/{}'.format(title), query=[('username', u'{}'.format(username))])
         if not "online" in is_on:
             title = "[COLOR red]%s[/COLOR]" % title
         if not thumbnail.startswith("https"):

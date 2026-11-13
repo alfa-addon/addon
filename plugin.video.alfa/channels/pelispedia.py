@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -90,9 +91,9 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", c_type='peliculas', 
-                         url=host + "cartelera-peliculas/page/1", thumbnail=get_thumb("movies", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'cartelera-peliculas/page/1'), thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(Item(channel=item.channel, title="Series", action="list_all", c_type='series', 
-                         url=host + "cartelera-series/page/1", thumbnail=get_thumb("all", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'cartelera-series/page/1'), thumbnail=get_thumb("all", auto=True)))
     itemlist.append(Item(channel=item.channel, title="Géneros", action="section", url=host, c_type='series', 
                          thumbnail=get_thumb("genres", auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url= host, c_type='search', 
@@ -149,7 +150,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if elem.find('span', class_="Qlty"): elem_json['quality'] = '*%s' \
                                                  % elem.find('span', class_="Qlty").get_text(strip=True).replace('Desconocido', '')
             elem_json['year'] = elem_json.get('year', AlfaChannel.parse_finds_dict(elem, findS.get('year', {}), year=True, c_type=item.c_type))
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -237,10 +238,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 elem_json['season'] = int(elem_json['season'] or 1)
                 elem_json['episode'] = int(elem_json['episode'] or 1)
                 if elem_json['season'] != item.contentSeason: continue
-            except:
+            except Exception:
                 continue
             elem_json['thumbnail'] = elem.find("img").get('src', '')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -298,17 +299,18 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
         
         if texto:
-            item.url += "?s=" + texto
+            item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
             item.c_type = 'search'
             item.texto = texto
             return list_all(item)
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

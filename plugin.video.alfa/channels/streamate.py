@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -56,7 +57,7 @@ def categorias(item):
             cat = filter
         else:
             cat = "category:%s;%s" % (name, filter)
-        url = "https://member.naiadsystems.com/search/v3/performers?domain=streamate.com&from=0&size=40&filters=%s;online:true&genderSetting=f" % cat
+        url = alfa_urlparse.build_url('https://member.naiadsystems.com', '/search/v3/performers', query=[('domain', 'streamate.com'), ('from', '0'), ('size', '40'), ('filters', u'{};online:true'.format(u'{}'.format(cat))), ('genderSetting', 'f')])
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail ))
     return itemlist
 
@@ -87,13 +88,13 @@ def lista(item):
     data = naiadsystems(item.url)
     total = data['totalResultCount']
     for elem in data['performers']:
-        thumbnail = "http://m1.nsimg.net/media/snap/{0}.jpg".format(elem['id'])
+        thumbnail = alfa_urlparse.build_url('http://m1.nsimg.net', u'/media/snap/{}.jpg'.format(elem['id']))
         name = elem['nickname']
         age = elem['age']
         country = elem['country']
         quality = 'HD' if elem['highDefinition'] else ''
         title = "%s [%s] (%s)" %(name,age,country)
-        url = "https://manifest-server.naiadsystems.com/live/s:%s.json?last=load&format=mp4-hls" % name
+        url = alfa_urlparse.build_url('https://manifest-server.naiadsystems.com', u'/live/s:{}.json'.format(name), query='last=load&format=mp4-hls')
         action = "play"
         if logger.info() is False:
             action = "findvideos"

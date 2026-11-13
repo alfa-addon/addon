@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -23,8 +24,8 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "sites"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(host, 'sites')))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -32,8 +33,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%svideos/search?q=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'videos/search', query=[('q', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:
@@ -52,7 +54,7 @@ def categorias(item):
         elem = elem.find('a', class_=False)
         url = elem['href']
         if "Categorias" in item.title:
-            url += "?ad=30"
+            url = alfa_urlparse.build_url(url, query='ad=30')
         title = elem.img['alt']
         thumbnail = elem.img['data-src']
         cantidad = elem.find('div', class_='list-global__details')

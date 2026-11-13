@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -53,8 +54,8 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista_all", url= host + "peliculas/page/1/", thumbnail=get_thumb("movies", auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Series", action="lista_all", url= host + "series/page/1/", thumbnail=get_thumb("tvshows", auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista_all", url= alfa_urlparse.build_url(host, 'peliculas/page/1/'), thumbnail=get_thumb("movies", auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Series", action="lista_all", url= alfa_urlparse.build_url(host, 'series/page/1/'), thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(Item(channel=item.channel, title="Genero" , action="categorias", url= host, thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Alfabetico" , action="categorias", url= host, thumbnail=get_thumb("alphabet", auto=True)))
     itemlist.append(Item(channel=item.channel, title="Año" , action="categorias", url= host, thumbnail=get_thumb('tvshows', auto=True)))
@@ -77,7 +78,7 @@ def search(item, texto):
     logger.info()
     try:
         texto = texto.replace(" ", "%20")
-        item.url = "%spage/1/?s=%s" % (host, texto)
+        item.url = alfa_urlparse.build_url(host, 'page/1/', query=[('s', u'{}'.format(texto))])
         if texto != "":
             return lista_all(item)
         else:
@@ -201,7 +202,7 @@ def episodesxseasons(item):
     itemlist = list()
     infoLabels = item.infoLabels
     season = infoLabels["season"]
-    url= "%swp-admin/admin-ajax.php" %host
+    url= alfa_urlparse.build_url(host, 'wp-admin/admin-ajax.php')
     soup = create_soup(url, post=item.post)
     matches = soup.find_all('article')
     for elem in matches:

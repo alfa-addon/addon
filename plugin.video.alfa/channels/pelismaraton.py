@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -55,9 +56,9 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title='Peliculas', url=host + 'movies', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Peliculas', url=alfa_urlparse.build_url(host, 'movies'), action='list_all',
                          thumbnail=get_thumb('movies', auto=True)))
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'series/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'series/'), action='list_all',
                          thumbnail=get_thumb('tvshows', auto=True)))
     # itemlist.append(Item(channel=item.channel, title='Animacion', url=host + 'animacion/', action='list_all',
                          # thumbnail=get_thumb('anime', auto=True)))
@@ -67,7 +68,7 @@ def mainlist(item):
                          thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(Item(channel=item.channel, title='Por Año', url=host, action='section',
                          thumbnail=get_thumb('year', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, query='s='),
                          thumbnail=get_thumb("search", auto=True)))
     
     autoplay.show_option(item.channel, itemlist)
@@ -112,7 +113,7 @@ def section(item):
     logger.info()
 
     itemlist = list()
-    base_url = "%s%s" % (host, "pelicula")
+    base_url = alfa_urlparse.urljoin(host, u'{}'.format("pelicula"))
     soup = create_soup(base_url)
 
     is_genre = False
@@ -129,7 +130,7 @@ def section(item):
             cant = elem.a.find("span").text
             title = re.sub(cant, "", elem.a.text)
         else:
-            url = '%spelicula-año/%s/' % (host, url)
+            url = alfa_urlparse.build_url(host, u'pelicula-año/{}/'.format(url))
 
         itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url, first=0))
 
@@ -150,7 +151,7 @@ def list_all(item):
         title = elem.h2.text
         try:
             year = int(elem.find("span", class_="Date").text)
-        except:
+        except Exception:
             year = "-"
         if elem.img.has_attr("data-src"):
             thumb = elem.img["data-src"]
@@ -176,7 +177,7 @@ def list_all(item):
     
     try:
         url_next_page = soup.find("nav", class_="wp-pagenavi").find_all("a")[-1]["href"]
-    except:
+    except Exception:
         return itemlist
     
     if url_next_page and len(matches) > 16:
@@ -196,7 +197,7 @@ def seasons(item):
     for elem in matches:
         try:
             season = int(scrapertools.find_single_match(elem.text, "Temporada (\d+)"))
-        except:
+        except Exception:
             season = 1
         title = "Temporada %s" % season
         infoLabels["season"] = season
@@ -324,15 +325,14 @@ def search(item, texto):
     logger.info()
     
     try:
-        texto = texto.replace(" ", "+")
-        item.url = item.url + texto
+        item.url = alfa_urlparse.update_query(item.url, {'s': texto})
 
         if texto != '':
             return list_all(item)
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -343,15 +343,15 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas']:
-            item.url = host + 'pelicula'
+            item.url = alfa_urlparse.build_url(host, 'pelicula')
         elif categoria == 'infantiles':
-            item.url = host + 'peliculas/animacion/'
+            item.url = alfa_urlparse.build_url(host, 'peliculas/animacion/')
         elif categoria == 'terror':
-            item.url = host + 'peliculas/terror/'
+            item.url = alfa_urlparse.build_url(host, 'peliculas/terror/')
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

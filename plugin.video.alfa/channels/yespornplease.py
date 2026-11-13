@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -32,9 +33,9 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars/"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars/')))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host ))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "xxx-categories/" ))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'xxx-categories/') ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     autoplay.show_option(item.channel, itemlist)
@@ -45,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s?s=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(texto))])
     try:
         return lista(item)
     except Exception:
@@ -77,9 +78,9 @@ def canal(item):
     logger.info()
     itemlist = []
     # itemlist.append(Item(channel=item.channel, title="BangBros" , action="lista", url=host + "bangbros/"))
-    itemlist.append(Item(channel=item.channel, title="Brazzers" , action="lista", url=host + "brazzers/"))
-    itemlist.append(Item(channel=item.channel, title="Reality Kings" , action="lista", url=host + "reality-kings/"))
-    itemlist.append(Item(channel=item.channel, title="SexMex" , action="lista", url=host + "sexmex/"))
+    itemlist.append(Item(channel=item.channel, title="Brazzers" , action="lista", url=alfa_urlparse.build_url(host, 'brazzers/')))
+    itemlist.append(Item(channel=item.channel, title="Reality Kings" , action="lista", url=alfa_urlparse.build_url(host, 'reality-kings/')))
+    itemlist.append(Item(channel=item.channel, title="SexMex" , action="lista", url=alfa_urlparse.build_url(host, 'sexmex/')))
     # soup = create_soup(item.url)
     # matches = soup.find('div', class_='text-center').find_all('a', href=re.compile(r"^https://yespornpleasexxx.com/")) #.select('a[href^="https://yespornpleasexxx.com/"]')
     # for elem in matches:
@@ -149,7 +150,7 @@ def findvideos(item):
             url = urlparse.unquote(url)
             url = BeautifulSoup(url, "html5lib", from_encoding="utf-8")
             url = url.a['href']
-            url += "|Referer=%s" % host
+            url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(host)})
         itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para AutoPlay

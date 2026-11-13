@@ -2500,14 +2500,14 @@ def _proxy_bypass_macosx_sysconf(host, proxy_settings):
 if sys.platform == 'darwin':
     try:
         from _scproxy import _get_proxy_settings, _get_proxies
-    except:
+    except Exception:
         try:
             # By default use environment variables
             _get_proxy_settings = getproxies_environment
             _get_proxies = proxy_bypass_environment
             getproxies = getproxies_environment
             proxy_bypass = proxy_bypass_environment
-        except:
+        except Exception:
             pass
 
     def proxy_bypass_macosx_sysconf(host):

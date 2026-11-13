@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -24,7 +25,7 @@ def test_video_exists(page_url):
     global host, server, data
     
     domain = scrapertools.get_domain_from_url(page_url)
-    host = "https://%s" % domain
+    host = alfa_urlparse.urlunsplit(('https', u'{}'.format(domain), "", "", ""))
     server = domain.split(".")[-2]
     
     response = httptools.downloadpage(page_url, **kwargs)

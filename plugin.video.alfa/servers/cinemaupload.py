@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector Cinemaupload By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import os
 import re
 import json
@@ -41,7 +42,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     matches = scrapertools.find_multiple_matches(data.data, patron)
     
     for url in matches:
-        url += "|verifypeer=false&Referer=%s" %page_url
+        url = alfa_urlparse.add_url_headers(url, {'verifypeer': 'false', 'Referer': u'{}'.format(page_url)})
         if ".mp4" in url:
             video_urls.append(['.mp4 [CinemaUpload]', url])
         else:

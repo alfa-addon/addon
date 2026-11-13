@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -25,13 +26,13 @@ def get_video_url(page_url, video_password):
     hash = scrapertools.find_single_match(stream, '"hash":"([^"]+)"')
     host = host.decode('unicode-escape').encode('utf8')
     host = decod2(host)
-    url = "%s%s/index.m3u8" %(host, hash)
+    url = alfa_urlparse.build_url(host, u'{}/index.m3u8'.format(hash))
     data = httptools.downloadpage(url).data
     patron  = '([0-9_]+p.m3u8)'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality in matches:
-        url = "%s%s/%s" %(host, hash,quality)
-        url += "|Referer=%s" % page_url
+        url = alfa_urlparse.build_url(host, u'{}/{}'.format(hash, quality))
+        url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
         quality = scrapertools.find_single_match(quality, '(\d+p).m3u8')
         video_urls.append(["[ninjastream] %s" %quality, url])
     return video_urls

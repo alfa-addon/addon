@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -139,29 +140,29 @@ def submenu(item):
 
     if item.c_type == "peliculas":
 
-        itemlist.append(item.clone(title="Novedades", action="list_all", url=host + "peliculas-subtituladas/?filtro=estrenos", 
+        itemlist.append(item.clone(title="Novedades", action="list_all", url=alfa_urlparse.build_url(host, 'peliculas-subtituladas/', query='filtro=estrenos'),
                                    thumbnail=get_thumb("now_playing.png")))
-        itemlist.append(item.clone(title="Películas", action="list_all", url=host + "peliculas-subtituladas/", 
+        itemlist.append(item.clone(title="Películas", action="list_all", url=alfa_urlparse.build_url(host, 'peliculas-subtituladas/'),
                                    thumbnail=get_thumb("channels_movie.png")))
         itemlist.append(item.clone(title=" - [COLOR paleturquoise]Latino[/COLOR]", action="list_all", 
-                                   url=host + "peliculas-subtituladas/?filtro=audio-latino", 
+                                   url=alfa_urlparse.build_url(host, 'peliculas-subtituladas/', query='filtro=audio-latino'),
                                    thumbnail=get_thumb("channels_latino"), extra='latino'))
         itemlist.append(item.clone(title=" - [COLOR paleturquoise]3D[/COLOR]", action="list_all", 
-                                   url=host + "peliculas-3d/", 
+                                   url=alfa_urlparse.build_url(host, 'peliculas-3d/'),
                                    thumbnail=get_thumb("channels_movie.png")))
         itemlist.append(item.clone(title=" - [COLOR paleturquoise]Calidad DVD[/COLOR]", action="list_all", 
-                                   url=host + "calidad/dvd-full/", 
+                                   url=alfa_urlparse.build_url(host, 'calidad/dvd-full/'),
                                    thumbnail=get_thumb("channels_movie.png")))
         itemlist.append(item.clone(title=" - [COLOR paleturquoise]Por [A-Z][/COLOR]", action="section", 
-                                   url=host + "peliculas-subtituladas/?s=letra-%s", 
+                                   url=alfa_urlparse.build_url(host, 'peliculas-subtituladas/', query='s=letra-%s'),
                                    thumbnail=get_thumb("channels_movie_az.png")))
 
     if item.c_type == "series":
 
-        itemlist.append(item.clone(title="Series", action="list_all", url=host + "series-2/", 
+        itemlist.append(item.clone(title="Series", action="list_all", url=alfa_urlparse.build_url(host, 'series-2/'),
                                    thumbnail=get_thumb("channels_tvshow.png")))
         itemlist.append(item.clone(title=" - [COLOR paleturquoise]Por [A-Z][/COLOR]", action="section", 
-                                   url=host + "series-2/?s=letra-%s", 
+                                   url=alfa_urlparse.build_url(host, 'series-2/', query='s=letra-%s'),
                                    thumbnail=get_thumb("channels_tvshow_az.png")))
 
     return itemlist
@@ -218,7 +219,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     if x == 2: elem_json['quality'] = '*%s' % td.get_text(strip=True)
                     if x == 3: elem_json['quality'] = '*%s' % td.get_text(strip=True)
 
-                except:
+                except Exception:
                     logger.error(td)
                     logger.error(elem)
                     logger.error(traceback.format_exc())
@@ -234,7 +235,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['quality'] = '*'
                 elem_json['language'] = '*'
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
                 continue
@@ -310,7 +311,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 if elem_json['season'] != item.contentSeason: continue
                 if scrapertools.find_single_match(sxe, '(?i)\d+x\d+-(\d+)'):
                     elem_json['title'] = 'al %s' % scrapertools.find_single_match(sxe, '(?i)\d+x\d+-(\d+)')
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
                 continue
@@ -329,7 +330,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                                                            .find('tr', class_='fichserietabla_b').a.get('href', '')
                         elem_json['subtitle'] += [subtitle.replace(AlfaChannel.obtain_domain(subtitle, scheme=True), host.rstrip('/'))]
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -396,7 +397,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                                                   .find('tr', class_='fichserietabla_b').a.get('href', '')
                         elem_json['subtitle'] += [subtitle.replace(AlfaChannel.obtain_domain(subtitle, scheme=True), host.rstrip('/'))]
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
@@ -419,10 +420,11 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
     try:
-        item.url = item.url + "?s=%s" % texto
+        item.url = alfa_urlparse.build_url(item.url, query=[('s', u'{}'.format(_url_query_texto))])
 
         if texto:
             item.c_type = 'search'
@@ -430,7 +432,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))
@@ -446,7 +448,7 @@ def newest(categoria, **AHkwargs):
 
     try:
         if categoria == 'peliculas':
-            item.url = host + "peliculas-subtituladas/?filtro=estrenos"
+            item.url = alfa_urlparse.build_url(host, 'peliculas-subtituladas/', query='filtro=estrenos')
             item.c_type = "peliculas"
             item.channel = channel
             item.category_new= 'newest'
@@ -458,7 +460,7 @@ def newest(categoria, **AHkwargs):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -83,18 +84,18 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host + "page/1?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all", url=host + "page/1?filter=most-viewed"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorada", action="list_all", url=host + "page/1?filter=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas Larga", action="list_all", url=host + "page/1?filter=longest"))
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=alfa_urlparse.build_url(host, 'page/1', query='filter=latest')))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all", url=alfa_urlparse.build_url(host, 'page/1', query='filter=most-viewed')))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorada", action="list_all", url=alfa_urlparse.build_url(host, 'page/1', query='filter=popular')))
+    itemlist.append(Item(channel=item.channel, title="Mas Larga", action="list_all", url=alfa_urlparse.build_url(host, 'page/1', query='filter=longest')))
     
     # itemlist.append(Item(channel=item.channel, title="Peliculas" , action="list_all", url=host + "genres/porn-movies/page/1/"))
     # itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "/ratings/page/1/"))
     # itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=host + "/trending/page/1/"))
-    itemlist.append(Item(channel=item.channel, title="Año" , action="section", url=host + "mango-years" , extra="Año"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "mango-studios/?pg=1&sort=pop" , extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="section", url=host + "mango-pornstars/?pg=1&sort=pop" , extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "mango-genres/?pg=1", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Año" , action="section", url=alfa_urlparse.build_url(host, 'mango-years') , extra="Año"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(host, 'mango-studios/', query='pg=1&sort=pop') , extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="section", url=alfa_urlparse.build_url(host, 'mango-pornstars/', query='pg=1&sort=pop') , extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'mango-genres/', query='pg=1'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host))
     
     # itemlist.append(Item(channel=item.channel, title="-----------------------------------------------" ))
@@ -109,8 +110,8 @@ def submenu(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=item.url))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=item.url + "ratings/page/1/"))
-    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=item.url + "trending/page/1/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'ratings/page/1/')))
+    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=alfa_urlparse.build_url(item.url, 'trending/page/1/')))
     itemlist.append(Item(channel=item.channel, title="Año" , action="section",url=item.url , extra="Año"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search",url=item.url))
     return itemlist
@@ -161,7 +162,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['premium'] = elem.find('i', class_='premiumIcon') \
                                      or elem.find('span', class_=['ico-private', 'premium-video-icon']) or ''
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -208,7 +209,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['url'] = elem['u'].replace("\/", "/")
             elem_json['language'] = ''
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
         
@@ -222,7 +223,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%spage/1/?s=%s" % (item.url, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(item.url, 'page/1/', query=[('s', texto)])
     
     try:
         if texto:
@@ -233,7 +234,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

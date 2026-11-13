@@ -6,6 +6,7 @@
 # media/<id>/<fichero>.mp4?md5=...&expire=..."></video>. El mp4 se sirve sin cabeceras
 # especiales (medido el 2026-10-28: 200 video/mp4).
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 try:
@@ -44,7 +45,7 @@ def _fuente(page_url):
         return ''
     url = unescape(trozo.group(1)).strip()
     if not url.startswith('http'):
-        url = host + '/' + url.lstrip('/')
+        url = alfa_urlparse.build_url(host, u'/{}'.format(url.lstrip('/')))
     return url
 
 
@@ -63,4 +64,4 @@ def get_video_url(page_url, video_password=""):
     if not url:
         return []
 
-    return [["[luvstream]", url + '|' + CABECERAS]]
+    return [["[luvstream]", alfa_urlparse.add_url_headers(url, alfa_urlparse.Headers.from_string(CABECERAS))]]

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -95,13 +96,13 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=host + "peliculas/?page=1", 
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='list_all', url=alfa_urlparse.build_url(host, 'peliculas/', query='page=1'),
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
     
-    itemlist.append(Item(channel=item.channel, title='Series',  action='list_all', url=host + "series/?page=1", 
+    itemlist.append(Item(channel=item.channel, title='Series',  action='list_all', url=alfa_urlparse.build_url(host, 'series/', query='page=1'),
                          thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
     
-    itemlist.append(Item(channel=item.channel, title='Anime',  action='list_all', url=host + 'animes/?page=1', 
+    itemlist.append(Item(channel=item.channel, title='Anime',  action='list_all', url=alfa_urlparse.build_url(host, 'animes/', query='page=1'),
                          thumbnail=get_thumb('anime', auto=True), c_type='series', extra='anime'))
     
     # itemlist.append(Item(channel=item.channel, title='Dorama',  action='list_all', url=host + 'genero/dorama/', 
@@ -193,7 +194,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             
             if not elem_json['url']: continue
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -281,7 +282,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['episode'] = int(epi.div.get_text(strip=True).split(" ")[-1] or 1)
             elem_json['title'] = "%sx%s" % (elem_json['season'], elem_json['episode'])
         
-        except:
+        except Exception:
             logger.error(epi)
             logger.error(traceback.format_exc())
             continue
@@ -325,7 +326,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             
             if "/uqlink." in url:
                 url = scrapertools.find_single_match(url, "id=([A-z0-9]+)")
-                elem_json['url'] = "https://uqload.io/embed-%s.html" % url
+                elem_json['url'] = alfa_urlparse.build_url('https://uqload.io', u'/embed-{}.html'.format(url))
                 elem_json['language'] = ''
                 elem_json['server'] = 'uqload'
                 matches.append(elem_json.copy())
@@ -374,14 +375,14 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                         
                         if "1fichier=" in url or "1fichier" in server:
                             id = scrapertools.find_single_match(url, '=\?([A-z0-9]+)')
-                            url = "https://1fichier.com/?%s" %id
+                            url = alfa_urlparse.urlunsplit(('https', '1fichier.com', '/', id, ''))
                         
                         server = elem_.span.text.strip()
                         elem_json['url'] = url
                         elem_json['server'] = ''
                         elem_json['language'] = IDIOMAS.get(lang, lang)
                         matches.append(elem_json.copy())
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -408,8 +409,9 @@ def search(item, texto, **AHkwargs):
         # return itemlist
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = '%ssearch?page=1&s=%s' %(host, texto)
+        item.url = alfa_urlparse.build_url(host, 'search', query=[('page', '1'), ('s', u'{}'.format(_url_query_texto))])
         
         if texto:
             item.c_type = 'search'
@@ -418,7 +420,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

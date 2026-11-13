@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -92,7 +93,7 @@ def mainlist(item):
     
     itemlist = list()
     
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host+movie_path, action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=alfa_urlparse.urljoin(host, movie_path), action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='movies'))
     
     itemlist.append(Item(channel=item.channel, title='Películas por Género',  action='section', url=host, 
@@ -223,7 +224,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             if not elem_json['server']: continue
             elem_json['language'] = elem.get('data-lang', '').lower()
             elem_json['language'] = IDIOMAS.get(elem_json['language'], elem_json['language'])
-            elem_json['url'] = item.url + '?id=' + elem.get('data-id', '') + '&num=' + elem.get('data-num', '')
+            elem_json['url'] = alfa_urlparse.build_url(item.url, query=[('id', elem.get('data-id', '')), ('num', elem.get('data-num', ''))])
             elem_json['title'] = '%s'
             
             if not elem_json.get('url'): continue

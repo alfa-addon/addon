@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -50,7 +51,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     if "okru.link/embed" in page_url:
             v = scrapertools.find_single_match(page_url, "t=(\w+)")
-            data = httptools.downloadpage("https://okru.link/details.php?v=" + v, **kwargs).json
+            data = httptools.downloadpage(alfa_urlparse.build_url('https://okru.link', '/details.php', query=[('v', v)]), **kwargs).json
             url = data.get("file", '')
             video_urls.append(["video [okru]", url])
 

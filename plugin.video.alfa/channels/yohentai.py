@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import sys
 import re
 import datetime
@@ -93,7 +94,7 @@ def mainlist(item):
             list_type = "all",
             title = "Todos los hentai",
             thumbnail = get_thumb("all", auto=True),
-            url = "{}search".format(host),
+            url = alfa_urlparse.build_url(host, 'search'),
             viewType = "tvshows"
         )
     )
@@ -104,7 +105,7 @@ def mainlist(item):
             list_type = "genres",
             title = "Géneros",
             thumbnail = get_thumb("genres", auto=True),
-            url = "{}search".format(host),
+            url = alfa_urlparse.build_url(host, 'search'),
             viewType = "tvshows"
         )
     )
@@ -115,7 +116,7 @@ def mainlist(item):
             list_type = "year",
             title = "Año",
             thumbnail = get_thumb("year", auto=True),
-            url = "{}search".format(host),
+            url = alfa_urlparse.build_url(host, 'search'),
             viewType = "tvshows"
         )
     )
@@ -137,7 +138,7 @@ def mainlist(item):
             list_type = "all",
             title = "Buscar",
             thumbnail = get_thumb("search", auto=True),
-            url = "{}search".format(host),
+            url = alfa_urlparse.build_url(host, 'search'),
             viewType = "tvshows"
         )
     )
@@ -227,7 +228,7 @@ def genres(item):
             item.clone(
                 action = 'list_all',
                 title = title,
-                url = '{}search?genero={}&fecha={}&p=1'.format(host, genre, year)
+                url = alfa_urlparse.build_url(host, 'search', query=[('genero', u'{}'.format(genre)), ('fecha', u'{}'.format(year)), ('p', '1')])
             )
         )
     
@@ -324,7 +325,7 @@ def episodesxseason(item, get_episodes = False):
         name = item.url.split("/")[-1]
         name = name.replace("sub-espanol", "")
         name += "capitulo-%s" % cap
-        url = "%sver/%s" %(host, name)
+        url = alfa_urlparse.build_url(host, u'ver/{}'.format(name))
         itemlist.append(
             item.clone(
                 action = "findvideos",
@@ -376,7 +377,7 @@ def search(item, text):
     itemlist = []
     if text != '':
         try:
-            results = httptools.downloadpage("{}ajax/search/{}".format(host, text)).json
+            results = httptools.downloadpage(alfa_urlparse.build_url(host, u'ajax/search/{}'.format(text))).json
             for result in results:
                 itemlist.append(
                     Item(
@@ -384,14 +385,14 @@ def search(item, text):
                         channel = item.channel,
                         contentSerieName = result['nombre'],
                         plot = result['sinopsis'],
-                        thumbnail = '{}assets/img/serie/imagen/{}'.format(host, result['imagen']),
+                        thumbnail = alfa_urlparse.build_url(host, u'assets/img/serie/imagen/{}'.format(result['imagen'])),
                         title = result['nombre'],
-                        url = '{}hentai/{}'.format(host, result['seo']),
+                        url = alfa_urlparse.build_url(host, u'hentai/{}'.format(result['seo'])),
                         viewType = "episodes"
                     )
                 )
             return itemlist
-        except:
+        except Exception:
             for line in sys.exc_info():
                 logger.error("%s" % line)
             return itemlist

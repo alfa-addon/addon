@@ -3177,7 +3177,7 @@ def run(app=None, server='wsgiref', host='127.0.0.1', port=8080,
         pass
     except (SystemExit, MemoryError):
         raise
-    except:
+    except Exception:
         if not reloader: raise
         if not getattr(server, 'quiet', quiet):
             print_exc()

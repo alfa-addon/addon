@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -43,6 +44,6 @@ def get_video_url(page_url, video_password):
     # url += "|Referer=%s" % page_url
     host = "https://www.camsoda.com"
     headers = httptools.default_headers.copy()
-    url += "|%s&Referer=%s/&Origin=%s" % (urlparse.urlencode(headers), host, host)
+    url = alfa_urlparse.add_url_headers(url, headers, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
     video_urls.append(["[camsoda]", url])
     return video_urls

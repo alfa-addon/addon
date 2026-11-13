@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector lauchacohete By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -26,7 +27,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     # El CDN (spark.9bg.net) solo sirve el m3u8 y los subtítulos con el Referer del reproductor
     host = scrapertools.find_single_match(page_url, r'https?://([^/]+)')
-    referer = "https://%s/" % host if host else "https://pelis182.net/"
+    referer = alfa_urlparse.build_url(alfa_urlparse.urlunsplit(('https', u'{}'.format(host), "", "", "")), '/') if host else "https://pelis182.net/"
     headers = "|Referer=%s" % referer
     global data
     video_urls = []

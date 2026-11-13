@@ -28,7 +28,7 @@ class MyHTTPServer(HTTPServer):
         try:
             self.finish_request(request, client_address)
             self.shutdown_request(request)
-        except:
+        except Exception:
             self.handle_error(request, client_address)
             self.shutdown_request(request)
 
@@ -102,7 +102,7 @@ class Handler(HTTPWebSocketsHandler):
                 try:
                     c = controller(self)
                     c.run(self.path)
-                except:
+                except Exception:
                     if not "socket.py" in traceback.format_exc():
                         logger.error(traceback.format_exc())
                 finally:
@@ -126,7 +126,7 @@ class Handler(HTTPWebSocketsHandler):
 
                 self.controller.data = json_message["data"]
 
-        except:
+        except Exception:
             logger.error(traceback.format_exc())
             show_error_message(traceback.format_exc())
 
@@ -136,7 +136,7 @@ class Handler(HTTPWebSocketsHandler):
             from platformcode.controllers.html import html
             self.controller = html(self, self.ID)
             self.server.fnc_info()
-        except:
+        except Exception:
             logger.error(traceback.format_exc())
 
     def on_ws_closed(self):
@@ -174,7 +174,7 @@ if server == None:
 def run(controller, path):
     try:
         controller.run(path)
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
         show_error_message(traceback.format_exc())
 

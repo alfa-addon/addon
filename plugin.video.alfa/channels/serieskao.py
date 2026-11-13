@@ -2,6 +2,7 @@
 # -*- Channel SeriesKao -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
+from core import urlparse as alfa_urlparse
 import sys
 import base64
 import re
@@ -54,21 +55,21 @@ def mainlist(item):
     # itemlist.append(Item(channel=item.channel, title='embed69', action='findvideos', url="https://serieskao.top/pelicula/la-promesa-de-irene-bxKhP7"))
     # itemlist.append(Item(channel=item.channel, title='xupalace', action='findvideos', url="https://serieskao.top/pelicula/no-way-out-2023"))
     
-    itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=host + "peliculas",
+    itemlist.append(Item(channel=item.channel, title='Todas', action='list_all', url=alfa_urlparse.build_url(host, 'peliculas'),
                          thumbnail=get_thumb('movies', auto=True), type="peliculas"))
     # itemlist.append(Item(channel=item.channel, title='Por Género', action='genres', url=host,
                          # thumbnail=get_thumb('movies', auto=True), type="peliculas"))
     # itemlist.append(Item(channel=item.channel, title='Año', action='genres', url=host,
                          # thumbnail=get_thumb('movies', auto=True), type="peliculas"))
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'series', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=alfa_urlparse.build_url(host, 'series'), action='list_all',
                          thumbnail=get_thumb('tvshows', auto=True), type="series"))
     # itemlist.append(Item(channel=item.channel, title='Por Género', action='genres', url=host,
                          # thumbnail=get_thumb('tvshows', auto=True), type="series"))
     # itemlist.append(Item(channel=item.channel, title='Año', action='genres', url=host,
                          # thumbnail=get_thumb('tvshows', auto=True), type="series"))
-    itemlist.append(Item(channel=item.channel, title='Anime', url=host + 'animes', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Anime', url=alfa_urlparse.build_url(host, 'animes'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True), type="animes"))
-    itemlist.append(Item(channel=item.channel, title='Dorama', url=host + 'generos/dorama', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Dorama', url=alfa_urlparse.build_url(host, 'generos/dorama'), action='list_all',
                          thumbnail=get_thumb('anime', auto=True), type="series"))
     itemlist.append(Item(channel=item.channel, title='Por Género', action='genres', url=host,
                          thumbnail=get_thumb('genres', auto=True)))
@@ -97,7 +98,7 @@ def genres(item):
         if url in existe:
             continue
         existe.add(url)
-        itemlist.append(Item(channel=item.channel, title=title, url=host + url,
+        itemlist.append(Item(channel=item.channel, title=title, url=alfa_urlparse.urljoin(host, url),
                  action="list_all"))
     return itemlist
 
@@ -268,7 +269,7 @@ def findvideos(item):
                     code = scrapertools.find_single_match(vid, r'=\?([A-Za-z0-9]+)')
                     if not code:
                         continue
-                    vid = "https://1fichier.com/?%s" % code
+                    vid = alfa_urlparse.urlunsplit(('https', '1fichier.com', '/', code, ''))
             language = IDIOMAS.get(lang, lang or 'LAT')
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=vid,
                                  language=language, infoLabels=item.infoLabels))
@@ -317,8 +318,9 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = "%ssearch?s=%s" % (host, texto)
+        item.url = alfa_urlparse.build_url(host, 'search', query=[('s', u'{}'.format(_url_query_texto))])
 
         # item.url = item.url + texto
         item.extra = "buscar"
@@ -340,11 +342,11 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas']:
-            item.url = host + 'peliculas'
+            item.url = alfa_urlparse.build_url(host, 'peliculas')
         elif categoria == 'infantiles':
-            item.url = host + 'generos/animacion'
+            item.url = alfa_urlparse.build_url(host, 'generos/animacion')
         elif categoria == 'terror':
-            item.url = host + 'generos/terror'
+            item.url = alfa_urlparse.build_url(host, 'generos/terror')
         else:
             return []
         item.first = 0

@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector icedrive By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -29,7 +30,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     data = httptools.downloadpage(page_url).data
     url = scrapertools.find_single_match(data,'data-file-id="([^"]+)"')
-    url = "https://icedrive.net/dashboard/ajax/get?req=public-download&id=file-%s" %url
+    url = alfa_urlparse.build_url('https://icedrive.net', '/dashboard/ajax/get', query=[('req', 'public-download'), ('id', u'file-{}'.format(u'{}'.format(url)))])
     data = httptools.downloadpage(url).data
     url = scrapertools.find_single_match(data,'"error":false,"urls":\["([^"]+)"')
     url = url.replace("\/", "/")

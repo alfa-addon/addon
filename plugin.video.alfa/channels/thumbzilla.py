@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -78,14 +79,14 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "browse/time/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=host + "browse/views/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Valorada" , action="list_all", url=host + "top_rated/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Favoritas" , action="list_all", url=host + "most_favorited/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "browse/duration/?page=1"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "channels/most_popular/?page=1", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "pornstars?page=1", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/" , extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, 'browse/time/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=alfa_urlparse.build_url(host, 'browse/views/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas Valorada" , action="list_all", url=alfa_urlparse.build_url(host, 'top_rated/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Favoritas" , action="list_all", url=alfa_urlparse.build_url(host, 'most_favorited/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(host, 'browse/duration/', query='page=1')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(host, 'channels/most_popular/', query='page=1'), extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, 'pornstars', query='page=1'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/') , extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     return itemlist
@@ -123,7 +124,7 @@ def section_matches(item, matches_int, **AHkwargs):
                 cantidad = elem.find(string=re.compile(r"(?i)vídeos|videos|movies")).split("\n")
                 elem_json['cantidad'] = cantidad[0]
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -173,7 +174,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if elem.find('a', href=re.compile(r"/channel/[a-z0-9-]+/")):
                 elem_json['canal'] = elem.find('a', href=re.compile(r"/channel/[a-z0-9-]+/")).get_text(strip=True)
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -221,7 +222,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/date/?query=%s&page=1" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, 'search/date/', query=[('query', texto), ('page', '1')])
     
     try:
         if texto:
@@ -232,7 +233,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

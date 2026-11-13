@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -27,10 +28,10 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Today Selection" , action="lista", url=host + "todays-selection/"))
-    itemlist.append(Item(channel=item.channel, title="Top rated" , action="lista", url=host + "best/"))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "hits/month/0"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Today Selection" , action="lista", url=alfa_urlparse.build_url(host, 'todays-selection/')))
+    itemlist.append(Item(channel=item.channel, title="Top rated" , action="lista", url=alfa_urlparse.build_url(host, 'best/')))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=alfa_urlparse.build_url(host, 'hits/month/0')))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=alfa_urlparse.build_url(host, 'pornstars')))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host))
     itemlist.append(Item(channel=item.channel, title=""))
@@ -42,14 +43,14 @@ def mainlist(item):
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Today Selection" , action="lista", url="%s%s/todays-selection/"%(host,item.id)))
-    itemlist.append(Item(channel=item.channel, title="Top rated" , action="lista", url="%s%s/best/"%(host,item.id)))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url="%s%s/hits/month/0"%(host,item.id)))
+    itemlist.append(Item(channel=item.channel, title="Today Selection" , action="lista", url=alfa_urlparse.build_url(host, u'{}/todays-selection/'.format(item.id))))
+    itemlist.append(Item(channel=item.channel, title="Top rated" , action="lista", url=alfa_urlparse.build_url(host, u'{}/best/'.format(item.id))))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=alfa_urlparse.build_url(host, u'{}/hits/month/0'.format(item.id))))
     if "gay" in item.url:
-        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "pornstars-gay"))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=alfa_urlparse.build_url(host, 'pornstars-gay')))
     else:
-        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "pornstars-trans"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url="%s%s/" %(host,item.id) ))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=alfa_urlparse.build_url(host, 'pornstars-trans')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, u'{}/'.format(item.id)) ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", id=item.id))
     return itemlist
 
@@ -58,9 +59,9 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     if item.id:
-        item.url = "%ssearch/%s/month/%s" % (host,item.id,texto)
+        item.url = alfa_urlparse.build_url(host, u'search/{}/month/{}'.format(item.id, texto))
     else:
-        item.url = "%ssearch/month/%s" % (host,texto)
+        item.url = alfa_urlparse.build_url(host, u'search/month/{}'.format(texto))
     item.ref = item.ref
     try:
         return lista(item)
@@ -105,12 +106,13 @@ def catalogo(item):
     patron += '>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url,thumbnail,scrapedtitle,cantidad in matches:
+        url = urlparse.urljoin(host, url)
         if "/shemale" in url:
             url = url.replace("/shemale", "/videos/new/shemale/0")
         elif "/gay" in url:
             url = url.replace("/gay", "/videos/new/gay/0")
         else:
-            url += "/videos/new/0"
+            url = alfa_urlparse.build_url(url, '/videos/new/0')
         url = urlparse.urljoin(host,url)
         title = "%s (%s)" % (scrapedtitle, cantidad)
         plot = ""
@@ -138,7 +140,7 @@ def lista(item):
     patron += '</span>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for id,url,scrapedthumbnail,scrapedtitle,scrapedtime,quality in matches:
-        url = urlparse.urljoin(host,"video-%s" % id)+"/a"
+        url = alfa_urlparse.build_url(urlparse.urljoin(host,"video-%s" % id), '/a')
         if "acute\;" in scrapedtitle:
             scrapedtitle = scrapedtitle.replace("acute;", "").replace("&","")
         title = '[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s' % (scrapedtime,quality,scrapedtitle)

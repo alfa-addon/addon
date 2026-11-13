@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 import base64
 import re
@@ -70,7 +71,7 @@ def read_api(url):
     post["_token"] = soup.find("meta", {"name":"csrf-token"})["content"]
     post["p"] = '1'
     
-    api_url = "https://www.doramasyt.com/ajax/caplist/" + serie_id
+    api_url = alfa_urlparse.build_url('https://www.doramasyt.com', u'/ajax/caplist/{}'.format(serie_id))
     
     referer = host
 
@@ -91,22 +92,22 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="En Emisión", action="list_all", url=host + "emision",
+    itemlist.append(Item(channel=item.channel, title="En Emisión", action="list_all", url=alfa_urlparse.build_url(host, 'emision'),
                          thumbnail=get_thumb("on air", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Doramas", action="sub_menu", url=host + "doramas?categoria=dorama",
+    itemlist.append(Item(channel=item.channel, title="Doramas", action="sub_menu", url=alfa_urlparse.build_url(host, 'doramas', query='categoria=dorama'),
                          thumbnail=get_thumb("doramas", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url=host + "doramas?categoria=pelicula",
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url=alfa_urlparse.build_url(host, 'doramas', query='categoria=pelicula'),
                          thumbnail=get_thumb("movies", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", section="letra",
-                         url=host + "doramas?categoria=dorama", thumbnail=get_thumb("alphabet", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'doramas', query='categoria=dorama'), thumbnail=get_thumb("alphabet", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Por Años", action="section", section="fecha",
-                         url=host + "doramas?categoria=dorama", thumbnail=get_thumb("year", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'doramas', query='categoria=dorama'), thumbnail=get_thumb("year", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "buscar?q=",
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=alfa_urlparse.build_url(host, 'buscar', query='q='),
                          thumbnail=get_thumb("search", auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -165,7 +166,7 @@ def list_all(item):
                 new_item.contentSerieName = title
                 new_item.contentType = 'tvshow'
                 if season: new_item.contentSeason = int(season)
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -178,7 +179,7 @@ def list_all(item):
         url_next_page = soup.find("a", rel="next")["href"]
         if url_next_page and len(itemlist) > 8:
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
-    except:
+    except Exception:
         pass
 
     return itemlist
@@ -194,7 +195,7 @@ def section(item):
 
     for elem in matches[1:]:
 
-        url = "%s&%s=%s" % (item.url, item.section, elem["value"])
+        url = alfa_urlparse.update_query(item.url, [(u'{}'.format(item.section), u'{}'.format(elem["value"]))])
         title = elem["value"].capitalize()
         
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
@@ -229,7 +230,7 @@ def episodios(item):
                 Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                      action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
                      extra1='library'))
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
     
@@ -292,15 +293,16 @@ def search(item, texto):
     logger.info()
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = "%sbuscar?q=%s" %(host, texto)
+        item.url = alfa_urlparse.build_url(host, 'buscar', query=[('q', u'{}'.format(_url_query_texto))])
         item.first = 0
         if texto != '':
             return list_all(item)
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -185,7 +186,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['year'] = elem_json.get('year', AlfaChannel.parse_finds_dict(elem, findS.get('year', {}), year=True, c_type=item.c_type))
             AlfaChannel.get_language_and_set_filter(elem, elem_json)
             elem_json['plot'] = AlfaChannel.parse_finds_dict(elem, findS.get('plot', {}), c_type=item.c_type)
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -274,7 +275,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 if not elem_json['url']: continue
 
                 matches.append(elem_json.copy())
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -287,16 +288,17 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
         if texto:
-            item.url += "?s=" + texto
+            item.url = alfa_urlparse.build_url(item.url, query=[('s', _url_query_texto)])
             item.c_type = 'peliculas'
             item.texto = texto
             return list_all(item)
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -311,19 +313,19 @@ def newest(categoria, **AHkwargs):
         if categoria in ['peliculas']:
             item.url = host
         elif categoria == 'latino':
-            item.url = host + "idioma/latino/"
+            item.url = alfa_urlparse.build_url(host, 'idioma/latino/')
         elif categoria == 'castellano':
-            item.url = host + "idioma/castellano"
+            item.url = alfa_urlparse.build_url(host, 'idioma/castellano')
         elif categoria == 'infantiles':
-            item.url = host + 'animacion'
+            item.url = alfa_urlparse.build_url(host, 'animacion')
         elif categoria == 'terror':
-            item.url = host + 'terror'
+            item.url = alfa_urlparse.build_url(host, 'terror')
         
         item.c_type = "movies"
         itemlist = list_all(item)
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

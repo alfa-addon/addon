@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -26,12 +27,12 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Lo mejor" , action="lista", url=host + "best/"))
-    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="catalogo", url=host + "pornstars-index/from/worldwide/ever"))
-    itemlist.append(Item(channel=item.channel, title="WebCAM" , action="catalogo", url=host + "webcam-models-index/from/worldwide/ever"))
-    itemlist.append(Item(channel=item.channel, title="Modelos Eroticas" , action="catalogo", url=host + "erotic-models-index/from/worldwide/ever"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "channels-index/from/worldwide/top"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags"))
+    itemlist.append(Item(channel=item.channel, title="Lo mejor" , action="lista", url=alfa_urlparse.build_url(host, 'best/')))
+    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="catalogo", url=alfa_urlparse.build_url(host, 'pornstars-index/from/worldwide/ever')))
+    itemlist.append(Item(channel=item.channel, title="WebCAM" , action="catalogo", url=alfa_urlparse.build_url(host, 'webcam-models-index/from/worldwide/ever')))
+    itemlist.append(Item(channel=item.channel, title="Modelos Eroticas" , action="catalogo", url=alfa_urlparse.build_url(host, 'erotic-models-index/from/worldwide/ever')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=alfa_urlparse.build_url(host, 'channels-index/from/worldwide/top')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'tags')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     itemlist.append(Item(channel=item.channel, title=""))
     itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", id="gay"))
@@ -42,29 +43,30 @@ def mainlist(item):
 def submenu(item):
     logger.info()
     itemlist = []     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url="%s%s"%(host,item.id)))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.urljoin(host, u'{}'.format(item.id))))
     if "gay" in item.id:
-        itemlist.append(Item(channel=item.channel, title="Top rated" , action="lista", url="%sbest-of-gay/"%host))
-        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "porn-actors-index/gay/from/worldwide/ever"))
-        itemlist.append(Item(channel=item.channel, title="Amateur" , action="catalogo", url=host + "amateurs-index/gay/from/worldwide/ever"))
-        itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "channels-gay/from/worldwide/top"))
+        itemlist.append(Item(channel=item.channel, title="Top rated" , action="lista", url=alfa_urlparse.build_url(host, 'best-of-gay/')))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=alfa_urlparse.build_url(host, 'porn-actors-index/gay/from/worldwide/ever')))
+        itemlist.append(Item(channel=item.channel, title="Amateur" , action="catalogo", url=alfa_urlparse.build_url(host, 'amateurs-index/gay/from/worldwide/ever')))
+        itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=alfa_urlparse.build_url(host, 'channels-gay/from/worldwide/top')))
     else:
-        itemlist.append(Item(channel=item.channel, title="Top rated" , action="lista", url="%sbest-of-shemale/"%host))
-        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "pornstars-index/trans/from/worldwide/ever"))
-        itemlist.append(Item(channel=item.channel, title="Amateur" , action="catalogo", url=host + "amateurs-index/trans/from/worldwide/ever"))
-        itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "channels-trans/from/worldwide/top"))
-    itemlist.append(Item(channel=item.channel, title="Categoria" , action="categorias", url=host + "tags", id=item.id ))
+        itemlist.append(Item(channel=item.channel, title="Top rated" , action="lista", url=alfa_urlparse.build_url(host, 'best-of-shemale/')))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=alfa_urlparse.build_url(host, 'pornstars-index/trans/from/worldwide/ever')))
+        itemlist.append(Item(channel=item.channel, title="Amateur" , action="catalogo", url=alfa_urlparse.build_url(host, 'amateurs-index/trans/from/worldwide/ever')))
+        itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=alfa_urlparse.build_url(host, 'channels-trans/from/worldwide/top')))
+    itemlist.append(Item(channel=item.channel, title="Categoria" , action="categorias", url=alfa_urlparse.build_url(host, 'tags'), id=item.id ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", id=item.id))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
     if item.id:
-        item.url = "%s?k=%s&sort=uploaddate&typef=%s" % (host, texto, item.id)
+        item.url = alfa_urlparse.build_url(host, query=[('k', u'{}'.format(_url_query_texto)), ('sort', 'uploaddate'), ('typef', u'{}'.format(item.id))])
     else:
-        item.url = "%s?k=%s&sort=uploaddate" % (host, texto)
+        item.url = alfa_urlparse.build_url(host, query=[('k', u'{}'.format(_url_query_texto)), ('sort', 'uploaddate')])
 
     try:
         return lista(item)
@@ -118,7 +120,7 @@ def catalogo(item):
         if "/gay" in url or "/shemale" in url:
             url = url.replace("/gay", "/videos/new/gay/0").replace("/shemale", "/videos/new/shemale/0")
         else:
-            url += "/videos/new/0"
+            url = alfa_urlparse.build_url(url, '/videos/new/0')
         plot = ""
         itemlist.append(Item(channel=item.channel, action="listados", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )

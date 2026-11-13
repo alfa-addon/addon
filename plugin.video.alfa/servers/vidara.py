@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -40,7 +41,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     
     id = scrapertools.find_single_match(page_url, '/e/([A-z0-9]+)')
-    post_url = "%sapi/stream" % host
+    post_url = alfa_urlparse.build_url(host, 'api/stream')
     post = json.dumps({'filecode': id, 'device': 'web'})
     
     kwargs['headers'] = {

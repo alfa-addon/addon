@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -25,22 +26,23 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host +"videos"))
-    itemlist.append(Item(channel=item.channel, title="Exclusivos" , action="lista", url=host + "category/74/premium-hd"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "videos?sort=views-down"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "videos?sort=likes-down"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "videos?sort=duration-down"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels?sort=ranking"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories?sort=name"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'videos')))
+    itemlist.append(Item(channel=item.channel, title="Exclusivos" , action="lista", url=alfa_urlparse.build_url(host, 'category/74/premium-hd')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'videos', query='sort=views-down')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=alfa_urlparse.build_url(host, 'videos', query='sort=likes-down')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=alfa_urlparse.build_url(host, 'videos', query='sort=duration-down')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=alfa_urlparse.build_url(host, 'pornstars')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(host, 'channels', query='sort=ranking')))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories', query='sort=name')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch?keywords=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'search', query=[('keywords', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:
@@ -86,12 +88,12 @@ def categorias(item):
             cantidad = cantidad.text.strip().replace(" Videos", "").replace(" videos", "")
             title = "%s (%s)" % (title, cantidad)
         url = url.replace("channel-profile", "channel-profile-videos")
-        if "categories" in item.url:
-            url += "?sort=release"
-        else:
-            url += "?sort=date-down"
         url = url.replace("https://letsdoeit.com", "")
-        url = urlparse.urljoin(item.url,url)
+        url = urlparse.urljoin(item.url, url)
+        if "categories" in item.url:
+            url = alfa_urlparse.update_query(url, sort='release')
+        else:
+            url = alfa_urlparse.update_query(url, sort='date-down')
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = soup.find('a', class_='pager-next')

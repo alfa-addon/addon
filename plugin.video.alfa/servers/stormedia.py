@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -36,7 +37,7 @@ def get_video_url(page_url, video_password):
         # url = "https://s%s.fapmedia.com/wqpvid/%s/%s/%s/%s/%s_%s.mp4" %(server,s1,s2,id1,id,id,quality)
         # url = "https://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (servidor, num, pal,vid, id,id, quality)
         # url = "https://%s.vstor.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (servidor, num, pal,vid, id,id, quality)
-        url = "https://%s.vstor.top/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (servidor, num, pal,vid, id,id, quality)
+        url = alfa_urlparse.build_url(alfa_urlparse.urlunsplit(('https', u'{}.vstor.top'.format(servidor), "", "", "")), u'/whpvid/{}/{}/{}/{}/{}_{}.mp4'.format(num, pal, vid, id, id, quality))
         url = url.replace("_720p", "")
         video_urls.append(["[%s] %s" %(server,quality), url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))

@@ -263,7 +263,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
             # El id tiene que ser un numero, sino, no es valido y devuelve False
             try:
                 id = int(id)
-            except:
+            except Exception:
                 return False
 
             # El control sobre el que evaluar, tiene que estar dentro del rango, sino devuelve False
@@ -881,7 +881,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                         [self.visible_controls.index(c) for c in self.visible_controls if
                          c["control"].getId() == self.getFocus().getId()][0]
                     focus_control += 1
-                except:
+                except Exception:
                     focus_control = 0
 
                 while not focus_control == len(self.visible_controls) and (
@@ -910,7 +910,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                         focus_control -= 1
 
                     if focus_control < 0: focus_control = 0
-                except:
+                except Exception:
                     focus_control = 0
 
                 self.dispose_controls(focus_control, True)

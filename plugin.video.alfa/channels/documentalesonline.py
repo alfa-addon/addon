@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -32,11 +33,11 @@ def mainlist(item):
                          thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Categorías", action="categorias", url=host,
                          thumbnail=get_thumb('categories', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Top 100", action="listado", url=host + "top/",
+    itemlist.append(Item(channel=item.channel, title="Top 100", action="listado", url=alfa_urlparse.build_url(host, 'top/'),
                          thumbnail=get_thumb('more voted', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Populares", action="listado", url=host + "populares/",
+    itemlist.append(Item(channel=item.channel, title="Populares", action="listado", url=alfa_urlparse.build_url(host, 'populares/'),
                          thumbnail=get_thumb('more watched', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Series / Temas", action="listado", url=host + "series-temas/",
+    itemlist.append(Item(channel=item.channel, title="Series / Temas", action="listado", url=alfa_urlparse.build_url(host, 'series-temas/'),
                          thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search",
                          thumbnail=get_thumb('search', auto=True)))
@@ -67,7 +68,7 @@ def listado(item):
             itemlist.append(Item(action = "videos",
                                  channel = item.channel,
                                  title = scrapedtitle,
-                                 url = host + scrapedurl
+                                 url = alfa_urlparse.urljoin(host, scrapedurl)
                                  ))
     return itemlist
 
@@ -98,7 +99,7 @@ def videos(item):
     logger.info()
     itemlist = []
     if item.page:
-        data = httptools.downloadpage(item.url + "page/%s" %item.page, canonical=canonical).data
+        data = httptools.downloadpage(alfa_urlparse.build_url(item.url, u'page/{}'.format(item.page)), canonical=canonical).data
     else:
         data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '(?is)headline"><a href="([^"]+).*?'
@@ -127,12 +128,13 @@ def categorias(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
     try:
-        item.url = host + "?s=%s" % texto
+        item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto))])
         return videos(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 import base64
 
@@ -38,7 +39,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Películas", action='menu_movies', text_color="0xFFD4AF37", text_bold=True, thumbnail= "https://github.com/master-1970/resources/raw/master/images/genres/0/Directors%20Chair.png"))
     itemlist.append(item.clone(title='Series', action='menu_series', thumbnail= "https://github.com/master-1970/resources/raw/master/images/genres/0/TV%20Series.png",  text_color="0xFFD4AF37", text_bold=True))
     itemlist.append(
-        item.clone(title="Buscar...", action="search", text_color="0xFF5AC0E0", text_bold=True, url=host + 'search.html?keyword=', thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Search.png"))
+        item.clone(title="Buscar...", action="search", text_color="0xFF5AC0E0", text_bold=True, url=alfa_urlparse.build_url(host, 'search.html', query='keyword='), thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Search.png"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -51,9 +52,9 @@ def menu_movies(item):
 
     itemlist.append(Item(channel=item.channel, text_color="0xFF5AC0E0", text_bold=True, title="Estrenos", fanart="http://i.imgur.com/c3HS8kj.png", action="novedades_cine", url=host, thumbnail="https://github.com/master-1970/resources/raw/master/images/genres/0/New%20Releases.png"))
     itemlist.append(
-        Item(channel=item.channel, text_color="0xFF5AC0E0", text_bold=True, title="Más Vistas", action="popular", url=host + "popular", extra="popular", thumbnail="https://github.com/master-1970/resources/raw/master/images/genres/0/All%20Movies%20by%20Watched.png"))
-    itemlist.append(Item(channel=item.channel, text_color="0xFFD4AF37", text_bold=True,  title="Géneros", action="section", url=host + "popular", thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Genres.png"))
-    itemlist.append(Item(channel=item.channel, text_color="0xFFD4AF37", text_bold=True,  title="Año", action="section", url=host + "popular", thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Year.png"))
+        Item(channel=item.channel, text_color="0xFF5AC0E0", text_bold=True, title="Más Vistas", action="popular", url=alfa_urlparse.build_url(host, 'popular'), extra="popular", thumbnail="https://github.com/master-1970/resources/raw/master/images/genres/0/All%20Movies%20by%20Watched.png"))
+    itemlist.append(Item(channel=item.channel, text_color="0xFFD4AF37", text_bold=True,  title="Géneros", action="section", url=alfa_urlparse.build_url(host, 'popular'), thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Genres.png"))
+    itemlist.append(Item(channel=item.channel, text_color="0xFFD4AF37", text_bold=True,  title="Año", action="section", url=alfa_urlparse.build_url(host, 'popular'), thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Year.png"))
 
     return itemlist
 
@@ -62,17 +63,16 @@ def menu_series(item):
 
     itemlist=[]
     itemlist.append(Item(channel=item.channel, text_color="0xFF399437", text_bold=True, action="novedades_episodios", title="Últimos Episodios de:", folder=False, thumbnail=item.thumbnail))
-    itemlist.append(Item(channel=item.channel, text_color="0xFF5AC0E0", text_bold=True, action="novedades_episodios", title="   Series Tv", url=host + "watch-series", extra= "watch-series", thumbnail='https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/New%20TV%20Episodes.png', type='tvshows'))
-    itemlist.append(Item(channel=item.channel, text_color="0xFF5AC0E0", text_bold=True, action="novedades_episodios", title="   Doramas", url=host + "drama", extra= "drama", thumbnail='https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Asian%20Movies.png', type='tvshows'))
-    itemlist.append(Item(channel=item.channel, text_color="0xFF5AC0E0", text_bold=True, action="novedades_episodios", title="   Animes", url=host + "anime", extra= "anime", thumbnail='https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Anime.png', type='anime'))
+    itemlist.append(Item(channel=item.channel, text_color="0xFF5AC0E0", text_bold=True, action="novedades_episodios", title="   Series Tv", url=alfa_urlparse.build_url(host, 'watch-series'), extra= "watch-series", thumbnail='https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/New%20TV%20Episodes.png', type='tvshows'))
+    itemlist.append(Item(channel=item.channel, text_color="0xFF5AC0E0", text_bold=True, action="novedades_episodios", title="   Doramas", url=alfa_urlparse.build_url(host, 'drama'), extra= "drama", thumbnail='https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Asian%20Movies.png', type='tvshows'))
+    itemlist.append(Item(channel=item.channel, text_color="0xFF5AC0E0", text_bold=True, action="novedades_episodios", title="   Animes", url=alfa_urlparse.build_url(host, 'anime'), extra= "anime", thumbnail='https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Anime.png', type='anime'))
 
     return itemlist
 
 def search(item, texto):
     logger.info()
     itemlist = []
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = alfa_urlparse.update_query(item.url, {'keyword': texto})
     if texto != '':
         try:
             return popular(item)
@@ -95,14 +95,14 @@ def section(item):
 
     for scrapedurl, scrapedtitle in matches:
 
-        url = host + scrapedurl
+        url = alfa_urlparse.urljoin(host, scrapedurl)
         title = scrapedtitle
         if 'Géneros' in item.title:
             if title in title2:
                 title1 = title2[title]
             else:
                 title1 = title
-            icono = 'https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/'+ title1 +'.png'
+            icono = alfa_urlparse.build_url('https://raw.githubusercontent.com', u'/master-1970/resources/master/images/genres/0/{}.png'.format(title1))
         else:
             icono = 'https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Year.png'
         itemlist.append(Item(channel=item.channel,
@@ -139,7 +139,7 @@ def novedades_episodios(item):
         itemlist.append(new_item)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True, idioma_busqueda='en')
     if url_pagination:
-        url = urlparse.urljoin(host +  item.extra, url_pagination)
+        url = urlparse.urljoin(alfa_urlparse.urljoin(host, item.extra), url_pagination)
         title = ">> Pagina Siguiente"
         itemlist.append(Item(channel=item.channel, action="novedades_episodios", title=title, url=url, extra=item.extra))
     return itemlist
@@ -159,7 +159,7 @@ def novedades_cine(item):
         itemlist.append(new_item)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True, idioma_busqueda='en')
     if url_pagination:
-        url = urlparse.urljoin(host + item.extra, url_pagination)
+        url = urlparse.urljoin(alfa_urlparse.urljoin(host, item.extra), url_pagination)
         title = ">> Pagina Siguiente"
         itemlist.append(Item(channel=item.channel, action="novedades_cine", title=title, url=url))
     return itemlist
@@ -176,20 +176,20 @@ def popular(item):
             scrapedinfo = title.split(' - Season ')
             title2 = scrapedinfo[0]
             season = scrapedinfo[1]
-            url = urlparse.urljoin(host, url)+ "/season"
+            url = alfa_urlparse.build_url(urlparse.urljoin(host, url), '/season')
             new_item = Item(channel=item.channel, action="episodios",title=title, contentSerieName=title2, url=url, thumbnail=thumbnail,infoLabels={'season':season})
         elif "-info/" in url:
             url = urlparse.urljoin(host, url)
-            url = url.replace("-info/", "/")+ "/all"
+            url = alfa_urlparse.build_url(url.replace("-info/", "/"), '/all')
             new_item = Item(channel=item.channel, action="episodios",title=title, contentSerieName=title, url=url, thumbnail=thumbnail)
         else:
-            url = urlparse.urljoin(host, url)+"-episode-0"
+            url = alfa_urlparse.build_url(alfa_urlparse.append_path_suffix(urlparse.urljoin(host, url), '-episode-0'))
             extra = "film"
             new_item = Item(channel=item.channel, action="findvideos",title=title, url=url, extra=extra, contentTitle=title, thumbnail=thumbnail,infoLabels={'year':scrapedyear})
         itemlist.append(new_item)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True, idioma_busqueda='en')
     if url_pagination:
-        url = urlparse.urljoin(host + item.extra, url_pagination)
+        url = urlparse.urljoin(alfa_urlparse.urljoin(host, item.extra), url_pagination)
         title = ">> Pagina Siguiente"
         itemlist.append(Item(channel=item.channel, action="popular", title=title, url=url))
     return itemlist
@@ -236,23 +236,23 @@ def findvideos(item):
     urlsub = scrapertools.find_single_match(data, "&sub=(.*?)&cover")
     if urlsub != '':
         urlsub =  base64.b64decode(urlsub).decode('utf-8')
-        urlsub = 'https://sub.movie-series.net' + urlsub   
+        urlsub = alfa_urlparse.urlunsplit(('https', u'sub.movie-series.net{}'.format(urlsub), "", "", ""))
     for source in matches:
         if '/streaming.php' in source:
-            new_data = httptools.downloadpage("https:" + source).data
+            new_data = httptools.downloadpage(alfa_urlparse.urljoin('https:', source)).data
             url = scrapertools.find_single_match(new_data, "file: '(https://redirector.*?)'")
             thumbnail= "https://martechforum.com/wp-content/uploads/2015/07/drive-300x300.png"
             if url == "":
                 source = source.replace("streaming.php", "load.php")
         elif '/load.php' in source:
-            new_data = httptools.downloadpage("https:" + source).data
+            new_data = httptools.downloadpage(alfa_urlparse.urljoin('https:', source)).data
             url = scrapertools.find_single_match(new_data, "file: '(https://[A-z0-9]+.cdnfile.info/.*?)'")
             thumbnail= "https://vidnode.net/img/logo_vid.png"
         else:
             url = source
             thumbnail= ""
         if "https://redirector."  in url or "cdnfile.info" in url:
-            url += "|referer=https://vidnode.net/"  
+            url = alfa_urlparse.add_url_headers(url, {'referer': 'https://vidnode.net/'})
         
         if url != "":
             itemlist.append(Item(channel=item.channel, url=url, title='%s', action='play',plot=item.plot,  thumbnail=thumbnail, subtitle=urlsub))

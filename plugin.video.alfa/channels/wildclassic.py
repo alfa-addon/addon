@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import logger
@@ -16,9 +17,9 @@ host = 'https://www.wildclassic.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/vintage/newest-videos/", page=host + "/vintage/newest-videos/" ))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/vintage/"))
-    itemlist.append(item.clone(title="Mas largos" , action="lista", url=host + "/vintage/longest-videos/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, '/vintage/newest-videos/'), page=alfa_urlparse.build_url(host, '/vintage/newest-videos/') ))
+    itemlist.append(item.clone(title="Popular" , action="lista", url=alfa_urlparse.build_url(host, '/vintage/')))
+    itemlist.append(item.clone(title="Mas largos" , action="lista", url=alfa_urlparse.build_url(host, '/vintage/longest-videos/')))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -26,8 +27,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s/?query=%s" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, '/', query=[('query', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:

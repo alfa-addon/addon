@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -94,15 +95,15 @@ def submenu(item):
     AlfaChannel.host = item.url
     AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=item.url + "page/1/?filter=latest", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=item.url + "page/1/?filter=most-viewed", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=item.url + "page/1/?filter=popular", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=item.url + "page/1/?filter=longest", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'page/1/', query='filter=latest'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'page/1/', query='filter=most-viewed'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'page/1/', query='filter=popular'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(item.url, 'page/1/', query='filter=longest'), chanel=item.chanel))
     if "eroticage" in item.chanel:
-        itemlist.append(Item(channel=item.channel, title="Año" , action="section", url=item.url + "categories/", extra="año", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Año" , action="section", url=alfa_urlparse.build_url(item.url, 'categories/'), extra="año", chanel=item.chanel))
         itemlist.append(Item(channel=item.channel, title="Pais" , action="section", url=item.url, extra="Pais", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=item.url + "actors/page/1/", extra="PornStar", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url + "tags/", extra="Categorias", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(item.url, 'actors/page/1/'), extra="PornStar", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(item.url, 'tags/'), extra="Categorias", chanel=item.chanel))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url, chanel=item.chanel))
     
     return itemlist
@@ -170,7 +171,7 @@ def play(item):
     if "play.php" in url:
         vid = url.split('?vid=')[-1]
         post_url = url.split('play.php')[0]
-        post_url += "ajax_sources.php"
+        post_url = alfa_urlparse.build_url(post_url, 'ajax_sources.php')
         post = {'vid': vid, 'alternative': 'spankbang', 'ord': '0'}
         from core import httptools
         data = httptools.downloadpage(post_url, post=post).json
@@ -178,7 +179,7 @@ def play(item):
     # else:
         # url = url
     # if ".m3u" in url:
-    url += "|Referer=%s" %AlfaChannel.host
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(AlfaChannel.host)})
     if not "meta" in url:
         itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url, plot=item.plot ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
@@ -191,7 +192,7 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     # item.url = "%sbuscar/?q=%s&sort_by=video_viewed&from_videos=1" % (host, texto.replace(" ", "+"))
-    item.url = "%s?s=%s&filter=latest" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, query=[('s', texto), ('filter', 'latest')])
     
     try:
         if texto:
@@ -202,7 +203,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

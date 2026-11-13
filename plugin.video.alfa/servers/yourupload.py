@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -31,13 +32,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             url = scrapertools.find_single_match(data, "file:\s*'([^']+)'")
     if url:
         if "vidcache" not in url:
-            url = "https://www.yourupload.com%s" % url
+            url = alfa_urlparse.urlunsplit(('https', u'www.yourupload.com{}'.format(url), "", "", ""))
             media_url = httptools.downloadpage(url, headers=referer, only_headers=True).url
             ext = media_url[-4:]
-            media_url += "|Referer=%s" % url
+            media_url = alfa_urlparse.add_url_headers(media_url, {'Referer': u'{}'.format(url)})
         else:
             ext = url[-4:]
-            media_url = url +"|Referer=%s" % page_url
+            media_url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
         
         video_urls.append([ext + " [yourupload]", media_url])
     

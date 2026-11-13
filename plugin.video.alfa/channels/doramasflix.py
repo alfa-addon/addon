@@ -335,7 +335,7 @@ def seasons(item):
                     )
 
                 itemlist.append(new_item)
-        except:
+        except Exception:
             pass
 
         return itemlist
@@ -356,7 +356,7 @@ def seasons(item):
                 contentType = 'episode'
             )
             itemlist.append(new_item)
-    except:
+    except Exception:
         pass
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -577,7 +577,7 @@ def get_language_list(languages, code_list):
                     lang_list.append(next(filter(lambda lang: lang['code_flix'] == code, languages))['name'])
                 else:
                     lang_list.append(filter(lambda lang: lang['code_flix'] == code, languages)[0]['name'])
-        except:
+        except Exception:
             logger.error("The code list could not be parsed : {}".format(str(code_list)))
     # logger.info(lang_list, True)
     return lang_list

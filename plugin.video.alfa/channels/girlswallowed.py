@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -69,10 +70,10 @@ def mainlist(item):
     logger.info()
     itemlist = []
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "all-swallowed-videos/"))
-    itemlist.append(Item(channel=item.channel, title="Weekly" , action="list_all", url=host + "weekly-site-updates/"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "actors/", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, 'all-swallowed-videos/')))
+    itemlist.append(Item(channel=item.channel, title="Weekly" , action="list_all", url=alfa_urlparse.build_url(host, 'weekly-site-updates/')))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, 'actors/'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/'), extra="Categorias"))
     # itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     return itemlist
@@ -130,7 +131,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/video/?s=%s&o=recent&page=1" % (host, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(host, 'search/video/', query=[('s', texto), ('o', 'recent'), ('page', '1')])
     
     try:
         if texto:
@@ -141,7 +142,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

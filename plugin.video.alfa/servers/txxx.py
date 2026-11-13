@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -30,7 +31,7 @@ def test_video_exists(page_url):
         vid1= "0"
     else:
         vid1 = vid[:-6] + "000000"
-    url = "https://%s.%s/api/json/video/86400/%s/%s/%s.json" %(server,dom,vid1,vid2,vid)
+    url = alfa_urlparse.build_url(alfa_urlparse.urlunsplit(('https', u'{}.{}'.format(server, dom), "", "", "")), u'/api/json/video/86400/{}/{}/{}.json'.format(vid1, vid2, vid))
     headers = {'Referer': page_url}
     data = httptools.downloadpage(url, headers=headers).json
     if data['video']['status_id'] == "5":
@@ -41,8 +42,8 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-    page_url = "https://%s.%s" % (server,dom)
-    url = "%s/api/videofile.php?video_id=%s&lifetime=8640000" % (page_url,vid)
+    page_url = alfa_urlparse.urlunsplit(('https', u'{}.{}'.format(server, dom), "", "", ""))
+    url = alfa_urlparse.build_url(page_url, '/api/videofile.php', query=[('video_id', u'{}'.format(vid)), ('lifetime', '8640000')])
     headers = {'Referer': page_url}
     data = httptools.downloadpage(url, headers=headers).json
     for elem in data:
@@ -52,7 +53,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         if "tr" in quality: continue
         url = dec_url(url)
         if not url.startswith("http"):
-            url = "https://%s.%s%s" % (server,dom,url)
+            url = alfa_urlparse.urlunsplit(('https', u'{}.{}{}'.format(server, dom, url), "", "", ""))
         media_url = httptools.downloadpage(url, only_headers=True).url
         video_urls.append(["[%s] %s" %(server,quality), media_url])
     return video_urls

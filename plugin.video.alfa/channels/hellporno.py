@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 
@@ -23,8 +24,8 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "1/", t=""))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, '1/'), t=""))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, '/categories/')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     itemlist.append(Item(channel = item.channel, title = ""))
@@ -38,16 +39,17 @@ def mainlist(item):
 def new_menu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "1/?t=" + item.t))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?t="+ item.t, t=item.t))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, '1/', query=[('t', item.t)])))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, '/categories/', query=[('t', item.t)]), t=item.t))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", t=item.t))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/?q=%s&t=%s" % (host, texto,item.t )
+    item.url = alfa_urlparse.build_url(host, 'search/', query=[('q', u'{}'.format(_url_query_texto)), ('t', u'{}'.format(item.t))])
     try:
         return lista(item)
     except Exception:
@@ -66,7 +68,7 @@ def categorias(item):
     patron  = '<a href="([^"]+)">([^<]+)'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
-        scrapedurl += "?t=%s" %item.t
+        scrapedurl = alfa_urlparse.build_url(scrapedurl, query=[('t', u'{}'.format(item.t))])
         scrapedplot = ""
         scrapedthumbnail = ""
         # scrapedtitle = "%s (%s)" % (scrapedtitle,cantidad)

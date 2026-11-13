@@ -3,6 +3,7 @@
 # Conector vidhide By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -44,7 +45,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     global data
     domain = scrapertools.get_domain_from_url(page_url)
-    host = "https://%s" % domain
+    host = alfa_urlparse.urlunsplit(('https', u'{}'.format(domain), "", "", ""))
     try:
         enc_data = scrapertools.find_single_match(data, "text/javascript(?:'|\")>(eval.*?)</script>")
         dec_data = jsunpack.unpack(enc_data)

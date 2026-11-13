@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -43,11 +44,11 @@ def get_long_urls(data):
         if short_url.startswith(tuple(servers)):
             logger.info(": " + short_url)
             longurl_data = httptools.downloadpage(
-                "http://api.longurl.org/v2/expand?url=" + urllib.quote_plus(short_url)).data
+                alfa_urlparse.build_url('http://api.longurl.org', '/v2/expand', query=[('url', short_url)])).data
             logger.info(longurl_data)
             try:
                 long_url = scrapertools.scrapertools.find_single_match(longurl_data, '<long-url><!\[CDATA\[(.*?)\]\]></long-url>')
-            except:
+            except Exception:
                 long_url = ""
             if (long_url != ""): data = data.replace(short_url, long_url)
     return data

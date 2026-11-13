@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -40,7 +41,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%ssearch/%s/" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, u'search/{}/'.format(texto))
     try:
         return lista(item)
     except Exception:
@@ -57,10 +58,11 @@ def categorias(item):
     matches = soup.find_all('li', class_='hbd_item')
     for elem in matches:
         cat = elem.a['href'].replace("/", "")
+        category = alfa_urlparse.unquote(cat if alfa_urlparse.PY3 else cat.encode('utf-8'))
         cantidad = elem.find('span', class_='hbd_s_live')
         if cantidad:
             title = "%s %s" % (cat,cantidad.text.strip())
-        url = "%stools/listing_v3.php?livetab=%s&online_only=true&offset=0&can_pin_models=true&category=%s&limit=40" %(host,"female", cat)
+        url = alfa_urlparse.build_url(host, 'tools/listing_v3.php', query=[('livetab', u'{}'.format("female")), ('online_only', 'true'), ('offset', '0'), ('can_pin_models', 'true'), ('category', category), ('limit', '40')])
         thumbnail = ""
         plot = ""
         itemlist.append(Item(channel = item.channel, action="lista", title=title, url=url,
@@ -123,9 +125,9 @@ def findvideos(item):
     data = httptools.downloadpage(url, post=post, headers=headers).json
     url = data['localData']['videoServerUrl']
     if url.startswith("//mobile"):
-       videourl = 'https:' + url + '/hls/stream_' + item.name + '.m3u8'
+       videourl = alfa_urlparse.urljoin('https:', url) + '/hls/stream_' + item.name + '.m3u8'
     else:
-       videourl = 'https:' + url + '/hls/stream_' + item.name + '/playlist.m3u8'
+       videourl = alfa_urlparse.urljoin('https:', url) + '/hls/stream_' + item.name + '/playlist.m3u8'
     itemlist.append(Item(channel = item.channel, action="play", title=videourl, contentTitle = item.title, url=videourl, server="Directo" ))
     return itemlist
 
@@ -139,8 +141,8 @@ def play(item):
     data = httptools.downloadpage(url, post=post, headers=headers).json
     url = data['localData']['videoServerUrl']
     if url.startswith("//mobile"):
-       videourl = 'https:' + url + '/hls/stream_' + item.name + '.m3u8'
+       videourl = alfa_urlparse.urljoin('https:', url) + '/hls/stream_' + item.name + '.m3u8'
     else:
-       videourl = 'https:' + url + '/hls/stream_' + item.name + '/playlist.m3u8'
+       videourl = alfa_urlparse.urljoin('https:', url) + '/hls/stream_' + item.name + '/playlist.m3u8'
     itemlist.append(Item(channel = item.channel, action="play", title=videourl, contentTitle = item.title, url=videourl, server="Directo" ))
     return itemlist

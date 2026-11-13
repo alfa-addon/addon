@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from core import urlparse
@@ -28,7 +29,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     fileId = scrapertools.find_single_match(data, 'data-file-id="([^"]+)"')
     post = {"fileId": fileId}
     v_data = httptools.downloadpage(base_url, post=post, headers={"referer": page_url}).json
-    url = httptools.downloadpage(v_data["purchase"]["cdnUrl"]).url + "|referer=https://www.burstcloud.co/"
+    url = alfa_urlparse.add_url_headers(httptools.downloadpage(v_data["purchase"]["cdnUrl"]).url, {'referer': 'https://www.burstcloud.co/'})
     video_urls.append(['[burstcloud] MP4', url])
 
     return video_urls

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -65,17 +66,17 @@ def mainlist(item):
     logger.info()
     itemlist = []
     
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host + "newest"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=host + "mostviewed?period=monthly"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="list_all", url=host + "top?period=monthly"))
-    itemlist.append(Item(channel=item.channel, title="Favoritas del mes" , action="list_all", url=host + "mostfavored?period=monthly"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "longest?period=alltime"))
-    itemlist.append(Item(channel=item.channel, title="Castellano" , action="list_all", url=host + "inyourlanguage/es"))
-    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=host + "hot"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "channel/top-rated", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "pornstar/subscribers", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/popular", extra="Categorias"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", url=host +"new", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=alfa_urlparse.build_url(host, 'newest')))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=alfa_urlparse.build_url(host, 'mostviewed', query='period=monthly')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="list_all", url=alfa_urlparse.build_url(host, 'top', query='period=monthly')))
+    itemlist.append(Item(channel=item.channel, title="Favoritas del mes" , action="list_all", url=alfa_urlparse.build_url(host, 'mostfavored', query='period=monthly')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(host, 'longest', query='period=alltime')))
+    itemlist.append(Item(channel=item.channel, title="Castellano" , action="list_all", url=alfa_urlparse.build_url(host, 'inyourlanguage/es')))
+    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=alfa_urlparse.build_url(host, 'hot')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(host, 'channel/top-rated'), extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, 'pornstar/subscribers'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/popular'), extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", url=alfa_urlparse.build_url(host, 'new'), action="search"))
     
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel=item.channel, title="Trans", action="submenu", orientation="transgender"))
@@ -87,24 +88,24 @@ def submenu(item):
     logger.info()
     itemlist = []
     if "transgender" in item.orientation:
-        url = "%sredtube/%s/" %(host,item.orientation)
+        url = alfa_urlparse.build_url(host, u'redtube/{}/'.format(item.orientation))
     else:
-        url = "%s%s/" %(host,item.orientation)
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=url + "?sorting=newest"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=url + "?sorting=mostviewed&period=monthly"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="list_all", url=url + "?sorting=rating&period=monthly"))
-    itemlist.append(Item(channel=item.channel, title="Favoritas del mes" , action="list_all", url=url + "?sorting=mostfavored&period=monthly"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=url + "?sorting=longest&period=alltime"))
+        url = alfa_urlparse.build_url(host, u'{}/'.format(item.orientation))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=alfa_urlparse.build_url(url, query='sorting=newest')))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=alfa_urlparse.build_url(url, query='sorting=mostviewed&period=monthly')))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="list_all", url=alfa_urlparse.build_url(url, query='sorting=rating&period=monthly')))
+    itemlist.append(Item(channel=item.channel, title="Favoritas del mes" , action="list_all", url=alfa_urlparse.build_url(url, query='sorting=mostfavored&period=monthly')))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(url, query='sorting=longest&period=alltime')))
     if "gay" in item.orientation:
-        itemlist.append(Item(channel=item.channel, title="Castellano" , action="list_all", url=url + "inyourlanguage/es"))
-        itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=url + "hot"))
-        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=url + "pornstar/subscribers/", extra="PornStar"))
-        itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "channel/%s/top-rated" %item.orientation, extra="Canal"))
-        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "%s/categories/popular"%item.orientation, extra="Categorias"))
-        itemlist.append(Item(channel=item.channel, title="Buscar", url="%snew/%s/" %(host,item.orientation), action="search"))
+        itemlist.append(Item(channel=item.channel, title="Castellano" , action="list_all", url=alfa_urlparse.build_url(url, 'inyourlanguage/es')))
+        itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=alfa_urlparse.build_url(url, 'hot')))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(url, 'pornstar/subscribers/'), extra="PornStar"))
+        itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(host, u'channel/{}/top-rated'.format(item.orientation)), extra="Canal"))
+        itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, u'{}/categories/popular'.format(item.orientation)), extra="Categorias"))
+        itemlist.append(Item(channel=item.channel, title="Buscar", url=alfa_urlparse.build_url(host, u'new/{}/'.format(item.orientation)), action="search"))
     else:
-        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "pornstar/subscribers/%s" %item.orientation, extra="PornStar"))
-        itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "channel/%s/top-rated" %item.orientation, extra="Canal"))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, u'pornstar/subscribers/{}'.format(item.orientation)), extra="PornStar"))
+        itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(host, u'channel/{}/top-rated'.format(item.orientation)), extra="Canal"))
     
     return itemlist
 
@@ -141,8 +142,9 @@ def section_matches(item, matches_int, **AHkwargs):
             if elem.find(string=re.compile(r"(?i)videos|movies")):
                 elem_json['cantidad'] = elem.find(string=re.compile(r"(?i)videos|movies")).strip()
             if item.extra == "Categorias":
-                elem_json['url'] += "?sorting=newest"
-        except:
+                elem_json['url'] = alfa_urlparse.update_query(
+                    alfa_urlparse.urljoin(item.url, elem_json['url']), sorting='newest')
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -194,7 +196,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     pornstars[x] = value.get_text(strip=True)
                 elem_json['star'] = ' & '.join(pornstars)
             
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -216,7 +218,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%s?search=%s&page=1" % (item.url, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(item.url, query=[('search', texto), ('page', '1')])
     
     try:
         if texto:
@@ -227,7 +229,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

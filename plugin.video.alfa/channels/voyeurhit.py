@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -35,7 +36,7 @@ canonical = {
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-url_api = host + "api/json/videos/%s/%s/%s/60/%s.%s.1.all..%s.json"
+url_api = alfa_urlparse.build_url(host, 'api/json/videos/%s/%s/%s/60/%s.%s.1.all..%s.json')
 
 timeout = 5
 kwargs = {}
@@ -53,7 +54,7 @@ finds = {'find': {},
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {}, 
-         'next_page_rgx': [['&p=\d+', '&p=%s']], 
+         'next_page_rgx': [[r'\.\d+\.all\.', '.%s.all.'], [r'/\d+\.json', '/%s.json'], [r'\.\d+\.json', '.%s.json']],
          'last_page': {}, 
          'plot': {}, 
          'findvideos': {}, 
@@ -79,7 +80,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="list_all", url=url_api %  ("14400", "str", "longest", "", "", "")))
     # itemlist.append(Item(channel=item.channel, title="Pornstar" , action="section", url=host + "api/json/models/86400/%s/filt........../most-popular/48/1.json" %"str", extra="PornStars"))
     # itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "api/json/channels/14400/%s/most-viewed/80/..1.json" %"str", extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "api/json/categories/14400/%s.all.json" %"str", extra="Categorías"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, u'api/json/categories/14400/{}.all.json'.format("str")), extra="Categorías"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", orientation="str"))
     
     return itemlist
@@ -126,7 +127,7 @@ def section_matches(item, matches_int, **AHkwargs):
             if  elem.get('cf3', ''):  elem_json['thumbnail'] = elem.get('cf3', '')
             if  elem.get('total_videos', ''):  elem_json['cantidad'] = elem.get('total_videos', '')
             else: elem_json['cantidad'] =  elem.get('statistics', {}).get('videos', '')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -162,14 +163,14 @@ def list_all_matches(item, matches_int, **AHkwargs):
         elem_json = {}
        
         try:
-            elem_json['url'] = "%svideos/%s/%s/" % (host, elem.get('video_id', 0), elem.get('dir', ''))
+            elem_json['url'] = alfa_urlparse.build_url(host, u'videos/{}/{}/'.format(elem.get('video_id', 0), elem.get('dir', '')))
             elem_json['title'] = elem.get('title', '')
             elem_json['thumbnail'] = elem.get('scr', '') if elem.get('scr', '') else ''
             elem_json['stime'] = elem.get('duration', 0)
             quality = elem.get('file_dimensions', '').split('x') if elem.get('file_dimensions') else ''
             elem_json['quality'] = "%sp" % quality[-1]
             elem_json['star'] = elem.get('models', '') if elem.get('models', '') else ''
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -192,7 +193,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%sapi/videos.php?params=259200/%s/latest-updates/60/search..1.all..&s=%s&sort=latest-updates&date=all&type=all&duration=all" % (host,item.orientation, texto.replace(" ", "%20")) 
+    item.url = alfa_urlparse.build_url(host, 'api/videos.php', query=[('params', u'259200/{}/latest-updates/60/search..1.all..'.format(u'{}'.format(item.orientation))), ('s', u'{}'.format(texto)), ('sort', 'latest-updates'), ('date', 'all'), ('type', 'all'), ('duration', 'all')])
     
     try:
         if texto:
@@ -203,7 +204,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

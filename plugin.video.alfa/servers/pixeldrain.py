@@ -3,6 +3,7 @@
 # Conector PixelDrain By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -25,7 +26,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = list()
     v_id = scrapertools.find_single_match(page_url, "/u/([^$]+)")
-    media_url = "https://pixeldrain.com/api/file/%s?download" % v_id
+    media_url = alfa_urlparse.build_url('https://pixeldrain.com', u'/api/file/{}'.format(v_id), query='download')
     video_urls.append(["[PixelDrain]", media_url, 0])
 
     return video_urls

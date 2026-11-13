@@ -26,7 +26,7 @@ def get_addon_version(with_fix=True, from_xml=False):
         data = f.read()
         try:
             version = re.findall('<addon.+?version=["\']([^"\']+).+?>', data, flags=re.DOTALL)[0]
-        except:
+        except Exception:
             version = "???"
     
     if with_fix:
@@ -86,7 +86,7 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
             
             versiones = filetools.decode(versiones)
             break
-        except:
+        except Exception:
             import traceback
             from platformcode import logger
             logger.error("Unable to download repo xml: %s" % versiones)
@@ -329,7 +329,7 @@ def get_localized_string(code):
 
         try:
             dev = dev.encode("utf-8").decode()
-        except:
+        except Exception:
             pass
 
         return dev
@@ -545,5 +545,5 @@ def importer(module):
             # lib_path = scrapertools.find_single_match(ad, 'library="([^"]+)"')
             lib_path = re.search('library="([^"]+)"', ad).group(1)
             sys.path.append(os.path.join(path, lib_path))
-    except:
+    except Exception:
         pass

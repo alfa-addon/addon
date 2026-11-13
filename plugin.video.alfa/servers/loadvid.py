@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -22,7 +23,7 @@ def test_video_exists(page_url):
     if not videoHash or not token:
         return False, "[loadvid] El fichero no existe o ha sido borrado"
     
-    url = "%s/videos/get-signed-url/%s" %(host,videoHash)
+    url = alfa_urlparse.build_url(host, u'/videos/get-signed-url/{}'.format(videoHash))
     
     kwargs['headers'] = {
                          'Referer': page_url,
@@ -45,6 +46,6 @@ def get_video_url(page_url, video_password):
     video_urls = []
     global data
     url = data['signed_url']
-    url += "|%s" % urlparse.urlencode(kwargs['headers'])
+    url = alfa_urlparse.add_url_headers(url, kwargs['headers'])
     video_urls.append(['[loadvid]', url])
     return video_urls

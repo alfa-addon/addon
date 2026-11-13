@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys, re
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -38,7 +39,7 @@ __channel__ = canonical['channel']
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-except:
+except Exception:
     __modo_grafico__ = True
 
 
@@ -48,7 +49,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "lista", url = host, page = 1, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Categorias", action = "categorias", url = host, thumbnail = get_thumb("categories", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "?Titulo=", thumbnail = get_thumb("search", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = alfa_urlparse.build_url(host, query='Titulo='), thumbnail = get_thumb("search", auto = True)))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
     
@@ -66,7 +67,7 @@ def categorias(item):
                              action = "lista",
                              page = 0,
                              title = title,
-                             url = host + "?Categoria_id=" + id
+                             url = alfa_urlparse.build_url(host, query=[('Categoria_id', id)])
                         ))
     return itemlist
 
@@ -82,16 +83,16 @@ def lista(item):
     for url, thumbnail, title in matches:
         itemlist.append(item.clone(action = "seasons",
                              contentSerieName = title,
-                             thumbnail = host + thumbnail,
+                             thumbnail = alfa_urlparse.urljoin(host, thumbnail),
                              title = title,
-                             url = host + url
+                             url = alfa_urlparse.urljoin(host, url)
                         ))
     tmdb.set_infoLabels(itemlist)
     
     page = item.page + 1
     page_url = re.sub(r'page=\d+', 'page=%s' % page, item.url)
     if page == 2:
-        page_url = "%s?page=%s" %(item.url, page)
+        page_url = alfa_urlparse.build_url(item.url, query=[('page', u'{}'.format(page))])
     
     if not item.extra:
         thumbnail += '|verifypeer=false'
@@ -99,7 +100,7 @@ def lista(item):
                                 action = "lista",
                                 contentSerieName = title,
                                 page = page,
-                                thumbnail = host + thumbnail,
+                                thumbnail = alfa_urlparse.urljoin(host, thumbnail),
                                 title = "Pagina: %s" % page,
                                 url = page_url
                     ))
@@ -157,7 +158,7 @@ def episodesxseasons(item):
         itemlist.append(item.clone(action = "findvideos",
                                    infoLabels = infoLabels,
                                    title = title.strip(),
-                                   url = host + url
+                                   url = alfa_urlparse.urljoin(host, url)
                                    ))
     tmdb.set_infoLabels(itemlist)
     return itemlist
@@ -165,8 +166,7 @@ def episodesxseasons(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = alfa_urlparse.update_query(item.url, {'Titulo': texto})
     item.extra = "busca"
     item.page = 0
     if texto != '':

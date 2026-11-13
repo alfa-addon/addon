@@ -199,7 +199,7 @@ def now_available():
             for index, res in enumerate(futures.as_completed(c_results)):
                 try:
                     itemlist.extend(res.result()[1])
-                except:
+                except Exception:
                     continue
 
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)

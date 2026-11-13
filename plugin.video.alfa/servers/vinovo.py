@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -42,11 +43,11 @@ def get_video_url(page_url, video_password):
     rcap = alfaresolver.rcap(data, url, co)
     
     payload = {'token': tok, 'recaptcha': rcap}
-    api = '%s/api/file/url/%s' %(host,id)
+    api = alfa_urlparse.build_url(host, u'/api/file/url/{}'.format(id))
     data = httptools.downloadpage(api, post=payload, referer=page_url).json
     if data.get('token', ''):
         token= data['token']
     url = "%s/stream/%s" %(url, token)
-    url += "|Referer=%s" %page_url
+    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
     video_urls.append(["[vinovo]", url])
     return video_urls

@@ -41,7 +41,7 @@ class QuasarMonitor(xbmc.Monitor):
         try:
             urllib2.urlopen("%s/reload" % QUASARD_HOST)
             urllib2.urlopen("%s/cmd/clear_page_cache" % QUASARD_HOST)
-        except:
+        except Exception:
             pass
 
     def onNotification(self, sender, method, data):
@@ -51,5 +51,5 @@ class QuasarMonitor(xbmc.Monitor):
                 sender,
                 method,
                 base64.b64encode(data)))
-        except:
+        except Exception:
             pass

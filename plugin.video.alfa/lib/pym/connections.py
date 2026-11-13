@@ -370,13 +370,15 @@ class Connection(object):
 
     def _force_close(self):
         """Close connection without QUIT message"""
-        if self._sock:
-            try:
-                self._sock.close()
-            except:  # noqa
-                pass
-        self._sock = None
-        self._rfile = None
+        try:
+            if self._sock:
+                try:
+                    self._sock.close()
+                except Exception:  # noqa
+                    pass
+        finally:
+            self._sock = None
+            self._rfile = None
 
     __del__ = _force_close
 
@@ -615,7 +617,7 @@ class Connection(object):
             if sock is not None:
                 try:
                     sock.close()
-                except:  # noqa
+                except Exception:  # noqa
                     pass
 
             if isinstance(e, (OSError, IOError, socket.error)):
@@ -720,13 +722,15 @@ class Connection(object):
     def _read_query_result(self, unbuffered=False):
         self._result = None
         if unbuffered:
+            result = MySQLResult(self)
+            initialized = False
             try:
-                result = MySQLResult(self)
                 result.init_unbuffered_query()
-            except:
-                result.unbuffered_active = False
-                result.connection = None
-                raise
+                initialized = True
+            finally:
+                if not initialized:
+                    result.unbuffered_active = False
+                    result.connection = None
         else:
             result = MySQLResult(self)
             result.read()
@@ -1123,13 +1127,19 @@ class MySQLResult(object):
                 "**WARN**: Received LOAD_LOCAL packet but local_infile option is false.")
         load_packet = LoadLocalPacketWrapper(first_packet)
         sender = LoadLocalFile(load_packet.filename, self.connection)
+        sent = False
         try:
             sender.send_data()
-        except:
-            self.connection._read_packet()  # skip ok packet
-            raise
+            sent = True
+        finally:
+            if sent:
+                ok_packet = self.connection._read_packet()
+            else:
+                try:
+                    self.connection._read_packet()  # skip ok packet
+                except Exception:
+                    pass  # Preserve the send error, including cancellation.
 
-        ok_packet = self.connection._read_packet()
         if not ok_packet.is_ok_packet(): # pragma: no cover - upstream induced protocol error
             raise err.OperationalError(2014, "Commands Out of Sync")
         self._read_ok_packet(ok_packet)

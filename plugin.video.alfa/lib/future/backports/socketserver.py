@@ -304,11 +304,22 @@ class BaseServer(object):
         except socket.error:
             return
         if self.verify_request(request, client_address):
+            dispatched = False
+            handled = False
             try:
                 self.process_request(request, client_address)
-            except:
+                dispatched = True
+            except Exception:
                 self.handle_error(request, client_address)
-                self.shutdown_request(request)
+                handled = True
+            finally:
+                if not dispatched:
+                    failed = not handled
+                    try:
+                        self.shutdown_request(request)
+                    except Exception:
+                        if not failed:
+                            raise
 
     def handle_timeout(self):
         """Called if no new request arrives within self.timeout.
@@ -583,16 +594,22 @@ class ForkingMixIn(object):
         else:
             # Child process.
             # This must never return, hence os._exit()!
+            status = 1
             try:
-                self.finish_request(request, client_address)
-                self.shutdown_request(request)
-                os._exit(0)
-            except:
                 try:
+                    self.finish_request(request, client_address)
+                except Exception:
                     self.handle_error(request, client_address)
+                else:
+                    status = 0
+            finally:
+                request_status = status
+                status = 1
+                try:
                     self.shutdown_request(request)
+                    status = request_status
                 finally:
-                    os._exit(1)
+                    os._exit(status)
 
 
 class ThreadingMixIn(object):
@@ -608,12 +625,20 @@ class ThreadingMixIn(object):
         In addition, exception handling is done here.
 
         """
+        handled = False
         try:
             self.finish_request(request, client_address)
-            self.shutdown_request(request)
-        except:
+            handled = True
+        except Exception:
             self.handle_error(request, client_address)
-            self.shutdown_request(request)
+            handled = True
+        finally:
+            failed = not handled
+            try:
+                self.shutdown_request(request)
+            except Exception:
+                if not failed:
+                    raise
 
     def process_request(self, request, client_address):
         """Start a new thread to process the request."""

@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -101,17 +102,17 @@ def submenu(item):
     AlfaChannel.host = item.url
     AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
     
-    itemlist.append(Item(channel=item.channel, title="Nuevo" , action="list_all", url=item.url + "videos?o=mr&page=1", thumbnail = item.thumbnail, chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=item.url + "videos?o=mv&t=m&page=1", thumbnail = item.thumbnail, chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="list_all", url=item.url + "videos?o=tr&t=m&page=1", thumbnail = item.thumbnail, chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas Favorito" , action="list_all", url=item.url + "videos?o=tf&t=m&page=1", thumbnail = item.thumbnail, chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas Comentado" , action="list_all", url=item.url + "videos?o=md&t=m&page=1", thumbnail = item.thumbnail, chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=item.url + "videos?o=lg&t=m&page=1", thumbnail = item.thumbnail, chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=item.url + "videos?o=bw&page=1", thumbnail = item.thumbnail, chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Nuevo" , action="list_all", url=alfa_urlparse.build_url(item.url, 'videos', query='o=mr&page=1'), thumbnail = item.thumbnail, chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=alfa_urlparse.build_url(item.url, 'videos', query='o=mv&t=m&page=1'), thumbnail = item.thumbnail, chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'videos', query='o=tr&t=m&page=1'), thumbnail = item.thumbnail, chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Favorito" , action="list_all", url=alfa_urlparse.build_url(item.url, 'videos', query='o=tf&t=m&page=1'), thumbnail = item.thumbnail, chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Comentado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'videos', query='o=md&t=m&page=1'), thumbnail = item.thumbnail, chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=alfa_urlparse.build_url(item.url, 'videos', query='o=lg&t=m&page=1'), thumbnail = item.thumbnail, chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=alfa_urlparse.build_url(item.url, 'videos', query='o=bw&page=1'), thumbnail = item.thumbnail, chanel=item.chanel))
     if item.cat:
         itemlist.append(Item(channel=item.channel, title="Canal" , action="mycanal", url=item.url , extra="Canal", thumbnail = item.thumbnail, chanel=item.chanel))
     # itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=item.url + "pornstar", extra="PornStar", thumbnail = item.thumbnail, chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url + "categories", extra="Categorias", thumbnail = item.thumbnail, chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(item.url, 'categories'), extra="Categorias", thumbnail = item.thumbnail, chanel=item.chanel))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url, thumbnail = item.thumbnail, chanel=item.chanel))
     return itemlist
 
@@ -123,20 +124,20 @@ def mycanal(item):
 
     itemlist = []
     if "camcaps" in item.url or "chaturbate-video" in item.url or "nsfwcrave" in item.url:
-        itemlist.append(Item(channel=item.channel, title="Onlyfans" , action="list_all", url=item.url + "search/videos/onlyfans?o=mr&page=1", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Snapchat" , action="list_all", url=item.url + "search/videos/snapchat?o=mr&page=1", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Manyvids" , action="list_all", url=item.url + "search/videos/manyvids?o=mr&page=1", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Onlyfans" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/onlyfans', query='o=mr&page=1'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Snapchat" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/snapchat', query='o=mr&page=1'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Manyvids" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/manyvids', query='o=mr&page=1'), chanel=item.chanel))
         if "camcaps" in item.url:
-            itemlist.append(Item(channel=item.channel, title="Fansly" , action="list_all", url=item.url + "search/videos/fansly?o=mr&page=1", chanel=item.chanel))
-            itemlist.append(Item(channel=item.channel, title="Loyalfans" , action="list_all", url=item.url + "search/videos/loyalfans?o=mr&page=1", chanel=item.chanel))
-            itemlist.append(Item(channel=item.channel, title="Pornhub" , action="list_all", url=item.url + "search/videos/pornhub?o=mr&page=1", chanel=item.chanel))
-            itemlist.append(Item(channel=item.channel, title="Clips4sale" , action="list_all", url=item.url + "search/videos/clips4sale?o=mr&page=1", chanel=item.chanel))
-            itemlist.append(Item(channel=item.channel, title="Youtube" , action="list_all", url=item.url + "search/videos/youtube?o=mr&page=1", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="MFC" , action="list_all", url=item.url + "search/videos/mfc?o=mr&page=1", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Chaturbate" , action="list_all", url=item.url + "search/videos/chaturbate?o=mr&page=1", chanel=item.chanel))
-        itemlist.append(Item(channel=item.channel, title="Sextape" , action="list_all", url=item.url + "search/videos/sextape?o=mr&page=1", chanel=item.chanel))
+            itemlist.append(Item(channel=item.channel, title="Fansly" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/fansly', query='o=mr&page=1'), chanel=item.chanel))
+            itemlist.append(Item(channel=item.channel, title="Loyalfans" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/loyalfans', query='o=mr&page=1'), chanel=item.chanel))
+            itemlist.append(Item(channel=item.channel, title="Pornhub" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/pornhub', query='o=mr&page=1'), chanel=item.chanel))
+            itemlist.append(Item(channel=item.channel, title="Clips4sale" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/clips4sale', query='o=mr&page=1'), chanel=item.chanel))
+            itemlist.append(Item(channel=item.channel, title="Youtube" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/youtube', query='o=mr&page=1'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="MFC" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/mfc', query='o=mr&page=1'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Chaturbate" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/chaturbate', query='o=mr&page=1'), chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Sextape" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/sextape', query='o=mr&page=1'), chanel=item.chanel))
     else:
-        itemlist.append(Item(channel=item.channel, title="Onlyfans" , action="list_all", url=item.url + "search/videos/onlyfans?o=mr&page=1", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Onlyfans" , action="list_all", url=alfa_urlparse.build_url(item.url, 'search/videos/onlyfans', query='o=mr&page=1'), chanel=item.chanel))
     return itemlist
 
 
@@ -182,9 +183,9 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     if "reallifecam" in item.url:
-        item.url = "%ssearch/videos?search_query=%s&o=mr&page=1" % (item.url, texto.replace(" ", "+"))
+        item.url = alfa_urlparse.build_url(item.url, 'search/videos', query=[('search_query', texto), ('o', 'mr'), ('page', '1')])
     else:
-        item.url = "%ssearch/videos/%s?o=mr&page=1" % (item.url, texto.replace(" ", "-"))
+        item.url = alfa_urlparse.build_url(item.url, u'search/videos/{}'.format(texto.replace(" ", "-")), query='o=mr&page=1')
     
     try:
         if texto:
@@ -195,7 +196,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

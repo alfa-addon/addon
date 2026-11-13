@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -92,13 +93,13 @@ try:
     window = xbmcgui.Window(10000)
     js_data = window.getProperty("AH_hdfulls_js_data")
     data_js = window.getProperty("AH_hdfulls_data_js")
-except:
+except Exception:
     js_data = ''
     data_js = ''
     try:
         window.setProperty("AH_hdfulls_js_data", js_data)
         window.setProperty("AH_hdfulls_data_js", data_js)
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
 
@@ -132,49 +133,49 @@ def sub_menu(item):
 
     if item.c_type == "peliculas":
         itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Películas", text_bold=True, 
-                             url=host + "movies/date/1/",thumbnail=get_thumb('last', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'movies/date/1/'),thumbnail=get_thumb('last', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title=" - [COLOR paleturquoise]Películas Estreno[/COLOR]",
-                             url=host + "new-movies",  thumbnail=get_thumb('premieres', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'new-movies'),  thumbnail=get_thumb('premieres', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title="- [COLOR paleturquoise]Películas Actualizadas[/COLOR]",
-                             url=host + "updated-movies/date/1/", thumbnail=get_thumb('updated', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'updated-movies/date/1/'), thumbnail=get_thumb('updated', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="section", title=" - [COLOR paleturquoise]Películas por Género[/COLOR]",
-                             url=host + "movies", thumbnail=get_thumb('genres', auto=True), c_type=item.c_type, plot=plot, extra='Género'))
+                             url=alfa_urlparse.build_url(host, 'movies'), thumbnail=get_thumb('genres', auto=True), c_type=item.c_type, plot=plot, extra='Género'))
 
         itemlist.append(Item(channel=item.channel, action="section", title=" - [COLOR paleturquoise]Películas por Año[/COLOR]",
-                             url=host + "movies", thumbnail=get_thumb('year', auto=True), c_type=item.c_type, plot=plot, extra='Año'))
+                             url=alfa_urlparse.build_url(host, 'movies'), thumbnail=get_thumb('year', auto=True), c_type=item.c_type, plot=plot, extra='Año'))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Películas (Rating IMDB)", text_bold=True,
-                             url=host + "movies/imdb_rating/date/1/", thumbnail=get_thumb('recomended', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'movies/imdb_rating/date/1/'), thumbnail=get_thumb('recomended', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Películas (ABC)", text_bold=True,
-                             url=host + "movies/abc/date/1/", thumbnail=get_thumb('alphabet', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'movies/abc/date/1/'), thumbnail=get_thumb('alphabet', auto=True), c_type=item.c_type, plot=plot))
 
         
 
     if item.c_type == "series":
         itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Series", text_bold=True, 
-                             url=host + "tv-shows/date/1/", thumbnail=get_thumb('last', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'tv-shows/date/1/'), thumbnail=get_thumb('last', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title=" - [COLOR paleturquoise]Novelas Estreno[/COLOR]", 
-                             url=host + "tv-tags/soap/date/1/", thumbnail=get_thumb('telenovelas', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'tv-tags/soap/date/1/'), thumbnail=get_thumb('telenovelas', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title=" - [COLOR paleturquoise]Animes Estreno[/COLOR]", 
-                             url=host + "tv-tags/anime/date/1/", thumbnail=get_thumb('anime', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'tv-tags/anime/date/1/'), thumbnail=get_thumb('anime', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title=" - [COLOR paleturquoise]Doramas Estreno[/COLOR]", 
-                             url=host + "tv-tags/dorama/date/1/", thumbnail=get_thumb('doramas', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'tv-tags/dorama/date/1/'), thumbnail=get_thumb('doramas', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="section", extra="Género", title=" - [COLOR paleturquoise]Series por Género[/COLOR]",
-                             url=host + "tv-shows", thumbnail=get_thumb('genres', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'tv-shows'), thumbnail=get_thumb('genres', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Series (Rating IMDB)", text_bold=True, 
-                             url=host + "tv-shows/imdb_rating/date/1/", thumbnail=get_thumb('recomended', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'tv-shows/imdb_rating/date/1/'), thumbnail=get_thumb('recomended', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Series (ABC)", text_bold=True, 
-                             url=host + "tv-shows/abc/date/1/", thumbnail=get_thumb('alphabet', auto=True), c_type=item.c_type, plot=plot))
+                             url=alfa_urlparse.build_url(host, 'tv-shows/abc/date/1/'), thumbnail=get_thumb('alphabet', auto=True), c_type=item.c_type, plot=plot))
 
     return itemlist
 
@@ -223,7 +224,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['title_subs'] = elem.find('div', class_="right").get_text('.', strip=True).replace('0.0', '')
                 if elem_json['title_subs']: elem_json['title_subs'] = ['[COLOR darkgrey][%s][/COLOR]' % elem_json['title_subs']]
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -283,7 +284,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['language'] = item.language
             elem_json['thumbnail'] = elem.find('img').get("src", "")
             #if '/no-cover' in  elem_json['thumbnail']: continue
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -361,7 +362,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['title'] = '%s'
                 elem_json['server'] = ''
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -394,7 +395,7 @@ def search(item, texto, **AHkwargs):
     try:
         texto = texto.replace(" ", "+")
         item.post = {"menu": "search", "query": texto}
-        item.url = host + "search"
+        item.url = alfa_urlparse.build_url(host, 'search')
 
         if texto:
             item.c_type = "search"
@@ -403,7 +404,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

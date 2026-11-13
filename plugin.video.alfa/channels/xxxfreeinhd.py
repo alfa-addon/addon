@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -60,11 +61,11 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "?filter=latest"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "?filter=most-viewed"))
-    itemlist.append(item.clone(title="Mas valorado" , action="lista", url=host + "?filter=popular"))
-    itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "?filter=longest"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categories/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, query='filter=latest')))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, query='filter=most-viewed')))
+    itemlist.append(item.clone(title="Mas valorado" , action="lista", url=alfa_urlparse.build_url(host, query='filter=popular')))
+    itemlist.append(item.clone(title="Mas largo" , action="lista", url=alfa_urlparse.build_url(host, query='filter=longest')))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories/')))
     itemlist.append(item.clone(title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
@@ -74,8 +75,9 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%s?s=%s&filter=latest" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, query=[('s', u'{}'.format(_url_query_texto)), ('filter', 'latest')])
     try:
         return lista(item)
     except Exception:

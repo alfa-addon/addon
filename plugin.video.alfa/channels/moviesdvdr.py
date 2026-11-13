@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -158,7 +159,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['language'] = '*%s' % str(elem.find_all('img', class_='flageitor')).replace('class="flageitor"', '')
             elem_json['quality'] = '*DVDR'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -212,7 +213,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['torrent_info'] = ''
                 if elem.p: elem_json['plot'] = elem.p.get_text(strip=True)
 
-            except:
+            except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
@@ -235,10 +236,11 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
 
     try:
-        item.url = host + '?s=' + texto
+        item.url = alfa_urlparse.build_url(host, query=[('s', _url_query_texto)])
         item.c_type = 'peliculas'
         item.texto = texto
 
@@ -246,7 +248,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []
@@ -275,7 +277,7 @@ def newest(categoria, **AHkwargs):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []

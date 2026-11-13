@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 import re
 
 from platformcode import config, logger
@@ -30,11 +31,11 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos", action="lista", url= host + "new_videos/1/"))
-    itemlist.append(Item(channel=item.channel, title="Mas valorados", action="lista", url=host + "trending_videos/"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos", action="lista", url= host + "most_popular/"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels/1?o=top"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos", action="lista", url= alfa_urlparse.build_url(host, 'new_videos/1/')))
+    itemlist.append(Item(channel=item.channel, title="Mas valorados", action="lista", url=alfa_urlparse.build_url(host, 'trending_videos/')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos", action="lista", url= alfa_urlparse.build_url(host, 'most_popular/')))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=alfa_urlparse.build_url(host, 'pornstars')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(host, 'channels/1', query='o=top')))
     # itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -43,7 +44,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%ss/%s/?o=new" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, u's/{}/'.format(texto), query='o=new')
     try:
         return lista(item)
     except Exception:
@@ -69,7 +70,7 @@ def catalogo(item):
         if cantidad:
             title = "%s (%s)" %(title, cantidad[-1].text.strip())
         url =  urlparse.urljoin(host,url)
-        url += "?o=new"
+        url = alfa_urlparse.build_url(url, query='o=new')
         thumbnail =  urlparse.urljoin(host,thumbnail)
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title , url=url , 
@@ -96,7 +97,7 @@ def categorias(item):
         # thumbnail += "|Referer=%s" % host
         
         url =  urlparse.urljoin(item.url,url)
-        url += "?o=new"
+        url = alfa_urlparse.build_url(url, query='o=new')
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title , url=url , 
                              fanart=thumbnail, thumbnail=thumbnail, plot=plot) )

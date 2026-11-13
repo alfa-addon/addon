@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -107,12 +108,12 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Series", action="list_all", 
-                         url=host + "showlist/rating/", post="showlist_thumbs=on&status=airing", 
+                         url=alfa_urlparse.build_url(host, 'showlist/rating/'), post="showlist_thumbs=on&status=airing",
                          thumbnail=get_thumb("channels_tvshow_hd.png"), c_type="series", 
                          contentPlot=plot))
     
     itemlist.append(Item(channel=item.channel, title="Temporadas completas", action="list_all", 
-                         url=host + "cat/tv-packs-1/", extra = 'Temporadas', 
+                         url=alfa_urlparse.build_url(host, 'cat/tv-packs-1/'), extra = 'Temporadas',
                          thumbnail=get_thumb("downloads.png"), c_type="series", 
                          contentPlot=plot))
 
@@ -306,7 +307,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             if elem_json['season'] != item.contentSeason: continue
 
             sxe = 's%se%s' % (str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
-            elem_json['url'] = elem_json['url_episode'] = '%ssearch/%s-%s' % (host, item.contentSerieName.replace(' ', '-').lower(), sxe)
+            elem_json['url'] = elem_json['url_episode'] = alfa_urlparse.build_url(host, u'search/{}-{}'.format(item.contentSerieName.replace(' ', '-').lower(), sxe))
             elem_json['title'] = '%sx%s %s' % (str(elem_json['season']), str(elem_json['episode']).zfill(2), title)
 
             if scrapertools.find_single_match(date_, patron_date_in):
@@ -423,8 +424,7 @@ def findvideos_links(item, elem_in, elem_json):
                         if item.contentSeason != int(season): break
                         elem_json['season'] = item.contentSeason
                         elem_json['episode'] = int(elem_json['episode'])
-                        elem_json['url_episode'] = '%ssearch/%s-s%se%s' % (host, item.contentSerieName.replace(' ', '-').lower(), 
-                                                                           str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
+                        elem_json['url_episode'] = alfa_urlparse.build_url(host, u'search/{}-s{}e{}'.format(item.contentSerieName.replace(' ', '-').lower(), str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2)))
                     elem_json['title'] = '%sx%s - ' % (str(elem_json['season']), str(elem_json['episode']).zfill(2))
                     
                 elem_json['language'] = item.language
@@ -493,7 +493,7 @@ def search(item, texto, **AHkwargs):
     
     try:
         if texto:
-            item.url = host + 'search/%s' % texto
+            item.url = alfa_urlparse.build_url(host, u'search/{}'.format(texto))
             item.c_type = "search"
             item.texto = texto
             return list_all(item)

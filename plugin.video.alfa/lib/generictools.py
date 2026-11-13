@@ -36,6 +36,7 @@ import ast
 
 from channelselector import get_thumb
 from core import scrapertools
+from core.urlparse import normalize_domain, normalize_canonical, format_channel_host
 from core import servertools
 from core import channeltools
 from core import filetools
@@ -1270,6 +1271,8 @@ def monitor_domains_update(options=None):
 
     monitor = xbmc.Monitor()
     server_domains_list = jsontools.load(window.getProperty("alfa_cached_domains_update") or '{}')
+    server_domains_list = dict((channel, normalize_canonical(domains))
+                               for channel, domains in server_domains_list.items())
     window.setProperty("alfa_cached_domains_update", "")
     alfa_channels_list = {}
     alfa_domains_list = {}
@@ -1313,9 +1316,10 @@ def monitor_domains_update(options=None):
             return
 
         try:
-            canonical = channel_obj.canonical.copy()
-            canonical_http = channel_obj.canonical.copy()
+            canonical = normalize_canonical(channel_obj.canonical)
+            canonical_http = canonical.copy()
             canonical_http.update(server_domains_list.get(channel, {}))
+            canonical_http = normalize_canonical(canonical_http)
             if 'host' in canonical_http: del canonical_http['host']
             if 'forced_proxy_opt' in canonical_http: del canonical_http['forced_proxy_opt']
             if 'forced_proxy' in canonical_http: del canonical_http['forced_proxy']
@@ -1335,7 +1339,7 @@ def monitor_domains_update(options=None):
                 current_host = config.get_setting("current_host", channel, default='')
                 if len(canonical_http['host_alt']) > 1 and 'host_alt_main' in canonical_http:
                     current_host = canonical_http['host_alt'][idx]
-                if current_host and current_host != canonical_http['host_alt'][idx]:
+                if current_host and normalize_domain(current_host) != canonical_http['host_alt'][idx]:
                     response = httptools.downloadpage(current_host, **opt)
 
                 if not response.sucess:
@@ -1345,7 +1349,7 @@ def monitor_domains_update(options=None):
                         if response.sucess and response.soup.find('div', class_='row g-3 btns mt-1 mb-5 g-md-5').find('div', class_='offset-md-4'):
                             url = response.soup.find('div', class_='row g-3 btns mt-1 mb-5 g-md-5').find('div', class_='offset-md-4')\
                                                .a.get('href', '').rstrip('/')
-                            if url and (url + '/') not in canonical_http['host_alt'] and (url + '/') not in canonical_http['host_black_list']:
+                            if url and normalize_domain(url) not in canonical_http['host_alt'] and normalize_domain(url) not in canonical_http['host_black_list']:
                                 url += '/'
                                 response = httptools.downloadpage(url, **opt)
                                 if response.sucess:
@@ -1385,7 +1389,7 @@ def monitor_domains_update(options=None):
                 if alfa_domains_tor.get(channel):
                     logger.error('### .ONION: %s: %s' % (channel, alfa_domains_tor[channel]))
 
-            if not canonical['host_alt'][idx].endswith('/'): response.canonical = response.canonical.rstrip('/')
+            response.canonical = normalize_domain(response.canonical)
             if response.canonical and response.canonical != canonical['host_alt'][idx] \
                                   and response.canonical not in canonical['host_black_list'] \
                                   and response.canonical not in server_domains_list.get(channel, {}).get('host_black_list', []):
@@ -1400,8 +1404,8 @@ def monitor_domains_update(options=None):
                 if response.canonical not in alfa_domains_list[channel]['host_alt'] \
                                       and response.canonical not in alfa_domains_list[channel]['host_black_list']:
                     current_host = config.get_setting("current_host", channel, default='')
-                    if current_host and current_host != response.canonical:
-                        config.set_setting("current_host", response.canonical, channel)
+                    if current_host and normalize_domain(current_host) != response.canonical:
+                        config.set_setting("current_host", format_channel_host(response.canonical, channel_obj.host), channel)
                     if alfa_domains_list[channel]['host_alt'][idx] not in alfa_domains_list[channel]['host_black_list']:
                         alfa_domains_list[channel]['host_black_list'].insert(0, alfa_domains_list[channel]['host_alt'][idx])
                     if response.canonical not in alfa_domains_list[channel]['host_alt']:
@@ -2520,7 +2524,7 @@ def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], matches_inde
                                                                    .find('span', class_='fdi-type').get_text(strip=True), r'(\d+)'))
                             if len(str(elem_json['episode'])) > 3:
                                 elem_json['episode'] = int(scrapertools.find_single_match(elem_json['url'], r'/capitulo-(\d+)'))
-                        except:
+                        except Exception:
                             logger.error(elem)
                             elem_json['season'] =  1
                             elem_json['episode'] =  1
@@ -3019,7 +3023,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
-                except:
+                except Exception:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
@@ -3559,7 +3563,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                     ASSISTANT_SERVERS = eval(window.getProperty("alfa_assistant_servers") or '127.0.0.1')
                     ASSISTANT_REMOTE = False if '127.0.0.1' in ASSISTANT_SERVERS[0] else True
-                except:
+                except Exception:
                     alfa_gateways = []
                     ASSISTANT_SERVERS = ['127.0.0.1']
                     ASSISTANT_REMOTE = False
@@ -3842,7 +3846,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
                                 ASSISTANT_SERVERS = eval(window.getProperty("alfa_assistant_servers") or '127.0.0.1')
                                 ASSISTANT_REMOTE = False if '127.0.0.1' in ASSISTANT_SERVERS[0] else True
-                            except:
+                            except Exception:
                                 alfa_gateways = []
                                 ASSISTANT_SERVERS = ['127.0.0.1']
                                 ASSISTANT_REMOTE = False
@@ -4235,7 +4239,7 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py_urls, *
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
-                except:
+                except Exception:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
@@ -4562,7 +4566,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py_urls, 
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
-                except:
+                except Exception:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
@@ -4872,7 +4876,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py_urls
                 use_assistant = title_search.get('assistant', PASSWORDS.get('cookies', {}).get('caching', {}).get('assistant', True))
                 try:
                     alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
-                except:
+                except Exception:
                     alfa_gateways = []
                 if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
@@ -5172,7 +5176,7 @@ def get_torrent_size(url, **kwargs):
         return torrent_params
     try:
         if isinstance(kwargs.get('timeout', 5), (tuple, list)): kwargs['timeout'] = kwargs['timeout'][1]
-    except:
+    except Exception:
         kwargs['timeout'] = 5
     
     retry_CF = kwargs.get('retries_cloudflare', 2)

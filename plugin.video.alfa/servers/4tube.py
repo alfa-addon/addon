@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -29,7 +30,7 @@ def get_video_url(page_url, video_password):
     label = '+'.join(label)
     post = {}
     headers = {"origin": "https://www.4tube.com"}
-    post_url = "https://token.%s.com/0000000%s/embeds/%s" %(server,id,label)
+    post_url = alfa_urlparse.build_url(alfa_urlparse.urlunsplit(('https', u'token.{}.com'.format(server), "", "", "")), u'/0000000{}/embeds/{}'.format(id, label))
     data = httptools.downloadpage(post_url, post = post, headers=headers, add_referer=True).data
     patron = '"(\d+)":.*?'
     patron += ',"token":"([^"]+)"'

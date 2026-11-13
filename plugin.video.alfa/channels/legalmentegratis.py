@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -82,7 +83,7 @@ def list_all(item):
         contentTitle = scrapedtitle
         year = re.sub(r'\(|\)','', _year) or '-'
         title = '%s [%s]' % (contentTitle, year)
-        thumbnail = 'http:' + scrapedthumbnail
+        thumbnail = alfa_urlparse.urljoin('http:', scrapedthumbnail)
         
         itemlist.append(Item(channel=item.channel, action='findvideos',
                              title=title,
@@ -110,7 +111,7 @@ def section(item):
     
     itemlist = []
 
-    data = get_source(host+'generos/')
+    data = get_source(alfa_urlparse.build_url(host, 'generos/'))
     action = 'list_all'
 
     if item.section == 'genre':
@@ -143,7 +144,7 @@ def findvideos(item):
     url = scrapertools.find_single_match (data, '<iframe.*?src="([^"]+)"')
     if 'gloria.tv' in url:
         new_data = get_source(url)
-        url = 'https://gloria.tv'+ scrapertools.find_single_match(new_data, '<source type=".*?" src="([^"]+)">')
+        url = alfa_urlparse.urlunsplit(('https', u'gloria.tv{}'.format(scrapertools.find_single_match(new_data, '<source type=".*?" src="([^"]+)">')), "", "", ""))
 
     itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                          language=IDIOMAS[language], infoLabels=item.infoLabels))

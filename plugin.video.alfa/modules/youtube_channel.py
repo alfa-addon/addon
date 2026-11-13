@@ -69,7 +69,7 @@ def playlists(item, channel_id, pageToken=""):
     try:
         nextPageToken = json_object["nextPageToken"]
         itemlist.extend(playlists(item, channel_id, nextPageToken))
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
 
@@ -104,7 +104,7 @@ def videos(item, pageToken=""):
     try:
         nextPageToken = json_object["nextPageToken"]
         itemlist.extend(videos(item, nextPageToken))
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
 

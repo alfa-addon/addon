@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -38,7 +39,7 @@ encoding = "utf-8"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-except:
+except Exception:
     __modo_grafico__ = True
 
 
@@ -57,10 +58,10 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host+'archives/movies/', 
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=alfa_urlparse.build_url(host, 'archives/movies/'),
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu', url=host+'archives/series/', 
+    itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu', url=alfa_urlparse.build_url(host, 'archives/series/'),
                          thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -76,23 +77,23 @@ def sub_menu(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Últimas', url=item.url + "page/", action='list_all', pagina=1,
+    itemlist.append(Item(channel=item.channel, title='Últimas', url=alfa_urlparse.build_url(item.url, 'page/'), action='list_all', pagina=1,
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Estrenos', url=item.url+'releases/page/', action='list_all', pagina=1, 
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=alfa_urlparse.build_url(item.url, 'releases/page/'), action='list_all', pagina=1,
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Top Semana', url=item.url+'top/week/page/', action='list_all', pagina=1, 
+    itemlist.append(Item(channel=item.channel, title='Top Semana', url=alfa_urlparse.build_url(item.url, 'top/week/page/'), action='list_all', pagina=1,
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Top Día', url=item.url+'top/day/page/', action='list_all', pagina=1,
+    itemlist.append(Item(channel=item.channel, title='Top Día', url=alfa_urlparse.build_url(item.url, 'top/day/page/'), action='list_all', pagina=1,
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
     
     if item.c_type == 'peliculas':
         itemlist.append(Item(channel=item.channel, title='Generos', action='section', url=host,
                              thumbnail=get_thumb('genres', auto=True), c_type=item.c_type))
     else:
-        itemlist.append(Item(channel=item.channel, title='Episodios', action='list_all', url=host+'archives/episodes',
+        itemlist.append(Item(channel=item.channel, title='Episodios', action='list_all', url=alfa_urlparse.build_url(host, 'archives/episodes'),
                              thumbnail=get_thumb('episodes', auto=True), c_type='episodios'))
 
     return itemlist
@@ -102,7 +103,7 @@ def section(item):
     logger.info()
     itemlist = []
     
-    data = httptools.downloadpage(host + "_next/static/chunks/170-415b9c38dc5af95d.js", encoding="unicode_escape").data
+    data = httptools.downloadpage(alfa_urlparse.build_url(host, '_next/static/chunks/170-415b9c38dc5af95d.js'), encoding="unicode_escape").data
     
     data = data.decode('unicode_escape')
     patron = 'href:"(/genres/.+?)".+?children:"(.+?)"'
@@ -111,7 +112,7 @@ def section(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     
     for url, title in matches:
-        itemlist.append(Item(channel=item.channel, title=title, action='list_all', url=host+url+"/page/", pagina=1,
+        itemlist.append(Item(channel=item.channel, title=title, action='list_all', url=alfa_urlparse.build_url(host, u'{}/page/'.format(url)), pagina=1,
                              thumbnail=get_thumb('episodes', auto=True) ))
 
     genres = {'Acción': 'genres/accion/', 
@@ -135,7 +136,7 @@ def list_all(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(item.url + "%s" %item.pagina, canonical=canonical).data
+    data = httptools.downloadpage(alfa_urlparse.build_url(item.url, str(item.pagina)), canonical=canonical).data
     patron  = '(?ims)(?:bdOz3|_LFJR).*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<h3>([^<]+).*?'
@@ -146,7 +147,7 @@ def list_all(item):
         idioma = "Latino"
         item.infoLabels['year'] = annio
         title = scrapertools.unescape(title)
-        url = "%s%s" %(host, url)
+        url = alfa_urlparse.urljoin(host, u'{}'.format(url))
         new_item = Item(channel=item.channel, url=url, title=title, thumbnail="", c_type =item.c_type,
                         language=idioma, infoLabels={"year": annio})
         if "series" in url:
@@ -216,7 +217,7 @@ def episodesxseason(item):
             break
     for elem in episodios:
         cap = elem['number']
-        url = "%s/seasons/%s/episodes/%s" %(item.url, season, cap)
+        url = alfa_urlparse.build_url(item.url, u'/seasons/{}/episodes/{}'.format(season, cap))
         title = "%sx%s" % (season, cap)
         infoLabels["episode"] = cap
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
@@ -278,8 +279,9 @@ def search(item, texto, **AHkwargs):
     logger.info()
     
     try:
+        _url_query_texto = texto
         texto = texto.replace(" ", "+")
-        item.url = item.url + 'search?q=' + texto
+        item.url = alfa_urlparse.build_url(item.url, 'search', query=[('q', _url_query_texto)])
         
         if texto:
             item.c_type = 'search'
@@ -289,7 +291,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -302,13 +304,13 @@ def newest(categoria, **AHkwargs):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = host + 'archives/movies'
+            item.url = alfa_urlparse.build_url(host, 'archives/movies')
 
         itemlist = list_all(item)
 
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))

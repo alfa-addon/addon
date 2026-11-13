@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -76,11 +77,11 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "latest-updates/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=host + "most-popular/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Valorada" , action="list_all", url=host + "top_rated/"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "pornstars/?sort_by=total_videos", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/?sort_by=title", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(host, 'latest-updates/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="list_all", url=alfa_urlparse.build_url(host, 'most-popular/')))
+    itemlist.append(Item(channel=item.channel, title="Mas Valorada" , action="list_all", url=alfa_urlparse.build_url(host, 'top_rated/')))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=alfa_urlparse.build_url(host, 'pornstars/', query='sort_by=total_videos'), extra="PornStar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(host, 'categories/', query='sort_by=title'), extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url= host))
     return itemlist
 
@@ -139,7 +140,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 for x, value in enumerate(pornstars):
                     pornstars[x] = value.get_text(strip=True)
                 elem_json['star'] = ' & '.join(pornstars)
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -187,7 +188,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/?q=%s" % (item.url, texto.replace(" ", "+"))
+    item.url = alfa_urlparse.build_url(item.url, 'search/', query=[('q', texto)])
     
     try:
         if texto:
@@ -198,7 +199,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

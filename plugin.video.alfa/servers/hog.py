@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -12,7 +13,7 @@ def test_video_exists(page_url):
     page = page_url.split('/video/')
     host = page[0]
     id = page[-1]
-    post_url = "%s/api/video-info" %host
+    post_url = alfa_urlparse.build_url(host, '/api/video-info')
     post = {'videoId': id}
     data = httptools.downloadpage(post_url, post=post).json
     

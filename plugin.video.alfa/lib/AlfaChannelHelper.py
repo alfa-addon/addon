@@ -4,6 +4,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -20,6 +21,7 @@ if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from channelselector import get_thumb
 from core import scrapertools
+from core import urlparse
 from core import servertools
 from core import jsontools
 from core.item import Item
@@ -32,7 +34,7 @@ from modules import renumbertools
 DEBUG = False
 BTDIGG = 'btdig'
 BTDIGG_URL = config.BTDIGG_URL
-BTDIGG_URL_SEARCH = '%ssearch_%s/' % (BTDIGG_URL, BTDIGG)
+BTDIGG_URL_SEARCH = alfa_urlparse.build_url(BTDIGG_URL, u'search_{}/'.format(BTDIGG))
 BTDIGG_LABEL = config.BTDIGG_LABEL
 PLOT_BTDIGG = 'Introduce criterios de búsqueda:\r\n' + \
               '[COLOR lime]título calidad |Orden [filtro A Filtro B ...] [filtro CALIDAD ...] [filtro IDIOMA ...][/COLOR]\r\n' + \
@@ -91,7 +93,7 @@ class AlfaChannelHelper:
         self.host = host
         self.host_torrent = finds.get('controls', {}).get('host_torrent', self.host)
         self.timeout = timeout
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         self.channel = channel or canonical.get('channel', '')
         if self.channel and canonical and 'host' in canonical and not canonical['host'] and canonical.get('host_alt', []): 
             config.set_setting("current_host", canonical['host_alt'][0], channel=self.channel)
@@ -161,6 +163,8 @@ class AlfaChannelHelper:
             self.ASSISTANT_VERSION = tuple()
         try:
             self.domains_updated = jsontools.load(window.getProperty("alfa_domains_updated") or '{}')
+            if self.channel in self.domains_updated:
+                self.domains_updated[self.channel] = urlparse.normalize_canonical(self.domains_updated[self.channel])
             if self.channel in self.domains_updated and 'finds' in self.domains_updated[self.channel]:
                 finds_updated = self.domains_updated[self.channel].pop('finds', '')
                 for key, value in finds_updated.items():
@@ -170,52 +174,56 @@ class AlfaChannelHelper:
                         for key_c, value_c in finds_updated[key].items():
                             self.finds_controls_updated[key_c] = eval('%s' % value_c)
 
-            if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and 'host' in self.canonical \
-                                    and 'host_alt' in self.canonical and 'host_black_list' in self.canonical \
-                                    and self.canonical.get('update_host_list', True):
+            canonical_view = urlparse.normalize_canonical(self.canonical)
+            if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and 'host' in canonical_view \
+                                    and 'host_alt' in canonical_view and 'host_black_list' in canonical_view \
+                                    and canonical_view.get('update_host_list', True):
                 if self.channel in self.domains_updated and (self.domains_updated[self.channel].get('host_alt') \
                                                              or self.domains_updated[self.channel].get('host_alt_tor')
                                                              or self.domains_updated[self.channel].get('UPDATE_CANONICAL')):
-                    if self.host != self.domains_updated[self.channel].get('host_alt', [''])[0] or self.host != self.canonical['host_alt'][0] \
-                                    or self.domains_updated[self.channel].get('host_alt', []) != self.canonical['host_alt'] \
+                    if urlparse.normalize_domain(self.host) != self.domains_updated[self.channel].get('host_alt', [''])[0] or urlparse.normalize_domain(self.host) != canonical_view['host_alt'][0] \
+                                    or self.domains_updated[self.channel].get('host_alt', []) != canonical_view['host_alt'] \
                                     or (self.domains_updated[self.channel].get('host_alt_tor', []) \
-                                        and self.domains_updated[self.channel].get('host_alt_tor', []) != self.canonical.get('host_alt_tor', '-')) \
-                                    or self.domains_updated[self.channel].get('host_black_list', []) != self.canonical['host_black_list'] \
+                                        and self.domains_updated[self.channel].get('host_alt_tor', []) != canonical_view.get('host_alt_tor', '-')) \
+                                    or self.domains_updated[self.channel].get('host_black_list', []) != canonical_view['host_black_list'] \
                                     or self.domains_updated[self.channel].get('UPDATE_CANONICAL'):
-                        self.host = self.canonical['host'] = self.domains_updated[self.channel].get('host_alt', ([self.canonical['host']] \
-                                                                                                    if self.canonical['host'] else []) \
-                                                                                                    or self.canonical['host_alt'])[0]
+                        canonical_view['host'] = self.domains_updated[self.channel].get('host_alt', ([canonical_view['host']] \
+                                                                                                    if canonical_view['host'] else []) \
+                                                                                                    or canonical_view['host_alt'])[0]
+                        self.host = urlparse.format_channel_host(canonical_view['host'], self.host)
                         if config.get_setting("current_host", self.channel) != self.host:
                             config.set_setting("current_host", self.host, self.channel)
                             channel = __import__('channels.%s' % self.channel, None, None, ["channels.%s" % self.channel])
                             channel.host = self.host
-                        self.canonical['host_black_list'] = self.domains_updated[self.channel].get('host_black_list', 
-                                                                                 self.canonical['host_black_list'])
-                        for host_alt in self.canonical['host_alt'][:]:
-                            if host_alt not in self.canonical['host_black_list'] \
+                        canonical_view['host_black_list'] = self.domains_updated[self.channel].get('host_black_list',
+                                                                                 canonical_view['host_black_list'])
+                        for host_alt in canonical_view['host_alt'][:]:
+                            if host_alt not in canonical_view['host_black_list'] \
                                         and host_alt not in self.domains_updated[self.channel]\
-                                                                .get('host_alt', self.canonical['host_alt']): 
-                                self.canonical['host_black_list'].insert(0, host_alt)
-                                self.canonical['host_alt'].remove(host_alt)
-                        self.canonical['host_alt'] = self.domains_updated[self.channel].get('host_alt', self.canonical['host_alt'])
-                        if self.host not in self.canonical['host_alt'] and self.host not in self.canonical['host_black_list']:
-                            self.canonical['host_alt'].insert(0, self.host)
-                        if self.host in self.canonical['host_black_list'] and self.canonical['host_alt']:
-                            self.host = self.canonical['host'] = self.canonical['host_alt'][0]
+                                                                .get('host_alt', canonical_view['host_alt']):
+                                canonical_view['host_black_list'].insert(0, host_alt)
+                                canonical_view['host_alt'].remove(host_alt)
+                        canonical_view['host_alt'] = self.domains_updated[self.channel].get('host_alt', canonical_view['host_alt'])
+                        if urlparse.normalize_domain(self.host) not in canonical_view['host_alt'] and urlparse.normalize_domain(self.host) not in canonical_view['host_black_list']:
+                            canonical_view['host_alt'].insert(0, urlparse.normalize_domain(self.host))
+                        if urlparse.normalize_domain(self.host) in canonical_view['host_black_list'] and canonical_view['host_alt']:
+                            canonical_view['host'] = canonical_view['host_alt'][0]
+                            self.host = urlparse.format_channel_host(canonical_view['host'], self.host)
                         if len(self.domains_updated[self.channel].get('host_alt', [])) > 1:
-                            for host_alt in self.canonical['host_alt'][:]:
-                                if host_alt in self.canonical['host_black_list']:
-                                    self.canonical['host_alt'].remove(host_alt)
+                            for host_alt in canonical_view['host_alt'][:]:
+                                if host_alt in canonical_view['host_black_list']:
+                                    canonical_view['host_alt'].remove(host_alt)
                         if self.domains_updated[self.channel].get('host_alt_tor', []) \
-                                and self.domains_updated[self.channel].get('host_alt_tor', []) != self.canonical.get('host_alt_tor', '-'):
-                            self.canonical['host_alt_tor'] = self.domains_updated[self.channel]['host_alt_tor']
+                                and self.domains_updated[self.channel].get('host_alt_tor', []) != canonical_view.get('host_alt_tor', '-'):
+                            canonical_view['host_alt_tor'] = self.domains_updated[self.channel]['host_alt_tor']
                         if 'host_alt' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_alt']
                         if 'host_black_list' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_black_list']
                         if 'UPDATE_CANONICAL' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['UPDATE_CANONICAL']
-                        if self.domains_updated: self.canonical.update(self.domains_updated[self.channel])
-                        if self.DEBUG: logger.debug('HOST_updated: %s TO %s' % (host, self.canonical))
-                        self.print_DEBUG = self.canonical.get('print_DEBUG', False)
-                        self.host_alt_findb = self.canonical.get('host_alt_findb', [])
+                        if self.domains_updated: canonical_view.update(self.domains_updated[self.channel])
+                        if self.DEBUG: logger.debug('HOST_updated: %s TO %s' % (host, canonical_view))
+                        self.print_DEBUG = canonical_view.get('print_DEBUG', False)
+                        self.host_alt_findb = canonical_view.get('host_alt_findb', [])
+                        self.canonical.update(urlparse.format_channel_canonical(canonical_view, self.host))
         except Exception:
             self.domains_updated = {}
             logger.error(traceback.format_exc())
@@ -232,6 +240,7 @@ class AlfaChannelHelper:
         get_cached_files_('password')
 
         if "canonical" not in kwargs: kwargs["canonical"] = copy.deepcopy(self.canonical)
+        kwargs.setdefault("_canonical_host_reference", self.host)
         self.dns_params = kwargs.get('canonical', {}).get('dns_params', {})
         self.alfa_cached_passwords = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
         if kwargs.get('canonical', {}).get('cf_assistant', True) is not False and IS_ASSISTANT_INSTALLED:
@@ -340,19 +349,22 @@ class AlfaChannelHelper:
                     req = self.anubis_challenge(url, response, challenge, **kwargs)
                     response = self.httptools.downloadpage(url, **kwargs)
                     if response.url and response.url != url and scrapertools.find_single_match(str(response.data), regex):
-                        self.host = self.obtain_domain(url, scheme=True).rstrip('/') + '/'
-                        response.host = self.obtain_domain(response.url, scheme=True).rstrip('/') + '/'
-                        self.doo_url = self.doo_url.replace(self.host, response.host)
-                        self.url = url = url.replace(self.host, response.host)
+                        old_domain = urlparse.url_domain(url)
+                        new_domain = urlparse.url_domain(response.url)
+                        response.host = urlparse.format_channel_host(new_domain, self.host)
+                        self.doo_url = urlparse.replace_domain(self.doo_url, new_domain)
+                        self.url = url = urlparse.replace_domain(url, new_domain)
                         if "canonical" not in kwargs: kwargs["canonical"] = copy.deepcopy(self.canonical) if not self.TEST_ON_AIR else {}
-                        kwargs["canonical"]["host"] = response.host
+                        kwargs["canonical"]["host"] = new_domain
                         if not kwargs.get("canonical", {}).get("host_black_list"): kwargs["canonical"]["host_black_list"] = []
-                        kwargs["canonical"]["host_black_list"].insert(0, self.host)
+                        kwargs["canonical"]["host_black_list"].insert(0, old_domain)
                         if not kwargs.get("canonical", {}).get("host_alt"): kwargs["canonical"]["host_alt"] = []
                         kwargs["canonical"]["host_alt"][0] = kwargs["canonical"]["host"]
                         if kwargs.get("canonical", {}).get("host_alt_new"):
                             kwargs["canonical"]["host_alt_new"].insert(0, kwargs["canonical"]["host"])
+                        kwargs["canonical"].update(urlparse.format_channel_canonical(kwargs["canonical"], self.host))
                         self.host = response.host
+                        self.canonical['host'] = response.host
                         response.proxy__ = ''
                         req = self.anubis_challenge(url, response, challenge, **kwargs)
                         response = self.httptools.downloadpage(url, **kwargs)
@@ -400,9 +412,11 @@ class AlfaChannelHelper:
 
         if response.host:
             logger.error('response.host: %s' % response.host)
-            self.doo_url = self.doo_url.replace(self.host, response.host)
-            self.url = url.replace(self.host, response.host)
+            response.host = urlparse.format_channel_host(response.host, self.host)
+            self.doo_url = urlparse.replace_domain(self.doo_url, response.host)
+            self.url = urlparse.replace_domain(url, response.host)
             self.host = response.host
+            self.canonical['host'] = response.host
         elif response.url and response.url != url:
             if not response.url.startswith('http'):
                 logger.error('WRONG response.url: %s / %s' % (url, response.url))
@@ -646,75 +660,48 @@ class AlfaChannelHelper:
 
     def do_quote(self, url, safe='', encoding=None, errors=None, plus=True):
         try:
-            if PY3:
-                import urllib.parse as urllib
-                if plus:
-                    return urllib.quote_plus(url, safe=safe, encoding=encoding, errors=errors)
-                else:
-                    return urllib.quote(url, safe=safe, encoding=encoding, errors=errors)
-            else:
-                import urllib
-                if plus:
-                    return urllib.quote_plus(url, safe=safe)
-                else:
-                    return urllib.quote(url, safe=safe)
-
+            encoder = urlparse.quote_plus if plus else urlparse.quote
+            return encoder(url, safe=safe, encoding=encoding, errors=errors)
         except Exception:
             return ''
 
     def do_unquote(self, url, encoding='utf-8', errors='replace', plus=True):
         try:
-            if PY3:
-                import urllib.parse as urllib
-                if plus:
-                    return urllib.unquote_plus(url, encoding=encoding, errors=errors)
-                else:
-                    return urllib.unquote(url, encoding=encoding, errors=errors)
-            else:
-                import urllib
-                if plus:
-                    return urllib.unquote_plus(url)
-                else:
-                    return urllib.unquote(url)
-
+            decoder = urlparse.unquote_plus if plus else urlparse.unquote
+            return decoder(url, encoding=encoding, errors=errors)
         except Exception:
             return ''
 
     def do_urlencode(self, post, doseq=False, safe='', encoding=None, errors=None):
         try:
-            if PY3:
-                import urllib.parse as urllib
-                return urllib.urlencode(post, doseq=doseq, safe=safe, encoding=encoding, errors=errors)
-            else:
-                import urllib
-                return urllib.urlencode(post, doseq=doseq)
-
+            return urlparse.urlencode(post, doseq=doseq, safe=safe,
+                                      encoding=encoding, errors=errors)
         except Exception:
             return ''
 
     def urljoin(self, domain, url, allow_fragments=True):
-        if PY3:
-            import urllib.parse as urlparse
-        else:
-            import urlparse
-        
         return urlparse.urljoin(domain, url, allow_fragments=allow_fragments)
-    
+
     def urlparse(self, url, scheme='', allow_fragments=True):
-        if PY3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
-        
-        return urlparse(url, scheme=scheme, allow_fragments=allow_fragments)
+        return urlparse.urlparse(url, scheme=scheme, allow_fragments=allow_fragments)
 
     def parse_qs(self, url, keep_blank_values=False, strict_parsing=False, encoding="utf-8", errors="replace", max_num_fields=None):
-        if PY3:
-            from urllib.parse import parse_qs
-            return parse_qs(url, keep_blank_values, strict_parsing, encoding, errors, max_num_fields)
-        else:
-            from urlparse import parse_qs
-            return parse_qs(url, keep_blank_values, strict_parsing)
+        if PY3 and max_num_fields is not None:
+            separator = b'&' if isinstance(url, bytes) else '&'
+            if (1 + url.count(separator) if url else 0) > max_num_fields:
+                raise ValueError("Max number of fields exceeded")
+        return urlparse.parse_qs(url, keep_blank_values=keep_blank_values,
+                                 strict_parsing=strict_parsing,
+                                 encoding=encoding, errors=errors)
+
+    def build_url(self, base, *paths, **options):
+        return urlparse.build_url(base, *paths, **options)
+
+    def update_query(self, url, values=(), **parameters):
+        return urlparse.update_query(url, values, **parameters)
+
+    def add_url_headers(self, url, headers, *additional_headers):
+        return urlparse.add_url_headers(url, headers, *additional_headers)
 
     def obtain_domain(self, url, sub=False, point=False, scheme=False):
 
@@ -827,10 +814,10 @@ class AlfaChannelHelper:
                         if finds_controls['force_find_last_page'][2] == 'post': 
                             url_page = post
                             url_page_control = 'post'
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if url_page_control == 'url':
-                            item.url = re.sub(rgx_org, rgx_des % str(item.curr_page), url_page.rstrip('/')).replace('//?', '/?')
-                        else:
+                    if url_page_control == 'url':
+                        item.url = urlparse.update_page_url(item.url, finds_next_page_rgx, item.curr_page)
+                    else:
+                        for rgx_org, rgx_des in finds_next_page_rgx:
                             item.post = re.sub(rgx_org, rgx_des % str(item.curr_page), post.rstrip('/')).replace('//?', '/?')
 
                 else:
@@ -1728,7 +1715,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         timeout_search = timeout * 2 if isinstance(timeout, (int, float)) else (timeout[0], timeout[1] * 2)     # Timeout para búsquedas
 
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
@@ -1779,9 +1766,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     if self.DEBUG: logger.debug('self.URL: %s / %s' % (next_page_url, self.url))
                     self.next_page_url = next_page_url = item.url = self.url
                     self.url = ''
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if not scrapertools.find_single_match(item.url, rgx_org): continue
-                        item.url = re.sub(rgx_org, rgx_des % str(self.curr_page), item.url.rstrip('/')).replace('//?', '/?')
+                    item.url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page, fallback=False)
                 if soup:
                     AHkwargs['soup'] = self.response.soup or self.response.json or self.response.data
                     self.curr_page += 1
@@ -1834,7 +1819,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             finds_controls = finds.get('controls', {})
             self.cnt_tot = self.cnt_tot or finds_controls.get('cnt_tot', 20)
             host = finds_controls.get('host', self.host)
-            self.doo_url = "%swp-admin/admin-ajax.php" % host
+            self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
             if AHkwargs.get('url') and AHkwargs['url'] != item.url: self.next_page_url = next_page_url = item.url
             next_page_url = self.next_page_url
             host_referer = finds_controls.get('host_referer', host) or host_referer
@@ -1879,19 +1864,15 @@ class DictionaryAllChannel(AlfaChannelHelper):
                         if finds_controls['force_find_last_page'][2] == 'post': 
                             url_page = post
                             url_page_control = 'post'
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if scrapertools.find_single_match(url_page, rgx_org): break
+                    if url_page_control == 'url':
+                        next_page_url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page)
                     else:
-                        url = item.url.split('?')
-                        item.url = url[0].rstrip('/') + finds_next_page_rgx[0][1] % str(self.curr_page)
-                        if '?' in item.url and len(url) > 1: url[1] = url[1].replace('?', '&')
-                        if len(url) > 1: item.url = '%s?%s' % (item.url, url[1].lstrip('/'))
-                    next_page_url = item.url
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if url_page_control == 'url':
-                            if not scrapertools.find_single_match(next_page_url, rgx_org): continue
-                            next_page_url = re.sub(rgx_org, rgx_des % str(self.curr_page), next_page_url.rstrip('/')).replace('//?', '/?')
+                        for rgx_org, rgx_des in finds_next_page_rgx:
+                            if scrapertools.find_single_match(url_page, rgx_org): break
                         else:
+                            item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
+                        next_page_url = item.url
+                        for rgx_org, rgx_des in finds_next_page_rgx:
                             if not scrapertools.find_single_match(post, rgx_org): continue
                             post = re.sub(rgx_org, rgx_des % str(self.curr_page), post.rstrip('/')).replace('//?', '/?')
 
@@ -1914,12 +1895,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                            and isinstance(finds_controls['force_find_last_page'][1], int):
                         if self.last_page >= finds_controls['force_find_last_page'][0]:
                             url = next_page_url
-                            for rgx_org, rgx_des in finds_next_page_rgx:
-                                if url_page_control == 'url':
-                                    if not scrapertools.find_single_match(url, rgx_org): continue
-                                    url = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
-                                                 url.rstrip('/')).replace('//?', '/?')
-                                else:
+                            if url_page_control == 'url':
+                                url = urlparse.update_page_url(url, finds_next_page_rgx,
+                                                               finds_controls['force_find_last_page'][1], fallback=False)
+                            else:
+                                for rgx_org, rgx_des in finds_next_page_rgx:
                                     if not scrapertools.find_single_match(post_alt, rgx_org): continue
                                     post_alt = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
                                                       post_alt.rstrip('/')).replace('//?', '/?')
@@ -2230,7 +2210,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if self.DEBUG: logger.debug('FINDS_categories: %s; FINDS_controls: %s' % (finds_out, finds_controls))
 
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
@@ -2427,7 +2407,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         item.title  = item.title.replace('(V)-' , '')
         item.contentTitle  = item.contentTitle.replace('(V)-' , '')
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         url_replace = self.url_replace = self.finds.get('url_replace', [])
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)
@@ -2647,7 +2627,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds = self.finds.copy()
         finds_controls = finds.get('controls', {})
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host) or host_referer
         post = item.post or finds_controls.pop('post', None) or post
         headers = item.headers or finds_controls.get('headers', {}) or headers
@@ -2898,7 +2878,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None)
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         url_replace = self.url_replace = self.finds.get('url_replace', [])
         min_temp = finds_controls.get('min_temp', False)
@@ -2993,7 +2973,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds_controls = finds.get('controls', {})
         find_add_video_to_videolibrary = finds_controls.get('add_video_to_videolibrary', True)
         host = finds_controls.get('host', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host) or host_referer
         post = item.post or finds_controls.pop('post', None) or post
         headers = item.headers or finds_controls.get('headers', {}) or headers
@@ -3286,7 +3266,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None)
         self.host_torrent = finds_controls.get('host_torrent', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         url_replace = self.url_replace = self.finds.get('url_replace', [])
         manage_torrents = finds_controls.get('manage_torrents', True)
@@ -3456,7 +3436,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds = self.finds.copy()
         finds_controls = finds.get('controls', {})
         self.host_torrent = finds_controls.get('host_torrent', self.host)
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         post = item.post or finds_controls.pop('post', None) or post
         headers = item.headers or finds_controls.get('headers', {}) or headers
@@ -3769,7 +3749,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if item.chanel:
             host = self.host = config.get_setting("current_host", item.chanel, default=host)
             self.canonical.update({'channel': item.chanel, 'host': self.host, 'host_alt': [self.host]})
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
@@ -3798,9 +3778,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                     if self.DEBUG: logger.debug('self.URL: %s / %s' % (next_page_url, self.url))
                     self.next_page_url = next_page_url = item.url = self.url
                     self.url = ''
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if not scrapertools.find_single_match(item.url, rgx_org): continue
-                        item.url = re.sub(rgx_org, rgx_des % str(self.curr_page), item.url.rstrip('/')).replace('//?', '/?')
+                    item.url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page, fallback=False)
                 if soup:
                     AHkwargs['soup'] = self.response.soup or self.response.json or self.response.data
                     self.curr_page += 1
@@ -3930,7 +3908,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
             finds_controls = finds.get('controls', {})
             self.cnt_tot = self.cnt_tot or finds_controls.get('cnt_tot', 20)
             host = self.host = finds_controls.get('host', self.host)
-            self.doo_url = "%swp-admin/admin-ajax.php" % host
+            self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
             if AHkwargs.get('url') and AHkwargs['url'] != item.url: self.next_page_url = next_page_url = item.url
             next_page_url = self.next_page_url
             host_referer = finds_controls.get('host_referer', host) or host_referer
@@ -3964,19 +3942,15 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                         if finds_controls['force_find_last_page'][2] == 'post': 
                             url_page = post
                             url_page_control = 'post'
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if scrapertools.find_single_match(url_page, rgx_org): break
+                    if url_page_control == 'url':
+                        next_page_url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page)
                     else:
-                        url = item.url.split('?')
-                        item.url = url[0].rstrip('/') + finds_next_page_rgx[0][1] % str(self.curr_page)
-                        if '?' in item.url and len(url) > 1: url[1] = url[1].replace('?', '&')
-                        if len(url) > 1: item.url = '%s?%s' % (item.url, url[1].lstrip('/'))
-                    next_page_url = item.url
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if url_page_control == 'url':
-                            if not scrapertools.find_single_match(next_page_url, rgx_org): continue
-                            next_page_url = re.sub(rgx_org, rgx_des % str(self.curr_page), next_page_url.rstrip('/')).replace('//?', '/?')
+                        for rgx_org, rgx_des in finds_next_page_rgx:
+                            if scrapertools.find_single_match(url_page, rgx_org): break
                         else:
+                            item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
+                        next_page_url = item.url
+                        for rgx_org, rgx_des in finds_next_page_rgx:
                             if not scrapertools.find_single_match(post, rgx_org): continue
                             post = re.sub(rgx_org, rgx_des % str(self.curr_page), post.rstrip('/')).replace('//?', '/?')
 
@@ -3999,12 +3973,11 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                            and isinstance(finds_controls['force_find_last_page'][1], int):
                         if self.last_page >= finds_controls['force_find_last_page'][0]:
                             url = next_page_url
-                            for rgx_org, rgx_des in finds_next_page_rgx:
-                                if url_page_control == 'url':
-                                    if not scrapertools.find_single_match(url, rgx_org): continue
-                                    url = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
-                                                 url.rstrip('/')).replace('//?', '/?')
-                                else:
+                            if url_page_control == 'url':
+                                url = urlparse.update_page_url(url, finds_next_page_rgx,
+                                                               finds_controls['force_find_last_page'][1], fallback=False)
+                            else:
+                                for rgx_org, rgx_des in finds_next_page_rgx:
                                     if not scrapertools.find_single_match(post_alt, rgx_org): continue
                                     post_alt = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
                                                       post_alt.rstrip('/')).replace('//?', '/?')
@@ -4239,7 +4212,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if item.chanel:
             host = self.host = config.get_setting("current_host", item.chanel, default=host)
             self.canonical.update({'channel': item.chanel, 'host': self.host, 'host_alt': [self.host]})
-        self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.doo_url = urlparse.urljoin(host, "wp-admin/admin-ajax.php")
         host_referer = finds_controls.get('host_referer', host)
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
@@ -4430,19 +4403,15 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                         if finds_controls['force_find_last_page'][2] == 'post': 
                             url_page = post
                             url_page_control = 'post'
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if scrapertools.find_single_match(url_page, rgx_org): break
+                    if url_page_control == 'url':
+                        next_page_url = urlparse.update_page_url(item.url, finds_next_page_rgx, self.curr_page)
                     else:
-                        url = item.url.split('?')
-                        item.url = url[0].rstrip('/') + finds_next_page_rgx[0][1] % str(self.curr_page)
-                        if '?' in item.url and len(url) > 1: url[1] = url[1].replace('?', '&')
-                        if len(url) > 1: item.url = '%s?%s' % (item.url, url[1].lstrip('/'))
-                    next_page_url = item.url
-                    for rgx_org, rgx_des in finds_next_page_rgx:
-                        if url_page_control == 'url':
-                            if not scrapertools.find_single_match(next_page_url, rgx_org): continue
-                            next_page_url = re.sub(rgx_org, rgx_des % str(self.curr_page), next_page_url.rstrip('/')).replace('//?', '/?')
+                        for rgx_org, rgx_des in finds_next_page_rgx:
+                            if scrapertools.find_single_match(url_page, rgx_org): break
                         else:
+                            item.url = urlparse.build_page_url(item.url, finds_next_page_rgx[0][1] % str(self.curr_page))
+                        next_page_url = item.url
+                        for rgx_org, rgx_des in finds_next_page_rgx:
                             if not scrapertools.find_single_match(post, rgx_org): continue
                             post = re.sub(rgx_org, rgx_des % str(self.curr_page), post.rstrip('/')).replace('//?', '/?')
 
@@ -4464,10 +4433,8 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                            and isinstance(finds_controls['force_find_last_page'][1], int):
                         if self.last_page >= finds_controls['force_find_last_page'][0]:
                             url = next_page_url
-                            for rgx_org, rgx_des in finds_next_page_rgx:
-                                if not scrapertools.find_single_match(url, rgx_org): continue
-                                url = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
-                                             url.rstrip('/')).replace('//?', '/?')
+                            url = urlparse.update_page_url(url, finds_next_page_rgx,
+                                                           finds_controls['force_find_last_page'][1], fallback=False)
                             soup_last_page = self.create_soup(url, item=item, hide_infobox=True, **kwargs)
                             self.last_page = int(self.parse_finds_dict(soup_last_page, finds_last_page, next_page=True, 
                                                                   c_type=item.c_type).lstrip('#'))
@@ -4653,7 +4620,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if item.chanel:
             self.host = self.host_torrent = config.get_setting("current_host", item.chanel, default=self.host_torrent)
             self.canonical.update({'channel': item.chanel, 'host': self.host_torrent, 'host_alt': [self.host_torrent]})
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         url_replace = self.url_replace = self.finds.get('url_replace', [])
         manage_torrents = finds_controls.get('manage_torrents', True)
@@ -4750,7 +4717,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         finds = self.finds.copy()
         finds_controls = finds.get('controls', {})
         self.host_torrent = finds_controls.get('host_torrent', self.host_torrent)
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         post = item.post or finds_controls.pop('post', None) or post
         headers = item.headers or finds_controls.get('headers', {}) or headers
@@ -4945,7 +4912,7 @@ class DooPlay(AlfaChannelHelper):
         self.finds_controls_updated = {}
         self.url = self.movie_path = self.tv_path = self.movie_action = self.tv_action = ''
         self.timeout = finds.get('control', {}).get('timeout', 5)
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         self.forced_proxy_opt = forced_proxy_opt
         self.list_language = list_language
         self.list_servers = list_servers or LIST_SERVERS
@@ -5094,7 +5061,7 @@ class DooPlay(AlfaChannelHelper):
 
         matches = []
         finds = self.finds
-        self.doo_url = "%swp-admin/admin-ajax.php" % self.host
+        self.doo_url = urlparse.urljoin(self.host, "wp-admin/admin-ajax.php")
         pattern_url = r'(?i)src="([^"]+)"'
 
         for elem in matches_int:

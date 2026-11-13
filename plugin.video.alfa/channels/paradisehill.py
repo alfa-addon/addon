@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -22,20 +23,21 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "all/?sort=created_at"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "popular/?filter=month&sort=by_likes"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "actors/?sort=by_likes"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "studios/?sort=by_likes"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=alfa_urlparse.build_url(host, 'all/', query='sort=created_at')))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=alfa_urlparse.build_url(host, 'popular/', query='filter=month&sort=by_likes')))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=alfa_urlparse.build_url(host, 'actors/', query='sort=by_likes')))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=alfa_urlparse.build_url(host, 'studios/', query='sort=by_likes')))
 
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/?sort=by_likes"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=alfa_urlparse.build_url(host, 'categories/', query='sort=by_likes')))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    _url_query_texto = texto
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/?pattern=%s" % (host,texto)
+    item.url = alfa_urlparse.build_url(host, 'search/', query=[('pattern', u'{}'.format(_url_query_texto))])
     try:
         return lista(item)
     except Exception:

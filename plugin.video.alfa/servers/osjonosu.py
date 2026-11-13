@@ -2,6 +2,7 @@
 # --------------------------------------------------------
 # Conector osjonosu By Alfa development Group
 # --------------------------------------------------------
+from core import urlparse as alfa_urlparse
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -33,7 +34,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             unpacked = jsunpack.unpack(pack)
             unpacked = unpacked.replace("\\'", "'")
             url = scrapertools.find_single_match(unpacked, "sources\:\s*\[\{'(?:file|src)':'([^']+)'")
-            url = host+url
+            url = alfa_urlparse.urljoin(host, url)
         video_urls.append(['[osjonosu] m3u8', url])
     except Exception:
         logger.error("[osjonosu] Failed to get video url.")

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 import re
 
@@ -21,7 +22,7 @@ def test_video_exists(page_url):
     global data
     
     kwargs['headers'] = {
-                         'Referer': '%s/' %host,
+                         'Referer': alfa_urlparse.build_url(host, '/'),
                          'Origin': host,
                          # 'Content-Type': 'application/json;charset=UTF-8',
                          # 'Accept-Encoding': 'gzip, deflate, br, zstd',
@@ -64,7 +65,7 @@ def get_video_url(page_url, video_password):
                 ##matches_m3u8 = re.compile('#EXT-X-STREAM-INF\:[^\n]*\n([^\n]*)\n', re.DOTALL).findall(datos)
                 for quality, url in matches_m3u8:
                     url =urlparse.urljoin(m3u8_source,url)
-                    url += "|Referer=%s/&Origin=%s" % (host, host)
+                    url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}/'.format(u'{}'.format(host)), 'Origin': u'{}'.format(host)})
                     video_urls.append(['[supervideo] %sp' % quality, url])
         else:
             video_urls.append(['[supervideo] m3u', m3u8_source])

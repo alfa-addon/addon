@@ -2,6 +2,7 @@
 # -*- Channel SleazeMovies -*-
 # -*- Created for Alfa-addon -*-
 # -*- By Sculkurt -*-
+from core import urlparse as alfa_urlparse
 import re
 
 from channelselector import get_thumb
@@ -31,7 +32,7 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = list()
-    itemlist.append(item.clone(title="Todas", action="lista", url=host +"page/2/", thumbnail=get_thumb('all', auto=True)))
+    itemlist.append(item.clone(title="Todas", action="lista", url=alfa_urlparse.build_url(host, 'page/2/'), thumbnail=get_thumb('all', auto=True)))
     itemlist.append(item.clone(title="Generos", action="genero", url=host, thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Buscar", action="search", thumbnail=get_thumb('search', auto=True)))
     return itemlist
@@ -39,9 +40,7 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
-    if texto != "":
-        texto = texto.replace(" ", "+")
-    item.url = "%s?s=%s" % (host, texto)
+    item.url = alfa_urlparse.build_url(host, query=[('s', texto)])
     item.extra = "busqueda"
     try:
         return lista(item)
@@ -118,7 +117,7 @@ def findvideos(item):
     id = scrapertools.find_single_match(data, 'src=".*?vid=([^"]+)"').replace("amp;", "")
     logger.debug(data)
     post = "vid=%s&alternative=sleazyvids&ord=0" % id
-    url = "%splayer/ajax_sources.php" %host
+    url = alfa_urlparse.build_url(host, 'player/ajax_sources.php')
     data = httptools.downloadpage(url, post=post, canonical=canonical).data
     url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace("\/", "/").replace(" ", "%20")
     title = scrapertools.find_single_match(data, '"label":"([^"]+)"').replace("\/", "/").replace(" ", "%20")

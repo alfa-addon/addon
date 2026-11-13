@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -25,7 +26,7 @@ canonical = {
              'channel': 'ennovelas', 
              'host': config.get_setting("current_host", 'ennovelas', default=''), 
              'host_alt': ["https://ennovelas.site/"], 
-             'host_black_list': ["https://jodrif.online/", "https://ennovelas.net/", "https://ennovelas.io/"
+             'host_black_list': ["https://jodrif.online/", "https://ennovelas.net/", "https://ennovelas.io/",
                                  "https://k.ennovelas.net/", "https://m.ennovelas.net/", 'https://u.ennovelas.net/', 'https://o.ennovelas.net/',
                                  'https://v.ennovelas.net/', 'https://n.ennovelas.net/', 'https://t.ennovelas.net/', 'https://f.ennovelas.net/', 
                                  "https://d.ennovelas.net/", "https://i.ennovelas.net/", "https://s.ennovelas.net/", "https://b.ennovelas.net/", 
@@ -93,12 +94,12 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", 
-                         url=host + "movies/", c_type='peliculas', thumbnail=get_thumb("movies", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'movies/'), c_type='peliculas', thumbnail=get_thumb("movies", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Novelas", action="list_all", 
-                         url=host + "novelas-completas/", c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
+                         url=alfa_urlparse.build_url(host, 'novelas-completas/'), c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Nuevos Episodios[/COLOR]" , action="list_all", 
-                         url= host + "episodes/", c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
+                         url= alfa_urlparse.build_url(host, 'episodes/'), c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Países[/COLOR]" , action="section", 
                          url= host, c_type='series', thumbnail=get_thumb('country', auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Años[/COLOR]" , action="section", 
@@ -169,7 +170,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elif tv_path not in elem_json['url'] and item.c_type == 'search':
                 continue
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -228,7 +229,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['episode'] = scrapertools.find_single_match(elem.find('div', class_='episodeNum').get_text('|', strip=True), '\d+')
             elem_json['episode'] = int(elem_json['episode'] or 1)
             elem_json['language'] = elem_json.get('language', '*')
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -283,7 +284,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 try:
                     bs4 = base64.b64decode(soup.find('div', id="btnServers").find('form').find('input').get('value', '')).decode('utf-8')
                     matches_alt = jsontools.load(bs4).values()
-                except:
+                except Exception:
                     pass
             
             if not matches_alt and (soup.find('ul', class_="serversList") or soup.find('div', class_="watch")):
@@ -321,7 +322,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                         logger.debug('Servidor no soportado: %s' % elem_json['url'])
                         continue
 
-                except:
+                except Exception:
                     logger.error(elem)
                     logger.error(traceback.format_exc())
                     continue
@@ -332,7 +333,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
                 matches.append(elem_json.copy())
 
-        except:
+        except Exception:
             logger.error(elem_ini)
             logger.error(traceback.format_exc())
             continue
@@ -353,7 +354,7 @@ def search(item, texto, **AHkwargs):
 
     try:
         texto = texto.replace(" ", "+")
-        item.url = '%ssearch/%s/' %  (host, texto)
+        item.url = alfa_urlparse.build_url(host, u'search/{}/'.format(texto))
 
         if texto:
             item.c_type = "search"
@@ -362,7 +363,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

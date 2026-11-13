@@ -3,6 +3,7 @@
 # Conector Upstream By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import re
 from core import httptools
 from core import scrapertools
@@ -47,11 +48,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for url_ in matches:
         url = url_
         if not url.startswith('http'):
-            url = host + url
+            url = alfa_urlparse.urljoin(host, url)
         ext = url[-4:]
         if ext == '.srt' or ext == '.jpg':
             continue
-        url += '|Referer=%s' % page_url
+        url = alfa_urlparse.add_url_headers(url, {'Referer': u'{}'.format(page_url)})
         video_urls.append(["%s [Upstream]" % ext, url])
 
     return video_urls

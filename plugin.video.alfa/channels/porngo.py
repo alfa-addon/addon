@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -99,13 +100,13 @@ def submenu(item):
     AlfaChannel.host = item.url
     AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=item.url + "latest-updates/1/", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistos" , action="list_all", url=item.url + "most-popular/1/", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=item.url + "top-rated/1/", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'latest-updates/1/'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistos" , action="list_all", url=alfa_urlparse.build_url(item.url, 'most-popular/1/'), chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=alfa_urlparse.build_url(item.url, 'top-rated/1/'), chanel=item.chanel))
     if item.canal:
-        itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=item.url + "sites/", extra="Canal", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="section", url=item.url + "models/most-viewed/", extra="PornStar", chanel=item.chanel))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url + "categories/", extra="Categorias", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=alfa_urlparse.build_url(item.url, 'sites/'), extra="Canal", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="section", url=alfa_urlparse.build_url(item.url, 'models/most-viewed/'), extra="PornStar", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=alfa_urlparse.build_url(item.url, 'categories/'), extra="Categorias", chanel=item.chanel))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url, chanel=item.chanel))
     
     return itemlist
@@ -147,7 +148,7 @@ def section_matches(item, matches_int, **AHkwargs):
                                                                                      or elem.img.get('src', '')
             elem_json['cantidad'] = data.a.get_text(strip=True)
         
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -197,7 +198,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 for x, value in enumerate(pornstars):
                     pornstars[x] = value.get_text(strip=True)
                 elem_json['star'] = ' & '.join(pornstars)
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -218,7 +219,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/%s/1/" % (host, texto.replace(" ", "-"))
+    item.url = alfa_urlparse.build_url(host, u'search/{}/1/'.format(texto.replace(" ", "-")))
     
     try:
         if texto:
@@ -229,7 +230,7 @@ def search(item, texto, **AHkwargs):
             return []
     
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []

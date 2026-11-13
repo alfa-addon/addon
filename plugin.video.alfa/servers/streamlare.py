@@ -3,6 +3,7 @@
 # Conector streamlare By Alfa development Group
 # --------------------------------------------------------
 
+from core import urlparse as alfa_urlparse
 import re
 
 from core import httptools
@@ -77,7 +78,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         # matches.append(['', url_new])
     
     for res, media_url in matches:
-        media_url += "|User-Agent=%s" % (httptools.get_user_agent(quoted=True))
+        media_url = alfa_urlparse.add_url_headers(media_url, {'User-Agent': u'{}'.format(httptools.get_user_agent(quoted=True))})
         video_urls.append([res, media_url])
 
     return video_urls

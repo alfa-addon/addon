@@ -3,6 +3,7 @@
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
+from core import urlparse as alfa_urlparse
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
@@ -106,22 +107,22 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host, action='list_all',
                          thumbnail=get_thumb('newest', auto=True), c_type='novedades'))
     
-    itemlist.append(Item(channel=item.channel, title='En Emisión', url=host + 'emision?p=1', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='En Emisión', url=alfa_urlparse.build_url(host, 'emision', query='p=1'), action='list_all',
                          thumbnail=get_thumb('on air', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Directorio', url=host + tv_path, action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Directorio', url=alfa_urlparse.urljoin(host, tv_path), action='list_all',
                          thumbnail=get_thumb('all', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Directorio por Año',  action='section', url=host + tv_path, 
+    itemlist.append(Item(channel=item.channel, title='Directorio por Año',  action='section', url=alfa_urlparse.urljoin(host, tv_path),
                          thumbnail=get_thumb('year', auto=True), extra='fecha', c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Directorio por Género',  action='section', url=host + tv_path, 
+    itemlist.append(Item(channel=item.channel, title='Directorio por Género',  action='section', url=alfa_urlparse.urljoin(host, tv_path),
                          thumbnail=get_thumb('genres', auto=True), extra='genero', c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Directorio por Letra',  action='section', url=host + tv_path, 
+    itemlist.append(Item(channel=item.channel, title='Directorio por Letra',  action='section', url=alfa_urlparse.urljoin(host, tv_path),
                          thumbnail=get_thumb('alphabet', auto=True), extra='letra', c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Directorio por Categoria',  action='section', url=host + tv_path, 
+    itemlist.append(Item(channel=item.channel, title='Directorio por Categoria',  action='section', url=alfa_urlparse.urljoin(host, tv_path),
                          thumbnail=get_thumb('categories', auto=True), extra='categoria', c_type='series'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -162,7 +163,7 @@ def section_matches(item, matches_int, **AHkwargs):
         # logger.error(elem)
         elem_json = {}
         elem_json['title'] = elem.find(text=True, recursive=False)
-        elem_json['url'] = item.url + '&' + item.extra + '=' + elem.get('value', '')
+        elem_json['url'] = alfa_urlparse.update_query(item.url, [(item.extra, elem.get('value', ''))])
         matches.append(elem_json.copy())
 
     return matches
@@ -377,8 +378,9 @@ def search(item, texto, **AHkwargs):
 
     try:
         # https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
+        _url_query_texto = texto
         texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = item.url + "buscar?p=1&q=" + texto
+        item.url = alfa_urlparse.build_url(item.url, 'buscar', query=[('p', '1'), ('q', _url_query_texto)])
 
         if texto:
             item.c_type = 'search'
