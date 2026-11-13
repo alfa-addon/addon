@@ -1,0 +1,38 @@
+{
+  "id": "fansubscat",
+  "name": "Fansubs.cat",
+  "active": true,
+  "adult": false,
+  "language": ["cat"],
+  "thumbnail": "https://static.fansubs.cat/images/logo.png",
+  "banner": "",
+  "fanart": "",
+  "categories": ["anime"],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incloure a la cerca global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_anime",
+      "type": "bool",
+      "label": "Incloure a les novetats d'anime",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Filtrar idioma dels enllaços",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": ["No filtrar", "CAT"]
+    }
+  ]
+}
