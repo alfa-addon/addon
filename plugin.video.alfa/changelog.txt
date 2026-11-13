@@ -2,14 +2,74 @@
         [B]Estos son los cambios para esta versión:[/B]
         
         • +18
+        • Allcalidad
         • Allpeliculas
+        • AnimeFLV
+        • AnimeJL
+        • AnimeJara
+        • Area-Documental
+        • Asialiveaction
+        • BlogHorror
+        • Cine Mundo
+        • Cine libre Online
+        • Cine24H
+        • CineCalidad
+        • Cuevana2español
+        • DeTodoPeliculas
+        • Divxtotal
+        • Documentales Online
         • Dontorrent
+        • DoramasYT
+        • Doramasflix
+        • DoramedPlay
+        • Elite Torrent
+        • EntrePeliculasySeries
+        • Estrenos Anime
+        • EstrenosCinesaa
+        • Eztv
+        • Flizz Movies
+        • FullSerieHD
+        • Genteclic
+        • Gnula
+        • GranTorrent
         • HDFull
+        • Hacktorrent
+        • HenaoJara
+        • HomeCine
+        • JKanime
         • LaMovie
+        • Lacartoons
+        • Latanime
+        • Legalmente Gratis (clasicos)
+        • MejorTorrent
+        • MiraPeliculas
+        • Mitorrent
+        • Mundo Donghua
+        • Pelicinehd
+        • Peliculasflix
         • Pelis182
         • PelisForte
+        • PelisPlus
         • Pelisflix
+        • Pelispanda
+        • Pelispedia
         • PoseidonHD
         • RetroTV
+        • SeriesKao
+        • SeriesRetro
+        • SoloLatino
+        • TVAnime
+        • Tio Anime
+        • TioDonghua
+        • Trailers ecartelera
         • TubeOnLine
+        • Tubepelis
+        • VerAnime
+        • Veronline
+        • WolfMax4K
+        • Yandispoiler
+        • Yts
+        • Zonaleros
+        • Zoowomaniacos
+        • repelishd
         
